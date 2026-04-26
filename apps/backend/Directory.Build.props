@@ -1,0 +1,32 @@
+<Project>
+
+  <PropertyGroup>
+    <!-- Shared across all projects under apps/backend/ -->
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- Treat every compiler and analyzer warning as a build error -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+
+    <!-- Enforce IDE code-style rules (IDExxx) during dotnet build, not just in the IDE -->
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+
+    <!-- Enable all Roslyn analyzers shipped with the SDK -->
+    <AnalysisLevel>latest-All</AnalysisLevel>
+
+    <!-- Deterministic builds (reproducible artifacts, required for supply-chain integrity) -->
+    <Deterministic>true</Deterministic>
+
+    <!-- Suppress XML-doc warnings — we don't write public API docs -->
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+
+    <!-- Fail dotnet restore if any NuGet package has a known CVE.
+         Moderate+ severity covers CVSS ≥ 4.0. Raise to "high" if too noisy. -->
+    <NuGetAudit>true</NuGetAudit>
+    <NuGetAuditMode>all</NuGetAuditMode>
+    <NuGetAuditLevel>moderate</NuGetAuditLevel>
+  </PropertyGroup>
+
+</Project>
