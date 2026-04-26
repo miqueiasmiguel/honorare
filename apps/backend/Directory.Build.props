@@ -18,8 +18,10 @@
     <!-- Deterministic builds (reproducible artifacts, required for supply-chain integrity) -->
     <Deterministic>true</Deterministic>
 
-    <!-- Suppress XML-doc warnings — we don't write public API docs -->
-    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <!-- GenerateDocumentationFile=true is required for IDE0005 (unused usings) to run on
+         build. CS1591 (missing XML comment) is suppressed so we don't have to document
+         every member. -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
 
     <!-- Fail dotnet restore if any NuGet package has a known CVE.
