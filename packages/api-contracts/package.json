@@ -1,0 +1,10 @@
+{
+  "name": "@honorare/api-contracts",
+  "version": "0.0.0",
+  "private": true,
+  "description": "TypeScript client generated from Honorare OpenAPI spec. Do not edit manually.",
+  "main": "src/index.ts",
+  "scripts": {
+    "generate": "bash ../../tools/generate-api-client.sh"
+  }
+}
