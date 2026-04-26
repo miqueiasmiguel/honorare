@@ -1,0 +1,70 @@
+name: Medico PWA CI
+
+on:
+  push:
+    paths:
+      - "apps/medico-pwa/**"
+      - "packages/api-contracts/**"
+      - ".github/workflows/medico-pwa-ci.yml"
+  pull_request:
+    paths:
+      - "apps/medico-pwa/**"
+      - "packages/api-contracts/**"
+      - ".github/workflows/medico-pwa-ci.yml"
+
+jobs:
+  test:
+    name: Lint, Test & Coverage
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Prettier check
+        run: pnpm -F medico-pwa prettier:check
+
+      - name: ESLint
+        run: pnpm -F medico-pwa lint
+
+      - name: StyleLint
+        run: pnpm -F medico-pwa stylelint
+
+      - name: Test with coverage
+        run: pnpm -F medico-pwa test:ci
+
+      - name: Enforce 80% coverage threshold
+        run: |
+          SUMMARY="apps/medico-pwa/coverage/coverage-summary.json"
+          if [ ! -f "$SUMMARY" ]; then
+            echo "::error::Coverage summary not found at $SUMMARY"
+            exit 1
+          fi
+          LINES=$(node -e "const c=require('./$SUMMARY').total.lines.pct; console.log(c)")
+          echo "Line coverage: ${LINES}%"
+          node -e "
+            const pct = require('./$SUMMARY').total.lines.pct;
+            if (pct < 80) { console.error('Coverage ' + pct + '% is below the required 80% threshold.'); process.exit(1); }
+          "
+
+      - name: Build
+        run: pnpm -F medico-pwa build --base-href /app/
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: medico-pwa-coverage
+          path: apps/medico-pwa/coverage/
