@@ -1,0 +1,237 @@
+# Honorare — Próximos Passos
+
+Backlog ordenado por precedência. Cada fatia entrega algo verificável.
+
+## Fase 0 — Pré-código (não pular)
+
+Trabalho que **não é código** mas é pré-requisito. Prioridade máxima.
+
+### P0.1 — Verificação de marca (responsável: dono) ✅
+
+- [x] INPI (busca.inpi.gov.br) — classes 9, 35, 36, 42 — "Honorare" disponível
+- [x] registro.br — domínios disponíveis; compra pendente (em breve)
+- [x] Google + lojas de app — sem concorrentes com nome similar
+
+**Resultado:** nome aprovado. Registrar domínio antes de qualquer comunicação pública.
+
+### P0.2 — Casos reais UNIMED (responsável: dono + cliente)
+
+- [ ] Pedir ao cliente 15-20 guias reais UNIMED já pagas (com demonstrativo de pagamento)
+- [ ] Documentar cada uma em `docs/test-cases-real.md` com: inputs, valor apresentado, valor pago, glosas
+- [ ] Identificar casos especiais entre elas (urgência noturna, apartamento, múltiplos auxiliares, etc.)
+
+**Bloqueante:** sem isso, motor de cálculo é especulação. Não começar a Fatia 4 sem.
+
+### P0.3 — Ambiente local (responsável: dono)
+
+- [ ] .NET 10 SDK instalado
+- [ ] Node 20 + pnpm 9 instalados
+- [ ] Docker Desktop ou Rancher Desktop funcionando
+- [ ] PostgreSQL acessível (via Docker ou nativo)
+- [ ] Editor configurado (Rider / VS Code) com extensões C# e Angular
+
+## Fase 1 — Fundação (3-4 semanas)
+
+Trabalho que precede qualquer feature. Cada item é um prompt isolado para Claude Code.
+
+### F1.1 — Esqueleto do monorepo
+
+Estrutura de pastas, configs (`package.json`, `pnpm-workspace.yaml`, `Directory.Build.props`, etc.), READMEs e CLAUDE.mds placeholder. Sem código de aplicação.
+
+**Critério de pronto:** `pnpm install` funciona, `git commit` limpo.
+
+### F1.2 — Projetos Angular
+
+Criar `admin-web` e `medico-pwa` com Angular CLI dentro de `apps/`. PWA do médico com `@angular/service-worker` configurado. Cada um com `<base href>` correto e roteamento básico.
+
+**Critério de pronto:** `ng serve` funciona em ambos, mostrando "Hello world" em rotas distintas.
+
+### F1.3 — Solution .NET com bounded contexts
+
+Criar `Honorare.sln` em `apps/backend/` com:
+- Projeto `App` (host)
+- Projetos `Identity`, `Catalog`, `Faturamento`, `Reporting` (class libraries)
+- Referências corretas (App referencia todos; Reporting → Faturamento → Catalog → Identity)
+- Cada um com classe placeholder e `CLAUDE.md` específico
+
+**Critério de pronto:** `dotnet build` limpo, `dotnet run` no App responde em alguma rota.
+
+### F1.4 — Docker Compose com Postgres + backend
+
+`infra/docker-compose.yml` subindo Postgres com banco `honorare_dev`, backend em modo dev, Nginx roteando subpaths. Variáveis em `.env`.
+
+**Critério de pronto:** `pnpm dev:up` sobe stack, `localhost/api/health` responde.
+
+### F1.5 — Endpoint `/api/v1/health` e cliente OpenAPI
+
+Endpoint trivial respondendo `{ status: "ok" }`. Swashbuckle configurado para gerar OpenAPI. Script `tools/generate-api-client.sh` que regenera `@honorare/api-contracts`. Os dois Angular consumindo o cliente gerado.
+
+**Critério de pronto:** ciclo completo: backend muda → script gera → Angular type-check passa.
+
+### F1.6 — PWA instalável
+
+Manifest, ícones, service worker do `medico-pwa` configurados corretamente para subpath `/app/`. Testar instalação real em iPhone e Android (via ngrok ou similar).
+
+**Critério de pronto:** "Adicionar à tela inicial" funciona em iOS e Android, abre em fullscreen.
+
+### F1.7 — Autenticação ponta-a-ponta
+
+ASP.NET Core Identity configurado. JWT com refresh token. Login, logout, refresh funcionando nos dois Angular. Multi-tenant via `TenantId` em todas as queries (global query filter).
+
+**Critério de pronto:** admin loga em `/admin/`, médico loga em `/app/`, ambos veem telas distintas. Token refresha sem deslogar.
+
+## Fase 2 — Cadastros (2-3 semanas)
+
+Domínio começa aqui. Multi-tenant desde já.
+
+### F2.1 — Tenants e usuários
+
+CRUD de Tenant. Convite de usuário por email (admin → usuário). Aceitação de convite com definição de senha. Tela de "Meu perfil".
+
+### F2.2 — Operadoras e procedimentos
+
+CRUD de `Operadora`. CRUD de `Procedimento` (TUSS + porte + porte anestésico + flags). Importação de TUSS via CSV.
+
+### F2.3 — Tabelas e prestadores
+
+CRUD de `TabelaProcedimento` (valor por operadora, importação CSV). CRUD de `Prestador`. CRUD de `DeflatorPrestador`.
+
+### F2.4 — Beneficiários
+
+CRUD ou criação lazy ao digitar guia.
+
+## Fase 3 — Operação (3-4 semanas)
+
+O coração do MVP.
+
+### F3.1 — Entrada manual de guia e controle de pagamentos
+
+O admin entra **todas** as guias de um médico (pagas e pendentes), não só as disputadas. A tela principal do admin-web é o "Controle de Pagamentos" por médico: lista de guias com código de cor por situação (verde = Liquidada, vermelho = Em Recurso, amarelo = Apresentada).
+
+Campos obrigatórios da `Guia`: Data, Senha (pré-autorização), Carteira do beneficiário, Nome do paciente, Procedimentos (múltiplos por guia), Hospital/Operadora, Situação.
+
+Campo `Observacao` (texto livre) é obrigatório — é a justificativa da divergência, exibida em vermelho no recurso e no portal do médico.
+
+Para guias do tipo **Pacote** (preço flat negociado), o admin informa manualmente o `ValorApurado` — o motor não é invocado. A guia entra normalmente no recurso.
+
+Autocomplete de procedimento TUSS. Validações. Listagem paginada e filtrada por médico/período/situação.
+
+**Atenção:** UX deste formulário é crítica. Se for mais lento que a planilha atual, cliente não usa.
+
+### F3.2 — Motor de cálculo (UNIMED)
+
+`IPricingRuleSet` + `UnimedRuleSet` + pipeline de modifiers. Calcula valor esperado ao salvar a guia. Salva trace completo em `Calculo` + `PassoCalculo`.
+
+**Validação:** os 15-20 casos reais devem todos passar antes de seguir para F3.3.
+
+### F3.3 — Anestesia
+
+Calculator separado para anestesia (tempo anestésico, porte AN, multiplicador 17,19%). Validar contra casos reais que envolvam anestesistas.
+
+### F3.4 — Demonstrativos e conciliação manual
+
+Entrada manual de demonstrativo. Conciliação item-a-item com botão "essa linha é esta guia". Registra `ValorLiquidado` (PG UNIMED) por item. Status da guia atualizado. Quando o convênio pagar integralmente, admin baixa a guia — ela sai do relatório de pendências.
+
+### F3.5 — Geração de recurso (PDF)
+
+Feature central do produto. O admin cria um `Recurso` (recebe número automático no formato `AAAAMM`), seleciona as guias em divergência e gera o PDF. As guias incluídas têm situação atualizada para `EmRecurso` com referência ao número.
+
+Estrutura do PDF:
+- Cabeçalho: logo + nome da billing company (por tenant)
+- Título: `[Nome do médico] - CRM [número] - RECURSO [OPERADORA] [AAAAMM]`
+- Por guia: data, senha, carteira do beneficiário, nome do paciente, papel do executor (ex: CIRURGIÃO)
+- Por item da guia: código TUSS + descrição + % aplicado, **PAGO**, **CORRETO**
+- Subtotais por guia; **RESTA PAGAR** em destaque (= `sum(CORRETO) − sum(PAGO)`)
+- Observação em vermelho (campo `Observacao` da guia)
+
+Labels das colunas: usar **PAGO** e **CORRETO** como padrão (não "PG UNIMED"/"VL CORRETO" — labels variam entre documentos do cliente; a forma curta é mais limpa e não amarra na operadora).
+
+Semântica dos valores:
+- **VL CORRETO** por item = `ValorApurado` (o que o motor diz que deveria ser pago; para pacotes, valor informado manualmente)
+- **PG UNIMED** por item = `ValorLiquidado` (o que o demonstrativo registrou)
+- **RESTA PAGAR** por guia = `sum(ValorApurado) − sum(ValorLiquidado)`
+
+O PDF é o documento que o admin envia à operadora para contestar. Sem esta feature o sistema não substitui a planilha atual.
+
+**Critério de pronto:** PDF gerado é indistinguível (em informação) do documento que o cliente monta hoje manualmente.
+
+## Fase 4 — Visualização (2-3 semanas)
+
+### F4.1 — Portal do médico (PWA)
+
+Lista de guias pendentes onde o médico é executor (guias já baixadas não aparecem). Filtros (período, operadora). Detalhe da guia com observação do admin em destaque — é o que permite ao médico entender o status de cada paciente (não pago, pago parcial, motivo).
+
+Resumo financeiro (total apresentado vs. pago vs. em aberto) é fase 2 — no MVP o médico precisa ver o status e a justificativa, não necessariamente os totais.
+
+**Cuidado:** garantir filtro automático por executor via global query filter. Não confiar em filtros manuais por endpoint.
+
+### F4.2 — Tela admin com auditoria de divergências
+
+Lista de divergências classificadas por severidade. Detalhe de cada uma com explicação (do trace). Botão "marcar como contestada".
+
+### F4.3 — Suspensão de tenant (inadimplência manual)
+
+Campo `Tenant.Status` (Ativo, Suspenso, Cancelado). Tela admin para alterar. Middleware bloqueia acesso quando suspenso. Mensagem amigável.
+
+**Estimativa:** 3-5 dias. Não deixar para depois do segundo cliente — implementar antes.
+
+## Fase 5 — Relatórios (1-2 semanas)
+
+### F5.1 — Relatório por médico (período)
+
+Total apresentado, pago, em aberto. Detalhamento. Exportação CSV/PDF.
+
+### F5.2 — Relatório por operadora
+
+Mesma coisa, agrupado por operadora.
+
+### F5.3 — Relatório de divergências
+
+Para o admin, lista priorizada de glosas com potencial de contestação.
+
+## Fase 6 — Pré-produção (2 semanas)
+
+### F6.1 — Logs de acesso (LGPD)
+
+`LogAcesso` para eventos relevantes (login, exportação, alteração de permissão). Não logar tudo — só o que importa para responder "quem viu o quê".
+
+### F6.2 — Backup e monitoramento
+
+Backup automático do Postgres. Application Insights / Seq para logs de aplicação. Alertas básicos (erro 500, latência alta).
+
+### F6.3 — Documentação para o cliente
+
+Manual de uso, FAQ. Vídeos curtos dos fluxos principais.
+
+### F6.4 — Testes E2E dos fluxos críticos
+
+Playwright ou Cypress para fluxos críticos:
+- Admin cria guia, cálculo aparece correto
+- Médico vê suas guias e não vê de outros
+- Conciliação detecta divergência
+
+## Cortes possíveis
+
+Se prazo apertar, cortar nesta ordem:
+
+1. F5 (relatórios agregados) — o recurso (F3.5) já entrega o essencial; relatórios analíticos ficam para depois
+2. F4.1 (PWA do médico) — médico acessa pelo admin web responsivo, PWA fica para fase 2
+3. F3.4 (conciliação automática) — só registra demonstrativo, não bate com guia automaticamente
+4. F2.4 (beneficiários como entidade) — campo de texto livre na guia
+
+**Não cortar:** F0, F1.7 (auth), F2.2/F2.3 (operadoras/procedimentos/tabelas), F3.1/F3.2 (guia + cálculo), **F3.5 (geração de recurso)**, F4.3 (suspensão).
+
+O motor de cálculo (F3.2) **não é cortável** — é o que produz o VL CORRETO que aparece no recurso e justifica a contestação perante a operadora. Sem ele o sistema é só uma planilha com PDF.
+
+## Estimativa total
+
+- Fase 0: 1 semana (em paralelo com F1)
+- Fase 1: 3-4 semanas
+- Fase 2: 2-3 semanas
+- Fase 3: 3-4 semanas
+- Fase 4: 2-3 semanas
+- Fase 5: 1-2 semanas
+- Fase 6: 2 semanas
+
+**MVP completo: 12-16 semanas focadas com Claude Code ajudando.**
+**MVP enxuto (sem PWA + sem relatórios bonitos): 8-10 semanas.**
