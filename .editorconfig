@@ -1,15 +1,77 @@
 root = true
 
+# ─── Universal defaults ────────────────────────────────────────────────────────
 [*]
-indent_style = space
-indent_size = 2
-end_of_line = lf
-charset = utf-8
+indent_style             = space
+indent_size              = 2
+end_of_line              = lf
+charset                  = utf-8
 trim_trailing_whitespace = true
-insert_final_newline = true
+insert_final_newline     = true
+max_line_length          = 120
 
-[*.{cs,csproj,sln}]
-indent_size = 4
+# ─── C# ───────────────────────────────────────────────────────────────────────
+[*.{cs,csx}]
+indent_size     = 4
+max_line_length = 120
 
-[*.md]
+# ─── .NET project / config files ──────────────────────────────────────────────
+[*.{csproj,vbproj,vcxproj,props,targets,nuspec,resx,config}]
+indent_size = 2
+
+# ─── Visual Studio solution files (Microsoft-generated; preserve their format) ─
+[*.sln]
+indent_style = tab
+end_of_line  = crlf
+
+# ─── TypeScript & JavaScript ──────────────────────────────────────────────────
+[*.{ts,tsx,mts,cts}]
+quote_type     = single
+max_line_length = 120
+
+[*.{js,mjs,cjs}]
+max_line_length = 120
+
+# ─── Angular HTML templates ───────────────────────────────────────────────────
+[*.html]
+indent_size     = 2
+max_line_length = 140
+
+# ─── Styles ───────────────────────────────────────────────────────────────────
+[*.{css,scss,sass,less}]
+indent_size     = 2
+max_line_length = 120
+
+# ─── Data formats ─────────────────────────────────────────────────────────────
+[*.{json,jsonc,json5}]
+indent_size = 2
+
+[*.{yml,yaml}]
+indent_size = 2
+
+[*.toml]
+indent_size = 2
+
+[*.xml]
+indent_size = 2
+
+# ─── Shell scripts (always LF, even on Windows) ───────────────────────────────
+[*.{sh,bash,zsh}]
+end_of_line = lf
+
+# ─── PowerShell (Windows line endings) ────────────────────────────────────────
+[*.{ps1,psm1,psd1}]
+end_of_line = crlf
+
+# ─── Markdown (preserve intentional trailing spaces for line breaks) ──────────
+[*.{md,mdx}]
 trim_trailing_whitespace = false
+max_line_length          = off
+
+# ─── Dockerfiles ──────────────────────────────────────────────────────────────
+[{Dockerfile,Dockerfile.*,.dockerignore}]
+indent_size = 2
+
+# ─── CI / Infrastructure ──────────────────────────────────────────────────────
+[.github/**]
+indent_size = 2
