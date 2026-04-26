@@ -1,0 +1,49 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+dist/
+build/
+.angular/
+out-tsc/
+
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.nupkg
+*.snupkg
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Test coverage
+coverage/
+TestResults/
+
+# Generated API client (regenerated from OpenAPI)
+packages/api-contracts/src/generated/
+
+# Docker volumes
+infra/postgres/data/
