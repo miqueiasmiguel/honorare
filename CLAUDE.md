@@ -6,50 +6,97 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Honorare is a SaaS platform for medical payment reconciliation — a financial ledger ("conta-corrente") between physicians and health plan operators (convênios), starting with UNIMED. The product is aimed at billing companies that manage physician payments, not the doctors directly.
 
-**Current status:** Pre-development (Phase 0). Only documentation exists in `docs/`. No source code has been created yet.
+**Current status:** Phase 1 scaffolding complete. Backend (.NET 10), admin-web (Angular SPA), medico-pwa (Angular PWA), infra (Docker Compose + Nginx + observability stack), and the full engineering harness (linting, testing, CI, pre-commit hooks) are in place. Domain feature development begins next.
 
 ## Commands
 
-These are the intended commands once the codebase is scaffolded (Phase 1+):
-
 ```bash
-# JavaScript / TypeScript (via pnpm workspaces)
-pnpm install                   # Install all JS/TS dependencies
-pnpm dev:up                    # Start Docker Compose (Postgres + backend + Nginx)
-pnpm -F admin-web dev          # Dev server for admin Angular SPA
-pnpm -F medico-pwa dev         # Dev server for doctor Angular PWA
-pnpm tools generate-api-client # Regenerate TypeScript client from OpenAPI spec
+# ── Setup ──────────────────────────────────────────────────────────────────────
+pnpm install                        # Install all JS/TS deps + activate Husky hooks
 
-# .NET Backend
-dotnet build                   # Build the backend solution
-dotnet run --project apps/backend/App  # Run backend in development
-dotnet test                    # Run all xUnit tests
+# ── Dev ────────────────────────────────────────────────────────────────────────
+pnpm dev:up                         # Start Docker Compose (Postgres + backend + Nginx + observability)
+pnpm -F admin-web dev               # Dev server: admin Angular SPA  (http://localhost:4200/admin/)
+pnpm -F medico-pwa dev              # Dev server: doctor Angular PWA  (http://localhost:4201/app/)
+pnpm generate-api-client            # Regenerate TS client from OpenAPI spec
+
+# ── Backend (.NET) ─────────────────────────────────────────────────────────────
+dotnet build apps/backend/Honorare.sln            # Build (warnings = errors)
+dotnet run --project apps/backend/App             # Run in development
+dotnet test apps/backend/Honorare.sln             # Run all xUnit tests + coverage
+
+# ── Frontend — lint ────────────────────────────────────────────────────────────
+pnpm -F admin-web lint              # ESLint (--max-warnings 0)
+pnpm -F admin-web lint:fix          # ESLint autofix
+pnpm -F admin-web stylelint         # StyleLint SCSS (--max-warnings 0)
+pnpm -F admin-web prettier:check    # Prettier check (no write)
+pnpm -F admin-web prettier:fix      # Prettier autoformat
+
+# ── Frontend — test ────────────────────────────────────────────────────────────
+pnpm -F admin-web test              # Vitest watch mode
+pnpm -F admin-web test:ci           # Vitest single-run + coverage (used by CI)
 ```
 
-CI/CD uses three independent GitHub Actions workflows filtering by path:
-- `backend-ci.yml` → `apps/backend/**`
-- `admin-web-ci.yml` → `apps/admin-web/**, packages/api-contracts/**`
-- `medico-pwa-ci.yml` → `apps/medico-pwa/**, packages/api-contracts/**`
+CI/CD uses four independent GitHub Actions workflows:
+
+| Workflow | Trigger path | Steps |
+|---|---|---|
+| `backend-ci.yml` | `apps/backend/**` | restore → build → test → coverage threshold |
+| `admin-web-ci.yml` | `apps/admin-web/**, packages/api-contracts/**` | prettier → eslint → stylelint → test → coverage → build |
+| `medico-pwa-ci.yml` | `apps/medico-pwa/**, packages/api-contracts/**` | same as admin-web |
+| `codeql.yml` | `main`/`master` push + weekly | CodeQL static analysis (C# + TypeScript) |
 
 ## Architecture
 
-### Planned Monorepo Layout
+### Monorepo Layout
 
 ```
 honorare/
+├── .editorconfig               # Root — covers all file types (root = true)
+├── .commitlintrc.json          # Conventional commits enforcement
+├── .lintstagedrc.js            # Per-workspace lint-staged rules
+├── .husky/
+│   ├── pre-commit              # → pnpm lint-staged
+│   └── commit-msg              # → pnpm commitlint --edit "$1"
+├── .vscode/
+│   ├── settings.json           # formatOnSave, ESLint flat config, per-lang formatters
+│   └── extensions.json         # Recommended extensions for the team
+├── .github/
+│   ├── dependabot.yml          # Weekly updates: npm (3 scopes), NuGet, Actions
+│   └── workflows/
+│       ├── backend-ci.yml
+│       ├── admin-web-ci.yml
+│       ├── medico-pwa-ci.yml
+│       └── codeql.yml          # Security analysis (C# + TypeScript)
 ├── apps/
-│   ├── backend/            # .NET 10 API solution
-│   ├── admin-web/          # Angular SPA for billing company admins
-│   └── medico-pwa/         # Angular PWA for individual physicians
+│   ├── backend/
+│   │   ├── .editorconfig       # Roslyn analyzer severity rules + C# naming conventions
+│   │   ├── Directory.Build.props  # TreatWarningsAsErrors, EnforceCodeStyleInBuild,
+│   │   │                          # AnalysisLevel=latest-All, NuGetAudit
+│   │   ├── App/                # Main .NET 10 Web API project
+│   │   └── tests/
+│   │       └── Faturamento.Tests/
+│   │           └── Fixtures/
+│   │               └── PostgresContainerFixture.cs  # Testcontainers xUnit fixture
+│   ├── admin-web/              # Angular SPA — billing company admins
+│   │   ├── .editorconfig       # Angular/TS overrides (inherits root, no root=true)
+│   │   ├── eslint.config.js    # Flat config: typescript-eslint strict + angular-eslint
+│   │   ├── .stylelintrc.json   # BEM, no color-named, no !important
+│   │   ├── vitest.config.ts    # Vitest + @angular/build vite plugin + v8 coverage
+│   │   └── src/
+│   │       └── test-setup.ts   # Zone.js + BrowserDynamicTestingModule init
+│   └── medico-pwa/             # Angular PWA — individual physicians (same structure)
 ├── packages/
-│   └── api-contracts/      # TypeScript client auto-generated from OpenAPI
+│   └── api-contracts/          # TypeScript client auto-generated from OpenAPI
 ├── infra/
 │   ├── docker-compose.yml
-│   ├── nginx/              # Reverse proxy: /admin/, /app/, /api/v1/
-│   └── postgres/
+│   ├── nginx/                  # Reverse proxy: /admin/, /app/, /api/v1/
+│   ├── grafana/                # Pre-provisioned datasources (Prometheus, Jaeger, Loki)
+│   ├── otel/                   # OpenTelemetry Collector config
+│   └── prometheus/
 ├── tools/
 │   └── generate-api-client.sh
-└── docs/                   # All domain/architecture documentation
+└── docs/                       # All domain/architecture documentation
 ```
 
 ### Backend Bounded Contexts
@@ -85,6 +132,174 @@ A single domain serves three paths via Nginx:
 - `/app/` → medico-pwa Angular PWA
 
 Angular apps must be built with the correct `--base-href` for their subpath.
+
+## Observability
+
+The backend is instrumented with **OpenTelemetry** (traces, metrics, structured logs) and exports via OTLP to an OpenTelemetry Collector. The collector fans out to:
+
+| Signal | Backend | UI |
+|---|---|---|
+| Traces | Jaeger | `http://localhost:16686` |
+| Metrics | Prometheus | `http://localhost:9090` |
+| Logs | Loki | Grafana → `http://localhost:3000` |
+
+### How it works
+
+- `Otlp:Endpoint` in `appsettings.json` points to the collector (`http://otel-collector:4317` in Docker, `http://localhost:4317` for local dev without Docker).
+- ASP.NET Core requests, outbound HTTP, EF Core queries, and .NET runtime metrics are instrumented automatically.
+- `ILogger` output is bridged to OTEL — no separate logging sink needed. Every log record carries the active `TraceId`, enabling trace ↔ log correlation in Grafana.
+- Grafana datasources (Prometheus, Jaeger, Loki) are pre-provisioned via `infra/grafana/provisioning/`.
+
+### Adding custom traces/metrics
+
+Use the standard .NET `ActivitySource` and `Meter` APIs — do not take a library dependency on the OTel SDK in domain code:
+
+```csharp
+// in a service that needs a custom span
+private static readonly ActivitySource Activity = new("Honorare.Faturamento");
+
+using var span = Activity.StartActivity("ApurarGuia");
+span?.SetTag("guia.id", guiaId);
+```
+
+Register the source name in `Program.cs` inside `.WithTracing(t => t.AddSource("Honorare.Faturamento"))`.
+
+### Rules
+
+- Never disable telemetry in production. The `Otlp:Endpoint` can be set to a no-op address if a collector is unavailable, but instrumentation stays active.
+- Custom span/metric names must follow the `Honorare.<Context>` prefix convention.
+- The `TenantId` must be added as a span attribute on every request that touches tenant data — this is essential for debugging multi-tenant issues without violating data isolation.
+
+## Engineering Harness
+
+The goal is zero tolerance for quality regressions: every linter warning is a build error, and CI enforces the same rules that run locally. "It passes on my machine" is not acceptable.
+
+### Warnings are errors everywhere
+
+| Stack | Mechanism | File |
+|---|---|---|
+| .NET | `TreatWarningsAsErrors`, `EnforceCodeStyleInBuild`, `AnalysisLevel=latest-All` | `apps/backend/Directory.Build.props` |
+| TypeScript | `strict`, `noImplicitOverride`, `noImplicitReturns`, `noFallthroughCasesInSwitch` | `apps/*/tsconfig.json` |
+| Angular templates | `strictTemplates`, `strictInjectionParameters`, `typeCheckHostBindings` | `apps/*/tsconfig.json` |
+| ESLint | `--max-warnings 0` in `lint` script | `apps/*/package.json` |
+| StyleLint | `--max-warnings 0` in `stylelint` script | `apps/*/package.json` |
+
+### `.editorconfig` structure
+
+A single root `.editorconfig` (`root = true`) covers every file type with explicit rules (max_line_length, charset, indent, eol per extension). App-level configs under `apps/admin-web/` and `apps/medico-pwa/` inherit from it — they do **not** set `root = true`. The backend has a dedicated `apps/backend/.editorconfig` with Roslyn analyzer severity rules and C# code-style preferences.
+
+### .NET: `Directory.Build.props`
+
+`apps/backend/Directory.Build.props` applies to every `.csproj` under that directory. Never override these properties in individual project files — use `#pragma warning disable` with an explanatory comment for one-off exceptions.
+
+| Property | Value | Effect |
+|---|---|---|
+| `TreatWarningsAsErrors` | `true` | All compiler + analyzer warnings fail `dotnet build` |
+| `EnforceCodeStyleInBuild` | `true` | IDE code-style rules (IDE0xxx) enforced during `dotnet build` |
+| `AnalysisLevel` | `latest-All` | Every Roslyn analyzer rule shipped with the SDK is active |
+| `Nullable` | `enable` | Null-safety enforced across all projects |
+| `Deterministic` | `true` | Reproducible build artifacts |
+| `NuGetAudit` | `true` | `dotnet restore` fails on packages with CVE ≥ moderate |
+
+### Roslyn naming conventions (enforced as errors)
+
+| Symbol | Convention | Example |
+|---|---|---|
+| Private instance fields | `_camelCase` | `_tenantId` |
+| Async methods | `PascalCaseAsync` | `GetGuiasAsync` |
+| Constants | `PascalCase` | `MaxRetryCount` |
+
+### Key IDE diagnostics
+
+| Rule | Severity | What it catches |
+|---|---|---|
+| `IDE0005` | error | Unnecessary `using` directives |
+| `IDE0051` | error | Unused private members |
+| `IDE0052` | error | Unread private members |
+| `IDE0055` | error | Formatting violations |
+| `IDE0059` | warning | Unnecessary value assignments |
+| `IDE0060` | warning | Unused parameters |
+| `CA2007` | none | `ConfigureAwait` — not required in ASP.NET Core |
+
+### TypeScript / Angular linting
+
+Each Angular app has `apps/*/eslint.config.js` (ESLint v9 flat config) with:
+- `typescript-eslint` `strictTypeChecked` + `stylisticTypeChecked` — type-aware rules
+- `angular-eslint` `tsRecommended` + `templateRecommended` + `templateAccessibility`
+- `eslint-config-prettier` at the end (disables formatting rules that conflict with Prettier)
+- Test files (`*.spec.ts`) have `no-explicit-any` and `explicit-function-return-type` relaxed
+
+SCSS is linted by StyleLint (`apps/*/.stylelintrc.json`) using `stylelint-config-standard-scss` with BEM selector enforcement, `color-named: never`, and no `!important`.
+
+### Pre-commit hooks (Husky + lint-staged)
+
+`pnpm install` activates Husky via the `prepare` script. Two hooks run on every commit:
+
+| Hook | File | What it runs |
+|---|---|---|
+| `pre-commit` | `.husky/pre-commit` | `pnpm lint-staged` — ESLint + StyleLint + Prettier on staged files only |
+| `commit-msg` | `.husky/commit-msg` | `pnpm commitlint` — enforces Conventional Commits format |
+
+Commit format: `type(scope): subject` where type ∈ `feat fix chore docs style refactor perf test ci revert`. Header ≤ 100 chars.
+
+### Security
+
+- **NuGetAudit** — `dotnet restore` fails if any NuGet package (direct or transitive) has a CVE at moderate severity or above. Configured in `Directory.Build.props`.
+- **CodeQL** — `.github/workflows/codeql.yml` runs static security analysis on C# and TypeScript on every PR to main and weekly. Uses the `security-and-quality` query pack.
+- **Dependabot** — `.github/dependabot.yml` opens weekly PRs for npm (root, admin-web, medico-pwa), NuGet, and GitHub Actions. Angular, ESLint, OpenTelemetry, and EF Core packages are grouped to reduce PR noise.
+
+## Testing Philosophy
+
+This project follows **Test-Driven Development (TDD)**. Write the failing test first, then write the minimum production code to make it pass, then refactor.
+
+**The minimum acceptable test coverage is 80% across all projects.** The CI pipeline enforces this threshold — builds fail if coverage drops below it.
+
+### Rules
+
+- **Red → Green → Refactor.** Never write production code without a failing test that demands it.
+- **Test behavior, not implementation.** Tests assert observable outcomes (return values, side effects, exceptions); they do not assert internal method calls unless testing an integration boundary.
+- **One concept per test.** A test name should read as a sentence describing the scenario and expected outcome.
+- **UNIMED calculation tests are ground truth.** The `Faturamento/Tests/` suite targets real paid invoices. Any change to calculation logic requires a new or updated test case from an actual document.
+- **No test should depend on another.** Each test sets up and tears down its own state.
+
+### Coverage Targets by Layer
+
+| Layer | Minimum Coverage |
+|---|---|
+| `Faturamento` (calculation engine) | 90% — financial correctness is non-negotiable |
+| `Identity`, `Catalog` | 80% |
+| `Reporting` | 80% |
+| Angular components | 80% (V8 coverage via Vitest + `@vitest/coverage-v8`) |
+
+### What counts toward coverage
+
+- Unit tests for domain logic (services, calculation engine, validators)
+- Integration tests that hit a real Postgres container via `PostgresContainerFixture` (Testcontainers)
+- Component tests for Angular (not e2e)
+
+Infrastructure glue code (EF migrations, DI wiring, `Program.cs`) is excluded from the coverage threshold.
+
+### Angular testing stack
+
+Tests use **Vitest** (not Karma — deprecated). Each app has `vitest.config.ts` pointing to `src/test-setup.ts` which initialises Zone.js and `BrowserDynamicTestingModule`. Coverage is collected via `@vitest/coverage-v8` and reported in `json-summary` format for CI threshold enforcement. Run with `pnpm -F admin-web test` (watch) or `pnpm -F admin-web test:ci` (CI, single-run).
+
+### Backend integration tests
+
+Use `PostgresContainerFixture` for tests that need a real database. It starts a Postgres container via Testcontainers, so `dotnet test` works locally without Docker Compose:
+
+```csharp
+[Collection(nameof(PostgresCollection))]
+public class MinhaIntegrationTest(PostgresContainerFixture db)
+{
+    [Fact]
+    public async Task Exemplo()
+    {
+        var options = db.BuildOptions<AppDbContext>();
+        await using var ctx = new AppDbContext(options);
+        // …
+    }
+}
+```
 
 ## Key Architectural Constraints
 
