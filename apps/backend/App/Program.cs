@@ -1,5 +1,9 @@
 using App.Data;
 using Microsoft.EntityFrameworkCore;
+using OpenTelemetry.Logs;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +16,32 @@ builder.Services.AddSwaggerGen(options =>
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+
+var otlpEndpoint = new Uri(builder.Configuration["Otlp:Endpoint"] ?? "http://localhost:4317");
+
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(r => r
+        .AddService(
+            serviceName: "honorare-backend",
+            serviceVersion: typeof(Program).Assembly.GetName().Version?.ToString() ?? "dev")
+        .AddEnvironmentVariableDetector())
+    .WithTracing(t => t
+        .AddAspNetCoreInstrumentation(o => o.RecordException = true)
+        .AddHttpClientInstrumentation()
+        .AddEntityFrameworkCoreInstrumentation()
+        .AddOtlpExporter(o => o.Endpoint = otlpEndpoint))
+    .WithMetrics(m => m
+        .AddAspNetCoreInstrumentation()
+        .AddHttpClientInstrumentation()
+        .AddRuntimeInstrumentation()
+        .AddOtlpExporter(o => o.Endpoint = otlpEndpoint));
+
+builder.Logging.AddOpenTelemetry(l =>
+{
+    l.IncludeFormattedMessage = true;
+    l.IncludeScopes = true;
+    l.AddOtlpExporter(o => o.Endpoint = otlpEndpoint);
+});
 
 var app = builder.Build();
 
