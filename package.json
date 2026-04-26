@@ -4,10 +4,17 @@
   "scripts": {
     "dev:up": "docker compose -f infra/docker-compose.yml up --build",
     "dev:down": "docker compose -f infra/docker-compose.yml down",
-    "generate-api-client": "bash tools/generate-api-client.sh"
+    "generate-api-client": "bash tools/generate-api-client.sh",
+    "prepare": "husky"
   },
   "engines": {
     "node": ">=22",
     "pnpm": ">=10"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.0.0",
+    "@commitlint/config-conventional": "^19.0.0",
+    "husky": "^9.1.0",
+    "lint-staged": "^15.3.0"
   }
 }
