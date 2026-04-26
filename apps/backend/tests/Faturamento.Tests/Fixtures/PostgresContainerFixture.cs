@@ -33,4 +33,6 @@ public sealed class PostgresContainerFixture : IAsyncLifetime
 }
 
 [CollectionDefinition(nameof(PostgresCollection))]
+#pragma warning disable CA1711 // xUnit collection marker classes must match the [Collection] attribute name
 public sealed class PostgresCollection : ICollectionFixture<PostgresContainerFixture>;
+#pragma warning restore CA1711
