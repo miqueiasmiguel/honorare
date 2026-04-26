@@ -1,0 +1,6 @@
+# Arquivos de migration são gerados automaticamente pelo EF Core.
+# Suprimir regras de estilo que conflitam com o formato padrão do gerador.
+[*.cs]
+dotnet_diagnostic.IDE0005.severity = none
+dotnet_diagnostic.IDE0161.severity = none
+dotnet_diagnostic.CA1515.severity = none
