@@ -111,7 +111,7 @@ Reporting → Faturamento → Catalog → Identity
 
 | Context | Responsibility |
 |---|---|
-| `Identity` | Auth, tenants, users, invitations |
+| `Identity` | Auth (Google OAuth 2.0), tenants, users, roles, tenant suspension |
 | `Catalog` | Operators, procedures, pricing tables, providers, beneficiaries |
 | `Faturamento` | Invoices (guias), UNIMED calculation engine, statement reconciliation |
 | `Reporting` | Aggregated queries for admin dashboard and doctor portal |
@@ -214,6 +214,7 @@ A single root `.editorconfig` (`root = true`) covers every file type with explic
 | Rule | Severity | What it catches |
 |---|---|---|
 | `IDE0005` | error | Unnecessary `using` directives |
+| `IDE0011` | error | Missing braces on `if`/`else`/`for` etc. — always use `{ }` even for one-liners |
 | `IDE0051` | error | Unused private members |
 | `IDE0052` | error | Unread private members |
 | `IDE0055` | error | Formatting violations |
