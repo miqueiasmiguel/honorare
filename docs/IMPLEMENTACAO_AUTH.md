@@ -8,17 +8,18 @@
 
 ### Personas e isolamento
 
-| Persona | Role (claim) | Isolamento de dados |
-|---|---|---|
-| Admin geral do SaaS (dono do produto) | `SaasAdmin` | Nenhum — acessa qualquer tenant |
-| Admin da empresa de faturamento | `TenantAdmin` | `TenantId` via global query filter |
-| Médico (usuário do PWA) | `Medico` | `TenantId` + `MedicoId` explícito nas queries |
+| Persona                               | Role (claim)  | Isolamento de dados                           |
+| ------------------------------------- | ------------- | --------------------------------------------- |
+| Admin geral do SaaS (dono do produto) | `SaasAdmin`   | Nenhum — acessa qualquer tenant               |
+| Admin da empresa de faturamento       | `TenantAdmin` | `TenantId` via global query filter            |
+| Médico (usuário do PWA)               | `Medico`      | `TenantId` + `MedicoId` explícito nas queries |
 
 ### Método de autenticação
 
 **Google OAuth 2.0 como único método no MVP.** Não há senha. Não há magic link. Não há MFA. Não há convite por email.
 
 Racional:
+
 - Público B2B brasileiro tem altíssima penetração de Gmail/Google Workspace
 - Elimina toda superfície de ataque de senha
 - ASP.NET Core Identity tem provider Google built-in
@@ -26,6 +27,7 @@ Racional:
 - O `PasswordHash` do `IdentityUser` fica nulo — nenhuma senha é persistida
 
 Diferimentos conscientes (não implementar no MVP):
+
 - Magic link → fase 2, se aparecer usuário sem Google
 - Passkeys (WebAuthn) → fase 3, quando PWA tiver adoção real
 - MFA → pós-MVP
@@ -38,8 +40,8 @@ Diferimentos conscientes (não implementar no MVP):
 {
   "sub": "user-guid",
   "role": "SaasAdmin | TenantAdmin | Medico",
-  "tenant_id": "guid",    // AUSENTE para SaasAdmin
-  "medico_id": "guid",    // PRESENTE apenas para Medico
+  "tenant_id": "guid", // AUSENTE para SaasAdmin
+  "medico_id": "guid", // PRESENTE apenas para Medico
   "email": "...",
   "jti": "token-guid",
   "exp": 0
@@ -151,6 +153,7 @@ As tasks estão ordenadas por dependência. Nunca pular uma task antes de conclu
 **Escopo:** `apps/backend/App/App.csproj` e projetos relevantes.
 
 Pacotes a adicionar:
+
 ```
 Microsoft.AspNetCore.Authentication.Google
 Microsoft.AspNetCore.Authentication.JwtBearer
@@ -177,6 +180,7 @@ Verificar se já existem antes de adicionar. Usar NuGet Central Package Manageme
 - Registrar as configurações no `AppDbContext` via `modelBuilder.ApplyConfigurationsFromAssembly`
 
 **Restrições:**
+
 - `ApplicationUser.PasswordHash` deve ser ignorado no modelo ou sempre nulo — incluir comentário explicando o motivo
 - Índice único em `ApplicationUser.GoogleId`
 - Índice único em `RefreshToken.TokenHash`
@@ -225,11 +229,12 @@ Este serviço é o único mecanismo pelo qual o global query filter do `AppDbCon
 
 ---
 
-### TASK-AUTH-05 — Google OAuth callback e emissão de JWT
+### TASK-AUTH-05 — Google OAuth callback e emissão de JWT (Implementado ✅)
 
 **Escopo:** `apps/backend/Identity/` + `apps/backend/App/Program.cs`
 
 Fluxo:
+
 1. Frontend redireciona para `/api/v1/auth/google` (backend inicia OAuth)
 2. Google redireciona para `/api/v1/auth/google/callback`
 3. Backend recebe `GoogleId` + `email` do Google
@@ -240,6 +245,7 @@ Fluxo:
 8. Retorna `{ accessToken, refreshToken, expiresIn }` como JSON
 
 Configuração em `Program.cs`:
+
 ```csharp
 builder.Services
     .AddAuthentication()
@@ -251,6 +257,7 @@ builder.Services
 ```
 
 Variáveis de ambiente necessárias (adicionar ao `.env` e ao `appsettings.json`):
+
 ```
 Google__ClientId
 Google__ClientSecret
@@ -260,11 +267,22 @@ Jwt__Audience
 ```
 
 **Restrições:**
+
 - Nunca logar o refresh token raw
 - O `jti` do JWT deve ser um `Guid.NewGuid()` para permitir revogação futura
 - `TenantId` e `MedicoId` só entram no JWT se não forem nulos
 
 **Critério de pronto:** fluxo completo testável via Swagger/httpie. JWT decodificável com claims corretos para cada role.
+
+**Notas de implementação:**
+
+- `AuthService.ProcessGoogleCallbackAsync` encapsula toda a lógica de negócio (lookup, validações, emissão de tokens)
+- `GET /api/v1/auth/google` inicia o challenge; `GET /api/v1/auth/google/finalize` processa o callback e retorna JSON ou redireciona via `?returnUrl=`
+- `returnUrl` suporta `/admin/…` (admin-web) e `/app/…` (medico-pwa), habilitando os dois apps Angular
+- TASK-AUTH-10 incluída: GoogleId associado automaticamente no primeiro login por email
+- Políticas `SaasOnly`, `TenantAccess`, `MedicoAccess` registradas no mesmo PR (antecipa TASK-AUTH-08)
+- Segredo JWT mínimo de 32 chars; `jti` é `Guid.NewGuid()` em cada token
+- 13 testes de integração cobrindo todos os cenários de erro e claims por role
 
 ---
 
@@ -273,11 +291,13 @@ Jwt__Audience
 **Escopo:** `apps/backend/Identity/`
 
 `POST /api/v1/auth/refresh`
+
 ```json
 { "refreshToken": "..." }
 ```
 
 Fluxo:
+
 1. Hashear o token recebido (SHA-256)
 2. Buscar `RefreshToken` pelo hash
 3. Validar: não revogado, não expirado, usuário ativo, tenant ativo
@@ -308,6 +328,7 @@ O access token não pode ser revogado (stateless) — o frontend deve descartar 
 **Escopo:** `apps/backend/App/Program.cs`
 
 Registrar políticas:
+
 ```csharp
 builder.Services.AddAuthorization(o => {
     o.AddPolicy("SaasOnly",     p => p.RequireRole("SaasAdmin"));
@@ -317,6 +338,7 @@ builder.Services.AddAuthorization(o => {
 ```
 
 Middleware de tenant suspenso:
+
 - Após autenticação JWT, verificar `Tenant.Status` do `TenantId` do usuário
 - Se `Suspenso` ou `Cancelado`, retornar 403 com body `{ "error": "tenant_suspended" }`
 - SaasAdmin não passa por este middleware
@@ -331,14 +353,14 @@ Middleware de tenant suspenso:
 
 Endpoints mínimos do painel SaaS:
 
-| Método | Rota | Descrição |
-|---|---|---|
-| `GET` | `/api/v1/saas/tenants` | Listar todos os tenants com status |
-| `POST` | `/api/v1/saas/tenants` | Criar novo tenant |
-| `PATCH` | `/api/v1/saas/tenants/{tenantId}/status` | Ativar / suspender / cancelar |
-| `GET` | `/api/v1/saas/tenants/{tenantId}/users` | Listar usuários do tenant |
-| `POST` | `/api/v1/saas/tenants/{tenantId}/users` | Criar usuário (TenantAdmin ou Medico) |
-| `PATCH` | `/api/v1/saas/tenants/{tenantId}/users/{userId}/status` | Ativar / desativar usuário |
+| Método  | Rota                                                    | Descrição                             |
+| ------- | ------------------------------------------------------- | ------------------------------------- |
+| `GET`   | `/api/v1/saas/tenants`                                  | Listar todos os tenants com status    |
+| `POST`  | `/api/v1/saas/tenants`                                  | Criar novo tenant                     |
+| `PATCH` | `/api/v1/saas/tenants/{tenantId}/status`                | Ativar / suspender / cancelar         |
+| `GET`   | `/api/v1/saas/tenants/{tenantId}/users`                 | Listar usuários do tenant             |
+| `POST`  | `/api/v1/saas/tenants/{tenantId}/users`                 | Criar usuário (TenantAdmin ou Medico) |
+| `PATCH` | `/api/v1/saas/tenants/{tenantId}/users/{userId}/status` | Ativar / desativar usuário            |
 
 Criação de usuário recebe: `{ email, role, medicoId? }`. O `GoogleId` é preenchido no primeiro login do usuário (associado por email).
 
