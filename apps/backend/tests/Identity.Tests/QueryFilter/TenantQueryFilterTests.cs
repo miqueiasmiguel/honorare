@@ -67,6 +67,16 @@ public sealed class TenantQueryFilterTests(PostgresContainerFixture db)
             .Options;
         var ctx = new TestableDbContext(options, currentUser);
         await ctx.Database.EnsureCreatedAsync();
+        // EnsureCreatedAsync is a no-op when the DB already exists (e.g., created by another test
+        // in this collection using the base AppDbContext). Create TenantItems explicitly so the
+        // filter tests are order-independent.
+        await ctx.Database.ExecuteSqlRawAsync("""
+            CREATE TABLE IF NOT EXISTS "TenantItems" (
+                "Id"       uuid NOT NULL PRIMARY KEY,
+                "TenantId" uuid NOT NULL,
+                "Name"     text NOT NULL DEFAULT ''
+            )
+            """);
         return ctx;
     }
 
