@@ -372,7 +372,7 @@ Middleware de tenant suspenso:
 
 ---
 
-### TASK-AUTH-09 — Painel SaaS: CRUD de Tenants e usuários
+### TASK-AUTH-09 — Painel SaaS: CRUD de Tenants e usuários (Implementado ✅)
 
 **Escopo:** `apps/backend/Identity/` (endpoints sob `/api/v1/saas/`)
 
@@ -392,6 +392,18 @@ Criação de usuário recebe: `{ email, role, medicoId? }`. O `GoogleId` é pree
 **Restrição LGPD:** toda rota com `{tenantId}` deve validar que o tenant existe, mesmo para SaasAdmin. Isso garante auditabilidade.
 
 **Critério de pronto:** SaaS admin consegue criar tenant, criar usuário TenantAdmin neste tenant, e o usuário consegue autenticar via Google e receber JWT com o `TenantId` correto.
+
+**Notas de implementação:**
+
+- `SaasService` em `App/Identity/SaasService.cs` — acesso direto ao `AppDbContext`, sem `UserManager`
+- `SaasEndpoints` em `App/Identity/Endpoints/SaasEndpoints.cs` — `MapGroup("/api/v1/saas").RequireAuthorization("SaasOnly")`
+- `Tenant.Activate()` adicionado à entidade (necessário para PATCH de status → Ativo)
+- Records de retorno: `TenantSummary` e `UserSummary` declarados em `SaasService.cs`
+- `DeriveRole` reutilizado de `AuthService` (mesmo assembly, `internal static`)
+- `ListTenantUsers` materializa antes de projetar role (EF Core não traduz `DeriveRole` para SQL)
+- Roles válidos para criação de usuário: `TenantAdmin`, `Medico` — `SaasAdmin` rejeitado com `ValidationError`
+- Erro de container compartilhado no teste: `Assert.Empty` em `ListTenantsAsync` falha pois o banco não está vazio; testes de lista verificam subconjunto por ID
+- 25 testes de integração em `Identity.Tests/Saas/SaasServiceTests.cs`; 1 teste de critério de pronto (`CreateUser_ThenAuthenticateViaGoogle_JwtContainsCorrectTenantId`)
 
 ---
 
