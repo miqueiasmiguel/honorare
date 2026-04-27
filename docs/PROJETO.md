@@ -21,7 +21,7 @@ A billing company hoje faz esse controle manual em planilhas. Honorare automatiz
 
 ## Escopo do MVP
 
-1. **Autenticação multi-nível** (Admin + Médico, multi-tenant)
+1. **Autenticação multi-nível** (Google OAuth 2.0 sem senha — SaaS admin, TenantAdmin e Médico, multi-tenant com isolamento por `TenantId` e `MedicoId`)
 2. **Cadastro manual de dados** (sem OCR no MVP — entrada manual igual à planilha atual)
 3. **Cálculo de pagamentos** (motor com regras UNIMED — indispensável; é o que determina o VL CORRETO de cada procedimento)
 4. **Conciliação** com demonstrativos da operadora (registra o PG UNIMED por item)

@@ -29,7 +29,7 @@ honorare/
 
 ```
 App           # composition root, endpoints HTTP
-Identity      # tenants, usuários, convites, autenticação, suspensão
+Identity      # tenants, usuários, autenticação Google OAuth, suspensão
 Catalog       # operadoras, procedimentos, tabelas, prestadores, beneficiários
 Faturamento   # guias, demonstrativos, cálculo, conciliação, divergências
 Reporting     # queries agregadas para portal do médico e admin
@@ -64,6 +64,59 @@ Uma classe = uma implementação. Interface só quando há múltiplas implementa
 ### Estrutura flat dentro de cada context
 
 Dentro de cada bounded context, evitar subpastas `Domain/`, `Application/`, `Infrastructure/`. Subpastas só quando o número de arquivos justificar (geralmente >10).
+
+## Autenticação e autorização
+
+### Método de autenticação
+
+**Google OAuth 2.0** é o único método de autenticação no MVP. Não há senha, magic link, MFA ou convite por email.
+
+- Usuários são pré-cadastrados pelo SaaS admin (email + role). O `GoogleId` é associado automaticamente no primeiro login.
+- `PasswordHash` do `IdentityUser` é sempre nulo — nenhuma senha é armazenada.
+- O JWT emitido após o OAuth tem TTL de 15 minutos; refresh token de 7 dias persistido como hash SHA-256.
+
+### Três roles, três isolamentos
+
+| Role | Acessa | Isolamento |
+|---|---|---|
+| `SaasAdmin` | Painel SaaS global (`/api/v1/saas/**`) | Nenhum — acessa qualquer tenant |
+| `TenantAdmin` | Painel do tenant (`/api/v1/admin/**`) | `TenantId` via global query filter |
+| `Medico` | PWA do médico (`/api/v1/medico/**`) | `TenantId` + `MedicoId` explícito nas queries |
+
+### Políticas de autorização
+
+```csharp
+"SaasOnly"     → RequireRole("SaasAdmin")
+"TenantAccess" → RequireRole("TenantAdmin", "SaasAdmin")
+"MedicoAccess" → RequireRole("Medico")
+```
+
+### `ICurrentUser` — abstração do contexto de autenticação
+
+Serviço scoped (por request) que lê claims do `IHttpContextAccessor`. É injetado no `AppDbContext` e é o único mecanismo pelo qual o global query filter decide ignorar o `TenantId`.
+
+```csharp
+public interface ICurrentUser
+{
+    Guid UserId { get; }
+    Guid? TenantId { get; }   // null = SaasAdmin
+    Guid? MedicoId { get; }   // null = não é Medico
+    bool IsSaasAdmin { get; }
+}
+```
+
+O global query filter em toda entidade com `TenantId`:
+
+```csharp
+builder.HasQueryFilter(e =>
+    _currentUser.IsSaasAdmin || e.TenantId == _currentUser.TenantId);
+```
+
+Isolamento por `MedicoId` **não usa global filter** — é `Where(e => e.MedicoId == _currentUser.MedicoId)` explícito nos endpoints `/api/v1/medico/**`.
+
+### Regra LGPD para SaasAdmin
+
+Toda rota `/api/v1/saas/**` que acessa dados de um tenant específico deve receber `tenantId` como parâmetro de rota e validar que o tenant existe. Isso garante auditabilidade ("o admin acessou dados do tenant X") sem violar o isolamento multi-tenant.
 
 ### Multi-tenant é não-negociável
 
@@ -133,8 +186,8 @@ O template do recurso inclui o logo da billing company — cada `Tenant` armazen
 
 ## Testes
 
-- **Backend:** xUnit, testes por bounded context. Os 15-20 casos reais UNIMED são o **padrão-ouro do motor de cálculo** — vivem em `Faturamento.Tests/Calculo/`.
-- **Frontend:** Jest/Karma (padrão Angular), testes de componentes críticos.
+- **Backend:** xUnit, testes por bounded context. Os 15-20 casos reais UNIMED são o **padrão-ouro do motor de cálculo** — vivem em `Faturamento.Tests/Calculo/`. Testes de integração usam `PostgresContainerFixture` (Testcontainers) para bater em Postgres real.
+- **Frontend:** Vitest (não Karma — depreciado), com `@vitest/coverage-v8`. Cada app tem `vitest.config.ts` apontando para `src/test-setup.ts`.
 - Testes testam **comportamento, não implementação**. Não mockar o que pertence ao teste.
 
 ## CI/CD

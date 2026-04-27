@@ -1,4 +1,5 @@
 using App.Data;
+using App.Identity;
 using Microsoft.EntityFrameworkCore;
 using Testcontainers.PostgreSql;
 
@@ -14,12 +15,13 @@ public sealed class PostgresContainerFixture : IAsyncLifetime
 
     public string ConnectionString => _container.GetConnectionString();
 
-    internal async Task<AppDbContext> CreateContextAsync()
+    internal async Task<AppDbContext> CreateContextAsync(ICurrentUser? currentUser = null)
     {
+        currentUser ??= new SaasAdminCurrentUser();
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseNpgsql(ConnectionString)
             .Options;
-        var ctx = new AppDbContext(options);
+        var ctx = new AppDbContext(options, currentUser);
         await ctx.Database.EnsureCreatedAsync();
         return ctx;
     }
@@ -27,6 +29,16 @@ public sealed class PostgresContainerFixture : IAsyncLifetime
     public Task InitializeAsync() => _container.StartAsync();
 
     public Task DisposeAsync() => _container.DisposeAsync().AsTask();
+
+    // Bypass total do filtro — usado como default em testes de schema.
+    private sealed class SaasAdminCurrentUser : ICurrentUser
+    {
+        public Guid UserId => Guid.Empty;
+        public Guid? TenantId => null;
+        public Guid? MedicoId => null;
+        public bool IsSaasAdmin => true;
+        public bool IsAuthenticated => true;
+    }
 }
 
 [CollectionDefinition(nameof(IdentityPostgresCollection))]

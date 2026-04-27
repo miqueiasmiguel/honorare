@@ -150,6 +150,40 @@ Motor de cálculo é validado contra guias reais já pagas do cliente. Esses cas
 
 Cada prompt: escopo limitado, critério de pronto explícito, "não melhore de passagem". Investigação antes de ação. Migrations sempre revisadas, nunca aplicadas automaticamente.
 
+### D-024: Google OAuth 2.0 como único método de autenticação no MVP
+
+Sem senha, sem magic link, sem MFA, sem convite por email. Usuários são pré-cadastrados pelo SaaS admin (email + role); o `GoogleId` é associado no primeiro login. `PasswordHash` é sempre nulo.
+
+**Justificativa:** elimina toda a superfície de ataque de senha; público B2B brasileiro tem alta penetração de Google Workspace/Gmail; provider Google é built-in no ASP.NET Core Identity sem infraestrutura adicional.
+
+**Revisitar:** quando aparecer usuário sem conta Google (adicionar magic link como fallback) ou quando volume justificar MFA.
+
+**Não implementar no MVP:** magic link, passkeys (WebAuthn), social login adicional (Apple/Microsoft), recuperação de conta self-service, convite por email.
+
+### D-025: Três roles fixas — SaasAdmin, TenantAdmin, Medico
+
+Sem RBAC granular por recurso. Roles são suficientes para o MVP com cliente único.
+
+| Role | Acessa | Isolamento |
+|---|---|---|
+| `SaasAdmin` | Painel SaaS global | Nenhum |
+| `TenantAdmin` | Painel do tenant | `TenantId` via global query filter |
+| `Medico` | PWA do médico | `TenantId` + `MedicoId` explícito |
+
+Claims do JWT: `sub`, `role`, `tenant_id` (ausente para SaasAdmin), `medico_id` (presente só para Medico).
+
+**Revisitar:** quando houver múltiplos perfis dentro de um tenant (ex: admin só de leitura, admin de escrita).
+
+### D-026: `ICurrentUser` como único ponto de bypass do global query filter
+
+O `AppDbContext` injeta `ICurrentUser` (serviço scoped). O global query filter por `TenantId` verifica `ICurrentUser.IsSaasAdmin` antes de filtrar. Nenhum outro mecanismo pode bypassar o filtro.
+
+Isolamento por `MedicoId` não usa global filter — é `Where` explícito nos endpoints do médico para evitar interferência com queries administrativas.
+
+**Regra LGPD:** toda rota do SaaS admin que acessa dados de tenant específico recebe `tenantId` como parâmetro de rota e valida sua existência — garante auditabilidade sem violar o isolamento.
+
+**Revisitar:** nunca — essa abstração é simples e funciona para qualquer expansão futura de roles.
+
 ### D-023: CLAUDE.md em três níveis
 
 - Raiz: regras gerais do monorepo

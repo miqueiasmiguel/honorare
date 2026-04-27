@@ -76,17 +76,23 @@ Manifest, ícones, service worker do `medico-pwa` configurados corretamente para
 
 ### F1.7 — Autenticação ponta-a-ponta
 
-ASP.NET Core Identity configurado. JWT com refresh token. Login, logout, refresh funcionando nos dois Angular. Multi-tenant via `TenantId` em todas as queries (global query filter).
+> **Detalhamento completo em `docs/IMPLEMENTACAO_AUTH.md`** — ler antes de implementar.
 
-**Critério de pronto:** admin loga em `/admin/`, médico loga em `/app/`, ambos veem telas distintas. Token refresha sem deslogar.
+ASP.NET Core Identity com **Google OAuth 2.0** como único método. Sem senha. JWT (15 min) + refresh token (7 dias, persistido como hash SHA-256). Três roles: `SaasAdmin`, `TenantAdmin`, `Medico`. Serviço `ICurrentUser` injetado no `AppDbContext` para controle do global query filter por `TenantId`. Middleware bloqueia tenants suspensos.
+
+Inclui painel SaaS mínimo: listar tenants, criar tenant, criar usuário (TenantAdmin ou Medico), ativar/suspender tenant. SaaS admin cadastra usuários por email — `GoogleId` é associado automaticamente no primeiro login do usuário.
+
+**Critério de pronto:** SaaS admin cria tenant e usuário; usuário loga via Google em `/admin/` ou `/app/` conforme seu role; ambos veem telas distintas; token refresha sem deslogar; tenant suspenso recebe 403.
 
 ## Fase 2 — Cadastros (2-3 semanas)
 
 Domínio começa aqui. Multi-tenant desde já.
 
-### F2.1 — Tenants e usuários
+### F2.1 — Gerenciamento de usuários (TenantAdmin)
 
-CRUD de Tenant. Convite de usuário por email (admin → usuário). Aceitação de convite com definição de senha. Tela de "Meu perfil".
+Telas do admin-web para o `TenantAdmin` gerenciar usuários dentro do seu tenant: listar usuários, ativar/desativar médico, editar perfil. Tela "Meu perfil" para o próprio admin.
+
+**Não inclui:** convite por email (cortado do MVP — SaaS admin cadastra usuários diretamente via painel SaaS implementado em F1.7). Convite por email entra como fase 2 quando houver múltiplos clientes e o fluxo de onboarding virar gargalo.
 
 ### F2.2 — Operadoras e procedimentos
 

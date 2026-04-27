@@ -146,7 +146,7 @@ As tasks estão ordenadas por dependência. Nunca pular uma task antes de conclu
 
 ---
 
-### TASK-AUTH-01 — Instalar pacotes NuGet
+### TASK-AUTH-01 — Instalar pacotes NuGet (Implementado ✅)
 
 **Escopo:** `apps/backend/App/App.csproj` e projetos relevantes.
 
@@ -164,7 +164,7 @@ Verificar se já existem antes de adicionar. Usar NuGet Central Package Manageme
 
 ---
 
-### TASK-AUTH-02 — Entidade `ApplicationUser`, `Tenant`, `RefreshToken`
+### TASK-AUTH-02 — Entidade `ApplicationUser`, `Tenant`, `RefreshToken` (Implementado ✅)
 
 **Escopo:** `apps/backend/Identity/`
 
@@ -186,7 +186,7 @@ Verificar se já existem antes de adicionar. Usar NuGet Central Package Manageme
 
 ---
 
-### TASK-AUTH-03 — Serviço `ICurrentUser`
+### TASK-AUTH-03 — Serviço `ICurrentUser` (Implementado ✅)
 
 **Escopo:** `apps/backend/Identity/`
 
@@ -209,7 +209,7 @@ Este serviço é o único mecanismo pelo qual o global query filter do `AppDbCon
 
 ---
 
-### TASK-AUTH-04 — Global query filter no `AppDbContext`
+### TASK-AUTH-04 — Global query filter no `AppDbContext` (Implementado ✅)
 
 **Escopo:** `apps/backend/App/AppDbContext.cs`
 
