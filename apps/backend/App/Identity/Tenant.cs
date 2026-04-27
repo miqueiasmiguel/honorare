@@ -17,6 +17,8 @@ internal sealed class Tenant
         CreatedAt = DateTimeOffset.UtcNow
     };
 
+    public void Activate() => Status = TenantStatus.Ativo;
+
     public void Suspend() => Status = TenantStatus.Suspenso;
 
     public void Cancel() => Status = TenantStatus.Cancelado;

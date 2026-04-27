@@ -69,4 +69,22 @@ public sealed class TenantTests
         tenant.Suspend();
         Assert.Equal(TenantStatus.Suspenso, tenant.Status);
     }
+
+    [Fact]
+    public void Activate_SuspendedTenant_SetsStatusToAtivo()
+    {
+        var tenant = Tenant.Create("Clínica ABC");
+        tenant.Suspend();
+        tenant.Activate();
+        Assert.Equal(TenantStatus.Ativo, tenant.Status);
+    }
+
+    [Fact]
+    public void Activate_CancelledTenant_SetsStatusToAtivo()
+    {
+        var tenant = Tenant.Create("Clínica ABC");
+        tenant.Cancel();
+        tenant.Activate();
+        Assert.Equal(TenantStatus.Ativo, tenant.Status);
+    }
 }
