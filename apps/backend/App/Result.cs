@@ -17,3 +17,23 @@ internal readonly record struct Result
 
     public bool IsFailure => !IsSuccess;
 }
+
+internal readonly record struct Result<T>
+{
+    public T? Value { get; }
+    public DomainError? Error { get; }
+
+    private Result(T? value, DomainError? error)
+    {
+        Value = value;
+        Error = error;
+    }
+
+    public bool IsSuccess => Error is null;
+
+    public bool IsFailure => Error is not null;
+
+    public static Result<T> Ok(T value) => new(value, null);
+
+    public static Result<T> Fail(DomainError error) => new(default, error);
+}
