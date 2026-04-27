@@ -52,6 +52,64 @@ internal sealed class AuthService(AppDbContext db, IConfiguration config)
         return Result<AuthTokens>.Ok(new AuthTokens(accessToken, rawRefreshToken, expiresIn));
     }
 
+    internal async Task<Result<AuthTokens>> RefreshTokenAsync(
+        string rawRefreshToken, CancellationToken ct = default)
+    {
+        var hash = HashToken(rawRefreshToken);
+        var token = await _db.RefreshTokens
+            .FirstOrDefaultAsync(t => t.TokenHash == hash, ct);
+
+        if (token is null || token.IsRevoked || token.ExpiresAt <= DateTimeOffset.UtcNow)
+        {
+            return Result<AuthTokens>.Fail(new UnauthorizedError("Token inválido."));
+        }
+
+        var user = await _db.Users.FindAsync([token.UserId], ct);
+        if (user is null || !user.IsActive)
+        {
+            return Result<AuthTokens>.Fail(new UnauthorizedError("Token inválido."));
+        }
+
+        if (user.TenantId is not null)
+        {
+            var tenant = await _db.Tenants
+                .FirstOrDefaultAsync(t => t.Id == user.TenantId.Value, ct);
+            if (tenant is null || tenant.Status != TenantStatus.Ativo)
+            {
+                return Result<AuthTokens>.Fail(new UnauthorizedError("Token inválido."));
+            }
+        }
+
+        var (rawNew, newHash) = GenerateRefreshTokenPair();
+        var refreshTokenDays = _config.GetValue<int>("Jwt:RefreshTokenDays", 7);
+        var newToken = RefreshToken.Create(
+            user.Id, newHash, DateTimeOffset.UtcNow.AddDays(refreshTokenDays));
+
+        token.Revoke(newToken.Id.ToString());
+        _db.RefreshTokens.Add(newToken);
+
+        var role = DeriveRole(user);
+        var accessToken = CreateAccessToken(user, role);
+        await _db.SaveChangesAsync(ct);
+
+        var expiresIn = _config.GetValue<int>("Jwt:AccessTokenMinutes", 15) * 60;
+        return Result<AuthTokens>.Ok(new AuthTokens(accessToken, rawNew, expiresIn));
+    }
+
+    internal async Task LogoutAsync(Guid userId, CancellationToken ct = default)
+    {
+        var tokens = await _db.RefreshTokens
+            .Where(t => t.UserId == userId && !t.IsRevoked)
+            .ToListAsync(ct);
+
+        foreach (var token in tokens)
+        {
+            token.Revoke();
+        }
+
+        await _db.SaveChangesAsync(ct);
+    }
+
     // Looks up the user by GoogleId; if not found, tries by email and associates the GoogleId
     // on first login (TASK-AUTH-10). Returns null when the user does not exist at all.
     private async Task<ApplicationUser?> ResolveUserAsync(
@@ -124,9 +182,11 @@ internal sealed class AuthService(AppDbContext db, IConfiguration config)
     private static (string raw, string hash) GenerateRefreshTokenPair()
     {
         var raw = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
-        var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(raw)));
-        return (raw, hash);
+        return (raw, HashToken(raw));
     }
+
+    private static string HashToken(string raw) =>
+        Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(raw)));
 }
 
 internal sealed record AuthTokens(string AccessToken, string RefreshToken, int ExpiresIn);

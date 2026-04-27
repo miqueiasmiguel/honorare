@@ -25,6 +25,12 @@ internal static class AuthEndpoints
         // Reads the external cookie, calls AuthService, and either redirects or returns JSON.
         app.MapGet("/api/v1/auth/google/finalize", FinalizeGoogleLoginAsync)
             .AllowAnonymous();
+
+        app.MapPost("/api/v1/auth/refresh", RefreshAsync)
+            .AllowAnonymous();
+
+        app.MapPost("/api/v1/auth/logout", LogoutAsync)
+            .RequireAuthorization();
     }
 
     private static ChallengeHttpResult InitiateGoogleLogin(
@@ -89,6 +95,30 @@ internal static class AuthEndpoints
         });
     }
 
+    private static async Task<IResult> RefreshAsync(
+        RefreshRequest body, AuthService authService, CancellationToken ct)
+    {
+        var result = await authService.RefreshTokenAsync(body.RefreshToken, ct);
+        if (result.IsFailure)
+        {
+            return Results.Problem(
+                statusCode: StatusCodes.Status401Unauthorized,
+                detail: "Token inválido.");
+        }
+
+        var t = result.Value!;
+        return Results.Ok(new { t.AccessToken, t.RefreshToken, t.ExpiresIn });
+    }
+
+    private static async Task<IResult> LogoutAsync(
+        ICurrentUser currentUser, AuthService authService, CancellationToken ct)
+    {
+        await authService.LogoutAsync(currentUser.UserId, ct);
+        return Results.NoContent();
+    }
+
     private static bool IsAllowedReturnUrl(string url) =>
         _allowedReturnUrlPrefixes.Any(p => url.StartsWith(p, StringComparison.OrdinalIgnoreCase));
 }
+
+internal sealed record RefreshRequest(string RefreshToken);
