@@ -12,5 +12,5 @@ export default {
     'pnpm -F medico-pwa prettier:fix',
 
   // Root-level files (CI, infra, docs)
-  '*.{json,yml,yaml,md}': 'prettier --ignore-unknown --write',
+  '*.{json,yml,yaml,md}': 'pnpm exec prettier --ignore-unknown --write',
 };
