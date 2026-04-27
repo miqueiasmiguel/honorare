@@ -116,6 +116,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseAuthentication();
+app.UseMiddleware<TenantStatusMiddleware>();
 app.UseAuthorization();
 
 app.MapAuthEndpoints();
