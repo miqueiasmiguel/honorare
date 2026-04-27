@@ -286,7 +286,7 @@ Jwt__Audience
 
 ---
 
-### TASK-AUTH-06 — Endpoint de refresh token
+### TASK-AUTH-06 — Endpoint de refresh token (Implementado ✅)
 
 **Escopo:** `apps/backend/Identity/`
 
@@ -309,9 +309,18 @@ Retornar 401 para qualquer falha de validação (não detalhar o motivo — evit
 
 **Critério de pronto:** teste unitário cobrindo token válido, token revogado, token expirado, usuário inativo.
 
+**Notas de implementação:**
+
+- `AuthService.RefreshTokenAsync` encapsula toda a lógica; extração de `HashToken(string raw)` como helper privado estático elimina duplicação com `GenerateRefreshTokenPair`
+- `RefreshToken.Revoke(newToken.Id.ToString())` rastreia a cadeia de rotação via `ReplacedByTokenId`
+- Todos os cenários de falha retornam `UnauthorizedError` (sem discriminar o motivo — evita oracle)
+- `POST /api/v1/auth/refresh` mapeado como `.AllowAnonymous()` — não exige JWT
+- `RefreshRequest` é um `internal sealed record` declarado no nível do namespace em `AuthEndpoints.cs`
+- 8 testes de integração em `Identity.Tests/Auth/RefreshTokenTests.cs` cobrindo: token válido, rotação, claims corretos, token revogado, token expirado, usuário inativo, token desconhecido, e `ExpiresIn` = 900
+
 ---
 
-### TASK-AUTH-07 — Endpoint de logout
+### TASK-AUTH-07 — Endpoint de logout (Implementado ✅)
 
 **Escopo:** `apps/backend/Identity/`
 
@@ -321,9 +330,16 @@ Revogar todos os `RefreshToken` ativos do usuário. Retornar 204.
 
 O access token não pode ser revogado (stateless) — o frontend deve descartar o token localmente. TTL curto de 15 min já limita a janela de exposição.
 
+**Notas de implementação:**
+
+- `AuthService.LogoutAsync(Guid userId)` consulta somente tokens não revogados (`Where(!t.IsRevoked)`) — tokens já revogados são ignorados sem erro
+- `POST /api/v1/auth/logout` mapeado com `.RequireAuthorization()` — lê `userId` via `ICurrentUser` injetado no handler
+- Após logout, `RefreshTokenAsync` com o token antigo retorna `UnauthorizedError` (token revogado)
+- 4 testes de integração em `Identity.Tests/Auth/LogoutTests.cs` cobrindo: revogação de todos os tokens, sem tokens (nenhum erro), refresh após logout retorna 401, e mix de tokens já revogados + ativos
+
 ---
 
-### TASK-AUTH-08 — Políticas de autorização e middleware de tenant suspenso
+### TASK-AUTH-08 — Políticas de autorização e middleware de tenant suspenso (Implementado ✅)
 
 **Escopo:** `apps/backend/App/Program.cs`
 
@@ -344,6 +360,15 @@ Middleware de tenant suspenso:
 - SaasAdmin não passa por este middleware
 
 **Critério de pronto:** request de usuário com tenant suspenso retorna 403 antes de chegar ao controller.
+
+**Notas de implementação:**
+
+- Políticas já estavam implementadas desde TASK-AUTH-05; esta task adicionou apenas o middleware
+- `TenantStatusMiddleware` em `App/Identity/TenantStatusMiddleware.cs` — lê `ctx.User` diretamente (não via `ICurrentUser`) para ser testável sem o pipeline HTTP completo
+- Middleware registrado com `app.UseMiddleware<TenantStatusMiddleware>()` entre `UseAuthentication()` e `UseAuthorization()` — SaasAdmin e anônimos passam sem consulta ao DB
+- `AppDbContext` é injetado via parâmetro do `InvokeAsync` (padrão ASP.NET Core para serviços scoped em middleware singleton)
+- Testado diretamente instanciando `TenantStatusMiddleware` e passando `DefaultHttpContext` + `AppDbContext` real — sem necessidade de `WebApplicationFactory`
+- 6 testes em `Identity.Tests/Middleware/TenantStatusMiddlewareTests.cs`: tenant ativo, suspenso, cancelado, SaasAdmin, anônimo, e verificação do corpo da resposta JSON
 
 ---
 
