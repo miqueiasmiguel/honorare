@@ -8,7 +8,7 @@ namespace Identity.Tests.Schema;
 public sealed class IdentitySchemaTests(PostgresContainerFixture db)
 {
     [Fact]
-    public async Task ApplicationUser_WithNullTenantIdAndMedicoId_Persists_AsSaasAdmin()
+    public async Task ApplicationUser_WithNullTenantIdAndMedicoId_Persists_AsSaasAdmin_Async()
     {
         await using var ctx = await db.CreateContextAsync();
         var user = ApplicationUser.Create("saasadmin@honorare.com");
@@ -22,7 +22,7 @@ public sealed class IdentitySchemaTests(PostgresContainerFixture db)
     }
 
     [Fact]
-    public async Task ApplicationUser_WithNullGoogleId_Persists_AsPreRegistered()
+    public async Task ApplicationUser_WithNullGoogleId_Persists_AsPreRegistered_Async()
     {
         await using var ctx = await db.CreateContextAsync();
         var user = ApplicationUser.Create("preCadastrado@clinic.com", Guid.NewGuid());
@@ -35,7 +35,7 @@ public sealed class IdentitySchemaTests(PostgresContainerFixture db)
     }
 
     [Fact]
-    public async Task ApplicationUser_DuplicateGoogleId_ThrowsDbUpdateException()
+    public async Task ApplicationUser_DuplicateGoogleId_ThrowsDbUpdateException_Async()
     {
         await using var ctx = await db.CreateContextAsync();
         var googleId = $"google-{Guid.NewGuid()}";
@@ -50,7 +50,7 @@ public sealed class IdentitySchemaTests(PostgresContainerFixture db)
     }
 
     [Fact]
-    public async Task RefreshToken_DuplicateTokenHash_ThrowsDbUpdateException()
+    public async Task RefreshToken_DuplicateTokenHash_ThrowsDbUpdateException_Async()
     {
         await using var ctx = await db.CreateContextAsync();
         var user = ApplicationUser.Create("user@clinic.com", Guid.NewGuid());
@@ -66,7 +66,7 @@ public sealed class IdentitySchemaTests(PostgresContainerFixture db)
     }
 
     [Fact]
-    public async Task Tenant_Persists_WithAllProperties()
+    public async Task Tenant_Persists_WithAllProperties_Async()
     {
         await using var ctx = await db.CreateContextAsync();
         var tenant = Tenant.Create("Clínica Exemplo");
@@ -81,7 +81,7 @@ public sealed class IdentitySchemaTests(PostgresContainerFixture db)
     }
 
     [Fact]
-    public async Task ApplicationUser_QueryWithoutFilter_ReturnsBothTenants()
+    public async Task ApplicationUser_QueryWithoutFilter_ReturnsBothTenants_Async()
     {
         await using var ctx = await db.CreateContextAsync();
         var tenant1 = Guid.NewGuid();

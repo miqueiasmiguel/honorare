@@ -71,7 +71,7 @@ public sealed class TenantQueryFilterTests(PostgresContainerFixture db)
     }
 
     [Fact]
-    public async Task TenantAdmin_CannotSee_OtherTenantData()
+    public async Task TenantAdmin_CannotSee_OtherTenantData_Async()
     {
         var tenantA = Guid.NewGuid();
         var tenantB = Guid.NewGuid();
@@ -93,7 +93,7 @@ public sealed class TenantQueryFilterTests(PostgresContainerFixture db)
     }
 
     [Fact]
-    public async Task TenantAdmin_CanSee_OwnTenantData()
+    public async Task TenantAdmin_CanSee_OwnTenantData_Async()
     {
         var tenantId = Guid.NewGuid();
 
@@ -114,7 +114,7 @@ public sealed class TenantQueryFilterTests(PostgresContainerFixture db)
     }
 
     [Fact]
-    public async Task SaasAdmin_CanSee_AllTenantData()
+    public async Task SaasAdmin_CanSee_AllTenantData_Async()
     {
         var tenantA = Guid.NewGuid();
         var tenantB = Guid.NewGuid();
