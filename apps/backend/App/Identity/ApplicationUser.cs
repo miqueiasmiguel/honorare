@@ -35,4 +35,8 @@ internal sealed class ApplicationUser : IdentityUser<Guid>
         GoogleId = googleId;
         return Result.Ok();
     }
+
+    public void Deactivate() => IsActive = false;
+
+    public void Activate() => IsActive = true;
 }
