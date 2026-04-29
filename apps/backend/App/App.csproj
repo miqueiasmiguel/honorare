@@ -3,6 +3,10 @@
   <!-- Shared defaults (Nullable, ImplicitUsings, TreatWarningsAsErrors, etc.)
        are inherited from Directory.Build.props — do not repeat them here. -->
 
+  <PropertyGroup>
+    <UserSecretsId>honorare-app</UserSecretsId>
+  </PropertyGroup>
+
   <ItemGroup>
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
       <_Parameter1>Faturamento.Tests</_Parameter1>

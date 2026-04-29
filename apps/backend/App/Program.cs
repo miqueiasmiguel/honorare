@@ -1,8 +1,10 @@
 using System.Text;
+using App;
 using App.Data;
 using App.Identity;
 using App.Identity.Endpoints;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -12,6 +14,8 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
+
+ConfigurationValidator.Validate(builder.Configuration);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
@@ -34,8 +38,7 @@ builder.Services.AddIdentityCore<ApplicationUser>()
     .AddEntityFrameworkStores<AppDbContext>();
 
 // ── Authentication ──────────────────────────────────────────────────────────
-var jwtSecret = builder.Configuration["Jwt:Secret"]
-    ?? throw new InvalidOperationException("Jwt:Secret não configurado.");
+var jwtSecret = builder.Configuration["Jwt:Secret"]!;
 
 builder.Services
     .AddAuthentication(options =>
@@ -46,12 +49,10 @@ builder.Services
     .AddCookie("External")                           // temp cookie for OAuth handshake
     .AddGoogle(options =>
     {
-        options.ClientId = builder.Configuration["Google:ClientId"]
-            ?? throw new InvalidOperationException("Google:ClientId não configurado.");
-        options.ClientSecret = builder.Configuration["Google:ClientSecret"]
-            ?? throw new InvalidOperationException("Google:ClientSecret não configurado.");
+        options.ClientId = builder.Configuration["Google:ClientId"]!;
+        options.ClientSecret = builder.Configuration["Google:ClientSecret"]!;
         options.SignInScheme = "External";           // store Google identity in temp cookie
-        options.CallbackPath = "/signin-google";     // handled internally by middleware
+        options.CallbackPath = "/api/v1/auth/google/callback"; // under /api/ so Nginx routes it to the backend
     })
     .AddJwtBearer(options =>
     {
@@ -105,6 +106,11 @@ builder.Logging.AddOpenTelemetry(l =>
 
 var app = builder.Build();
 
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger(options => options.RouteTemplate = "api/{documentName}/openapi.json");
@@ -114,8 +120,11 @@ if (app.Environment.IsDevelopment())
         options.RoutePrefix = "api/docs";
     });
 }
+else
+{
+    app.UseHttpsRedirection();
+}
 
-app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseMiddleware<TenantStatusMiddleware>();
 app.UseAuthorization();
