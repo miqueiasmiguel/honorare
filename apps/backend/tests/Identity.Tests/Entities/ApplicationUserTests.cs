@@ -74,4 +74,15 @@ public sealed class ApplicationUserTests
         user.AssociateGoogleId("google-456");
         Assert.Equal("google-123", user.GoogleId);
     }
+
+    [Fact]
+    public void AssociateGoogleId_WithSameIdAlreadySet_ReturnsConflictError()
+    {
+        // AssociateGoogleId não é idempotente — mesmo ID repetido também retorna ConflictError
+        var user = ApplicationUser.Create("test@example.com");
+        user.AssociateGoogleId("google-123");
+        var result = user.AssociateGoogleId("google-123");
+        Assert.True(result.IsFailure);
+        Assert.IsType<ConflictError>(result.Error);
+    }
 }

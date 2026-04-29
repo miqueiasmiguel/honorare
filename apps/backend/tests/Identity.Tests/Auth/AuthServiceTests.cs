@@ -338,4 +338,182 @@ public class AuthServiceTests(PostgresContainerFixture db)
         Assert.True(r2.IsSuccess);
         Assert.NotEqual(r1.Value!.RefreshToken, r2.Value!.RefreshToken);
     }
+
+    // ── TASK-AUTH-10: primeiro login (associação de GoogleId) ────────────────
+
+    [Fact]
+    public async Task ProcessGoogleCallbackAsync_SaasAdminPreCadastrado_AssociatesGoogleIdAndIssuesCorrectJwtAsync()
+    {
+        await using var ctx = await db.CreateContextAsync();
+        var email = $"{Guid.NewGuid()}@saas-precad.test";
+        var googleId = $"google-saas-precad-{Guid.NewGuid()}";
+
+        var user = ApplicationUser.Create(email); // SaasAdmin — sem TenantId
+        ctx.Users.Add(user);
+        await ctx.SaveChangesAsync();
+
+        var service = CreateService(ctx);
+        var result = await service.ProcessGoogleCallbackAsync(googleId, email);
+
+        Assert.True(result.IsSuccess);
+        var claims = DecodeJwtClaims(result.Value!.AccessToken);
+        Assert.Equal("SaasAdmin", claims[ClaimTypes.Role]);
+        Assert.DoesNotContain("tenant_id", claims.Keys);
+        Assert.DoesNotContain("medico_id", claims.Keys);
+
+        await using var freshCtx = await db.CreateContextAsync();
+        var stored = await freshCtx.Users.FindAsync(user.Id);
+        Assert.Equal(googleId, stored!.GoogleId);
+    }
+
+    [Fact]
+    public async Task ProcessGoogleCallbackAsync_MedicoPreCadastrado_AssociatesGoogleIdAndIssuesCorrectClaimsAsync()
+    {
+        await using var ctx = await db.CreateContextAsync();
+        var email = $"{Guid.NewGuid()}@medico-precad.test";
+        var googleId = $"google-medico-precad-{Guid.NewGuid()}";
+        var medicoId = Guid.NewGuid();
+
+        var tenant = Tenant.Create("Tenant Medico PreCad");
+        ctx.Tenants.Add(tenant);
+        var user = ApplicationUser.Create(email, tenant.Id, medicoId);
+        ctx.Users.Add(user);
+        await ctx.SaveChangesAsync();
+
+        var service = CreateService(ctx);
+        var result = await service.ProcessGoogleCallbackAsync(googleId, email);
+
+        Assert.True(result.IsSuccess);
+        var claims = DecodeJwtClaims(result.Value!.AccessToken);
+        Assert.Equal("Medico", claims[ClaimTypes.Role]);
+        Assert.Equal(tenant.Id.ToString(), claims["tenant_id"]);
+        Assert.Equal(medicoId.ToString(), claims["medico_id"]);
+
+        await using var freshCtx = await db.CreateContextAsync();
+        var stored = await freshCtx.Users.FindAsync(user.Id);
+        Assert.Equal(googleId, stored!.GoogleId);
+    }
+
+    [Fact]
+    public async Task ProcessGoogleCallbackAsync_FirstLogin_GoogleIdPersistedToFreshContextAsync()
+    {
+        await using var ctx = await db.CreateContextAsync();
+        var email = $"{Guid.NewGuid()}@persist-precad.test";
+        var googleId = $"google-persist-precad-{Guid.NewGuid()}";
+
+        var tenant = Tenant.Create("Tenant Persist PreCad");
+        ctx.Tenants.Add(tenant);
+        var user = ApplicationUser.Create(email, tenant.Id);
+        ctx.Users.Add(user);
+        await ctx.SaveChangesAsync();
+
+        var service = CreateService(ctx);
+        var result = await service.ProcessGoogleCallbackAsync(googleId, email);
+        Assert.True(result.IsSuccess);
+
+        // Contexto completamente novo — não usa o identity map do ctx anterior
+        await using var freshCtx = await db.CreateContextAsync();
+        var stored = await freshCtx.Users.FindAsync(user.Id);
+        Assert.Equal(googleId, stored!.GoogleId);
+    }
+
+    [Fact]
+    public async Task ProcessGoogleCallbackAsync_FirstLoginAssociatesGoogleId_SubsequentLoginByGoogleIdSucceedsAsync()
+    {
+        await using var ctx = await db.CreateContextAsync();
+        var email = $"{Guid.NewGuid()}@lifecycle-precad.test";
+        var googleId = $"google-lifecycle-precad-{Guid.NewGuid()}";
+
+        var tenant = Tenant.Create("Tenant Lifecycle PreCad");
+        ctx.Tenants.Add(tenant);
+        var user = ApplicationUser.Create(email, tenant.Id);
+        ctx.Users.Add(user);
+        await ctx.SaveChangesAsync();
+
+        var service = CreateService(ctx);
+
+        // Primeiro login: entra pelo caminho de lookup por email
+        var firstResult = await service.ProcessGoogleCallbackAsync(googleId, email);
+        Assert.True(firstResult.IsSuccess);
+
+        // Segundo login: agora o GoogleId está associado — entra pelo caminho do GoogleId
+        var secondResult = await service.ProcessGoogleCallbackAsync(googleId, email);
+        Assert.True(secondResult.IsSuccess);
+    }
+
+    [Fact]
+    public async Task ProcessGoogleCallbackAsync_InactivePreCadastrado_GoogleIdNotPersistedAsync()
+    {
+        await using var ctx = await db.CreateContextAsync();
+        var email = $"{Guid.NewGuid()}@inactive-precad.test";
+        var googleId = $"google-inactive-precad-{Guid.NewGuid()}";
+
+        var tenant = Tenant.Create("Tenant Inativo PreCad");
+        ctx.Tenants.Add(tenant);
+        var user = ApplicationUser.Create(email, tenant.Id);
+        user.Deactivate();
+        ctx.Users.Add(user);
+        await ctx.SaveChangesAsync();
+
+        var service = CreateService(ctx);
+        var result = await service.ProcessGoogleCallbackAsync(googleId, email);
+
+        Assert.True(result.IsFailure);
+        Assert.IsType<ForbiddenError>(result.Error);
+
+        // Fresh context confirma que GoogleId NÃO foi persistido — SaveChangesAsync nunca foi chamado
+        await using var freshCtx = await db.CreateContextAsync();
+        var stored = await freshCtx.Users.FindAsync(user.Id);
+        Assert.Null(stored!.GoogleId);
+    }
+
+    [Fact]
+    public async Task ProcessGoogleCallbackAsync_SuspendedTenantPreCadastrado_GoogleIdNotPersistedAsync()
+    {
+        await using var ctx = await db.CreateContextAsync();
+        var email = $"{Guid.NewGuid()}@susp-precad.test";
+        var googleId = $"google-susp-precad-{Guid.NewGuid()}";
+
+        var tenant = Tenant.Create("Tenant Suspenso PreCad");
+        tenant.Suspend();
+        ctx.Tenants.Add(tenant);
+        var user = ApplicationUser.Create(email, tenant.Id);
+        ctx.Users.Add(user);
+        await ctx.SaveChangesAsync();
+
+        var service = CreateService(ctx);
+        var result = await service.ProcessGoogleCallbackAsync(googleId, email);
+
+        Assert.True(result.IsFailure);
+        Assert.IsType<ForbiddenError>(result.Error);
+
+        await using var freshCtx = await db.CreateContextAsync();
+        var stored = await freshCtx.Users.FindAsync(user.Id);
+        Assert.Null(stored!.GoogleId);
+    }
+
+    [Fact]
+    public async Task ProcessGoogleCallbackAsync_CancelledTenantPreCadastrado_GoogleIdNotPersistedAsync()
+    {
+        await using var ctx = await db.CreateContextAsync();
+        var email = $"{Guid.NewGuid()}@cancel-precad.test";
+        var googleId = $"google-cancel-precad-{Guid.NewGuid()}";
+
+        var tenant = Tenant.Create("Tenant Cancelado PreCad");
+        tenant.Cancel();
+        ctx.Tenants.Add(tenant);
+        var user = ApplicationUser.Create(email, tenant.Id);
+        ctx.Users.Add(user);
+        await ctx.SaveChangesAsync();
+
+        var service = CreateService(ctx);
+        var result = await service.ProcessGoogleCallbackAsync(googleId, email);
+
+        Assert.True(result.IsFailure);
+        Assert.IsType<ForbiddenError>(result.Error);
+
+        await using var freshCtx = await db.CreateContextAsync();
+        var stored = await freshCtx.Users.FindAsync(user.Id);
+        Assert.Null(stored!.GoogleId);
+    }
 }
