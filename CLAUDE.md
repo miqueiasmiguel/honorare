@@ -39,12 +39,12 @@ pnpm -F admin-web test:ci           # Vitest single-run + coverage (used by CI)
 
 CI/CD uses four independent GitHub Actions workflows:
 
-| Workflow | Trigger path | Steps |
-|---|---|---|
-| `backend-ci.yml` | `apps/backend/**` | restore → build → test → coverage threshold |
-| `admin-web-ci.yml` | `apps/admin-web/**, packages/api-contracts/**` | prettier → eslint → stylelint → test → coverage → build |
-| `medico-pwa-ci.yml` | `apps/medico-pwa/**, packages/api-contracts/**` | same as admin-web |
-| `codeql.yml` | `main`/`master` push + weekly | CodeQL static analysis (C# + TypeScript) |
+| Workflow            | Trigger path                                    | Steps                                                   |
+| ------------------- | ----------------------------------------------- | ------------------------------------------------------- |
+| `backend-ci.yml`    | `apps/backend/**`                               | restore → build → test → coverage threshold             |
+| `admin-web-ci.yml`  | `apps/admin-web/**, packages/api-contracts/**`  | prettier → eslint → stylelint → test → coverage → build |
+| `medico-pwa-ci.yml` | `apps/medico-pwa/**, packages/api-contracts/**` | same as admin-web                                       |
+| `codeql.yml`        | `main`/`master` push + weekly                   | CodeQL static analysis (C# + TypeScript)                |
 
 ## Architecture
 
@@ -109,12 +109,12 @@ The backend follows a **bounded-context structure without Clean Architecture lay
 Reporting → Faturamento → Catalog → Identity
 ```
 
-| Context | Responsibility |
-|---|---|
-| `Identity` | Auth (Google OAuth 2.0), tenants, users, roles, tenant suspension |
-| `Catalog` | Operators, procedures, pricing tables, providers, beneficiaries |
+| Context       | Responsibility                                                        |
+| ------------- | --------------------------------------------------------------------- |
+| `Identity`    | Auth (Google OAuth 2.0), tenants, users, roles, tenant suspension     |
+| `Catalog`     | Operators, procedures, pricing tables, providers, beneficiaries       |
 | `Faturamento` | Invoices (guias), UNIMED calculation engine, statement reconciliation |
-| `Reporting` | Aggregated queries for admin dashboard and doctor portal |
+| `Reporting`   | Aggregated queries for admin dashboard and doctor portal              |
 
 ### Multi-Tenancy
 
@@ -127,6 +127,7 @@ The backend exposes a versioned OpenAPI spec at `/api/v1/`. The TypeScript clien
 ### Nginx Routing
 
 A single domain serves three paths via Nginx:
+
 - `/api/v1/` → .NET backend (port 5000)
 - `/admin/` → admin-web Angular SPA
 - `/app/` → medico-pwa Angular PWA
@@ -137,11 +138,11 @@ Angular apps must be built with the correct `--base-href` for their subpath.
 
 The backend is instrumented with **OpenTelemetry** (traces, metrics, structured logs) and exports via OTLP to an OpenTelemetry Collector. The collector fans out to:
 
-| Signal | Backend | UI |
-|---|---|---|
-| Traces | Jaeger | `http://localhost:16686` |
-| Metrics | Prometheus | `http://localhost:9090` |
-| Logs | Loki | Grafana → `http://localhost:3000` |
+| Signal  | Backend    | UI                                |
+| ------- | ---------- | --------------------------------- |
+| Traces  | Jaeger     | `http://localhost:16686`          |
+| Metrics | Prometheus | `http://localhost:9090`           |
+| Logs    | Loki       | Grafana → `http://localhost:3000` |
 
 ### How it works
 
@@ -176,13 +177,13 @@ The goal is zero tolerance for quality regressions: every linter warning is a bu
 
 ### Warnings are errors everywhere
 
-| Stack | Mechanism | File |
-|---|---|---|
-| .NET | `TreatWarningsAsErrors`, `EnforceCodeStyleInBuild`, `AnalysisLevel=latest-All` | `apps/backend/Directory.Build.props` |
-| TypeScript | `strict`, `noImplicitOverride`, `noImplicitReturns`, `noFallthroughCasesInSwitch` | `apps/*/tsconfig.json` |
-| Angular templates | `strictTemplates`, `strictInjectionParameters`, `typeCheckHostBindings` | `apps/*/tsconfig.json` |
-| ESLint | `--max-warnings 0` in `lint` script | `apps/*/package.json` |
-| StyleLint | `--max-warnings 0` in `stylelint` script | `apps/*/package.json` |
+| Stack             | Mechanism                                                                         | File                                 |
+| ----------------- | --------------------------------------------------------------------------------- | ------------------------------------ |
+| .NET              | `TreatWarningsAsErrors`, `EnforceCodeStyleInBuild`, `AnalysisLevel=latest-All`    | `apps/backend/Directory.Build.props` |
+| TypeScript        | `strict`, `noImplicitOverride`, `noImplicitReturns`, `noFallthroughCasesInSwitch` | `apps/*/tsconfig.json`               |
+| Angular templates | `strictTemplates`, `strictInjectionParameters`, `typeCheckHostBindings`           | `apps/*/tsconfig.json`               |
+| ESLint            | `--max-warnings 0` in `lint` script                                               | `apps/*/package.json`                |
+| StyleLint         | `--max-warnings 0` in `stylelint` script                                          | `apps/*/package.json`                |
 
 ### `.editorconfig` structure
 
@@ -192,39 +193,40 @@ A single root `.editorconfig` (`root = true`) covers every file type with explic
 
 `apps/backend/Directory.Build.props` applies to every `.csproj` under that directory. Never override these properties in individual project files — use `#pragma warning disable` with an explanatory comment for one-off exceptions.
 
-| Property | Value | Effect |
-|---|---|---|
-| `TreatWarningsAsErrors` | `true` | All compiler + analyzer warnings fail `dotnet build` |
-| `EnforceCodeStyleInBuild` | `true` | IDE code-style rules (IDE0xxx) enforced during `dotnet build` |
-| `AnalysisLevel` | `latest-All` | Every Roslyn analyzer rule shipped with the SDK is active |
-| `Nullable` | `enable` | Null-safety enforced across all projects |
-| `Deterministic` | `true` | Reproducible build artifacts |
-| `NuGetAudit` | `true` | `dotnet restore` fails on packages with CVE ≥ moderate |
+| Property                  | Value        | Effect                                                        |
+| ------------------------- | ------------ | ------------------------------------------------------------- |
+| `TreatWarningsAsErrors`   | `true`       | All compiler + analyzer warnings fail `dotnet build`          |
+| `EnforceCodeStyleInBuild` | `true`       | IDE code-style rules (IDE0xxx) enforced during `dotnet build` |
+| `AnalysisLevel`           | `latest-All` | Every Roslyn analyzer rule shipped with the SDK is active     |
+| `Nullable`                | `enable`     | Null-safety enforced across all projects                      |
+| `Deterministic`           | `true`       | Reproducible build artifacts                                  |
+| `NuGetAudit`              | `true`       | `dotnet restore` fails on packages with CVE ≥ moderate        |
 
 ### Roslyn naming conventions (enforced as errors)
 
-| Symbol | Convention | Example |
-|---|---|---|
-| Private instance fields | `_camelCase` | `_tenantId` |
-| Async methods | `PascalCaseAsync` | `GetGuiasAsync` |
-| Constants | `PascalCase` | `MaxRetryCount` |
+| Symbol                  | Convention        | Example         |
+| ----------------------- | ----------------- | --------------- |
+| Private instance fields | `_camelCase`      | `_tenantId`     |
+| Async methods           | `PascalCaseAsync` | `GetGuiasAsync` |
+| Constants               | `PascalCase`      | `MaxRetryCount` |
 
 ### Key IDE diagnostics
 
-| Rule | Severity | What it catches |
-|---|---|---|
-| `IDE0005` | error | Unnecessary `using` directives |
-| `IDE0011` | error | Missing braces on `if`/`else`/`for` etc. — always use `{ }` even for one-liners |
-| `IDE0051` | error | Unused private members |
-| `IDE0052` | error | Unread private members |
-| `IDE0055` | error | Formatting violations |
-| `IDE0059` | warning | Unnecessary value assignments |
-| `IDE0060` | warning | Unused parameters |
-| `CA2007` | none | `ConfigureAwait` — not required in ASP.NET Core |
+| Rule      | Severity | What it catches                                                                 |
+| --------- | -------- | ------------------------------------------------------------------------------- |
+| `IDE0005` | error    | Unnecessary `using` directives                                                  |
+| `IDE0011` | error    | Missing braces on `if`/`else`/`for` etc. — always use `{ }` even for one-liners |
+| `IDE0051` | error    | Unused private members                                                          |
+| `IDE0052` | error    | Unread private members                                                          |
+| `IDE0055` | error    | Formatting violations                                                           |
+| `IDE0059` | warning  | Unnecessary value assignments                                                   |
+| `IDE0060` | warning  | Unused parameters                                                               |
+| `CA2007`  | none     | `ConfigureAwait` — not required in ASP.NET Core                                 |
 
 ### TypeScript / Angular linting
 
 Each Angular app has `apps/*/eslint.config.js` (ESLint v9 flat config) with:
+
 - `typescript-eslint` `strictTypeChecked` + `stylisticTypeChecked` — type-aware rules
 - `angular-eslint` `tsRecommended` + `templateRecommended` + `templateAccessibility`
 - `eslint-config-prettier` at the end (disables formatting rules that conflict with Prettier)
@@ -236,10 +238,10 @@ SCSS is linted by StyleLint (`apps/*/.stylelintrc.json`) using `stylelint-config
 
 `pnpm install` activates Husky via the `prepare` script. Two hooks run on every commit:
 
-| Hook | File | What it runs |
-|---|---|---|
+| Hook         | File                | What it runs                                                            |
+| ------------ | ------------------- | ----------------------------------------------------------------------- |
 | `pre-commit` | `.husky/pre-commit` | `pnpm lint-staged` — ESLint + StyleLint + Prettier on staged files only |
-| `commit-msg` | `.husky/commit-msg` | `pnpm commitlint` — enforces Conventional Commits format |
+| `commit-msg` | `.husky/commit-msg` | `pnpm commitlint` — enforces Conventional Commits format                |
 
 Commit format: `type(scope): subject` where type ∈ `feat fix chore docs style refactor perf test ci revert`. Header ≤ 100 chars.
 
@@ -265,12 +267,12 @@ This project follows **Test-Driven Development (TDD)**. Write the failing test f
 
 ### Coverage Targets by Layer
 
-| Layer | Minimum Coverage |
-|---|---|
-| `Faturamento` (calculation engine) | 90% — financial correctness is non-negotiable |
-| `Identity`, `Catalog` | 80% |
-| `Reporting` | 80% |
-| Angular components | 80% (V8 coverage via Vitest + `@vitest/coverage-v8`) |
+| Layer                              | Minimum Coverage                                     |
+| ---------------------------------- | ---------------------------------------------------- |
+| `Faturamento` (calculation engine) | 90% — financial correctness is non-negotiable        |
+| `Identity`, `Catalog`              | 80%                                                  |
+| `Reporting`                        | 80%                                                  |
+| Angular components                 | 80% (V8 coverage via Vitest + `@vitest/coverage-v8`) |
 
 ### What counts toward coverage
 
@@ -302,6 +304,97 @@ public class MinhaIntegrationTest(PostgresContainerFixture db)
 }
 ```
 
+## Authentication & Authorization
+
+The full auth stack is implemented (TASK-AUTH-01 through TASK-AUTH-11). Do not re-implement any of this.
+
+### Method
+
+Google OAuth 2.0 only. No passwords, no magic links, no MFA. `ApplicationUser.PasswordHash` is always null.
+
+### Flow
+
+1. Frontend redirects to `GET /api/v1/auth/google` — backend initiates the OAuth challenge
+2. Google redirects to `GET /api/v1/auth/google/finalize?returnUrl=...`
+3. Backend looks up the user by `GoogleId` (or by email on first login — auto-associates the `GoogleId`)
+4. Issues a JWT access token (15 min) + refresh token (7 days, stored as SHA-256 hash)
+5. Returns `{ accessToken, refreshToken, expiresIn }` or redirects via `?returnUrl=`
+
+### JWT Claims
+
+```json
+{ "sub": "user-guid", "role": "SaasAdmin|TenantAdmin|Medico", "tenant_id": "guid (absent for SaasAdmin)", "medico_id": "guid (Medico only)", "email": "...", "jti": "guid", "exp": 0 }
+```
+
+### Authorization Policies
+
+| Policy         | Roles                      |
+| -------------- | -------------------------- |
+| `SaasOnly`     | `SaasAdmin`                |
+| `TenantAccess` | `TenantAdmin`, `SaasAdmin` |
+| `MedicoAccess` | `Medico`                   |
+
+Route prefixes: `/api/v1/saas/**` → `SaasOnly`, `/api/v1/admin/**` → `TenantAccess`, `/api/v1/medico/**` → `MedicoAccess`.
+
+### Tenant Isolation
+
+`ICurrentUser` (scoped service) reads claims from `IHttpContextAccessor`. Injected into `AppDbContext` for the global query filter on every entity implementing `ITenantEntity`:
+
+```csharp
+builder.HasQueryFilter(e => _currentUser.IsSaasAdmin || e.TenantId == _currentUser.TenantId);
+```
+
+`Tenant`, `ApplicationUser`, `RefreshToken` do **not** implement `ITenantEntity` — they are managed globally by SaaS admin.
+
+`TenantStatusMiddleware` (between `UseAuthentication` and `UseAuthorization`) blocks requests from users whose tenant is `Suspenso` or `Cancelado` with HTTP 403 `{ "error": "tenant_suspended" }`.
+
+### Refresh & Logout
+
+- `POST /api/v1/auth/refresh` — rotates the refresh token (old one revoked, new pair issued). Anonymous endpoint.
+- `POST /api/v1/auth/logout` — revokes all active refresh tokens for the user. Requires JWT.
+
+### SaaS Admin Endpoints (`/api/v1/saas/`)
+
+`SaasService` provides CRUD for tenants and users. Every route with `{tenantId}` validates that the tenant exists (LGPD auditability).
+
+| Method  | Route                                                   | Description                             |
+| ------- | ------------------------------------------------------- | --------------------------------------- |
+| `GET`   | `/api/v1/saas/tenants`                                  | List all tenants                        |
+| `POST`  | `/api/v1/saas/tenants`                                  | Create tenant                           |
+| `PATCH` | `/api/v1/saas/tenants/{tenantId}/status`                | Activate / suspend / cancel             |
+| `GET`   | `/api/v1/saas/tenants/{tenantId}/users`                 | List users of a tenant                  |
+| `POST`  | `/api/v1/saas/tenants/{tenantId}/users`                 | Create user (`TenantAdmin` or `Medico`) |
+| `PATCH` | `/api/v1/saas/tenants/{tenantId}/users/{userId}/status` | Activate / deactivate user              |
+
+### Frontend Auth (Angular)
+
+Both `admin-web` and `medico-pwa` share the same pattern:
+
+- `AuthService` — access token in memory (Angular signal), refresh token in `localStorage["_rt"]`
+- `authInterceptor` — adds `Authorization: Bearer` to all requests outside `/api/v1/auth/`; retries on 401 after refresh
+- `authGuard` — protects routes; attempts silent refresh before redirecting to `/auth/login`
+- `Login` — single "Entrar com Google" button → `GET /api/v1/auth/google?returnUrl=...`
+- `Callback` — reads `accessToken/refreshToken/expiresIn` from query params, strips them from browser history, stores tokens, navigates to `/`
+- `app.config.ts` — `provideAppInitializer` restores session on startup via silent refresh
+
+### Environment Variables Required
+
+```env
+Google__ClientId=...
+Google__ClientSecret=...
+Jwt__Secret=...          # min 32 chars
+Jwt__Issuer=https://honorare.com.br
+Jwt__Audience=honorare-api
+Jwt__AccessTokenMinutes=15
+Jwt__RefreshTokenDays=7
+```
+
+### What is NOT implemented (by design)
+
+Magic links, passkeys, MFA, additional social providers, email invites, RBAC beyond roles, auth audit log, rate limiting on auth endpoints.
+
+---
+
 ## Key Architectural Constraints
 
 These are firm decisions (see `docs/DECISOES.md` for full rationale):
@@ -316,27 +409,27 @@ These are firm decisions (see `docs/DECISOES.md` for full rationale):
 
 Business concepts use Portuguese; infrastructure and tooling use English.
 
-| Portuguese | English meaning |
-|---|---|
-| Guia | Invoice / claim |
-| Demonstrativo | Payment statement from operator |
-| Conta-corrente | Running account / ledger |
-| Convênio / Operadora | Health plan / insurance operator |
-| Prestador | Healthcare provider (the physician or clinic) |
-| Beneficiário | Patient / plan member |
-| Faturamento | Billing |
-| Glosa | Claim denial / rejection by the operator |
-| Tabela | Pricing table (e.g., CBHPM, AMB, or operator-specific) |
-| Porte | Procedure complexity tier |
-| Deflator | Discount multiplier applied to auxiliary procedures |
-| Apuração | Calculation/determination of the correct fee per pricing rules |
-| Senha | Pre-authorization code issued by the operator for a procedure |
-| Apresentada | Guia status: submitted to operator, awaiting payment |
-| Liquidada | Guia status: payment fully settled by operator |
-| Em Recurso | Guia status: included in a formal dispute sent to operator |
-| ValorApurado | System-determined correct fee (labeled "VL CORRETO" in the recurso PDF) |
-| ValorLiquidado | Amount actually paid by the operator (labeled "PG UNIMED" in the recurso PDF) |
-| Recurso | Formal dispute document sent to operator; also the entity grouping disputed guias |
+| Portuguese           | English meaning                                                                   |
+| -------------------- | --------------------------------------------------------------------------------- |
+| Guia                 | Invoice / claim                                                                   |
+| Demonstrativo        | Payment statement from operator                                                   |
+| Conta-corrente       | Running account / ledger                                                          |
+| Convênio / Operadora | Health plan / insurance operator                                                  |
+| Prestador            | Healthcare provider (the physician or clinic)                                     |
+| Beneficiário         | Patient / plan member                                                             |
+| Faturamento          | Billing                                                                           |
+| Glosa                | Claim denial / rejection by the operator                                          |
+| Tabela               | Pricing table (e.g., CBHPM, AMB, or operator-specific)                            |
+| Porte                | Procedure complexity tier                                                         |
+| Deflator             | Discount multiplier applied to auxiliary procedures                               |
+| Apuração             | Calculation/determination of the correct fee per pricing rules                    |
+| Senha                | Pre-authorization code issued by the operator for a procedure                     |
+| Apresentada          | Guia status: submitted to operator, awaiting payment                              |
+| Liquidada            | Guia status: payment fully settled by operator                                    |
+| Em Recurso           | Guia status: included in a formal dispute sent to operator                        |
+| ValorApurado         | System-determined correct fee (labeled "VL CORRETO" in the recurso PDF)           |
+| ValorLiquidado       | Amount actually paid by the operator (labeled "PG UNIMED" in the recurso PDF)     |
+| Recurso              | Formal dispute document sent to operator; also the entity grouping disputed guias |
 
 ## Domain: UNIMED Calculation Rules
 
@@ -352,13 +445,13 @@ Applicable multipliers include: accommodation type (enfermaria vs. apartamento),
 
 All product and architecture decisions live in `docs/`:
 
-| File | Contents |
-|---|---|
-| `PROJETO.md` | Product vision, scope, MVP timeline |
-| `ARQUITETURA.md` | Full tech stack decisions and bounded context details |
-| `DOMINIO.md` | Glossary, UNIMED pricing rules, special cases |
-| `DECISOES.md` | 23 architectural and product decisions with rationale |
-| `PROXIMOS_PASSOS.md` | Phased backlog (Phase 0–6) with effort estimates |
-| `honorare-brand-guide.md` | Design system: palette, typography, voice |
+| File                      | Contents                                              |
+| ------------------------- | ----------------------------------------------------- |
+| `PROJETO.md`              | Product vision, scope, MVP timeline                   |
+| `ARQUITETURA.md`          | Full tech stack decisions and bounded context details |
+| `DOMINIO.md`              | Glossary, UNIMED pricing rules, special cases         |
+| `DECISOES.md`             | 23 architectural and product decisions with rationale |
+| `PROXIMOS_PASSOS.md`      | Phased backlog (Phase 0–6) with effort estimates      |
+| `honorare-brand-guide.md` | Design system: palette, typography, voice             |
 
 When implementing a feature, read the relevant `docs/` section before writing code.
