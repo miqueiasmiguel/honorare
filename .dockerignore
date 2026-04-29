@@ -1,0 +1,19 @@
+# JS deps and build artifacts
+node_modules/
+**/node_modules/
+**/dist/
+**/.angular/
+
+# .NET artifacts
+**/bin/
+**/obj/
+
+# Infra data volumes
+infra/postgres/data/
+
+# Dev / tooling
+.git/
+.husky/
+.vscode/
+docs/
+tools/
