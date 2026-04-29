@@ -1,5 +1,6 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
+COPY Directory.Build.props Directory.Packages.props .editorconfig ./
 COPY App/App.csproj App/
 RUN dotnet restore App/App.csproj
 COPY App/ App/
