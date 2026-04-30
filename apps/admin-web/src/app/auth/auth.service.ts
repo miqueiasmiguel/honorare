@@ -25,6 +25,20 @@ export class AuthService {
     return token !== null && exp !== null && Date.now() < exp;
   });
 
+  readonly role = computed((): string | null => {
+    const token = this._accessToken();
+    if (!token) return null;
+    try {
+      // JWT uses Base64URL (- and _ instead of + and /); atob requires standard Base64.
+      const segment = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+      const padded = segment + '='.repeat((4 - (segment.length % 4)) % 4);
+      const payload = JSON.parse(atob(padded)) as Record<string, unknown>;
+      return (payload['role'] as string | undefined) ?? null;
+    } catch {
+      return null;
+    }
+  });
+
   getAccessToken(): string | null {
     return this._accessToken();
   }
