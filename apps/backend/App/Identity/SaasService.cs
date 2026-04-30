@@ -5,6 +5,14 @@ namespace App.Identity;
 
 internal sealed record TenantSummary(Guid Id, string Name, TenantStatus Status, DateTimeOffset CreatedAt);
 
+internal sealed record TenantWithOwnerSummary(
+    Guid TenantId,
+    string TenantName,
+    TenantStatus Status,
+    DateTimeOffset CreatedAt,
+    Guid OwnerId,
+    string OwnerEmail);
+
 internal sealed record UserSummary(
     Guid Id, string Email, string Role, bool IsActive, DateTimeOffset CreatedAt, Guid? MedicoId);
 
@@ -20,18 +28,39 @@ internal sealed class SaasService(AppDbContext db)
             .ToList();
     }
 
-    internal async Task<Result<TenantSummary>> CreateTenantAsync(
-        string name, CancellationToken ct = default)
+    internal async Task<Result<TenantWithOwnerSummary>> CreateTenantAsync(
+        string tenantName, string ownerEmail, CancellationToken ct = default)
     {
-        if (string.IsNullOrWhiteSpace(name))
+        if (string.IsNullOrWhiteSpace(tenantName))
         {
-            return Result<TenantSummary>.Fail(new ValidationError("Nome do tenant é obrigatório."));
+            return Result<TenantWithOwnerSummary>.Fail(new ValidationError("Nome do tenant é obrigatório."));
         }
 
-        var tenant = Tenant.Create(name.Trim());
+        if (string.IsNullOrWhiteSpace(ownerEmail))
+        {
+            return Result<TenantWithOwnerSummary>.Fail(new ValidationError("E-mail do owner é obrigatório."));
+        }
+
+        if (!ApplicationUser.IsValidEmail(ownerEmail))
+        {
+            return Result<TenantWithOwnerSummary>.Fail(new ValidationError("E-mail do owner inválido."));
+        }
+
+        var emailInUse = await _db.Users.AnyAsync(u => u.Email == ownerEmail, ct);
+        if (emailInUse)
+        {
+            return Result<TenantWithOwnerSummary>.Fail(new ConflictError("E-mail já está em uso."));
+        }
+
+        var tenant = Tenant.Create(tenantName.Trim());
+        var owner = ApplicationUser.Create(ownerEmail.Trim(), tenant.Id, medicoId: null);
+
         _db.Tenants.Add(tenant);
+        _db.Users.Add(owner);
         await _db.SaveChangesAsync(ct);
-        return Result<TenantSummary>.Ok(new TenantSummary(tenant.Id, tenant.Name, tenant.Status, tenant.CreatedAt));
+
+        return Result<TenantWithOwnerSummary>.Ok(new TenantWithOwnerSummary(
+            tenant.Id, tenant.Name, tenant.Status, tenant.CreatedAt, owner.Id, owner.Email!));
     }
 
     internal async Task<Result<TenantSummary>> UpdateTenantStatusAsync(

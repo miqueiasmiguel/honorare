@@ -36,6 +36,19 @@ internal sealed class ApplicationUser : IdentityUser<Guid>
         return Result.Ok();
     }
 
+    public static bool IsValidEmail(string email)
+    {
+        try
+        {
+            _ = new System.Net.Mail.MailAddress(email);
+            return true;
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+    }
+
     public void Deactivate() => IsActive = false;
 
     public void Activate() => IsActive = true;

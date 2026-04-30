@@ -24,15 +24,16 @@ internal static class SaasEndpoints
     private static async Task<IResult> CreateTenantAsync(
         CreateTenantRequest body, SaasService saasService, CancellationToken ct)
     {
-        var result = await saasService.CreateTenantAsync(body.Name, ct);
+        var result = await saasService.CreateTenantAsync(body.TenantName, body.OwnerEmail, ct);
         if (result.IsFailure)
         {
-            return Results.Problem(
-                statusCode: StatusCodes.Status400BadRequest,
-                detail: result.Error!.Message);
+            var statusCode = result.Error is ConflictError
+                ? StatusCodes.Status409Conflict
+                : StatusCodes.Status400BadRequest;
+            return Results.Problem(statusCode: statusCode, detail: result.Error!.Message);
         }
 
-        return Results.Created($"/api/v1/saas/tenants/{result.Value!.Id}", result.Value);
+        return Results.Created($"/api/v1/saas/tenants/{result.Value!.TenantId}", result.Value);
     }
 
     private static async Task<IResult> UpdateTenantStatusAsync(
@@ -99,7 +100,7 @@ internal static class SaasEndpoints
     }
 }
 
-internal sealed record CreateTenantRequest(string Name);
+internal sealed record CreateTenantRequest(string TenantName, string OwnerEmail);
 
 internal sealed record UpdateTenantStatusRequest(string Status);
 
