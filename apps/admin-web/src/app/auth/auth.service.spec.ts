@@ -154,6 +154,51 @@ describe('AuthService', () => {
     });
   });
 
+  describe('role()', () => {
+    function makeFakeJwt(payload: Record<string, unknown>): string {
+      return `header.${btoa(JSON.stringify(payload))}.sig`;
+    }
+
+    it('role_DerivesCorrectlyFromJwtPayload', () => {
+      service.storeTokens({
+        accessToken: makeFakeJwt({ role: 'SaasAdmin', sub: 'user-id' }),
+        refreshToken: 'rt',
+        expiresIn: 900,
+      });
+      expect(service.role()).toBe('SaasAdmin');
+    });
+
+    it('returns null when no token is stored', () => {
+      expect(service.role()).toBeNull();
+    });
+
+    it('returns null for TenantAdmin role', () => {
+      service.storeTokens({
+        accessToken: makeFakeJwt({ role: 'TenantAdmin', sub: 'user-id' }),
+        refreshToken: 'rt',
+        expiresIn: 900,
+      });
+      expect(service.role()).toBe('TenantAdmin');
+    });
+
+    it('returns null when token is malformed (not a valid JWT)', () => {
+      service.storeTokens({ accessToken: 'not-a-jwt', refreshToken: 'rt', expiresIn: 900 });
+      expect(service.role()).toBeNull();
+    });
+
+    it('handles Base64URL encoding (- and _ chars) as issued by real JWTs', () => {
+      // Real JWTs use Base64URL where + → - and / → _
+      // Build a payload whose standard-base64 contains + or / to verify the conversion
+      const rawPayload = JSON.stringify({ role: 'SaasAdmin', sub: 'user-id', extra: '>>>???' });
+      const b64Standard = btoa(rawPayload);
+      // Simulate Base64URL by converting + → - and / → _
+      const b64Url = b64Standard.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+      const fakeJwt = `header.${b64Url}.sig`;
+      service.storeTokens({ accessToken: fakeJwt, refreshToken: 'rt', expiresIn: 900 });
+      expect(service.role()).toBe('SaasAdmin');
+    });
+  });
+
   describe('initSession()', () => {
     it('calls refresh() when a refresh token exists in localStorage', async () => {
       localStorage.setItem('_rt', 'stored-rt');
