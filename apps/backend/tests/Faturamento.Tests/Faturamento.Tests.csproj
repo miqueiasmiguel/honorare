@@ -7,7 +7,7 @@
     <IsPackable>false</IsPackable>
     <!-- CA1515 (make types internal) does not apply to test assemblies: xUnit requires
          fixture and collection-definition classes to be public for reflection-based discovery. -->
-    <NoWarn>$(NoWarn);CA1515</NoWarn>
+    <NoWarn>$(NoWarn);CA1515;CA1707</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

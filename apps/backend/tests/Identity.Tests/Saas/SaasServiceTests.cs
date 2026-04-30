@@ -57,17 +57,19 @@ public class SaasServiceTests(PostgresContainerFixture db)
     // ── CreateTenant ─────────────────────────────────────────────────────────────
 
     [Fact]
-    public async Task CreateTenantAsync_ValidName_ReturnsAtiveTenantSummaryAsync()
+    public async Task CreateTenantAsync_ValidData_ReturnsTenantWithOwnerSummaryAsync()
     {
         await using var ctx = await db.CreateContextAsync();
         var service = CreateService(ctx);
+        var ownerEmail = $"owner-{Guid.NewGuid()}@test.com";
 
-        var result = await service.CreateTenantAsync($"Clínica {Guid.NewGuid()}");
+        var result = await service.CreateTenantAsync($"Clínica {Guid.NewGuid()}", ownerEmail);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(TenantStatus.Ativo, result.Value!.Status);
-        Assert.NotEqual(Guid.Empty, result.Value!.Id);
+        Assert.NotEqual(Guid.Empty, result.Value!.TenantId);
         Assert.True(result.Value!.CreatedAt > DateTimeOffset.MinValue);
+        Assert.Equal(ownerEmail, result.Value!.OwnerEmail);
     }
 
     [Fact]
@@ -76,7 +78,7 @@ public class SaasServiceTests(PostgresContainerFixture db)
         await using var ctx = await db.CreateContextAsync();
         var service = CreateService(ctx);
 
-        var result = await service.CreateTenantAsync(string.Empty);
+        var result = await service.CreateTenantAsync(string.Empty, "owner@test.com");
 
         Assert.True(result.IsFailure);
         Assert.IsType<ValidationError>(result.Error);
@@ -88,7 +90,7 @@ public class SaasServiceTests(PostgresContainerFixture db)
         await using var ctx = await db.CreateContextAsync();
         var service = CreateService(ctx);
 
-        var result = await service.CreateTenantAsync("   ");
+        var result = await service.CreateTenantAsync("   ", "owner@test.com");
 
         Assert.True(result.IsFailure);
         Assert.IsType<ValidationError>(result.Error);
@@ -456,9 +458,10 @@ public class SaasServiceTests(PostgresContainerFixture db)
         var authService = CreateAuthService(ctx);
 
         // SaaS admin cria tenant e usuário via painel
-        var tenantResult = await saasService.CreateTenantAsync($"FluxoCompleto {Guid.NewGuid()}");
+        var tenantResult = await saasService.CreateTenantAsync(
+            $"FluxoCompleto {Guid.NewGuid()}", $"owner-{Guid.NewGuid()}@fluxo.test");
         Assert.True(tenantResult.IsSuccess);
-        var tenantId = tenantResult.Value!.Id;
+        var tenantId = tenantResult.Value!.TenantId;
 
         var email = $"{Guid.NewGuid()}@fluxo.test";
         var userResult = await saasService.CreateUserAsync(tenantId, email, "TenantAdmin", null);
