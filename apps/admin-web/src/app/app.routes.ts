@@ -11,6 +11,11 @@ export const routes: Routes = [
     loadComponent: () => import('./auth/callback/callback').then((m) => m.Callback),
   },
   {
+    path: 'saas',
+    canActivate: [authGuard],
+    loadChildren: () => import('./saas/saas.routes').then((m) => m.saasRoutes),
+  },
+  {
     path: '',
     canActivate: [authGuard],
     loadComponent: () => import('./dashboard/dashboard').then((m) => m.Dashboard),
