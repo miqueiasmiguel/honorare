@@ -84,13 +84,33 @@ describe('Callback — happy path', () => {
     expect(callOrder[1]).toBe('storeTokens');
   });
 
-  it('navigates to / after storing tokens', async () => {
+  it('navigates to / after storing tokens when role is TenantAdmin', async () => {
     const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
     const fixture = TestBed.createComponent(Callback);
     fixture.detectChanges();
     await fixture.whenStable();
 
+    // at-value is not a valid JWT → role() returns null → redirect to /
     expect(navigateSpy).toHaveBeenCalledWith(['/']);
+  });
+});
+
+describe('Callback — role-based redirect', () => {
+  it('navigates to /saas after storing tokens when role is SaasAdmin', async () => {
+    localStorage.clear();
+    const saasPayload = btoa(JSON.stringify({ role: 'SaasAdmin', sub: 'admin-id' }));
+    const saasJwt = `header.${saasPayload}.sig`;
+    setupTestBed({ accessToken: saasJwt, refreshToken: 'rt-value', expiresIn: '900' });
+    await TestBed.compileComponents();
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+
+    const fixture = TestBed.createComponent(Callback);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(navigateSpy).toHaveBeenCalledWith(['/saas']);
+    localStorage.clear();
   });
 });
 

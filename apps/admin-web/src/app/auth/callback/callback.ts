@@ -35,6 +35,7 @@ export class Callback implements OnInit {
       expiresIn: +expiresInRaw,
     });
 
-    void this._router.navigate(['/']);
+    const role = this._auth.role();
+    void this._router.navigate([role === 'SaasAdmin' ? '/saas' : '/']);
   }
 }
