@@ -156,7 +156,10 @@ internal sealed class AuthService(AppDbContext db, IConfiguration config)
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new(JwtRegisteredClaimNames.Email, user.Email!),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new(ClaimTypes.Role, role)
+            // Use the short JWT claim name "role" so the frontend can read it directly.
+            // ClaimTypes.Role would emit the long URI form; the inbound mapper converts
+            // "role" → ClaimTypes.Role on validation, so RequireRole() still works.
+            new("role", role)
         };
 
         if (user.TenantId is not null)
