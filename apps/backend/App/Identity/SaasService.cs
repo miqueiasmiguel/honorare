@@ -3,7 +3,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Identity;
 
-internal sealed record TenantSummary(Guid Id, string Name, TenantStatus Status, DateTimeOffset CreatedAt);
+internal sealed record TenantSummary(
+    Guid Id,
+    string Name,
+    TenantStatus Status,
+    DateTimeOffset CreatedAt,
+    int TotalAdmins,
+    int TotalMedicos);
 
 internal sealed record TenantWithOwnerSummary(
     Guid TenantId,
@@ -22,10 +28,15 @@ internal sealed class SaasService(AppDbContext db)
 
     internal async Task<IReadOnlyList<TenantSummary>> ListTenantsAsync(CancellationToken ct = default)
     {
-        var tenants = await _db.Tenants.ToListAsync(ct);
-        return tenants
-            .Select(t => new TenantSummary(t.Id, t.Name, t.Status, t.CreatedAt))
-            .ToList();
+        return await _db.Tenants
+            .Select(t => new TenantSummary(
+                t.Id,
+                t.Name,
+                t.Status,
+                t.CreatedAt,
+                _db.Users.Count(u => u.TenantId == t.Id && u.MedicoId == null),
+                _db.Users.Count(u => u.TenantId == t.Id && u.MedicoId != null)))
+            .ToListAsync(ct);
     }
 
     internal async Task<Result<TenantWithOwnerSummary>> CreateTenantAsync(
@@ -89,7 +100,10 @@ internal sealed class SaasService(AppDbContext db)
         }
 
         await _db.SaveChangesAsync(ct);
-        return Result<TenantSummary>.Ok(new TenantSummary(tenant.Id, tenant.Name, tenant.Status, tenant.CreatedAt));
+        var totalAdmins = await _db.Users.CountAsync(u => u.TenantId == tenantId && u.MedicoId == null, ct);
+        var totalMedicos = await _db.Users.CountAsync(u => u.TenantId == tenantId && u.MedicoId != null, ct);
+        return Result<TenantSummary>.Ok(new TenantSummary(
+            tenant.Id, tenant.Name, tenant.Status, tenant.CreatedAt, totalAdmins, totalMedicos));
     }
 
     internal async Task<Result<IReadOnlyList<UserSummary>>> ListTenantUsersAsync(
