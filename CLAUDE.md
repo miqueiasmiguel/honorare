@@ -395,6 +395,35 @@ Magic links, passkeys, MFA, additional social providers, email invites, RBAC bey
 
 ---
 
+## Frontend Styling (admin-web)
+
+Before writing any SCSS for `admin-web`, read [`apps/admin-web/STYLES.md`](apps/admin-web/STYLES.md). It is the single source of truth for styles.
+
+**Hard rules:**
+
+- Never use raw hex values (`#1f1b16`) — always use `var(--color-*)`.
+- Never use named colors (`red`, `green`).
+- Never define `px` values outside the spacing scale. Use `space(n)` from the SCSS function.
+- Typography is always applied via `@include text-*` mixins — never set `font-size`/`font-weight`/`line-height` manually.
+- Numbers/monetary values always use `@include text-mono-value` (activates tabular nums).
+- StyleLint enforces hex banning, `!important`, named colors, BEM, and nesting depth automatically.
+
+**Importing tokens in a component:**
+
+```scss
+@use "styles/tokens" as *; // gives access to all mixins + space()
+
+.my-block {
+  @include text-body;
+  color: var(--color-tinta);
+  padding: space(4) space(6);
+}
+```
+
+CSS custom properties (`var(--...)`) work without any `@use` — they're global.
+
+---
+
 ## Key Architectural Constraints
 
 These are firm decisions (see `docs/DECISOES.md` for full rationale):
