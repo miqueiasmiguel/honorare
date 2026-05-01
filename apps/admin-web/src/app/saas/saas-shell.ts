@@ -1,51 +1,19 @@
-import { Component } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Component, inject } from '@angular/core';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { AuthService } from '../auth/auth.service';
 
 @Component({
   selector: 'app-saas-shell',
   imports: [RouterLink, RouterLinkActive, RouterOutlet],
-  template: `
-    <div class="saas-layout">
-      <nav class="saas-sidebar">
-        <a class="saas-sidebar__link" routerLink="tenants" routerLinkActive="active">Tenants</a>
-      </nav>
-      <main class="saas-content">
-        <router-outlet />
-      </main>
-    </div>
-  `,
-  styles: [
-    `
-      .saas-layout {
-        display: flex;
-        min-height: 100vh;
-      }
-
-      .saas-sidebar {
-        width: 240px;
-        padding: 1rem;
-        background-color: #1a1a2e;
-        flex-shrink: 0;
-      }
-
-      .saas-sidebar__link {
-        display: block;
-        padding: 0.5rem 1rem;
-        color: #e0e0e0;
-        text-decoration: none;
-        border-radius: 4px;
-      }
-
-      .saas-sidebar__link.active {
-        background-color: #16213e;
-        color: #fff;
-      }
-
-      .saas-content {
-        flex: 1;
-        overflow-y: auto;
-      }
-    `,
-  ],
+  templateUrl: './saas-shell.html',
+  styleUrl: './saas-shell.scss',
 })
-export class SaasShell {}
+export class SaasShell {
+  private readonly _auth = inject(AuthService);
+  private readonly _router = inject(Router);
+
+  logout(): void {
+    this._auth.logout();
+    void this._router.navigate(['/auth/login']);
+  }
+}

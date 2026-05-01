@@ -1,0 +1,14 @@
+<div class="saas-layout">
+  <nav class="saas-sidebar">
+    <span class="saas-sidebar__wordmark">honorare</span>
+    <div class="saas-sidebar__nav">
+      <a class="saas-sidebar__link" routerLink="tenants" routerLinkActive="active">Tenants</a>
+    </div>
+    <div class="saas-sidebar__footer">
+      <button class="saas-sidebar__logout" type="button" (click)="logout()">Sair</button>
+    </div>
+  </nav>
+  <main class="saas-content">
+    <router-outlet />
+  </main>
+</div>

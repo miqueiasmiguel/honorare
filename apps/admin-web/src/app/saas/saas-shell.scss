@@ -1,0 +1,82 @@
+@use 'styles/tokens' as *;
+
+.saas-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.saas-sidebar {
+  width: 240px;
+  padding: space(6) space(4);
+  background-color: var(--color-tinta);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: space(8);
+}
+
+.saas-sidebar__wordmark {
+  font-family: var(--font-mono);
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--color-terracota);
+  letter-spacing: -0.01em;
+  padding: 0 space(2);
+}
+
+.saas-sidebar__nav {
+  display: flex;
+  flex-direction: column;
+  gap: space(1);
+}
+
+.saas-sidebar__link {
+  display: block;
+  padding: space(2) space(3);
+
+  @include text-body;
+
+  color: var(--color-borda-discreta);
+  text-decoration: none;
+  border-radius: 6px;
+
+  @include transition-fast(color);
+
+  &:hover {
+    color: var(--color-pergaminho-claro);
+  }
+
+  &.active {
+    color: var(--color-terracota);
+  }
+}
+
+.saas-sidebar__footer {
+  margin-top: auto;
+}
+
+.saas-sidebar__logout {
+  display: block;
+  width: 100%;
+  padding: space(2) space(3);
+  background: none;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+
+  @include text-body;
+
+  color: var(--color-borda-discreta);
+
+  @include transition-fast(color);
+
+  &:hover {
+    color: var(--color-pergaminho-claro);
+  }
+}
+
+.saas-content {
+  flex: 1;
+  overflow-y: auto;
+}
