@@ -49,6 +49,7 @@ Criar `admin-web` e `medico-pwa` com Angular CLI dentro de `apps/`. PWA do médi
 ### F1.3 — Solution .NET com bounded contexts
 
 Criar `Honorare.sln` em `apps/backend/` com:
+
 - Projeto `App` (host)
 - Projetos `Identity`, `Catalog`, `Faturamento`, `Reporting` (class libraries)
 - Referências corretas (App referencia todos; Reporting → Faturamento → Catalog → Identity)
@@ -74,15 +75,11 @@ Manifest, ícones, service worker do `medico-pwa` configurados corretamente para
 
 **Critério de pronto:** "Adicionar à tela inicial" funciona em iOS e Android, abre em fullscreen.
 
-### F1.7 — Autenticação ponta-a-ponta
+### F1.7 — Autenticação ponta-a-ponta ✅ (backend + shell Angular concluídos)
 
-> **Detalhamento completo em `docs/IMPLEMENTACAO_AUTH.md`** — ler antes de implementar.
+ASP.NET Core Identity com **Google OAuth 2.0** como único método. JWT (15 min) + refresh token (7 dias, hash SHA-256). Três roles: `SaasAdmin`, `TenantAdmin`, `Medico`. Middleware bloqueia tenants suspensos. SaaS admin cadastra usuários por e-mail; `GoogleId` é associado no primeiro login.
 
-ASP.NET Core Identity com **Google OAuth 2.0** como único método. Sem senha. JWT (15 min) + refresh token (7 dias, persistido como hash SHA-256). Três roles: `SaasAdmin`, `TenantAdmin`, `Medico`. Serviço `ICurrentUser` injetado no `AppDbContext` para controle do global query filter por `TenantId`. Middleware bloqueia tenants suspensos.
-
-Inclui painel SaaS mínimo: listar tenants, criar tenant, criar usuário (TenantAdmin ou Medico), ativar/suspender tenant. SaaS admin cadastra usuários por email — `GoogleId` é associado automaticamente no primeiro login do usuário.
-
-**Critério de pronto:** SaaS admin cria tenant e usuário; usuário loga via Google em `/admin/` ou `/app/` conforme seu role; ambos veem telas distintas; token refresha sem deslogar; tenant suspenso recebe 403.
+**Painel SaaS (admin-web):** shell de rotas, guard, página de detalhe de tenant e gerenciamento de usuários concluídos. **Pendente:** página de listagem de tenants (`/saas/tenants`) — cards de resumo (ativos/suspensos/médicos), tabela com todos os tenants e modal de criação de tenant.
 
 ## Fase 2 — Cadastros (2-3 semanas)
 
@@ -143,6 +140,7 @@ Entrada manual de demonstrativo. Conciliação item-a-item com botão "essa linh
 Feature central do produto. O admin cria um `Recurso` (recebe número automático no formato `AAAAMM`), seleciona as guias em divergência e gera o PDF. As guias incluídas têm situação atualizada para `EmRecurso` com referência ao número.
 
 Estrutura do PDF:
+
 - Cabeçalho: logo + nome da billing company (por tenant)
 - Título: `[Nome do médico] - CRM [número] - RECURSO [OPERADORA] [AAAAMM]`
 - Por guia: data, senha, carteira do beneficiário, nome do paciente, papel do executor (ex: CIRURGIÃO)
@@ -153,6 +151,7 @@ Estrutura do PDF:
 Labels das colunas: usar **PAGO** e **CORRETO** como padrão (não "PG UNIMED"/"VL CORRETO" — labels variam entre documentos do cliente; a forma curta é mais limpa e não amarra na operadora).
 
 Semântica dos valores:
+
 - **VL CORRETO** por item = `ValorApurado` (o que o motor diz que deveria ser pago; para pacotes, valor informado manualmente)
 - **PG UNIMED** por item = `ValorLiquidado` (o que o demonstrativo registrou)
 - **RESTA PAGAR** por guia = `sum(ValorApurado) − sum(ValorLiquidado)`
@@ -212,6 +211,7 @@ Manual de uso, FAQ. Vídeos curtos dos fluxos principais.
 ### F6.4 — Testes E2E dos fluxos críticos
 
 Playwright ou Cypress para fluxos críticos:
+
 - Admin cria guia, cálculo aparece correto
 - Médico vê suas guias e não vê de outros
 - Conciliação detecta divergência

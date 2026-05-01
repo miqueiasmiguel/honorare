@@ -46,6 +46,7 @@ Entidade de outro context entra por `Id`, não por referência. Ex: `Guia.Operad
 ### YAGNI radical
 
 Não adicionar padrões sem dor concreta presente. Em particular, NÃO usar:
+
 - CQRS, MediatR
 - Repository pattern (EF Core já é repository)
 - AutoMapper / Mapster (mapeamento manual enquanto for pequeno)
@@ -56,6 +57,7 @@ Não adicionar padrões sem dor concreta presente. Em particular, NÃO usar:
 Uma classe = uma implementação. Interface só quando há múltiplas implementações reais.
 
 **Exceção legítima:** `IPricingRuleSet` em `Faturamento/Calculo/`. Justificativa: sistema é agnóstico de operadora; UNIMED é a primeira de várias previstas (Bradesco, Amil, etc.). Implementações previstas:
+
 - `UnimedRuleSet` — motor completo com pipeline de modificadores
 - `NullRuleSet` — para convênios sem tabela negociada; retorna `ValorApurado = null`, guia opera só com status e observação
 
@@ -77,11 +79,11 @@ Dentro de cada bounded context, evitar subpastas `Domain/`, `Application/`, `Inf
 
 ### Três roles, três isolamentos
 
-| Role | Acessa | Isolamento |
-|---|---|---|
-| `SaasAdmin` | Painel SaaS global (`/api/v1/saas/**`) | Nenhum — acessa qualquer tenant |
-| `TenantAdmin` | Painel do tenant (`/api/v1/admin/**`) | `TenantId` via global query filter |
-| `Medico` | PWA do médico (`/api/v1/medico/**`) | `TenantId` + `MedicoId` explícito nas queries |
+| Role          | Acessa                                 | Isolamento                                    |
+| ------------- | -------------------------------------- | --------------------------------------------- |
+| `SaasAdmin`   | Painel SaaS global (`/api/v1/saas/**`) | Nenhum — acessa qualquer tenant               |
+| `TenantAdmin` | Painel do tenant (`/api/v1/admin/**`)  | `TenantId` via global query filter            |
+| `Medico`      | PWA do médico (`/api/v1/medico/**`)    | `TenantId` + `MedicoId` explícito nas queries |
 
 ### Políticas de autorização
 
@@ -114,9 +116,19 @@ builder.HasQueryFilter(e =>
 
 Isolamento por `MedicoId` **não usa global filter** — é `Where(e => e.MedicoId == _currentUser.MedicoId)` explícito nos endpoints `/api/v1/medico/**`.
 
+### Claims do JWT
+
+```json
+{ "sub": "user-guid", "role": "SaasAdmin|TenantAdmin|Medico", "tenant_id": "guid (ausente para SaasAdmin)", "medico_id": "guid (apenas Medico)", "email": "...", "jti": "guid", "exp": 0 }
+```
+
 ### Regra LGPD para SaasAdmin
 
 Toda rota `/api/v1/saas/**` que acessa dados de um tenant específico deve receber `tenantId` como parâmetro de rota e validar que o tenant existe. Isso garante auditabilidade ("o admin acessou dados do tenant X") sem violar o isolamento multi-tenant.
+
+### Cortes explícitos de auth (pós-MVP)
+
+Magic link, passkeys, MFA, login social adicional (Apple, Microsoft), convite por e-mail e RBAC granular não serão implementados no MVP. SaaS admin cadastra usuários por e-mail; `GoogleId` é associado automaticamente no primeiro login.
 
 ### Multi-tenant é não-negociável
 
@@ -138,6 +150,7 @@ Bounded contexts: maioria em inglês (`Identity`, `Catalog`, `Reporting`), excet
 `admin-web` e `medico-pwa` são projetos Angular **independentes**, não um único Angular com lazy loading.
 
 Justificativa:
+
 - PWA configuration (service worker, manifest, cache) é específico do médico
 - Bundle size do médico precisa ser pequeno (mobile, 4G)
 - Contextos mentais diferentes (admin: entrada de dados; médico: visualização)
@@ -150,6 +163,7 @@ Justificativa:
 ## Backward-compat na API
 
 Backend e clientes não fazem deploy juntos. Regras:
+
 - Adicionar campos: ok
 - Tornar campos opcionais: ok
 - Adicionar endpoints: ok
@@ -160,11 +174,13 @@ Todos os endpoints devem estar em `/api/v1/` desde o início.
 ## URLs em produção
 
 Caminhos no mesmo domínio (não subdomínios):
+
 - `/admin/` → admin-web
 - `/app/` → medico-pwa
 - `/api/v1/` → backend
 
 Implicações:
+
 - Nginx ou similar como proxy reverso obrigatório
 - `<base href="/admin/">` no admin Angular, `<base href="/app/">` no PWA
 - Service Worker do PWA com `scope: "/app/"` e header `Service-Worker-Allowed: /app/`
@@ -193,6 +209,7 @@ O template do recurso inclui o logo da billing company — cada `Tenant` armazen
 ## CI/CD
 
 Três workflows independentes com path filter:
+
 - `backend-ci.yml` (filtro: `apps/backend/**`)
 - `admin-web-ci.yml` (filtro: `apps/admin-web/**, packages/api-contracts/**`)
 - `medico-pwa-ci.yml` (filtro: `apps/medico-pwa/**, packages/api-contracts/**`)
