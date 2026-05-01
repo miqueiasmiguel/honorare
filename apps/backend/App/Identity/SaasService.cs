@@ -20,7 +20,7 @@ internal sealed record TenantWithOwnerSummary(
     string OwnerEmail);
 
 internal sealed record UserSummary(
-    Guid Id, string Email, string Role, bool IsActive, DateTimeOffset CreatedAt, Guid? MedicoId);
+    Guid Id, string Email, string? Nome, string Role, bool IsActive, DateTimeOffset CreatedAt, Guid? MedicoId);
 
 internal sealed class SaasService(AppDbContext db)
 {
@@ -124,6 +124,7 @@ internal sealed class SaasService(AppDbContext db)
             .Select(u => new UserSummary(
                 u.Id,
                 u.Email!,
+                u.Nome,
                 AuthService.DeriveRole(u),
                 u.IsActive,
                 u.CreatedAt,
@@ -167,7 +168,7 @@ internal sealed class SaasService(AppDbContext db)
 
         var derivedRole = AuthService.DeriveRole(user);
         return Result<UserSummary>.Ok(new UserSummary(
-            user.Id, user.Email!, derivedRole, user.IsActive, user.CreatedAt, user.MedicoId));
+            user.Id, user.Email!, user.Nome, derivedRole, user.IsActive, user.CreatedAt, user.MedicoId));
     }
 
     internal async Task<Result> UpdateUserStatusAsync(
