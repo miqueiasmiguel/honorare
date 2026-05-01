@@ -1,0 +1,41 @@
+// CSS custom properties — single source of truth for all design tokens.
+// Never redefine these in component styles; reference them with var(--...).
+:root {
+  // ── Backgrounds
+  --color-pergaminho: #f6f1ea;
+  --color-pergaminho-claro: #fbf7f1;
+
+  // ── Text / Ink
+  --color-tinta: #1f1b16;
+  --color-tinta-secundaria: #6b6259;
+  --color-tinta-terciaria: #9a8f82;
+
+  // ── Borders
+  --color-borda-discreta: #e5dccc;
+  --color-borda-media: #cfc4b0;
+
+  // ── Brand accent — use sparingly (logo, links, primary CTA only)
+  --color-terracota: #b8593a;
+  --color-terracota-escuro: #8f4329;
+
+  // ── Status: positive ("Conforme", "Pago")
+  --color-verde-musgo: #5c7a4e;
+  --color-verde-musgo-claro: #e8efe2;
+
+  // ── Status: negative ("Divergência", "Glosa")
+  --color-ferrugem: #a14b3a;
+  --color-ferrugem-claro: #f4e4dd;
+
+  // ── Status: warning ("Pendente", "Aguardando")
+  --color-ambar: #a8702c;
+  --color-ambar-claro: #f2e9d6;
+
+  // ── Fonts
+  --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
+
+  // ── Motion — 150-200ms ease-out; no animation for decoration
+  --duration-fast: 150ms;
+  --duration-base: 200ms;
+  --easing-default: ease-out;
+}

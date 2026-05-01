@@ -9,6 +9,11 @@
     "declaration-no-important": true,
     "max-nesting-depth": [3, { "ignore": ["blockless-at-rules", "pseudo-classes"] }],
     "scss/no-global-function-names": true,
-    "scss/at-import-no-partial-leading-underscore": true
+    "scss/at-import-no-partial-leading-underscore": true,
+    "declaration-property-value-disallowed-list": {
+      "/^(color|background|background-color|border|border-color|border-top|border-right|border-bottom|border-left|outline|outline-color|fill|stroke|box-shadow|text-shadow|caret-color|text-decoration-color)$/": [
+        "/#[0-9a-fA-F]{3,8}/"
+      ]
+    }
   }
 }

@@ -1,29 +1,3 @@
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-
-:root {
-  --color-pergaminho: #f6f1ea;
-  --color-pergaminho-claro: #fbf7f1;
-  --color-tinta: #1f1b16;
-  --color-tinta-secundaria: #6b6259;
-  --color-tinta-terciaria: #9a8f82;
-  --color-borda-discreta: #e5dccc;
-  --color-borda-media: #cfc4b0;
-  --color-terracota: #b8593a;
-  --color-terracota-escuro: #8f4329;
-  --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
-  --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
-}
-
-html,
-body {
-  margin: 0;
-  padding: 0;
-  font-family: var(--font-sans);
-  background-color: var(--color-pergaminho);
-  color: var(--color-tinta);
-  -webkit-font-smoothing: antialiased;
-}
+// @use must come before any CSS — tokens define :root, base applies reset + globals
+@use './styles/tokens/root';
+@use './styles/base';

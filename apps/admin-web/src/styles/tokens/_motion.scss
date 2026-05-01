@@ -1,0 +1,23 @@
+@use 'sass:list';
+
+// Usage: @include transition(color, background-color);
+@mixin transition($props...) {
+  $result: ();
+
+  @each $prop in $props {
+    $result: list.append($result, #{$prop} var(--duration-base) var(--easing-default), comma);
+  }
+
+  transition: $result;
+}
+
+// For interactions that need to feel snappier
+@mixin transition-fast($props...) {
+  $result: ();
+
+  @each $prop in $props {
+    $result: list.append($result, #{$prop} var(--duration-fast) var(--easing-default), comma);
+  }
+
+  transition: $result;
+}
