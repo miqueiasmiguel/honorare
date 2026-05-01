@@ -5,7 +5,7 @@ import { AuthService } from '../auth.service';
 
 @Component({
   selector: 'app-callback',
-  template: '<p>A autenticar...</p>',
+  templateUrl: './callback.html',
 })
 export class Callback implements OnInit {
   private readonly _route = inject(ActivatedRoute);

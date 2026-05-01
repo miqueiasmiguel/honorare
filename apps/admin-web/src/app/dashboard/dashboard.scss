@@ -1,0 +1,18 @@
+@use 'styles/tokens' as *;
+
+.dashboard {
+  padding: space(6);
+}
+
+.dashboard__title {
+  @include text-h1;
+
+  margin: 0 0 space(2);
+}
+
+.dashboard__subtitle {
+  @include text-body;
+
+  color: var(--color-tinta-secundaria);
+  margin: 0;
+}
