@@ -18,13 +18,14 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
     `
       .saas-layout {
         display: flex;
-        height: 100%;
+        min-height: 100vh;
       }
 
       .saas-sidebar {
         width: 240px;
         padding: 1rem;
         background-color: #1a1a2e;
+        flex-shrink: 0;
       }
 
       .saas-sidebar__link {
@@ -42,7 +43,6 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
       .saas-content {
         flex: 1;
-        padding: 1.5rem;
         overflow-y: auto;
       }
     `,
