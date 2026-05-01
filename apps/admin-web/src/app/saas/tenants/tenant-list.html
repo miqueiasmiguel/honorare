@@ -1,0 +1,99 @@
+<div class="tenant-list">
+  <div class="tenant-list__cards">
+    <div class="tenant-list__card" data-testid="card-ativos">
+      <div class="tenant-list__card-label">Tenants Ativos</div>
+      <div class="tenant-list__card-value">{{ totalAtivos() }}</div>
+    </div>
+    <div class="tenant-list__card" data-testid="card-suspensos">
+      <div class="tenant-list__card-label">Tenants Suspensos</div>
+      <div class="tenant-list__card-value">{{ totalSuspensos() }}</div>
+    </div>
+    <div class="tenant-list__card" data-testid="card-medicos">
+      <div class="tenant-list__card-label">Total de Médicos</div>
+      <div class="tenant-list__card-value">{{ totalMedicos() }}</div>
+    </div>
+  </div>
+
+  <div class="tenant-list__toolbar">
+    <h2 class="tenant-list__title">Tenants</h2>
+    <button class="tenant-list__btn-novo" type="button" (click)="openModal()">Novo Tenant</button>
+  </div>
+
+  <table class="tenant-list__table">
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>Status</th>
+        <th>Admins</th>
+        <th>Médicos</th>
+        <th>Criado em</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (tenant of tenants(); track tenant.id) {
+        <tr class="tenant-list__row">
+          <td>{{ tenant.name }}</td>
+          <td>
+            <span [class]="badgeClass(tenant.status)">{{ tenant.status }}</span>
+          </td>
+          <td>{{ tenant.totalAdmins }}</td>
+          <td>{{ tenant.totalMedicos }}</td>
+          <td>{{ formatDate(tenant.createdAt) }}</td>
+          <td>
+            <button
+              class="tenant-list__btn-ver"
+              type="button"
+              [routerLink]="['/saas/tenants', tenant.id]"
+            >
+              Ver
+            </button>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+
+  @if (showModal()) {
+    <div class="tenant-list__overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="tenant-list__modal">
+        <h3 id="modal-title" class="tenant-list__modal-title">Novo Tenant</h3>
+        <form [formGroup]="form" (ngSubmit)="submitCreate()">
+          <div class="tenant-list__field">
+            <label for="tenantName" class="tenant-list__label">Nome do tenant</label>
+            <input
+              id="tenantName"
+              class="tenant-list__input"
+              formControlName="tenantName"
+              placeholder="Nome do tenant"
+            />
+            @if (form.controls.tenantName.invalid && form.controls.tenantName.touched) {
+              <span class="tenant-list__error">Nome é obrigatório</span>
+            }
+          </div>
+          <div class="tenant-list__field">
+            <label for="ownerEmail" class="tenant-list__label">E-mail do owner</label>
+            <input
+              id="ownerEmail"
+              class="tenant-list__input"
+              formControlName="ownerEmail"
+              type="email"
+              placeholder="E-mail do owner"
+            />
+            @if (form.controls.ownerEmail.invalid && form.controls.ownerEmail.touched) {
+              <span class="tenant-list__error tenant-list__error--email">E-mail inválido</span>
+            }
+          </div>
+          <div class="tenant-list__modal-footer">
+            <button type="button" class="tenant-list__btn-cancel" (click)="closeModal()">
+              Cancelar
+            </button>
+            <button type="submit" class="tenant-list__btn-criar" [disabled]="creating()">
+              Criar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

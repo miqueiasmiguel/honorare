@@ -1,0 +1,149 @@
+<div class="tenant-detail">
+  <nav class="tenant-detail__breadcrumb">
+    <a routerLink="/saas/tenants" class="tenant-detail__breadcrumb-link">Tenants</a>
+    <span class="tenant-detail__breadcrumb-sep"> / </span>
+    <span class="tenant-detail__breadcrumb-current">{{ tenant()?.name ?? '' }}</span>
+  </nav>
+
+  @if (tenant(); as t) {
+    <div class="tenant-detail__header">
+      <div class="tenant-detail__header-left">
+        <h2 class="tenant-detail__name">{{ t.name }}</h2>
+        <span [class]="badgeClass(t.status)">{{ t.status }}</span>
+      </div>
+      <div class="tenant-detail__header-actions">
+        @if (t.status === 'Ativo') {
+          <button
+            class="tenant-detail__btn tenant-detail__btn--warn"
+            type="button"
+            data-testid="btn-suspender"
+            (click)="changeStatus('Suspenso')"
+          >
+            Suspender
+          </button>
+          <button
+            class="tenant-detail__btn tenant-detail__btn--danger"
+            type="button"
+            data-testid="btn-cancelar"
+            (click)="changeStatus('Cancelado')"
+          >
+            Cancelar
+          </button>
+        }
+        @if (t.status === 'Suspenso') {
+          <button
+            class="tenant-detail__btn tenant-detail__btn--success"
+            type="button"
+            data-testid="btn-reativar"
+            (click)="changeStatus('Ativo')"
+          >
+            Reativar
+          </button>
+          <button
+            class="tenant-detail__btn tenant-detail__btn--danger"
+            type="button"
+            data-testid="btn-cancelar"
+            (click)="changeStatus('Cancelado')"
+          >
+            Cancelar
+          </button>
+        }
+      </div>
+    </div>
+  }
+
+  <div class="tenant-detail__section">
+    <div class="tenant-detail__section-header">
+      <h3 class="tenant-detail__section-title">Usuários</h3>
+      <button class="tenant-detail__btn" type="button" (click)="openModal()">
+        Adicionar usuário
+      </button>
+    </div>
+
+    <table class="tenant-detail__table">
+      <thead>
+        <tr>
+          <th>E-mail</th>
+          <th>Role</th>
+          <th>Status</th>
+          <th>Criado em</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (user of users(); track user.id) {
+          <tr class="tenant-detail__user-row">
+            <td>{{ user.email }}</td>
+            <td>
+              <span [class]="roleBadgeClass(user.role)">{{ user.role }}</span>
+            </td>
+            <td>{{ user.isActive ? 'Ativo' : 'Inativo' }}</td>
+            <td>{{ formatDate(user.createdAt) }}</td>
+            <td>
+              <button class="tenant-detail__toggle" type="button" (click)="toggleUser(user)">
+                {{ user.isActive ? 'Desativar' : 'Ativar' }}
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  @if (showModal()) {
+    <div
+      class="tenant-detail__overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="add-user-title"
+    >
+      <div class="tenant-detail__modal">
+        <h3 id="add-user-title" class="tenant-detail__modal-title">Adicionar usuário</h3>
+        <form [formGroup]="form" (ngSubmit)="submitAddUser()">
+          <div class="tenant-detail__field">
+            <label for="email" class="tenant-detail__label">E-mail</label>
+            <input
+              id="email"
+              class="tenant-detail__input"
+              formControlName="email"
+              type="email"
+              placeholder="E-mail do usuário"
+            />
+            @if (form.controls.email.invalid && form.controls.email.touched) {
+              <span class="tenant-detail__error">E-mail inválido</span>
+            }
+          </div>
+          <div class="tenant-detail__field">
+            <label for="role" class="tenant-detail__label">Role</label>
+            <select id="role" class="tenant-detail__input" formControlName="role">
+              <option value="TenantAdmin">Admin</option>
+              <option value="Medico">Médico</option>
+            </select>
+          </div>
+          @if (showMedicoId()) {
+            <div class="tenant-detail__field">
+              <label for="medicoId" class="tenant-detail__label">ID do Médico (UUID)</label>
+              <input
+                id="medicoId"
+                class="tenant-detail__input"
+                formControlName="medicoId"
+                placeholder="UUID do médico"
+              />
+              @if (form.controls.medicoId.invalid && form.controls.medicoId.touched) {
+                <span class="tenant-detail__error">ID do médico é obrigatório</span>
+              }
+            </div>
+          }
+          <div class="tenant-detail__modal-footer">
+            <button type="button" class="tenant-detail__btn-cancel" (click)="closeModal()">
+              Cancelar
+            </button>
+            <button type="submit" class="tenant-detail__btn" [disabled]="submitting()">
+              Adicionar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

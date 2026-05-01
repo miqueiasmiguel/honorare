@@ -1,0 +1,291 @@
+@use 'styles/tokens' as *;
+
+.tenant-detail {
+  padding: space(6);
+}
+
+.tenant-detail__breadcrumb {
+  @include text-body-small;
+
+  margin-bottom: space(4);
+}
+
+.tenant-detail__breadcrumb-link {
+  color: var(--color-tinta);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.tenant-detail__breadcrumb-sep {
+  color: var(--color-tinta-terciaria);
+  margin: 0 space(1);
+}
+
+.tenant-detail__breadcrumb-current {
+  color: var(--color-tinta-secundaria);
+}
+
+.tenant-detail__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: space(6);
+  padding: space(4);
+  background-color: var(--color-pergaminho-claro);
+  border: 1px solid var(--color-borda-discreta);
+  border-radius: 8px;
+}
+
+.tenant-detail__header-left {
+  display: flex;
+  align-items: center;
+  gap: space(3);
+}
+
+.tenant-detail__header-actions {
+  display: flex;
+  gap: space(2);
+}
+
+.tenant-detail__name {
+  @include text-h2;
+
+  margin: 0;
+}
+
+.tenant-detail__section {
+  background-color: var(--color-pergaminho-claro);
+  border: 1px solid var(--color-borda-discreta);
+  border-radius: 8px;
+  padding: space(4);
+}
+
+.tenant-detail__section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: space(4);
+}
+
+.tenant-detail__section-title {
+  @include text-h3;
+
+  margin: 0;
+}
+
+.tenant-detail__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tenant-detail__table th {
+  padding: space(3) space(4);
+  text-align: left;
+  border-bottom: 2px solid var(--color-borda-media);
+
+  @include text-label;
+}
+
+.tenant-detail__table td {
+  padding: space(3) space(4);
+  border-bottom: 1px solid var(--color-borda-discreta);
+
+  @include text-body;
+}
+
+.tenant-detail__btn {
+  padding: 0 space(3);
+  height: 34px;
+  background-color: var(--color-terracota);
+  color: var(--color-pergaminho-claro);
+  border: none;
+  border-radius: 6px;
+
+  @include text-label;
+
+  font-size: 13px;
+  cursor: pointer;
+
+  @include transition-fast(background-color);
+
+  &:hover {
+    background-color: var(--color-terracota-escuro);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.tenant-detail__btn--warn {
+  background-color: var(--color-ambar);
+
+  &:hover {
+    filter: brightness(0.88);
+  }
+}
+
+.tenant-detail__btn--danger {
+  background-color: var(--color-ferrugem);
+
+  &:hover {
+    filter: brightness(0.88);
+  }
+}
+
+.tenant-detail__btn--success {
+  background-color: var(--color-verde-musgo);
+
+  &:hover {
+    filter: brightness(0.88);
+  }
+}
+
+.tenant-detail__toggle {
+  padding: space(1) space(2);
+  border: 1px solid var(--color-borda-media);
+  background-color: transparent;
+  border-radius: 4px;
+
+  @include text-label;
+
+  cursor: pointer;
+
+  @include transition-fast(background-color, border-color);
+
+  &:hover {
+    background-color: var(--color-borda-discreta);
+  }
+}
+
+.tenant-detail__overlay {
+  position: fixed;
+  inset: 0;
+
+  // tinta (#1f1b16) com 60% opacidade
+  background-color: rgb(31 27 22 / 60%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.tenant-detail__modal {
+  background-color: var(--color-pergaminho-claro);
+  border-radius: 8px;
+  padding: space(6);
+  width: 420px;
+  max-width: 90%;
+}
+
+.tenant-detail__modal-title {
+  @include text-h3;
+
+  margin: 0 0 space(4);
+}
+
+.tenant-detail__field {
+  margin-bottom: space(4);
+}
+
+.tenant-detail__label {
+  display: block;
+
+  @include text-label;
+
+  color: var(--color-tinta-secundaria);
+  margin-bottom: space(1);
+}
+
+.tenant-detail__input {
+  width: 100%;
+  height: 40px;
+  padding: 0 space(3);
+  border: 1px solid var(--color-borda-media);
+  border-radius: 6px;
+  background-color: var(--color-pergaminho-claro);
+
+  @include text-body;
+  @include transition-fast(border-color);
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-terracota);
+  }
+
+  &::placeholder {
+    color: var(--color-tinta-terciaria);
+  }
+}
+
+.tenant-detail__error {
+  display: block;
+
+  @include text-label;
+
+  color: var(--color-ferrugem);
+  margin-top: space(1);
+}
+
+.tenant-detail__modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: space(3);
+  margin-top: space(6);
+}
+
+.tenant-detail__btn-cancel {
+  padding: 0 space(4);
+  height: 36px;
+  border: 1px solid var(--color-borda-media);
+  background-color: transparent;
+  border-radius: 6px;
+
+  @include text-label;
+
+  font-size: 14px;
+  cursor: pointer;
+
+  @include transition-fast(background-color);
+
+  &:hover {
+    background-color: var(--color-borda-discreta);
+  }
+}
+
+.badge {
+  display: inline-block;
+  padding: space(1) space(2);
+  border-radius: 100px;
+
+  @include text-label;
+}
+
+.badge--ativo {
+  background-color: var(--color-verde-musgo-claro);
+  color: var(--color-verde-musgo);
+}
+
+.badge--suspenso {
+  background-color: var(--color-ambar-claro);
+  color: var(--color-ambar);
+}
+
+.badge--cancelado {
+  background-color: var(--color-ferrugem-claro);
+  color: var(--color-ferrugem);
+}
+
+.badge--admin {
+  background-color: var(--color-borda-discreta);
+  color: var(--color-tinta);
+}
+
+.badge--medico {
+  background-color: var(--color-pergaminho);
+  color: var(--color-tinta-secundaria);
+}
