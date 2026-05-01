@@ -74,6 +74,9 @@ importers:
       "@eslint/js":
         specifier: ^9.0.0
         version: 9.39.4
+      "@types/node":
+        specifier: ^25.6.0
+        version: 25.6.0
       "@vitest/coverage-v8":
         specifier: ^3.0.0
         version: 3.2.4(vitest@3.2.4(@types/node@25.6.0)(jiti@2.6.1)(jsdom@26.1.0)(sass@1.90.0)(yaml@2.8.3))
