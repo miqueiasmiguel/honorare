@@ -11,6 +11,7 @@ internal sealed class ApplicationUser : IdentityUser<Guid>
     public Guid? MedicoId { get; private set; }
     public bool IsActive { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
+    public string? Nome { get; private set; }
 
     private ApplicationUser() { }
 
@@ -52,4 +53,6 @@ internal sealed class ApplicationUser : IdentityUser<Guid>
     public void Deactivate() => IsActive = false;
 
     public void Activate() => IsActive = true;
+
+    public void UpdateNome(string nome) => Nome = nome.Trim();
 }

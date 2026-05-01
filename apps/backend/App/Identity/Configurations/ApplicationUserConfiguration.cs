@@ -13,5 +13,6 @@ internal sealed class ApplicationUserConfiguration : IEntityTypeConfiguration<Ap
 
         builder.Property(u => u.GoogleId).HasMaxLength(128);
         builder.Property(u => u.CreatedAt).IsRequired();
+        builder.Property(u => u.Nome).HasMaxLength(100);
     }
 }
