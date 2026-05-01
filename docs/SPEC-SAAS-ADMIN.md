@@ -394,7 +394,7 @@ Casos obrigatórios:
 
 ---
 
-## TASK-SAAS-05 — Frontend: página de detalhe do tenant + gerenciamento de usuários
+## TASK-SAAS-05 — Frontend: página de detalhe do tenant + gerenciamento de usuários ✅ CONCLUÍDA
 
 ### Objetivo
 
