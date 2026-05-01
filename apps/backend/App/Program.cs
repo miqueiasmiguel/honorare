@@ -28,6 +28,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<SaasService>();
+builder.Services.AddScoped<AdminService>();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
@@ -131,6 +132,7 @@ app.UseAuthorization();
 
 app.MapAuthEndpoints();
 app.MapSaasEndpoints();
+app.MapAdminEndpoints();
 app.MapControllers();
 
 app.Run();
