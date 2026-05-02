@@ -742,7 +742,7 @@ export const homeRedirectGuard: CanActivateFn = () => {
 
 ---
 
-### TASK-ADMIN-08 — `AdminShell`, rotas e atualização de `app.routes.ts` e `Callback`
+### TASK-ADMIN-08 ✅ — `AdminShell`, rotas e atualização de `app.routes.ts` e `Callback`
 
 #### 4.8.1 `AdminShell`
 
