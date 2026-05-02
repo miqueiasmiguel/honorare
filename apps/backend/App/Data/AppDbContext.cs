@@ -1,4 +1,5 @@
 using System.Reflection;
+using App.Catalog;
 using App.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -14,6 +15,8 @@ internal class AppDbContext(
 
     public DbSet<Tenant> Tenants => Set<Tenant>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<Operadora> Operadoras => Set<Operadora>();
+    public DbSet<Procedimento> Procedimentos => Set<Procedimento>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
