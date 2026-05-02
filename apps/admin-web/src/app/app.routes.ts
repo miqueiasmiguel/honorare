@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './auth/auth.guard';
+import { homeRedirectGuard } from './auth/home-redirect.guard';
 
 export const routes: Routes = [
   {
@@ -16,9 +17,14 @@ export const routes: Routes = [
     loadChildren: () => import('./saas/saas.routes').then((m) => m.saasRoutes),
   },
   {
-    path: '',
+    path: 'admin',
     canActivate: [authGuard],
-    loadComponent: () => import('./dashboard/dashboard').then((m) => m.Dashboard),
+    loadChildren: () => import('./admin/admin.routes').then((m) => m.adminRoutes),
+  },
+  {
+    path: '',
+    canActivate: [authGuard, homeRedirectGuard],
+    children: [],
   },
   {
     path: '**',

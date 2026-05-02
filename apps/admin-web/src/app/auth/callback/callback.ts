@@ -36,6 +36,7 @@ export class Callback implements OnInit {
     });
 
     const role = this._auth.role();
-    void this._router.navigate([role === 'SaasAdmin' ? '/saas' : '/']);
+    const destination = role === 'SaasAdmin' ? '/saas/tenants' : '/admin/users';
+    void this._router.navigate([destination]);
   }
 }
