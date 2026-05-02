@@ -95,7 +95,9 @@ Telas do admin-web para o `TenantAdmin` gerenciar usuários dentro do seu tenant
 
 ### F2.2 — Operadoras e procedimentos
 
-CRUD de `Operadora`. CRUD de `Procedimento` (TUSS + porte + porte anestésico + flags). Importação de TUSS via CSV.
+**Entregues (TASK-CAT-01/02):** Entidades `Operadora` e `Procedimento` com `ITenantEntity`, enum `TipoRuleSet`, configurações EF Core (`OperadoraConfiguration`, `ProcedimentoConfiguration`), migration `AddCatalogEntities`, projeto `Catalog.Tests` com fixture Testcontainers e 15 schema tests passando.
+
+**Pendente:** CRUD de `Operadora` (TASK-CAT-03/04). CRUD de `Procedimento` com importação TUSS via CSV (TASK-CAT-05/06). Telas Angular de Operadora e Procedimento (TASK-CAT-07/08).
 
 ### F2.3 — Tabelas e prestadores
 
