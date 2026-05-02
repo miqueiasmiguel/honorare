@@ -36,6 +36,8 @@ describe('Callback — happy path', () => {
     router = TestBed.inject(Router);
     location = TestBed.inject(Location);
     authService = TestBed.inject(AuthService);
+    // Previne NG04002: provideRouter([]) não registra as rotas destino do Callback.
+    vi.spyOn(router, 'navigate').mockResolvedValue(true);
   });
 
   afterEach(() => {
@@ -84,14 +86,14 @@ describe('Callback — happy path', () => {
     expect(callOrder[1]).toBe('storeTokens');
   });
 
-  it('navigates to / after storing tokens when role is TenantAdmin', async () => {
+  it('navigates to /admin/users after storing tokens when role is not SaasAdmin', async () => {
     const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
     const fixture = TestBed.createComponent(Callback);
     fixture.detectChanges();
     await fixture.whenStable();
 
-    // at-value is not a valid JWT → role() returns null → redirect to /
-    expect(navigateSpy).toHaveBeenCalledWith(['/']);
+    // at-value is not a valid JWT → role() returns null → fallback to /admin/users
+    expect(navigateSpy).toHaveBeenCalledWith(['/admin/users']);
   });
 });
 
@@ -109,7 +111,7 @@ describe('Callback — role-based redirect', () => {
     fixture.detectChanges();
     await fixture.whenStable();
 
-    expect(navigateSpy).toHaveBeenCalledWith(['/saas']);
+    expect(navigateSpy).toHaveBeenCalledWith(['/saas/tenants']);
     localStorage.clear();
   });
 });

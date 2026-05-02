@@ -1,0 +1,47 @@
+<section class="profile">
+  <h1 class="profile__title">Meu perfil</h1>
+
+  @if (profile(); as p) {
+    <div class="profile__info-card">
+      <dl class="profile__info">
+        <dt class="profile__label">E-mail</dt>
+        <dd class="profile__value">{{ p.email }}</dd>
+        <dt class="profile__label">Perfil</dt>
+        <dd class="profile__value">{{ p.role }}</dd>
+      </dl>
+    </div>
+  }
+
+  <form class="profile__form" (ngSubmit)="submit()" [formGroup]="form">
+    <h2 class="profile__form-title">Dados pessoais</h2>
+
+    <div class="profile__field">
+      <label class="profile__field-label" for="nome">Nome de exibição</label>
+      <input
+        id="nome"
+        type="text"
+        class="profile__input"
+        [class.profile__input--invalid]="form.controls.nome.touched && form.controls.nome.invalid"
+        formControlName="nome"
+        maxlength="100"
+        autocomplete="name"
+        placeholder="Seu nome completo"
+      />
+      @if (form.controls.nome.touched && form.controls.nome.hasError('required')) {
+        <span class="profile__error">Nome é obrigatório.</span>
+      }
+      @if (form.controls.nome.touched && form.controls.nome.hasError('maxlength')) {
+        <span class="profile__error">Nome deve ter no máximo 100 caracteres.</span>
+      }
+    </div>
+
+    <div class="profile__actions">
+      <button type="submit" class="profile__btn-save" [disabled]="saving()">
+        {{ saving() ? 'Salvando…' : 'Salvar alterações' }}
+      </button>
+      @if (saved()) {
+        <span class="profile__success">Perfil salvo com sucesso.</span>
+      }
+    </div>
+  </form>
+</section>

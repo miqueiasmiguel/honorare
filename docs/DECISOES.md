@@ -119,6 +119,7 @@ Não um Angular único com lazy loading. Justificativa: PWA configuration, bundl
 ### D-018: YAGNI radical
 
 Não adicionar padrões sem dor concreta presente:
+
 - Sem CQRS, MediatR
 - Sem Repository (EF Core já é)
 - Sem AutoMapper (mapeamento manual)
@@ -129,6 +130,7 @@ Não adicionar padrões sem dor concreta presente:
 Uma classe = uma implementação. Interface só com múltiplas implementações reais.
 
 **Exceções legítimas:**
+
 - `IPricingRuleSet` (UNIMED é primeira de várias operadoras previstas)
 - `IGatewayPagamento` (futuro, quando `Billing` for criado)
 
@@ -164,11 +166,11 @@ Sem senha, sem magic link, sem MFA, sem convite por email. Usuários são pré-c
 
 Sem RBAC granular por recurso. Roles são suficientes para o MVP com cliente único.
 
-| Role | Acessa | Isolamento |
-|---|---|---|
-| `SaasAdmin` | Painel SaaS global | Nenhum |
-| `TenantAdmin` | Painel do tenant | `TenantId` via global query filter |
-| `Medico` | PWA do médico | `TenantId` + `MedicoId` explícito |
+| Role          | Acessa             | Isolamento                         |
+| ------------- | ------------------ | ---------------------------------- |
+| `SaasAdmin`   | Painel SaaS global | Nenhum                             |
+| `TenantAdmin` | Painel do tenant   | `TenantId` via global query filter |
+| `Medico`      | PWA do médico      | `TenantId` + `MedicoId` explícito  |
 
 Claims do JWT: `sub`, `role`, `tenant_id` (ausente para SaasAdmin), `medico_id` (presente só para Medico).
 
@@ -183,6 +185,26 @@ Isolamento por `MedicoId` não usa global filter — é `Where` explícito nos e
 **Regra LGPD:** toda rota do SaaS admin que acessa dados de tenant específico recebe `tenantId` como parâmetro de rota e valida sua existência — garante auditabilidade sem violar o isolamento.
 
 **Revisitar:** nunca — essa abstração é simples e funciona para qualquer expansão futura de roles.
+
+### D-027: `ApplicationUser` não implementa `ITenantEntity`
+
+`ApplicationUser` é gerenciado globalmente (SaaS admin precisa acessar usuários de qualquer tenant). O global query filter por `TenantId` **não se aplica** a ele.
+
+Todo código que consulta `_db.Users` no contexto de um tenant (ex: `AdminService`) deve incluir `.Where(u => u.TenantId == tenantId)` explicitamente. Omitir esse filtro é um vazamento LGPD.
+
+**Revisitar:** nunca — é uma exceção estrutural intencional ao modelo multi-tenant.
+
+### D-028: Role é derivada dinamicamente, não é coluna no banco
+
+`AuthService.DeriveRole(user)` encapsula a lógica: `TenantId == null → SaasAdmin`, `MedicoId != null → Medico`, `else → TenantAdmin`. Usar sempre esse método estático — nunca ler uma coluna `Role` que não existe.
+
+**Revisitar:** quando aparecer um quarto role (exigiria nova lógica no método e nova claim no JWT).
+
+### D-029: TenantAdmin não pode desativar a si mesmo
+
+`AdminService.UpdateUserStatusAsync` rejeita com `ForbiddenError` quando `userId == currentUser.UserId && !isActive`. Previne auto-lockout acidental — o SaaS admin é o único que pode desativar um TenantAdmin via painel SaaS.
+
+**Revisitar:** nunca — é uma regra de segurança sem exceção legítima.
 
 ### D-023: CLAUDE.md em três níveis
 

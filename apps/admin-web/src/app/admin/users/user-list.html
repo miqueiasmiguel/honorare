@@ -1,0 +1,47 @@
+<section class="user-list">
+  <header class="user-list__header">
+    <h1 class="user-list__title">Usuários</h1>
+  </header>
+
+  <table class="user-list__table">
+    <thead>
+      <tr>
+        <th class="user-list__th">Nome / E-mail</th>
+        <th class="user-list__th">Perfil</th>
+        <th class="user-list__th">Status</th>
+        <th class="user-list__th">Desde</th>
+        <th class="user-list__th">Ação</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (user of users(); track user.id) {
+        <tr class="user-list__row">
+          <td class="user-list__cell">
+            <span class="user-list__nome">{{ displayNome(user) }}</span>
+            @if (user.nome) {
+              <span class="user-list__email">{{ user.email }}</span>
+            }
+          </td>
+          <td class="user-list__cell">
+            <span [class]="roleBadgeClass(user.role)">{{ user.role }}</span>
+          </td>
+          <td class="user-list__cell">
+            <span [class]="statusBadgeClass(user.isActive)">{{
+              user.isActive ? 'Ativo' : 'Inativo'
+            }}</span>
+          </td>
+          <td class="user-list__cell">{{ formatDate(user.createdAt) }}</td>
+          <td class="user-list__cell">
+            <button type="button" class="user-list__btn-toggle" (click)="toggleStatus(user)">
+              {{ user.isActive ? 'Desativar' : 'Ativar' }}
+            </button>
+          </td>
+        </tr>
+      } @empty {
+        <tr>
+          <td colspan="5" class="user-list__empty">Nenhum usuário encontrado.</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</section>

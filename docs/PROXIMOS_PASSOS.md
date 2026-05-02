@@ -85,9 +85,11 @@ ASP.NET Core Identity com **Google OAuth 2.0** como único método. JWT (15 min)
 
 Domínio começa aqui. Multi-tenant desde já.
 
-### F2.1 — Gerenciamento de usuários (TenantAdmin)
+### F2.1 — Gerenciamento de usuários (TenantAdmin) ✅
 
 Telas do admin-web para o `TenantAdmin` gerenciar usuários dentro do seu tenant: listar usuários, ativar/desativar médico, editar perfil. Tela "Meu perfil" para o próprio admin.
+
+**Entregues:** `AdminService`, `AdminEndpoints` (`/api/v1/admin/`), campo `ApplicationUser.Nome` (nullable, max 100), migration `AddNomeToApplicationUser`, suite xUnit `AdminServiceTests`, componentes Angular `UserList` e `ProfilePage` com testes Vitest, `adminGuard`, `homeRedirectGuard`, redirecionamento pós-login por role.
 
 **Não inclui:** convite por email (cortado do MVP — SaaS admin cadastra usuários diretamente via painel SaaS implementado em F1.7). Convite por email entra como fase 2 quando houver múltiplos clientes e o fluxo de onboarding virar gargalo.
 

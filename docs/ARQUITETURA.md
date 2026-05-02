@@ -93,6 +93,19 @@ Dentro de cada bounded context, evitar subpastas `Domain/`, `Application/`, `Inf
 "MedicoAccess" → RequireRole("Medico")
 ```
 
+### Endpoints do TenantAdmin (`/api/v1/admin/`)
+
+Implementados em `App/Identity/Endpoints/AdminEndpoints.cs` com `AdminService` (`App/Identity/AdminService.cs`):
+
+| Método  | Rota                                  | Descrição                                        |
+| ------- | ------------------------------------- | ------------------------------------------------ |
+| `GET`   | `/api/v1/admin/users`                 | Lista usuários do próprio tenant                 |
+| `PATCH` | `/api/v1/admin/users/{userId}/status` | Ativa / desativa usuário (proíbe auto-desativar) |
+| `GET`   | `/api/v1/admin/profile`               | Retorna perfil do usuário autenticado            |
+| `PATCH` | `/api/v1/admin/profile`               | Atualiza `Nome` do usuário autenticado           |
+
+`ApplicationUser` **não implementa `ITenantEntity`** — o global query filter não se aplica. O `AdminService` filtra `_db.Users` por `TenantId` explicitamente em toda query. Role é derivada dinamicamente por `AuthService.DeriveRole(user)` (não é coluna no banco).
+
 ### `ICurrentUser` — abstração do contexto de autenticação
 
 Serviço scoped (por request) que lê claims do `IHttpContextAccessor`. É injetado no `AppDbContext` e é o único mecanismo pelo qual o global query filter decide ignorar o `TenantId`.

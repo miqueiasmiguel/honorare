@@ -1,0 +1,107 @@
+@use 'styles/tokens' as *;
+
+.user-list {
+  padding: space(8);
+}
+
+.user-list__header {
+  margin-bottom: space(6);
+}
+
+.user-list__title {
+  @include text-h2;
+
+  margin: 0;
+  color: var(--color-tinta);
+}
+
+.user-list__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.user-list__th {
+  padding: space(3) space(4);
+  text-align: left;
+  border-bottom: 2px solid var(--color-borda-media);
+
+  @include text-label;
+}
+
+.user-list__row:nth-child(even) {
+  background-color: var(--color-pergaminho-claro);
+}
+
+.user-list__cell {
+  padding: space(3) space(4);
+  vertical-align: middle;
+  border-bottom: 1px solid var(--color-borda-discreta);
+
+  @include text-body;
+}
+
+.user-list__nome {
+  display: block;
+  color: var(--color-tinta);
+  font-weight: 500;
+}
+
+.user-list__email {
+  display: block;
+  color: var(--color-tinta-secundaria);
+
+  @include text-label;
+}
+
+.user-list__empty {
+  color: var(--color-tinta-secundaria);
+  text-align: center;
+  padding: space(8);
+
+  @include text-body;
+}
+
+.user-list__btn-toggle {
+  padding: space(1) space(3);
+  border: 1px solid var(--color-borda-media);
+  border-radius: 4px;
+  background-color: transparent;
+  color: var(--color-tinta-secundaria);
+  cursor: pointer;
+
+  @include text-label;
+  @include transition-fast(background-color, border-color, color);
+
+  &:hover {
+    background-color: var(--color-pergaminho-claro);
+    border-color: var(--color-tinta-terciaria);
+  }
+}
+
+.badge {
+  display: inline-block;
+  padding: space(1) space(2);
+  border-radius: 100px;
+
+  @include text-label;
+}
+
+.badge--admin {
+  color: var(--color-tinta-secundaria);
+  background-color: var(--color-pergaminho-claro);
+}
+
+.badge--medico {
+  color: var(--color-ambar);
+  background-color: var(--color-ambar-claro);
+}
+
+.badge--ativo {
+  color: var(--color-verde-musgo);
+  background-color: var(--color-verde-musgo-claro);
+}
+
+.badge--inativo {
+  color: var(--color-ferrugem);
+  background-color: var(--color-ferrugem-claro);
+}
