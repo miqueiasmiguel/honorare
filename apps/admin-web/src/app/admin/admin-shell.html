@@ -1,0 +1,15 @@
+<div class="admin-layout">
+  <nav class="admin-sidebar">
+    <span class="admin-sidebar__wordmark">honorare</span>
+    <div class="admin-sidebar__nav">
+      <a class="admin-sidebar__link" routerLink="users" routerLinkActive="active">Usuários</a>
+      <a class="admin-sidebar__link" routerLink="profile" routerLinkActive="active">Meu perfil</a>
+    </div>
+    <div class="admin-sidebar__footer">
+      <button class="admin-sidebar__logout" type="button" (click)="logout()">Sair</button>
+    </div>
+  </nav>
+  <main class="admin-content">
+    <router-outlet />
+  </main>
+</div>
