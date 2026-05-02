@@ -612,7 +612,7 @@ file sealed class FakeCurrentUser(Guid userId, Guid tenantId) : ICurrentUser
 
 ---
 
-### TASK-ADMIN-05 — Regenerar cliente OpenAPI
+### TASK-ADMIN-05 ✅ — Regenerar cliente OpenAPI
 
 Executar:
 
@@ -630,7 +630,7 @@ Verificar que `packages/api-contracts/` foi atualizado e contém:
 
 ---
 
-### TASK-ADMIN-06 — Types e `AdminService` Angular
+### TASK-ADMIN-06 ✅ — Types e `AdminService` Angular
 
 #### 4.6.1 Types
 
@@ -697,7 +697,7 @@ export class AdminService {
 
 ---
 
-### TASK-ADMIN-07 — Guards: `adminGuard` e `homeRedirectGuard`
+### TASK-ADMIN-07 ✅ — Guards: `adminGuard` e `homeRedirectGuard`
 
 #### 4.7.1 `adminGuard`
 
