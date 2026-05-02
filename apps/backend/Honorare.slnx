@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/tests/">
+    <Project Path="tests/Catalog.Tests/Catalog.Tests.csproj" />
     <Project Path="tests/Faturamento.Tests/Faturamento.Tests.csproj" />
     <Project Path="tests/Identity.Tests/Identity.Tests.csproj" />
   </Folder>
