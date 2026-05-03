@@ -1,5 +1,8 @@
 using System.Text;
+using System.Text.Json.Serialization;
 using App;
+using App.Catalog;
+using App.Catalog.Endpoints;
 using App.Data;
 using App.Identity;
 using App.Identity.Endpoints;
@@ -23,12 +26,15 @@ builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new() { Title = "Honorare API", Version = "v1" });
 });
+builder.Services.ConfigureHttpJsonOptions(opt =>
+    opt.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<SaasService>();
 builder.Services.AddScoped<AdminService>();
+builder.Services.AddScoped<CatalogService>();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
@@ -133,6 +139,7 @@ app.UseAuthorization();
 app.MapAuthEndpoints();
 app.MapSaasEndpoints();
 app.MapAdminEndpoints();
+app.MapCatalogEndpoints();
 app.MapControllers();
 
 app.Run();
