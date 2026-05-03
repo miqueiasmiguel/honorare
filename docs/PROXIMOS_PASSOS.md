@@ -93,11 +93,9 @@ Telas do admin-web para o `TenantAdmin` gerenciar usuários dentro do seu tenant
 
 **Não inclui:** convite por email (cortado do MVP — SaaS admin cadastra usuários diretamente via painel SaaS implementado em F1.7). Convite por email entra como fase 2 quando houver múltiplos clientes e o fluxo de onboarding virar gargalo.
 
-### F2.2 — Operadoras e procedimentos
+### F2.2 — Operadoras e procedimentos ✅
 
-**Entregues (TASK-CAT-01/02):** Entidades `Operadora` e `Procedimento` com `ITenantEntity`, enum `TipoRuleSet`, configurações EF Core (`OperadoraConfiguration`, `ProcedimentoConfiguration`), migration `AddCatalogEntities`, projeto `Catalog.Tests` com fixture Testcontainers e 15 schema tests passando.
-
-**Pendente:** CRUD de `Operadora` (TASK-CAT-03/04). CRUD de `Procedimento` com importação TUSS via CSV (TASK-CAT-05/06). Telas Angular de Operadora e Procedimento (TASK-CAT-07/08).
+**Entregues:** Entidades `Operadora` e `Procedimento` com `ITenantEntity`, enum `TipoRuleSet` (Unimed / Nulo), configurações EF Core, migration `AddCatalogEntities`, projeto `Catalog.Tests` com fixture Testcontainers e suite completa de testes (schema, CRUD, endpoints, CSV import). `CatalogService` com CRUD de `Operadora` e `Procedimento`, importação batch via CSV (upsert por `CodigoTuss`, separador `;`, limite 10 000 linhas, erros linha a linha sem abortar o batch). Endpoints REST em `/api/v1/admin/operadoras` e `/api/v1/admin/procedimentos` com policy `TenantAccess`. Telas Angular no `admin-web`: `OperadoraList`, `OperadoraForm`, `ProcedimentoList`, `ProcedimentoForm` com modal de importação CSV; sidebar atualizado com seção "Cadastros".
 
 ### F2.3 — Tabelas e prestadores
 

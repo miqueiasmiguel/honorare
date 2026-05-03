@@ -206,6 +206,62 @@ Todo código que consulta `_db.Users` no contexto de um tenant (ex: `AdminServic
 
 **Revisitar:** nunca — é uma regra de segurança sem exceção legítima.
 
+### D-030: `Procedimento` é por tenant (sem tabela global)
+
+Cada billing company mantém sua própria tabela de procedimentos. Não há tabela CBHPM global compartilhada no MVP.
+
+**Justificativa:** cada Unimed Singular pode ter versão específica da tabela CBHPM vigente; tenants precisam ativar/desativar códigos para seu fluxo; campos internos customizados são previstos.
+
+**Revisitar:** se aparecer demanda real de tabela global compartilhada entre tenants.
+
+### D-031: `Porte` armazenado como string (não enum)
+
+Campo `Procedimento.Porte` é `string(4)`, não enum.
+
+**Justificativa:** CBHPM tem ~17 portes cirúrgicos; string evita manutenção de enum cada vez que novos portes surgirem. Validação semântica fica no domínio do cálculo, não no banco.
+
+**Revisitar:** nunca — decisão de conveniência sem custo real.
+
+### D-032: `TipoRuleSet` armazenado como string no banco
+
+`.HasConversion<string>()` no EF Core para a coluna `tipo_rule_set`.
+
+**Justificativa:** legibilidade direta no banco sem JOIN; facilita debug e consultas ad-hoc. Enum permanece no código para type safety.
+
+**Revisitar:** nunca.
+
+### D-033: Import CSV com upsert (`ExecuteUpdate` + `AddRange`)
+
+Endpoint `POST /api/v1/admin/procedimentos/importar-csv` faz upsert por `(TenantId, CodigoTuss)`.
+
+**Justificativa:** permite reimportar tabela completa sem perder dados; elimina necessidade de sincronização incremental; D-013 (sem versionamento no MVP).
+
+**Revisitar:** quando houver versionamento de tabelas (F2.3 ou pós-MVP).
+
+### D-034: Hard delete no MVP para Operadora e Procedimento
+
+Sem soft delete nas entidades `Operadora` e `Procedimento`. `ExcluirAsync` é DELETE físico com TODO para bloquear quando `Guia` associada existir (F3.1).
+
+**Justificativa:** sem guias ainda; soft delete adiciona complexidade sem benefício real no MVP.
+
+**Revisitar:** ao implementar F3.1 — o TODO no service deve ser convertido em validação real.
+
+### D-035: Separador CSV é `;` (ponto-e-vírgula)
+
+Formato de importação usa `;` em vez de `,`.
+
+**Justificativa:** planilhas Excel e LibreOffice em locale brasileiro exportam `;` por padrão. Usar `,` forçaria conversão manual antes do upload.
+
+**Revisitar:** nunca — é convenção do público-alvo.
+
+### D-036: Telas de Operadora e Procedimento ficam no `admin-web` (não no painel SaaS)
+
+Operadoras e procedimentos são dados de tenant, gerenciados pelo `TenantAdmin`.
+
+**Justificativa:** cada tenant tem sua própria configuração de operadoras e tabela de procedimentos; SaaS admin não precisa gerenciar isso.
+
+**Revisitar:** nunca — decisão de separação de responsabilidades clara.
+
 ### D-023: CLAUDE.md em três níveis
 
 - Raiz: regras gerais do monorepo
