@@ -1,0 +1,134 @@
+<section class="procedimento-form">
+  <h1 class="procedimento-form__title">{{ titulo }}</h1>
+
+  @if (loading()) {
+    <p class="procedimento-form__loading">Carregando…</p>
+  } @else {
+    <form class="procedimento-form__form" (ngSubmit)="salvar()" [formGroup]="form">
+      <div class="procedimento-form__field">
+        <label class="procedimento-form__label" for="codigoTuss">Código TUSS *</label>
+        <input
+          id="codigoTuss"
+          type="text"
+          class="procedimento-form__input"
+          [class.procedimento-form__input--invalid]="
+            form.controls.codigoTuss.touched && form.controls.codigoTuss.invalid
+          "
+          formControlName="codigoTuss"
+          maxlength="10"
+          placeholder="Ex: 30715013"
+        />
+        @if (form.controls.codigoTuss.touched && form.controls.codigoTuss.hasError('required')) {
+          <span class="procedimento-form__error procedimento-form__error--codigo-tuss"
+            >Código TUSS é obrigatório.</span
+          >
+        }
+        @if (form.controls.codigoTuss.touched && form.controls.codigoTuss.hasError('maxlength')) {
+          <span class="procedimento-form__error procedimento-form__error--codigo-tuss"
+            >Código TUSS deve ter no máximo 10 caracteres.</span
+          >
+        }
+      </div>
+
+      <div class="procedimento-form__field">
+        <label class="procedimento-form__label" for="descricao">Descrição *</label>
+        <input
+          id="descricao"
+          type="text"
+          class="procedimento-form__input"
+          [class.procedimento-form__input--invalid]="
+            form.controls.descricao.touched && form.controls.descricao.invalid
+          "
+          formControlName="descricao"
+          maxlength="500"
+          placeholder="Descrição do procedimento"
+        />
+        @if (form.controls.descricao.touched && form.controls.descricao.hasError('required')) {
+          <span class="procedimento-form__error procedimento-form__error--descricao"
+            >Descrição é obrigatória.</span
+          >
+        }
+      </div>
+
+      <div class="procedimento-form__row">
+        <div class="procedimento-form__field">
+          <label class="procedimento-form__label" for="porte">Porte</label>
+          <input
+            id="porte"
+            type="text"
+            class="procedimento-form__input procedimento-form__input--narrow"
+            formControlName="porte"
+            maxlength="4"
+            placeholder="Ex: 6B"
+          />
+        </div>
+
+        <div class="procedimento-form__field">
+          <label class="procedimento-form__label" for="porteAnestesico">Porte Anestésico</label>
+          <input
+            id="porteAnestesico"
+            type="number"
+            min="0"
+            max="8"
+            class="procedimento-form__input procedimento-form__input--narrow"
+            [class.procedimento-form__input--invalid]="
+              form.controls.porteAnestesico.touched && form.controls.porteAnestesico.invalid
+            "
+            formControlName="porteAnestesico"
+            placeholder="0–8"
+          />
+          @if (
+            form.controls.porteAnestesico.touched &&
+            (form.controls.porteAnestesico.hasError('max') ||
+              form.controls.porteAnestesico.hasError('min'))
+          ) {
+            <span class="procedimento-form__error procedimento-form__error--porte-anestesico"
+              >Porte anestésico deve ser entre 0 e 8.</span
+            >
+          }
+        </div>
+      </div>
+
+      <div class="procedimento-form__field procedimento-form__field--inline">
+        <input
+          id="ehSadt"
+          type="checkbox"
+          class="procedimento-form__checkbox"
+          formControlName="ehSadt"
+          title="Exames e diagnósticos — acréscimo de urgência não se aplica"
+        />
+        <label class="procedimento-form__label" for="ehSadt">SADT</label>
+      </div>
+
+      <div class="procedimento-form__field procedimento-form__field--inline">
+        <input
+          id="temPorteProprioVideo"
+          type="checkbox"
+          class="procedimento-form__checkbox"
+          formControlName="temPorteProprioVideo"
+          title="O código TUSS já contempla videolaparoscopia — acréscimo de 50% não se aplica"
+        />
+        <label class="procedimento-form__label" for="temPorteProprioVideo">Vídeo próprio</label>
+      </div>
+
+      <div class="procedimento-form__field procedimento-form__field--inline">
+        <label class="procedimento-form__label" for="ativo">Ativo</label>
+        <input
+          id="ativo"
+          type="checkbox"
+          class="procedimento-form__checkbox"
+          formControlName="ativo"
+        />
+      </div>
+
+      <div class="procedimento-form__actions">
+        <button type="submit" class="procedimento-form__btn-salvar" [disabled]="saving()">
+          {{ saving() ? 'Salvando…' : 'Salvar' }}
+        </button>
+        <button type="button" class="procedimento-form__btn-cancelar" (click)="cancelar()">
+          Cancelar
+        </button>
+      </div>
+    </form>
+  }
+</section>

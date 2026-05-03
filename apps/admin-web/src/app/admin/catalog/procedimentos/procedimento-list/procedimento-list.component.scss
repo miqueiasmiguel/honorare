@@ -1,0 +1,290 @@
+@use 'styles/tokens' as *;
+
+.procedimento-list {
+  padding: space(8);
+}
+
+.procedimento-list__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: space(6);
+}
+
+.procedimento-list__title {
+  @include text-h2;
+
+  margin: 0;
+  color: var(--color-tinta);
+}
+
+.procedimento-list__btn-novo {
+  height: 40px;
+  padding: 0 space(6);
+  border: none;
+  border-radius: space(1);
+  background-color: var(--color-terracota);
+  color: var(--color-pergaminho-claro);
+  cursor: pointer;
+
+  @include text-label;
+  @include transition(background-color);
+
+  &:hover {
+    background-color: var(--color-terracota-escuro);
+  }
+}
+
+.procedimento-list__toolbar {
+  display: flex;
+  align-items: center;
+  gap: space(6);
+  margin-bottom: space(4);
+  flex-wrap: wrap;
+}
+
+.procedimento-list__busca {
+  height: 36px;
+  padding: 0 space(3);
+  border: 1px solid var(--color-borda-media);
+  border-radius: space(1);
+  background-color: var(--color-pergaminho-claro);
+  color: var(--color-tinta);
+  width: 320px;
+
+  @include text-body;
+  @include transition(border-color);
+
+  &::placeholder {
+    color: var(--color-tinta-terciaria);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-terracota);
+  }
+}
+
+.procedimento-list__toggle-label {
+  display: flex;
+  align-items: center;
+  gap: space(2);
+  cursor: pointer;
+
+  @include text-body;
+
+  color: var(--color-tinta-secundaria);
+}
+
+.procedimento-list__import-actions {
+  display: flex;
+  align-items: center;
+  gap: space(3);
+  margin-left: auto;
+}
+
+.procedimento-list__input-csv {
+  display: none;
+}
+
+.procedimento-list__btn-importar {
+  height: 36px;
+  padding: 0 space(4);
+  border: 1px solid var(--color-terracota);
+  border-radius: space(1);
+  background-color: transparent;
+  color: var(--color-terracota);
+  cursor: pointer;
+
+  @include text-label;
+  @include transition-fast(background-color, border-color);
+
+  &:hover {
+    background-color: var(--color-pergaminho-claro);
+  }
+}
+
+.procedimento-list__btn-template {
+  height: 36px;
+  padding: 0 space(4);
+  border: 1px solid var(--color-borda-media);
+  border-radius: space(1);
+  background-color: transparent;
+  color: var(--color-tinta-secundaria);
+  cursor: pointer;
+
+  @include text-label;
+  @include transition-fast(background-color);
+
+  &:hover {
+    background-color: var(--color-pergaminho-claro);
+  }
+}
+
+.procedimento-list__import-resumo {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: space(4);
+  padding: space(4) space(6);
+  margin-bottom: space(4);
+  border: 1px solid var(--color-borda-media);
+  border-radius: space(1);
+  background-color: var(--color-pergaminho-claro);
+
+  @include text-body;
+
+  color: var(--color-tinta-secundaria);
+}
+
+.procedimento-list__import-erros {
+  width: 100%;
+  margin: 0;
+  padding: 0 0 0 space(4);
+}
+
+.procedimento-list__import-erro {
+  @include text-label;
+
+  color: var(--color-ferrugem);
+}
+
+.procedimento-list__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.procedimento-list__th {
+  padding: space(3) space(4);
+  text-align: left;
+  border-bottom: 2px solid var(--color-borda-media);
+
+  @include text-label;
+}
+
+.procedimento-list__row {
+  cursor: pointer;
+
+  @include transition(background-color);
+
+  &:nth-child(even) {
+    background-color: var(--color-pergaminho-claro);
+  }
+
+  &:hover {
+    background-color: var(--color-pergaminho-claro);
+  }
+}
+
+.procedimento-list__cell {
+  padding: space(3) space(4);
+  vertical-align: middle;
+  border-bottom: 1px solid var(--color-borda-discreta);
+
+  @include text-body;
+}
+
+.procedimento-list__cell--flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: space(1);
+  min-height: 44px;
+  align-items: center;
+}
+
+.procedimento-list__empty {
+  padding: space(8);
+  text-align: center;
+  color: var(--color-tinta-secundaria);
+
+  @include text-body;
+}
+
+.procedimento-list__btn-excluir {
+  padding: space(1) space(3);
+  border: 1px solid var(--color-borda-media);
+  border-radius: 4px;
+  background-color: transparent;
+  color: var(--color-ferrugem);
+  cursor: pointer;
+
+  @include text-label;
+  @include transition-fast(background-color, border-color);
+
+  &:hover {
+    background-color: var(--color-ferrugem-claro);
+    border-color: var(--color-ferrugem);
+  }
+}
+
+.procedimento-list__paginacao {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: space(4);
+  margin-top: space(6);
+}
+
+.procedimento-list__pag-info {
+  @include text-label;
+
+  color: var(--color-tinta-secundaria);
+}
+
+.procedimento-list__btn-pag {
+  height: 36px;
+  padding: 0 space(4);
+  border: 1px solid var(--color-borda-media);
+  border-radius: space(1);
+  background-color: transparent;
+  color: var(--color-tinta-secundaria);
+  cursor: pointer;
+
+  @include text-label;
+  @include transition-fast(background-color, border-color);
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  &:hover:not(:disabled) {
+    background-color: var(--color-pergaminho-claro);
+  }
+}
+
+.chip {
+  display: inline-block;
+  padding: space(1) space(2);
+  border-radius: 100px;
+
+  @include text-label;
+}
+
+.chip--sadt {
+  color: var(--color-ambar);
+  background-color: var(--color-ambar-claro);
+}
+
+.chip--video {
+  color: var(--color-verde-musgo);
+  background-color: var(--color-verde-musgo-claro);
+}
+
+.badge {
+  display: inline-block;
+  padding: space(1) space(2);
+  border-radius: 100px;
+
+  @include text-label;
+}
+
+.badge--ativo {
+  color: var(--color-verde-musgo);
+  background-color: var(--color-verde-musgo-claro);
+}
+
+.badge--inativo {
+  color: var(--color-ferrugem);
+  background-color: var(--color-ferrugem-claro);
+}

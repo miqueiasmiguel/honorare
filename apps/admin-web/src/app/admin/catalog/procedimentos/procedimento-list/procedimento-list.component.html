@@ -1,0 +1,130 @@
+<section class="procedimento-list">
+  <header class="procedimento-list__header">
+    <h1 class="procedimento-list__title">Procedimentos</h1>
+    <button type="button" class="procedimento-list__btn-novo" (click)="novoProcedimento()">
+      Novo procedimento
+    </button>
+  </header>
+
+  <div class="procedimento-list__toolbar">
+    <input
+      type="text"
+      class="procedimento-list__busca"
+      placeholder="Buscar por código ou descrição…"
+      (input)="onBuscaChange($any($event.target).value)"
+    />
+    <label class="procedimento-list__toggle-label">
+      <input
+        type="checkbox"
+        class="procedimento-list__toggle"
+        [checked]="exibirInativos()"
+        (change)="toggleExibirInativos()"
+      />
+      Exibir inativos
+    </label>
+    <div class="procedimento-list__import-actions">
+      <input
+        #csvInput
+        type="file"
+        accept=".csv"
+        class="procedimento-list__input-csv"
+        (change)="onFileChange($event)"
+      />
+      <button type="button" class="procedimento-list__btn-importar" (click)="csvInput.click()">
+        Importar CSV
+      </button>
+      <button type="button" class="procedimento-list__btn-template" (click)="downloadTemplate()">
+        Download template
+      </button>
+    </div>
+  </div>
+
+  @if (importResult(); as resultado) {
+    <div class="procedimento-list__import-resumo">
+      <span>Inseridos: {{ resultado.inseridos }}</span>
+      <span>Atualizados: {{ resultado.atualizados }}</span>
+      <span>Ignorados: {{ resultado.ignorados }}</span>
+      @if (resultado.erros.length > 0) {
+        <ul class="procedimento-list__import-erros">
+          @for (erro of resultado.erros; track erro.linha) {
+            <li class="procedimento-list__import-erro">
+              Linha {{ erro.linha }}: {{ erro.mensagem }}
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  }
+
+  <table class="procedimento-list__table">
+    <thead>
+      <tr>
+        <th class="procedimento-list__th">Código TUSS</th>
+        <th class="procedimento-list__th">Descrição</th>
+        <th class="procedimento-list__th">Porte</th>
+        <th class="procedimento-list__th">Porte AN</th>
+        <th class="procedimento-list__th">Flags</th>
+        <th class="procedimento-list__th">Status</th>
+        <th class="procedimento-list__th">Ação</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (proc of procedimentos(); track proc.id) {
+        <tr class="procedimento-list__row" (click)="navegar(proc.id)">
+          <td class="procedimento-list__cell">{{ proc.codigoTuss }}</td>
+          <td class="procedimento-list__cell">{{ truncar(proc.descricao) }}</td>
+          <td class="procedimento-list__cell">{{ proc.porte ?? '—' }}</td>
+          <td class="procedimento-list__cell">{{ proc.porteAnestesico ?? '—' }}</td>
+          <td class="procedimento-list__cell procedimento-list__cell--flags">
+            @if (proc.ehSadt) {
+              <span class="chip chip--sadt">SADT</span>
+            }
+            @if (proc.temPorteProprioVideo) {
+              <span class="chip chip--video">Vídeo próprio</span>
+            }
+          </td>
+          <td class="procedimento-list__cell">
+            <span [class]="proc.ativo ? 'badge badge--ativo' : 'badge badge--inativo'">
+              {{ proc.ativo ? 'Ativo' : 'Inativo' }}
+            </span>
+          </td>
+          <td class="procedimento-list__cell">
+            <button
+              type="button"
+              class="procedimento-list__btn-excluir"
+              (click)="excluir(proc, $event)"
+            >
+              Excluir
+            </button>
+          </td>
+        </tr>
+      } @empty {
+        <tr>
+          <td colspan="7" class="procedimento-list__empty">Nenhum procedimento cadastrado.</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+
+  @if (total() > itensPorPagina()) {
+    <div class="procedimento-list__paginacao">
+      <button
+        type="button"
+        class="procedimento-list__btn-pag"
+        [disabled]="pagina() === 1"
+        (click)="paginaAnterior()"
+      >
+        Anterior
+      </button>
+      <span class="procedimento-list__pag-info">Página {{ pagina() }}</span>
+      <button
+        type="button"
+        class="procedimento-list__btn-pag"
+        [disabled]="pagina() * itensPorPagina() >= total()"
+        (click)="proximaPagina()"
+      >
+        Próxima
+      </button>
+    </div>
+  }
+</section>
