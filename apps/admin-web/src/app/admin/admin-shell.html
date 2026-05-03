@@ -4,6 +4,19 @@
     <div class="admin-sidebar__nav">
       <a class="admin-sidebar__link" routerLink="users" routerLinkActive="active">Usuários</a>
       <a class="admin-sidebar__link" routerLink="profile" routerLinkActive="active">Meu perfil</a>
+      <span class="admin-sidebar__section">Cadastros</span>
+      <a
+        class="admin-sidebar__link admin-sidebar__link--sub"
+        routerLink="catalog/operadoras"
+        routerLinkActive="active"
+        >Operadoras</a
+      >
+      <a
+        class="admin-sidebar__link admin-sidebar__link--sub"
+        routerLink="catalog/procedimentos"
+        routerLinkActive="active"
+        >Procedimentos</a
+      >
     </div>
     <div class="admin-sidebar__footer">
       <button class="admin-sidebar__logout" type="button" (click)="logout()">Sair</button>

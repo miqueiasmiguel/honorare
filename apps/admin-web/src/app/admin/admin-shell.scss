@@ -51,6 +51,22 @@
   }
 }
 
+.admin-sidebar__section {
+  display: block;
+  padding: space(3) space(2) space(1);
+  margin-top: space(2);
+
+  @include text-label;
+
+  color: var(--color-tinta-terciaria);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.admin-sidebar__link--sub {
+  padding-left: space(4);
+}
+
 .admin-sidebar__footer {
   margin-top: auto;
 }

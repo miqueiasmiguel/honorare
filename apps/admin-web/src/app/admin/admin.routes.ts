@@ -16,6 +16,10 @@ export const adminRoutes: Routes = [
         path: 'profile',
         loadComponent: () => import('./profile/profile-page').then((m) => m.ProfilePage),
       },
+      {
+        path: 'catalog',
+        loadChildren: () => import('./catalog/catalog.routes').then((m) => m.catalogRoutes),
+      },
       { path: '', redirectTo: 'users', pathMatch: 'full' },
     ],
   },
