@@ -657,7 +657,7 @@ Para o endpoint de importação:
 
 ---
 
-### TASK-CAT-07 — TDD: Angular — Telas de Operadora
+### TASK-CAT-07 — TDD: Angular — Telas de Operadora ✅
 
 **Pré-requisito:** rodar `pnpm generate-api-client` após TASK-CAT-06 (backend rodando). Se não disponível, criar tipos locais temporários com `// TODO: regenerar após backend`.
 
@@ -727,7 +727,7 @@ Estilos: tokens de `STYLES.md` — `var(--color-*)`, `space()`, `@include text-*
 
 ---
 
-### TASK-CAT-08 — TDD: Angular — Telas de Procedimento
+### TASK-CAT-08 — TDD: Angular — Telas de Procedimento ✅
 
 #### Red — escrever os specs primeiro
 
@@ -803,10 +803,10 @@ TASK-CAT-06 ✅ (tests RED → Endpoints Procedimento GREEN)
       │
       ▼  [pnpm generate-api-client]
       │
-TASK-CAT-07 (specs RED → Angular Operadora GREEN)
+TASK-CAT-07 ✅ (specs RED → Angular Operadora GREEN)
       │
       ▼
-TASK-CAT-08 (specs RED → Angular Procedimento GREEN)
+TASK-CAT-08 ✅ (specs RED → Angular Procedimento GREEN)
 ```
 
 Cada task só começa depois que os testes da anterior estão passando. O cliente TypeScript (`pnpm generate-api-client`) é o ponto de sincronização entre backend e frontend — rodar após TASK-CAT-06.
