@@ -547,7 +547,7 @@ Implementar os 5 endpoints. Seguir **exatamente** o padrão de `App/Identity/End
 
 ---
 
-### TASK-CAT-05 — TDD: `CatalogService` — Procedimento + Import CSV
+### TASK-CAT-05 — TDD: `CatalogService` — Procedimento + Import CSV ✅
 
 #### Red — escrever os testes primeiro
 
@@ -614,7 +614,7 @@ Regras de negócio:
 
 ---
 
-### TASK-CAT-06 — TDD: Endpoints de Procedimento
+### TASK-CAT-06 — TDD: Endpoints de Procedimento ✅
 
 #### Red — escrever os testes primeiro
 
@@ -796,10 +796,10 @@ TASK-CAT-03 ✅ (tests RED → CatalogService Operadora GREEN)
 TASK-CAT-04 ✅ (tests RED → Endpoints Operadora GREEN)
       │
       ▼
-TASK-CAT-05 (tests RED → CatalogService Procedimento + CSV GREEN)
+TASK-CAT-05 ✅ (tests RED → CatalogService Procedimento + CSV GREEN)
       │
       ▼
-TASK-CAT-06 (tests RED → Endpoints Procedimento GREEN)
+TASK-CAT-06 ✅ (tests RED → Endpoints Procedimento GREEN)
       │
       ▼  [pnpm generate-api-client]
       │
