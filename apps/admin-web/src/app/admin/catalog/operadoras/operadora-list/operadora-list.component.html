@@ -1,0 +1,87 @@
+<section class="operadora-list">
+  <header class="operadora-list__header">
+    <h1 class="operadora-list__title">Operadoras</h1>
+    <button type="button" class="operadora-list__btn-nova" (click)="novaOperadora()">
+      Nova operadora
+    </button>
+  </header>
+
+  <div class="operadora-list__toolbar">
+    <input
+      type="text"
+      class="operadora-list__busca"
+      placeholder="Buscar por nome…"
+      (input)="onBuscaChange($any($event.target).value)"
+    />
+    <label class="operadora-list__toggle-label">
+      <input
+        type="checkbox"
+        class="operadora-list__toggle"
+        [checked]="exibirInativas()"
+        (change)="toggleExibirInativas()"
+      />
+      Exibir inativas
+    </label>
+  </div>
+
+  <table class="operadora-list__table">
+    <thead>
+      <tr>
+        <th class="operadora-list__th">Nome</th>
+        <th class="operadora-list__th">Registro ANS</th>
+        <th class="operadora-list__th">CNPJ</th>
+        <th class="operadora-list__th">Tipo</th>
+        <th class="operadora-list__th">Status</th>
+        <th class="operadora-list__th">Ação</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (op of operadoras(); track op.id) {
+        <tr class="operadora-list__row" (click)="navegar(op.id)">
+          <td class="operadora-list__cell">{{ op.nome }}</td>
+          <td class="operadora-list__cell">{{ op.registroAns ?? '—' }}</td>
+          <td class="operadora-list__cell">{{ formatarCnpj(op.cnpj) }}</td>
+          <td class="operadora-list__cell">
+            <span [class]="tipoBadgeClass(op.tipoRuleSet)">{{ tipoLabel(op.tipoRuleSet) }}</span>
+          </td>
+          <td class="operadora-list__cell">
+            <span [class]="op.ativa ? 'badge badge--ativa' : 'badge badge--inativa'">{{
+              op.ativa ? 'Ativa' : 'Inativa'
+            }}</span>
+          </td>
+          <td class="operadora-list__cell">
+            <button type="button" class="operadora-list__btn-excluir" (click)="excluir(op, $event)">
+              Excluir
+            </button>
+          </td>
+        </tr>
+      } @empty {
+        <tr>
+          <td colspan="6" class="operadora-list__empty">Nenhuma operadora cadastrada.</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+
+  @if (total() > itensPorPagina()) {
+    <div class="operadora-list__paginacao">
+      <button
+        type="button"
+        class="operadora-list__btn-pag"
+        [disabled]="pagina() === 1"
+        (click)="paginaAnterior()"
+      >
+        Anterior
+      </button>
+      <span class="operadora-list__pag-info">Página {{ pagina() }}</span>
+      <button
+        type="button"
+        class="operadora-list__btn-pag"
+        [disabled]="pagina() * itensPorPagina() >= total()"
+        (click)="proximaPagina()"
+      >
+        Próxima
+      </button>
+    </div>
+  }
+</section>

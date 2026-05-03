@@ -1,0 +1,95 @@
+<section class="operadora-form">
+  <h1 class="operadora-form__title">{{ titulo }}</h1>
+
+  @if (loading()) {
+    <p class="operadora-form__loading">Carregando…</p>
+  } @else {
+    <form class="operadora-form__form" (ngSubmit)="salvar()" [formGroup]="form">
+      <div class="operadora-form__field">
+        <label class="operadora-form__label" for="nome">Nome *</label>
+        <input
+          id="nome"
+          type="text"
+          class="operadora-form__input"
+          [class.operadora-form__input--invalid]="
+            form.controls.nome.touched && form.controls.nome.invalid
+          "
+          formControlName="nome"
+          maxlength="200"
+          placeholder="Nome da operadora"
+        />
+        @if (form.controls.nome.touched && form.controls.nome.hasError('required')) {
+          <span class="operadora-form__error operadora-form__error--nome">Nome é obrigatório.</span>
+        }
+      </div>
+
+      <div class="operadora-form__field">
+        <label class="operadora-form__label" for="registroAns">Registro ANS</label>
+        <input
+          id="registroAns"
+          type="text"
+          class="operadora-form__input"
+          [class.operadora-form__input--invalid]="
+            form.controls.registroAns.touched && form.controls.registroAns.invalid
+          "
+          formControlName="registroAns"
+          maxlength="6"
+          placeholder="000000"
+        />
+        @if (form.controls.registroAns.touched && form.controls.registroAns.hasError('pattern')) {
+          <span class="operadora-form__error operadora-form__error--ans"
+            >Registro ANS deve ter exatamente 6 dígitos numéricos.</span
+          >
+        }
+      </div>
+
+      <div class="operadora-form__field">
+        <label class="operadora-form__label" for="cnpj">CNPJ</label>
+        <input
+          id="cnpj"
+          type="text"
+          class="operadora-form__input"
+          [class.operadora-form__input--invalid]="
+            form.controls.cnpj.touched && form.controls.cnpj.invalid
+          "
+          formControlName="cnpj"
+          maxlength="14"
+          placeholder="00000000000000"
+        />
+        @if (form.controls.cnpj.touched && form.controls.cnpj.hasError('pattern')) {
+          <span class="operadora-form__error operadora-form__error--cnpj"
+            >CNPJ deve ter exatamente 14 dígitos numéricos (sem formatação).</span
+          >
+        }
+      </div>
+
+      <div class="operadora-form__field">
+        <label class="operadora-form__label" for="tipoRuleSet">Tipo de cálculo *</label>
+        <select id="tipoRuleSet" class="operadora-form__select" formControlName="tipoRuleSet">
+          @for (op of tipoOpcoes; track op.value) {
+            <option [value]="op.value">{{ op.label }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="operadora-form__field operadora-form__field--inline">
+        <label class="operadora-form__label" for="ativa">Ativa</label>
+        <input
+          id="ativa"
+          type="checkbox"
+          class="operadora-form__checkbox"
+          formControlName="ativa"
+        />
+      </div>
+
+      <div class="operadora-form__actions">
+        <button type="submit" class="operadora-form__btn-salvar" [disabled]="saving()">
+          {{ saving() ? 'Salvando…' : 'Salvar' }}
+        </button>
+        <button type="button" class="operadora-form__btn-cancelar" (click)="cancelar()">
+          Cancelar
+        </button>
+      </div>
+    </form>
+  }
+</section>
