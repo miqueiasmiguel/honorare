@@ -5,6 +5,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Catalog;
 
+internal sealed record ListarPrestadoresQuery(string? Busca, bool? Ativo, int Pagina, int ItensPorPagina);
+
+internal sealed record ListarPrestadoresResult(
+    IReadOnlyList<PrestadorDto> Itens, int Total, int Pagina, int ItensPorPagina);
+
+internal sealed record PrestadorDto(
+    Guid Id, string Nome, string? RegistroProfissional, bool Ativo, DateTimeOffset CriadoEm);
+
+internal sealed record SalvarPrestadorCommand(string Nome, string? RegistroProfissional, bool Ativo);
+
 internal sealed record ListarProcedimentosQuery(string? Busca, bool? Ativo, int Pagina, int ItensPorPagina);
 
 internal sealed record ListarProcedimentosResult(
@@ -457,4 +467,117 @@ internal sealed class CatalogService(AppDbContext db, ICurrentUser currentUser)
     private static ProcedimentoDto ToDto(Procedimento p) =>
         new(p.Id, p.CodigoTuss, p.Descricao, p.Porte, p.PorteAnestesico,
             p.EhSadt, p.TemPorteProprioVideo, p.Ativo, p.CriadoEm);
+
+
+    // ── Prestador ─────────────────────────────────────────────────────────────
+
+    internal async Task<ListarPrestadoresResult> ListarPrestadoresAsync(
+        ListarPrestadoresQuery query, CancellationToken ct = default)
+    {
+        var q = _db.Prestadores.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(query.Busca))
+        {
+            var pattern = $"%{query.Busca}%";
+            q = q.Where(p => EF.Functions.ILike(p.Nome, pattern));
+        }
+
+        if (query.Ativo.HasValue)
+        {
+            q = q.Where(p => p.Ativo == query.Ativo.Value);
+        }
+
+        var total = await q.CountAsync(ct);
+        var itensPorPagina = Math.Min(query.ItensPorPagina, 100);
+        var skip = (query.Pagina - 1) * itensPorPagina;
+
+        var itens = await q
+            .OrderBy(p => p.Nome)
+            .Skip(skip)
+            .Take(itensPorPagina)
+            .Select(p => new PrestadorDto(p.Id, p.Nome, p.RegistroProfissional, p.Ativo, p.CriadoEm))
+            .ToListAsync(ct);
+
+        return new ListarPrestadoresResult(itens, total, query.Pagina, query.ItensPorPagina);
+    }
+
+    internal async Task<Result<PrestadorDto>> ObterPrestadorPorIdAsync(
+        Guid id, CancellationToken ct = default)
+    {
+        var prestador = await _db.Prestadores.FirstOrDefaultAsync(p => p.Id == id, ct);
+        if (prestador is null)
+        {
+            return Result<PrestadorDto>.Fail(new NotFoundError("Prestador não encontrado."));
+        }
+
+        return Result<PrestadorDto>.Ok(ToDto(prestador));
+    }
+
+    internal async Task<Result<PrestadorDto>> CriarPrestadorAsync(
+        SalvarPrestadorCommand cmd, CancellationToken ct = default)
+    {
+        var erro = ValidarComandoPrestador(cmd);
+        if (erro is not null)
+        {
+            return Result<PrestadorDto>.Fail(erro);
+        }
+
+        var tenantId = _currentUser.TenantId!.Value;
+        var prestador = Prestador.Create(tenantId, cmd.Nome.Trim(), cmd.RegistroProfissional);
+        _db.Prestadores.Add(prestador);
+        await _db.SaveChangesAsync(ct);
+        return Result<PrestadorDto>.Ok(ToDto(prestador));
+    }
+
+    internal async Task<Result<PrestadorDto>> AtualizarPrestadorAsync(
+        Guid id, SalvarPrestadorCommand cmd, CancellationToken ct = default)
+    {
+        var erro = ValidarComandoPrestador(cmd);
+        if (erro is not null)
+        {
+            return Result<PrestadorDto>.Fail(erro);
+        }
+
+        var prestador = await _db.Prestadores.FirstOrDefaultAsync(p => p.Id == id, ct);
+        if (prestador is null)
+        {
+            return Result<PrestadorDto>.Fail(new NotFoundError("Prestador não encontrado."));
+        }
+
+        prestador.Atualizar(cmd.Nome.Trim(), cmd.RegistroProfissional, cmd.Ativo);
+        await _db.SaveChangesAsync(ct);
+        return Result<PrestadorDto>.Ok(ToDto(prestador));
+    }
+
+    internal async Task<Result> ExcluirPrestadorAsync(Guid id, CancellationToken ct = default)
+    {
+        var prestador = await _db.Prestadores.FirstOrDefaultAsync(p => p.Id == id, ct);
+        if (prestador is null)
+        {
+            return Result.Fail(new NotFoundError("Prestador não encontrado."));
+        }
+
+        _db.Prestadores.Remove(prestador);
+        await _db.SaveChangesAsync(ct);
+        // TODO F3.2: bloquear se houver Guias associadas (retornar 409)
+        return Result.Ok();
+    }
+
+    private static PrestadorDto ToDto(Prestador p) =>
+        new(p.Id, p.Nome, p.RegistroProfissional, p.Ativo, p.CriadoEm);
+
+    private static ValidationError? ValidarComandoPrestador(SalvarPrestadorCommand cmd)
+    {
+        if (string.IsNullOrWhiteSpace(cmd.Nome))
+        {
+            return new ValidationError("Nome é obrigatório.");
+        }
+
+        if (cmd.Nome.Trim().Length > 150)
+        {
+            return new ValidationError("Nome deve ter no máximo 150 caracteres.");
+        }
+
+        return null;
+    }
 }

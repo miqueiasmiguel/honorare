@@ -20,6 +20,14 @@ internal static class CatalogEndpoints
         gp.MapPut("{id:guid}", AtualizarProcedimentoAsync);
         gp.MapDelete("{id:guid}", ExcluirProcedimentoAsync);
         gp.MapPost("importar-csv", ImportarCsvAsync).DisableAntiforgery();
+
+        var gpr = app.MapGroup("/api/v1/admin/prestadores").RequireAuthorization("TenantAccess");
+
+        gpr.MapGet("", ListarPrestadoresAsync);
+        gpr.MapGet("{id:guid}", ObterPrestadorAsync);
+        gpr.MapPost("", CriarPrestadorAsync);
+        gpr.MapPut("{id:guid}", AtualizarPrestadorAsync);
+        gpr.MapDelete("{id:guid}", ExcluirPrestadorAsync);
     }
 
     // ── Operadora handlers ────────────────────────────────────────────────────
@@ -179,6 +187,81 @@ internal static class CatalogEndpoints
         return Results.NoContent();
     }
 
+    // ── Prestador handlers ────────────────────────────────────────────────────
+
+    private static async Task<IResult> ListarPrestadoresAsync(
+        [AsParameters] ListarPrestadoresRequest req,
+        CatalogService service, CancellationToken ct)
+    {
+        var query = new ListarPrestadoresQuery(req.Busca, req.Ativo, req.Pagina, req.ItensPorPagina);
+        var result = await service.ListarPrestadoresAsync(query, ct);
+        return Results.Ok(result);
+    }
+
+    private static async Task<IResult> ObterPrestadorAsync(
+        Guid id, CatalogService service, CancellationToken ct)
+    {
+        var result = await service.ObterPrestadorPorIdAsync(id, ct);
+        if (result.IsFailure)
+        {
+            return Results.Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                detail: result.Error!.Message);
+        }
+
+        return Results.Ok(result.Value);
+    }
+
+    private static async Task<IResult> CriarPrestadorAsync(
+        SalvarPrestadorRequest body, CatalogService service, CancellationToken ct)
+    {
+        var cmd = new SalvarPrestadorCommand(body.Nome, body.RegistroProfissional, body.Ativo);
+        var result = await service.CriarPrestadorAsync(cmd, ct);
+        if (result.IsFailure)
+        {
+            return Results.Problem(
+                statusCode: StatusCodes.Status400BadRequest,
+                detail: result.Error!.Message);
+        }
+
+        return Results.Created($"/api/v1/admin/prestadores/{result.Value!.Id}", result.Value);
+    }
+
+    private static async Task<IResult> AtualizarPrestadorAsync(
+        Guid id, SalvarPrestadorRequest body, CatalogService service, CancellationToken ct)
+    {
+        var cmd = new SalvarPrestadorCommand(body.Nome, body.RegistroProfissional, body.Ativo);
+        var result = await service.AtualizarPrestadorAsync(id, cmd, ct);
+        if (result.IsFailure)
+        {
+            var statusCode = result.Error switch
+            {
+                NotFoundError => StatusCodes.Status404NotFound,
+                _ => StatusCodes.Status400BadRequest,
+            };
+            return Results.Problem(statusCode: statusCode, detail: result.Error!.Message);
+        }
+
+        return Results.Ok(result.Value);
+    }
+
+    private static async Task<IResult> ExcluirPrestadorAsync(
+        Guid id, CatalogService service, CancellationToken ct)
+    {
+        var result = await service.ExcluirPrestadorAsync(id, ct);
+        if (result.IsFailure)
+        {
+            var statusCode = result.Error switch
+            {
+                ConflictError => StatusCodes.Status409Conflict,
+                _ => StatusCodes.Status404NotFound,
+            };
+            return Results.Problem(statusCode: statusCode, detail: result.Error!.Message);
+        }
+
+        return Results.NoContent();
+    }
+
     private static async Task<IResult> ImportarCsvAsync(
         IFormFile? file, CatalogService service, CancellationToken ct)
     {
@@ -235,4 +318,15 @@ internal sealed record SalvarProcedimentoRequest(
     int? PorteAnestesico,
     bool EhSadt,
     bool TemPorteProprioVideo,
+    bool Ativo);
+
+internal sealed record ListarPrestadoresRequest(
+    string? Busca = null,
+    bool? Ativo = null,
+    int Pagina = 1,
+    int ItensPorPagina = 20);
+
+internal sealed record SalvarPrestadorRequest(
+    string Nome,
+    string? RegistroProfissional,
     bool Ativo);
