@@ -1,0 +1,149 @@
+import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { GuiaService } from './guia.service';
+import type {
+  CriarGuiaPayload,
+  AtualizarGuiaPayload,
+  GuiaDetalheItem,
+  ListarGuiasResult,
+} from './guia.types';
+
+const GUIA_DETALHE: GuiaDetalheItem = {
+  id: 'guia-1',
+  prestadorId: 'prest-1',
+  prestadorNome: 'Dr. Fulano',
+  operadoraId: 'op-1',
+  operadoraNome: 'UNIMED',
+  beneficiarioId: 'ben-1',
+  beneficiarioNome: 'JOÃO SILVA',
+  beneficiarioCarteira: '0001234567',
+  senha: '12345',
+  dataAtendimento: '2026-05-01',
+  situacao: 'Apresentada',
+  ehPacote: false,
+  observacao: '',
+  totalItens: 1,
+  criadoEm: '2026-05-01T00:00:00Z',
+  atualizadoEm: '2026-05-01T00:00:00Z',
+  itens: [
+    {
+      id: 'item-1',
+      procedimentoId: 'proc-1',
+      codigoTuss: '31303079',
+      descricaoProcedimento: 'Consulta médica',
+      posicaoExecutor: 'Cirurgiao',
+      ordemProcedimento: 'Unico',
+      viaAcesso: 'Convencional',
+      acomodacao: 'Ambulatorial',
+      ehUrgencia: false,
+      valorApurado: null,
+      valorLiquidado: null,
+    },
+  ],
+};
+
+const CRIAR_PAYLOAD: CriarGuiaPayload = {
+  prestadorId: 'prest-1',
+  operadoraId: 'op-1',
+  beneficiarioId: 'ben-1',
+  senha: '12345',
+  dataAtendimento: '2026-05-01',
+  ehPacote: false,
+  observacao: '',
+  itens: [
+    {
+      procedimentoId: 'proc-1',
+      posicaoExecutor: 'Cirurgiao',
+      ordemProcedimento: 'Unico',
+      viaAcesso: 'Convencional',
+      acomodacao: 'Ambulatorial',
+      ehUrgencia: false,
+      valorApurado: null,
+    },
+  ],
+};
+
+function makeListResult(itens: GuiaDetalheItem[] = []): ListarGuiasResult {
+  return { itens, total: itens.length, pagina: 1, itensPorPagina: 20 };
+}
+
+describe('GuiaService', () => {
+  let service: GuiaService;
+  let httpMock: HttpTestingController;
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting(), GuiaService],
+    });
+    service = TestBed.inject(GuiaService);
+    httpMock = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => {
+    httpMock.verify();
+  });
+
+  it('listar_chamaCaminhoCorretoComParams', () => {
+    let result: ListarGuiasResult | undefined;
+    service
+      .listar({ pagina: 1, itensPorPagina: 20, prestadorId: 'prest-1' })
+      .subscribe((v) => (result = v));
+
+    const req = httpMock.expectOne(
+      (r) =>
+        r.url === '/api/v1/admin/guias' &&
+        r.params.get('pagina') === '1' &&
+        r.params.get('itensPorPagina') === '20' &&
+        r.params.get('prestadorId') === 'prest-1',
+    );
+    expect(req.request.method).toBe('GET');
+    req.flush(makeListResult());
+
+    expect(result?.total).toBe(0);
+  });
+
+  it('criar_chamaPOST', () => {
+    let result: GuiaDetalheItem | undefined;
+    service.criar(CRIAR_PAYLOAD).subscribe((v) => (result = v));
+
+    const req = httpMock.expectOne('/api/v1/admin/guias');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual(CRIAR_PAYLOAD);
+    req.flush(GUIA_DETALHE);
+
+    expect(result?.id).toBe('guia-1');
+  });
+
+  it('atualizar_chamaPUT', () => {
+    const payload: AtualizarGuiaPayload = {
+      operadoraId: 'op-2',
+      beneficiarioId: 'ben-1',
+      senha: '99999',
+      dataAtendimento: '2026-05-02',
+      ehPacote: false,
+      observacao: 'obs',
+      itens: [],
+    };
+    let result: GuiaDetalheItem | undefined;
+    service.atualizar('guia-1', payload).subscribe((v) => (result = v));
+
+    const req = httpMock.expectOne('/api/v1/admin/guias/guia-1');
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.body).toEqual(payload);
+    req.flush(GUIA_DETALHE);
+
+    expect(result?.id).toBe('guia-1');
+  });
+
+  it('excluir_chamaDELETE', () => {
+    let called = false;
+    service.excluir('guia-1').subscribe(() => (called = true));
+
+    const req = httpMock.expectOne('/api/v1/admin/guias/guia-1');
+    expect(req.request.method).toBe('DELETE');
+    req.flush(null, { status: 204, statusText: 'No Content' });
+
+    expect(called).toBe(true);
+  });
+});
