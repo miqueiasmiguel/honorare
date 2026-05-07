@@ -4,6 +4,8 @@ using App;
 using App.Catalog;
 using App.Catalog.Endpoints;
 using App.Data;
+using App.Faturamento;
+using App.Faturamento.Endpoints;
 using App.Identity;
 using App.Identity.Endpoints;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -35,6 +37,7 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<SaasService>();
 builder.Services.AddScoped<AdminService>();
 builder.Services.AddScoped<CatalogService>();
+builder.Services.AddScoped<GuiaService>();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
@@ -140,6 +143,7 @@ app.MapAuthEndpoints();
 app.MapSaasEndpoints();
 app.MapAdminEndpoints();
 app.MapCatalogEndpoints();
+app.MapGuiaEndpoints();
 app.MapControllers();
 
 app.Run();

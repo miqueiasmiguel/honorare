@@ -126,7 +126,7 @@ Todos os enums armazenados como string (`.HasConversion<string>()`).
 
 ### TASK-F31-02 — GuiaService: criar, listar, obter, atualizar, excluir
 
-**Status:** [ ] pendente  
+**Status:** [x] concluída  
 **Depende de:** TASK-F31-01
 
 **Arquivos a criar/modificar:**
@@ -214,7 +214,7 @@ record ListarGuiasResult(IReadOnlyList<GuiaDto> Itens, int Total, int Pagina, in
 
 ### TASK-F31-03 — GuiaEndpoints REST e testes de endpoint
 
-**Status:** [ ] pendente  
+**Status:** [x] concluída  
 **Depende de:** TASK-F31-02
 
 **Arquivos a criar/modificar:**
@@ -544,8 +544,8 @@ Acessível em `/admin/guias/`.
 ## Checklist de entrega
 
 - [x] TASK-F31-01 — schema + migration
-- [ ] TASK-F31-02 — GuiaService (16 testes)
-- [ ] TASK-F31-03 — GuiaEndpoints (9 testes)
+- [x] TASK-F31-02 — GuiaService (16 testes)
+- [x] TASK-F31-03 — GuiaEndpoints (9 testes)
 - [ ] TASK-F31-04 — delete guards CatalogService (3 testes)
 - [ ] TASK-F31-05 — types TS + GuiaService Angular (4 testes)
 - [ ] TASK-F31-06 — ItemGuiaFormComponent (4 testes)
