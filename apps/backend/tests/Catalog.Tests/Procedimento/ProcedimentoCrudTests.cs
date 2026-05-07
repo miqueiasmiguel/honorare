@@ -230,7 +230,7 @@ public sealed class ProcedimentoCrudTests(PostgresContainerFixture db)
     }
 
     [Fact]
-    public async Task AtualizarProcedimento_AlteraFlags_PersisteCorrretamenteAsync()
+    public async Task AtualizarProcedimento_AlteraFlags_PersisteCorretamenteAsync()
     {
         var tenantId = Guid.NewGuid();
         var (ctx, user) = BuildTenant(tenantId);
