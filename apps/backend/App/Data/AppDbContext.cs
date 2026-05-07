@@ -20,6 +20,7 @@ internal class AppDbContext(
     public DbSet<Prestador> Prestadores => Set<Prestador>();
     public DbSet<TabelaProcedimento> TabelasProcedimento => Set<TabelaProcedimento>();
     public DbSet<DeflatorPrestador> DeflatoresPrestador => Set<DeflatorPrestador>();
+    public DbSet<Beneficiario> Beneficiarios => Set<Beneficiario>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
