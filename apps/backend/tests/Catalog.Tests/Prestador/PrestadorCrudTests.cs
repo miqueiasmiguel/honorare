@@ -1,6 +1,7 @@
 using App;
 using App.Catalog;
 using App.Data;
+using App.Faturamento;
 using App.Identity;
 using Catalog.Tests.Fixtures;
 using Microsoft.EntityFrameworkCore;
@@ -210,6 +211,34 @@ public sealed class PrestadorCrudTests(PostgresContainerFixture db)
 
         Assert.Contains(result.Itens, i => i.Id == prestadorA.Value!.Id);
         Assert.DoesNotContain(result.Itens, i => i.Id == prestadorB.Value!.Id);
+    }
+
+    [Fact]
+    public async Task ExcluirPrestador_ComGuiaAssociada_RetornaConflictErrorAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var service = new CatalogService(ctx, user);
+
+        var criado = await service.CriarPrestadorAsync(new SalvarPrestadorCommand("Dr. Bloqueado", null, true));
+        Assert.True(criado.IsSuccess);
+        var prestadorId = criado.Value!.Id;
+
+        var operadora = App.Catalog.Operadora.Create(tenantId, "UNIMED Seed Prest", null, null, TipoRuleSet.Unimed);
+        var beneficiario = App.Catalog.Beneficiario.Create(tenantId, tenantId.ToString("N")[..8].ToUpperInvariant(), "Paciente Seed Prest");
+        ctx.Add(operadora);
+        ctx.Add(beneficiario);
+        await ctx.SaveChangesAsync();
+
+        var guia = Guia.Create(tenantId, prestadorId, operadora.Id, beneficiario.Id, "SEN001", new DateOnly(2025, 1, 1), false, "");
+        ctx.Add(guia);
+        await ctx.SaveChangesAsync();
+
+        var result = await service.ExcluirPrestadorAsync(prestadorId);
+
+        Assert.True(result.IsFailure);
+        Assert.IsType<ConflictError>(result.Error);
     }
 }
 

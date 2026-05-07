@@ -203,9 +203,13 @@ internal sealed class CatalogService(AppDbContext db, ICurrentUser currentUser)
             return Result.Fail(new NotFoundError("Operadora não encontrada."));
         }
 
+        if (await _db.Guias.AnyAsync(g => g.OperadoraId == id, ct))
+        {
+            return Result.Fail(new ConflictError("Operadora possui guias associadas."));
+        }
+
         _db.Operadoras.Remove(op);
         await _db.SaveChangesAsync(ct);
-        // TODO F3.1: bloquear se houver Guias associadas
         return Result.Ok();
     }
 
@@ -318,9 +322,13 @@ internal sealed class CatalogService(AppDbContext db, ICurrentUser currentUser)
             return Result.Fail(new NotFoundError("Procedimento não encontrado."));
         }
 
+        if (await _db.ItensGuia.AnyAsync(i => i.ProcedimentoId == id, ct))
+        {
+            return Result.Fail(new ConflictError("Procedimento possui guias associadas."));
+        }
+
         _db.Procedimentos.Remove(proc);
         await _db.SaveChangesAsync(ct);
-        // TODO F3.1: bloquear se procedimento estiver em uso em Guias
         return Result.Ok();
     }
 
@@ -810,9 +818,13 @@ internal sealed class CatalogService(AppDbContext db, ICurrentUser currentUser)
             return Result.Fail(new NotFoundError("Prestador não encontrado."));
         }
 
+        if (await _db.Guias.AnyAsync(g => g.PrestadorId == id, ct))
+        {
+            return Result.Fail(new ConflictError("Prestador possui guias associadas."));
+        }
+
         _db.Prestadores.Remove(prestador);
         await _db.SaveChangesAsync(ct);
-        // TODO F3.2: bloquear se houver Guias associadas (retornar 409)
         return Result.Ok();
     }
 

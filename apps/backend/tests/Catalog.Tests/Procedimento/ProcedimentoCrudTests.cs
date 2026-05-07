@@ -1,6 +1,7 @@
 using App;
 using App.Catalog;
 using App.Data;
+using App.Faturamento;
 using App.Identity;
 using Catalog.Tests.Fixtures;
 using Microsoft.EntityFrameworkCore;
@@ -265,6 +266,42 @@ public sealed class ProcedimentoCrudTests(PostgresContainerFixture db)
 
         Assert.True(result.IsFailure);
         Assert.IsType<NotFoundError>(result.Error);
+    }
+
+    [Fact]
+    public async Task ExcluirProcedimento_ComGuiaAssociada_RetornaConflictErrorAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var service = new CatalogService(ctx, user);
+
+        var codTuss = tenantId.ToString("N")[..8];
+        var procedimento = await service.CriarProcedimentoAsync(
+            new SalvarProcedimentoCommand(codTuss, "Proc Bloqueado", null, null, false, false, true));
+        Assert.True(procedimento.IsSuccess);
+        var procedimentoId = procedimento.Value!.Id;
+
+        var prestador = App.Catalog.Prestador.Create(tenantId, "Dr. Seed Proc", null);
+        var operadora = App.Catalog.Operadora.Create(tenantId, "UNIMED Seed Proc", null, null, TipoRuleSet.Unimed);
+        var beneficiario = App.Catalog.Beneficiario.Create(tenantId, tenantId.ToString("N")[..8].ToUpperInvariant(), "Paciente Seed Proc");
+        ctx.Add(prestador);
+        ctx.Add(operadora);
+        ctx.Add(beneficiario);
+        await ctx.SaveChangesAsync();
+
+        var guia = Guia.Create(tenantId, prestador.Id, operadora.Id, beneficiario.Id, "SEN001", new DateOnly(2025, 1, 1), false, "");
+        ctx.Add(guia);
+        await ctx.SaveChangesAsync();
+
+        var item = ItemGuia.Create(guia.Id, procedimentoId, PosicaoExecutor.Cirurgiao, OrdemProcedimento.Unico, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);
+        ctx.Add(item);
+        await ctx.SaveChangesAsync();
+
+        var result = await service.ExcluirProcedimentoAsync(procedimentoId);
+
+        Assert.True(result.IsFailure);
+        Assert.IsType<ConflictError>(result.Error);
     }
 }
 

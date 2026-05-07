@@ -1,6 +1,7 @@
 using App;
 using App.Catalog;
 using App.Data;
+using App.Faturamento;
 using App.Identity;
 using Catalog.Tests.Fixtures;
 using Microsoft.EntityFrameworkCore;
@@ -259,6 +260,34 @@ public sealed class OperadoraCrudTests(PostgresContainerFixture db)
 
         Assert.True(result.IsFailure);
         Assert.IsType<NotFoundError>(result.Error);
+    }
+
+    [Fact]
+    public async Task ExcluirOperadora_ComGuiaAssociada_RetornaConflictErrorAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var service = new CatalogService(ctx, user);
+
+        var created = await service.CriarAsync(new CriarOperadoraCommand("UNIMED Bloqueada", null, null, TipoRuleSet.Unimed));
+        Assert.True(created.IsSuccess);
+        var operadoraId = created.Value!.Id;
+
+        var prestador = App.Catalog.Prestador.Create(tenantId, "Dr. Seed Op", null);
+        var beneficiario = App.Catalog.Beneficiario.Create(tenantId, tenantId.ToString("N")[..8].ToUpperInvariant(), "Paciente Seed Op");
+        ctx.Add(prestador);
+        ctx.Add(beneficiario);
+        await ctx.SaveChangesAsync();
+
+        var guia = Guia.Create(tenantId, prestador.Id, operadoraId, beneficiario.Id, "SEN001", new DateOnly(2025, 1, 1), false, "");
+        ctx.Add(guia);
+        await ctx.SaveChangesAsync();
+
+        var result = await service.ExcluirAsync(operadoraId);
+
+        Assert.True(result.IsFailure);
+        Assert.IsType<ConflictError>(result.Error);
     }
 }
 
