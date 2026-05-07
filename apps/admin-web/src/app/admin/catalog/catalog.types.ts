@@ -161,3 +161,34 @@ export interface SalvarTabelaPayload {
   procedimentoId: string;
   valor: number;
 }
+
+// ── Beneficiário ────────────────────────────────────────────────────────────
+
+export interface BeneficiarioItem {
+  id: string;
+  carteira: string;
+  nome: string;
+  criadoEm: string;
+}
+
+export interface ListarBeneficiariosParams {
+  carteira?: string;
+  nome?: string;
+  pagina: number;
+  itensPorPagina: number;
+}
+
+export interface ListarBeneficiariosResult {
+  itens: BeneficiarioItem[];
+  total: number;
+  pagina: number;
+  itensPorPagina: number;
+}
+
+export interface LookupOrCreateResult extends BeneficiarioItem {
+  criado: boolean;
+}
+
+export interface AtualizarBeneficiarioPayload {
+  nome: string;
+}

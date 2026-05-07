@@ -2,8 +2,12 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import type {
+  AtualizarBeneficiarioPayload,
+  BeneficiarioItem,
   DeflatorItem,
   ImportarCsvResult,
+  ListarBeneficiariosParams,
+  ListarBeneficiariosResult,
   ListarOperadorasParams,
   ListarOperadorasResult,
   ListarPrestadoresParams,
@@ -12,6 +16,7 @@ import type {
   ListarProcedimentosResult,
   ListarTabelasParams,
   ListarTabelasResult,
+  LookupOrCreateResult,
   OperadoraItem,
   PrestadorItem,
   ProcedimentoItem,
@@ -219,5 +224,50 @@ export class CatalogService {
     return this._http.post<ImportarCsvResult>('/api/v1/admin/tabelas/importar-csv', formData, {
       params: httpParams,
     });
+  }
+
+  // ── Beneficiários ────────────────────────────────────────────────────────────
+
+  listarBeneficiarios(params: ListarBeneficiariosParams): Observable<ListarBeneficiariosResult> {
+    let httpParams = new HttpParams()
+      .set('pagina', params.pagina.toString())
+      .set('itensPorPagina', params.itensPorPagina.toString());
+
+    if (params.carteira) {
+      httpParams = httpParams.set('carteira', params.carteira);
+    }
+    if (params.nome) {
+      httpParams = httpParams.set('nome', params.nome);
+    }
+
+    return this._http.get<ListarBeneficiariosResult>('/api/v1/admin/beneficiarios', {
+      params: httpParams,
+    });
+  }
+
+  obterBeneficiario(id: string): Observable<BeneficiarioItem> {
+    return this._http.get<BeneficiarioItem>(`/api/v1/admin/beneficiarios/${id}`);
+  }
+
+  lookupOrCreateBeneficiario(carteira: string, nome: string): Observable<LookupOrCreateResult> {
+    return this._http.post<LookupOrCreateResult>('/api/v1/admin/beneficiarios/lookup-or-create', {
+      carteira,
+      nome,
+    });
+  }
+
+  atualizarBeneficiario(
+    id: string,
+    payload: AtualizarBeneficiarioPayload,
+  ): Observable<BeneficiarioItem> {
+    return this._http.put<BeneficiarioItem>(`/api/v1/admin/beneficiarios/${id}`, payload);
+  }
+
+  excluirBeneficiario(id: string): Observable<void> {
+    return this._http.delete(`/api/v1/admin/beneficiarios/${id}`).pipe(
+      map(() => {
+        return;
+      }),
+    );
   }
 }

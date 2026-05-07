@@ -436,7 +436,7 @@ private sealed record AtualizarBeneficiarioRequest(string Nome);
 
 ---
 
-### TASK-F24-05 — Angular: tipos e `CatalogService`
+### TASK-F24-05 ✅ — Angular: tipos e `CatalogService`
 
 **Objetivo:** Adicionar os tipos TypeScript e os métodos HTTP ao `CatalogService` do `admin-web`.
 
