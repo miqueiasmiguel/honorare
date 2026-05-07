@@ -77,6 +77,8 @@ internal sealed record CriarBeneficiarioCommand(string Carteira, string Nome);
 
 internal sealed record AtualizarBeneficiarioCommand(string Nome);
 
+internal sealed record LookupOrCreateResult(BeneficiarioDto Beneficiario, bool Criado);
+
 internal sealed class CatalogService(AppDbContext db, ICurrentUser currentUser)
 {
     private readonly AppDbContext _db = db;
@@ -1040,6 +1042,38 @@ internal sealed class CatalogService(AppDbContext db, ICurrentUser currentUser)
         _db.Beneficiarios.Remove(beneficiario);
         await _db.SaveChangesAsync(ct);
         return Result.Ok();
+    }
+
+    internal async Task<Result<LookupOrCreateResult>> LookupOrCreateAsync(
+        string carteira, string nome, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(carteira))
+        {
+            return Result<LookupOrCreateResult>.Fail(new ValidationError("Carteira é obrigatória."));
+        }
+
+        var carteiraNormalizada = carteira.Trim().ToUpperInvariant();
+
+        var existente = await _db.Beneficiarios
+            .FirstOrDefaultAsync(b => b.Carteira == carteiraNormalizada, ct);
+
+        if (existente is not null)
+        {
+            return Result<LookupOrCreateResult>.Ok(
+                new LookupOrCreateResult(ToBeneficiarioDto(existente), false));
+        }
+
+        if (string.IsNullOrWhiteSpace(nome))
+        {
+            return Result<LookupOrCreateResult>.Fail(new ValidationError("Nome é obrigatório."));
+        }
+
+        var tenantId = _currentUser.TenantId!.Value;
+        var novo = Beneficiario.Create(tenantId, carteira, nome);
+        _db.Beneficiarios.Add(novo);
+        await _db.SaveChangesAsync(ct);
+
+        return Result<LookupOrCreateResult>.Ok(new LookupOrCreateResult(ToBeneficiarioDto(novo), true));
     }
 
     private static BeneficiarioDto ToBeneficiarioDto(App.Catalog.Beneficiario b) =>

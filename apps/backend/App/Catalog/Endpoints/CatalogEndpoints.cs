@@ -46,6 +46,14 @@ internal static class CatalogEndpoints
         gdef.MapPost("", CriarDeflatorAsync);
         gdef.MapPut("{id:guid}", AtualizarDeflatorAsync);
         gdef.MapDelete("{id:guid}", ExcluirDeflatorAsync);
+
+        var gb = app.MapGroup("/api/v1/admin/beneficiarios").RequireAuthorization("TenantAccess");
+
+        gb.MapGet("", ListarBeneficiariosAsync);
+        gb.MapGet("{id:guid}", ObterBeneficiarioPorIdAsync);
+        gb.MapPost("lookup-or-create", LookupOrCreateBeneficiarioAsync);
+        gb.MapPut("{id:guid}", AtualizarBeneficiarioAsync);
+        gb.MapDelete("{id:guid}", ExcluirBeneficiarioAsync);
     }
 
     // ── Operadora handlers ────────────────────────────────────────────────────
@@ -440,6 +448,89 @@ internal static class CatalogEndpoints
         return Results.NoContent();
     }
 
+    // ── Beneficiário handlers ─────────────────────────────────────────────────
+
+    private static async Task<IResult> ListarBeneficiariosAsync(
+        [AsParameters] ListarBeneficiariosRequest req,
+        CatalogService service, CancellationToken ct)
+    {
+        var query = new ListarBeneficiariosQuery(req.Carteira, req.Nome, req.Pagina, req.ItensPorPagina);
+        var result = await service.ListarBeneficiariosAsync(query, ct);
+        return Results.Ok(result);
+    }
+
+    private static async Task<IResult> ObterBeneficiarioPorIdAsync(
+        Guid id, CatalogService service, CancellationToken ct)
+    {
+        var result = await service.ObterBeneficiarioPorIdAsync(id, ct);
+        if (result.IsFailure)
+        {
+            return Results.Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                detail: result.Error!.Message);
+        }
+
+        return Results.Ok(result.Value);
+    }
+
+    private static async Task<IResult> LookupOrCreateBeneficiarioAsync(
+        LookupOrCreateBeneficiarioRequest body, CatalogService service, CancellationToken ct)
+    {
+        var result = await service.LookupOrCreateAsync(body.Carteira, body.Nome, ct);
+        if (result.IsFailure)
+        {
+            return Results.Problem(
+                statusCode: StatusCodes.Status400BadRequest,
+                detail: result.Error!.Message);
+        }
+
+        var dto = result.Value!;
+        if (dto.Criado)
+        {
+            return Results.Created(
+                $"/api/v1/admin/beneficiarios/{dto.Beneficiario.Id}",
+                new { dto.Beneficiario.Id, dto.Beneficiario.Carteira, dto.Beneficiario.Nome, dto.Beneficiario.CriadoEm, dto.Criado });
+        }
+
+        return Results.Ok(
+            new { dto.Beneficiario.Id, dto.Beneficiario.Carteira, dto.Beneficiario.Nome, dto.Beneficiario.CriadoEm, dto.Criado });
+    }
+
+    private static async Task<IResult> AtualizarBeneficiarioAsync(
+        Guid id, AtualizarBeneficiarioRequest body, CatalogService service, CancellationToken ct)
+    {
+        var cmd = new AtualizarBeneficiarioCommand(body.Nome);
+        var result = await service.AtualizarBeneficiarioAsync(id, cmd, ct);
+        if (result.IsFailure)
+        {
+            var statusCode = result.Error switch
+            {
+                NotFoundError => StatusCodes.Status404NotFound,
+                _ => StatusCodes.Status400BadRequest,
+            };
+            return Results.Problem(statusCode: statusCode, detail: result.Error!.Message);
+        }
+
+        return Results.Ok(result.Value);
+    }
+
+    private static async Task<IResult> ExcluirBeneficiarioAsync(
+        Guid id, CatalogService service, CancellationToken ct)
+    {
+        var result = await service.ExcluirBeneficiarioAsync(id, ct);
+        if (result.IsFailure)
+        {
+            var statusCode = result.Error switch
+            {
+                ConflictError => StatusCodes.Status409Conflict,
+                _ => StatusCodes.Status404NotFound,
+            };
+            return Results.Problem(statusCode: statusCode, detail: result.Error!.Message);
+        }
+
+        return Results.NoContent();
+    }
+
     private static async Task<IResult> ImportarCsvAsync(
         IFormFile? file, CatalogService service, CancellationToken ct)
     {
@@ -524,3 +615,13 @@ internal sealed record SalvarDeflatorRequest(
     Guid OperadoraId,
     PosicaoExecutor Posicao,
     decimal Percentual);
+
+internal sealed record ListarBeneficiariosRequest(
+    string? Carteira = null,
+    string? Nome = null,
+    int Pagina = 1,
+    int ItensPorPagina = 20);
+
+internal sealed record LookupOrCreateBeneficiarioRequest(string Carteira, string Nome);
+
+internal sealed record AtualizarBeneficiarioRequest(string Nome);
