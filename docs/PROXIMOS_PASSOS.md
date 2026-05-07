@@ -97,9 +97,9 @@ Telas do admin-web para o `TenantAdmin` gerenciar usuários dentro do seu tenant
 
 **Entregues:** Entidades `Operadora` e `Procedimento` com `ITenantEntity`, enum `TipoRuleSet` (Unimed / Nulo), configurações EF Core, migration `AddCatalogEntities`, projeto `Catalog.Tests` com fixture Testcontainers e suite completa de testes (schema, CRUD, endpoints, CSV import). `CatalogService` com CRUD de `Operadora` e `Procedimento`, importação batch via CSV (upsert por `CodigoTuss`, separador `;`, limite 10 000 linhas, erros linha a linha sem abortar o batch). Endpoints REST em `/api/v1/admin/operadoras` e `/api/v1/admin/procedimentos` com policy `TenantAccess`. Telas Angular no `admin-web`: `OperadoraList`, `OperadoraForm`, `ProcedimentoList`, `ProcedimentoForm` com modal de importação CSV; sidebar atualizado com seção "Cadastros".
 
-### F2.3 — Tabelas e prestadores
+### F2.3 — Tabelas e prestadores ✅
 
-CRUD de `TabelaProcedimento` (valor por operadora, importação CSV). CRUD de `Prestador`. CRUD de `DeflatorPrestador`.
+**Entregues:** Entidades `Prestador`, `TabelaProcedimento` e `DeflatorPrestador` com `ITenantEntity`, enum `PosicaoExecutor` (Cirurgião, 1ºAux, 2ºAux, 3ºAux, Anestesista, ClínicoAssistente), configurações EF Core, migration `AddTabelasPrestadores`. `CatalogService` estendido com CRUD de `Prestador` (listar/obter/criar/atualizar/excluir) e CRUD de `TabelaProcedimento` com importação CSV (upsert por `(OperadoraId, CodigoTuss)`, separador `;`, limite 10 000 linhas, erros por linha sem abortar o batch) e CRUD de `DeflatorPrestador` (percentual 0–200 por posição). Endpoints REST em `/api/v1/admin/prestadores`, `/api/v1/admin/tabelas` e `/api/v1/admin/prestadores/{id}/deflatores` com policy `TenantAccess`. Telas Angular: `PrestadorList`, `PrestadorForm` (com seção de deflatores inline), `TabelaList` (filtro obrigatório por operadora), `TabelaForm` e `TabelaCsvModalComponent`; sidebar atualizado com "Tabelas de Valores" e "Prestadores".
 
 ### F2.4 — Beneficiários
 

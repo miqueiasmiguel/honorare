@@ -65,7 +65,19 @@
 
 ### Termos comerciais
 
-- **Deflator:** percentual negociado entre operadora e prestador sobre o valor de tabela. Varia por prestador.
+- **Prestador:** médico ou profissional de saúde cadastrado dentro de um tenant. É o executor dos procedimentos nas guias. Identificado por nome e registro profissional (CRM/CRO/RQE). Um tenant pode ter múltiplos prestadores.
+
+- **TabelaProcedimento:** valor negociado de um procedimento para uma operadora específica (tabela de honorários). A combinação `(OperadoraId, ProcedimentoId)` é única por tenant. Pode ser importada via CSV. É a fonte do `valor_base` no motor de cálculo.
+
+- **DeflatorPrestador:** percentual negociado entre um prestador e uma operadora para uma posição de execução específica (`PosicaoExecutor`). Multiplicador aplicado sobre o valor de tabela para obter o `valor_base`.
+
+  Fórmula: `valor_base = TabelaProcedimento.Valor × (DeflatorPrestador.Percentual / 100)`
+
+  A combinação `(PrestadorId, OperadoraId, Posicao)` é única por tenant.
+
+- **PosicaoExecutor:** papel do profissional na execução do procedimento, para fins de deflator. Valores: `Cirurgiao`, `PrimeiroAuxiliar`, `SegundoAuxiliar`, `TerceiroAuxiliar`, `Anestesista`, `ClinicoAssistente`.
+
+- **Deflator:** percentual negociado entre operadora e prestador sobre o valor de tabela. Varia por prestador e por posição de execução. Ver `DeflatorPrestador`.
 
 - **Operadora:** plano de saúde. **Cada Unimed Singular (JPA, Recife, Fortaleza, etc.) é uma operadora separada** — não confundir com "UNIMED" como rede.
 
@@ -75,9 +87,9 @@
 
 ### Valor base
 
-Valor base = `Valor de tabela do procedimento` × `Deflator do prestador`.
+`valor_base = TabelaProcedimento.Valor × (DeflatorPrestador.Percentual / 100)`
 
-A tabela é específica de cada Unimed Singular.
+`TabelaProcedimento` armazena o valor negociado do procedimento para a operadora. `DeflatorPrestador` armazena o percentual do prestador naquela operadora e posição. A tabela é específica de cada Unimed Singular.
 
 ### Multiplicador UNIMED sobre CBHPM 2015
 
@@ -142,6 +154,7 @@ Importante: a ordem afeta o resultado.
 ## Anestesia — caso especial
 
 Anestesia tem mecânica suficientemente diferente de honorários cirúrgicos:
+
 - Porte AN próprio (1 a 8), não o porte cirúrgico
 - Cálculo envolve tempo anestésico em minutos
 - Multiplicador 17,19% UNIMED sobre CBHPM 2015
@@ -151,6 +164,7 @@ Recomendação: **`AnestesiaCalculator` separado** dentro de `Faturamento/Calcul
 ## Casos especiais não tratados no MVP
 
 Não implementar agora, mas saber que existem:
+
 - **Pacotes** — preço flat negociado para um conjunto de procedimentos, ignorando a apuração por porte individual. **Aparece em guias reais do cliente atual** (ex: "PACOTE ABLAÇÃO R$ 2.500,00"). No MVP, o admin informa manualmente o `ValorApurado` na guia quando for pacote — a apuração não é invocada, mas o valor entra no recurso normalmente. Tratar como entrada manual obrigatória até ter suporte nativo.
 - **OPME** (Órteses, Próteses e Materiais Especiais — outra mecânica de cobrança)
 - **Lista Referencial de Intercâmbio** (quando beneficiário de uma Unimed usa rede de outra)
@@ -161,6 +175,7 @@ Esses casos vão gerar erros ou cálculos errados se aparecerem. Documentar e tr
 ## UNIMED não é uma operadora — são ~340 cooperativas
 
 Cada Unimed Singular (João Pessoa, Recife, BH, Dracena, etc.) é uma operadora independente:
+
 - Tabela de honorários própria
 - Valores de UCO próprios
 - Deflatores negociados próprios
@@ -171,6 +186,7 @@ No modelo de dados, **cada Unimed Singular é uma `Operadora` separada**. A regr
 ## Auditoria de glosa — o que o sistema produz
 
 Para cada `ItemGuia` calculado, o sistema gera:
+
 - `ValorApurado`: resultado da apuração de honorários — o que deveria ter sido liquidado (aparece como "VL CORRETO" no recurso)
 - `ValorLiquidado`: o que a operadora efetivamente liquidou (aparece como "PG UNIMED" no recurso; vem do demonstrativo)
 - `Divergencia`: classificação (Conforme, SubLiquidado, SobrepLiquidado, Pendente, IndeterminadoCalculo)
@@ -181,6 +197,7 @@ Para cada `ItemGuia` calculado, o sistema gera:
 ## Convênios sem apuração de honorários
 
 Para operadoras sem tabela de honorários negociada (convênios diversos, pequenos), o sistema opera em modo simplificado via `NullRuleSet`:
+
 - Nenhum `ValorApurado` é gerado
 - A guia funciona como registro de status + observação
 - Quando liquidado a menor, o admin registra no campo `Observacao` o que falta receber
