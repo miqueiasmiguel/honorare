@@ -5,6 +5,17 @@ using Microsoft.EntityFrameworkCore;
 
 namespace App.Catalog;
 
+internal sealed record ListarTabelasQuery(Guid? OperadoraId, string? CodigoTuss, int Pagina, int ItensPorPagina);
+
+internal sealed record ListarTabelasResult(
+    IReadOnlyList<TabelaDto> Itens, int Total, int Pagina, int ItensPorPagina);
+
+internal sealed record TabelaDto(
+    Guid Id, Guid OperadoraId, Guid ProcedimentoId,
+    string CodigoTuss, string Descricao, decimal Valor, DateTimeOffset AtualizadoEm);
+
+internal sealed record SalvarTabelaCommand(Guid OperadoraId, Guid ProcedimentoId, decimal Valor);
+
 internal sealed record ListarPrestadoresQuery(string? Busca, bool? Ativo, int Pagina, int ItensPorPagina);
 
 internal sealed record ListarPrestadoresResult(
@@ -468,6 +479,228 @@ internal sealed class CatalogService(AppDbContext db, ICurrentUser currentUser)
         new(p.Id, p.CodigoTuss, p.Descricao, p.Porte, p.PorteAnestesico,
             p.EhSadt, p.TemPorteProprioVideo, p.Ativo, p.CriadoEm);
 
+    // ── TabelaProcedimento ────────────────────────────────────────────────────
+
+    internal async Task<ListarTabelasResult> ListarTabelasAsync(
+        ListarTabelasQuery query, CancellationToken ct = default)
+    {
+        var q = from t in _db.TabelasProcedimento
+                join p in _db.Procedimentos on t.ProcedimentoId equals p.Id
+                select new { t, p };
+
+        if (query.OperadoraId.HasValue)
+        {
+            q = q.Where(x => x.t.OperadoraId == query.OperadoraId.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(query.CodigoTuss))
+        {
+            var pattern = $"%{query.CodigoTuss}%";
+            q = q.Where(x => EF.Functions.ILike(x.p.CodigoTuss, pattern));
+        }
+
+        var total = await q.CountAsync(ct);
+        var itensPorPagina = Math.Min(query.ItensPorPagina, 100);
+        var skip = (query.Pagina - 1) * itensPorPagina;
+
+        var itens = await q
+            .OrderBy(x => x.p.CodigoTuss)
+            .Skip(skip)
+            .Take(itensPorPagina)
+            .Select(x => new TabelaDto(
+                x.t.Id, x.t.OperadoraId, x.t.ProcedimentoId,
+                x.p.CodigoTuss, x.p.Descricao, x.t.Valor, x.t.AtualizadoEm))
+            .ToListAsync(ct);
+
+        return new ListarTabelasResult(itens, total, query.Pagina, query.ItensPorPagina);
+    }
+
+    internal async Task<Result<TabelaDto>> ObterTabelaPorIdAsync(
+        Guid id, CancellationToken ct = default)
+    {
+        var tabela = await (from t in _db.TabelasProcedimento
+                            join p in _db.Procedimentos on t.ProcedimentoId equals p.Id
+                            where t.Id == id
+                            select new TabelaDto(
+                                t.Id, t.OperadoraId, t.ProcedimentoId,
+                                p.CodigoTuss, p.Descricao, t.Valor, t.AtualizadoEm))
+            .FirstOrDefaultAsync(ct);
+
+        if (tabela is null)
+        {
+            return Result<TabelaDto>.Fail(new NotFoundError("Entrada de tabela não encontrada."));
+        }
+
+        return Result<TabelaDto>.Ok(tabela);
+    }
+
+    internal async Task<Result<TabelaDto>> CriarTabelaAsync(
+        SalvarTabelaCommand cmd, CancellationToken ct = default)
+    {
+        if (cmd.Valor <= 0)
+        {
+            return Result<TabelaDto>.Fail(new ValidationError("Valor deve ser maior que zero."));
+        }
+
+        if (await _db.TabelasProcedimento.AnyAsync(
+            t => t.OperadoraId == cmd.OperadoraId && t.ProcedimentoId == cmd.ProcedimentoId, ct))
+        {
+            return Result<TabelaDto>.Fail(
+                new ConflictError("Já existe uma entrada para esta operadora e procedimento."));
+        }
+
+        var tenantId = _currentUser.TenantId!.Value;
+        var tabela = TabelaProcedimento.Create(tenantId, cmd.OperadoraId, cmd.ProcedimentoId, cmd.Valor);
+        _db.TabelasProcedimento.Add(tabela);
+        await _db.SaveChangesAsync(ct);
+
+        return await ObterTabelaPorIdAsync(tabela.Id, ct);
+    }
+
+    internal async Task<Result<TabelaDto>> AtualizarTabelaAsync(
+        Guid id, SalvarTabelaCommand cmd, CancellationToken ct = default)
+    {
+        if (cmd.Valor <= 0)
+        {
+            return Result<TabelaDto>.Fail(new ValidationError("Valor deve ser maior que zero."));
+        }
+
+        var tabela = await _db.TabelasProcedimento.FirstOrDefaultAsync(t => t.Id == id, ct);
+        if (tabela is null)
+        {
+            return Result<TabelaDto>.Fail(new NotFoundError("Entrada de tabela não encontrada."));
+        }
+
+        tabela.AtualizarValor(cmd.Valor);
+        await _db.SaveChangesAsync(ct);
+
+        return await ObterTabelaPorIdAsync(id, ct);
+    }
+
+    internal async Task<Result> ExcluirTabelaAsync(Guid id, CancellationToken ct = default)
+    {
+        var tabela = await _db.TabelasProcedimento.FirstOrDefaultAsync(t => t.Id == id, ct);
+        if (tabela is null)
+        {
+            return Result.Fail(new NotFoundError("Entrada de tabela não encontrada."));
+        }
+
+        _db.TabelasProcedimento.Remove(tabela);
+        await _db.SaveChangesAsync(ct);
+        return Result.Ok();
+    }
+
+    internal async Task<ImportarCsvResult> ImportarTabelaCsvAsync(
+        Stream csvStream, Guid operadoraId, CancellationToken ct = default)
+    {
+        var tenantId = _currentUser.TenantId!.Value;
+        using var reader = new StreamReader(csvStream, Encoding.UTF8);
+
+        var linhas = new List<string>();
+        string? lida;
+        while ((lida = await reader.ReadLineAsync(ct)) is not null)
+        {
+            linhas.Add(lida);
+        }
+
+        if (linhas.Count == 0)
+        {
+            return new ImportarCsvResult(0, 0, 0, []);
+        }
+
+        if (linhas.Count - 1 > 10000)
+        {
+            return new ImportarCsvResult(0, 0, 0,
+                [new ErroCsvLinha(0, "O arquivo excede o limite de 10.000 linhas de dados.")]);
+        }
+
+        var header = linhas[0].Split(';');
+        var colIdx = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        for (var i = 0; i < header.Length; i++)
+        {
+            colIdx[header[i].Trim()] = i;
+        }
+
+        var erros = new List<ErroCsvLinha>();
+        var ignorados = 0;
+        var validRows = new List<(int LineNum, string CodigoTuss, decimal Valor)>();
+
+        for (var i = 1; i < linhas.Count; i++)
+        {
+            var lineNum = i + 1;
+            var cols = linhas[i].Split(';');
+
+            var codigoTuss = GetColValue(cols, colIdx, "CodigoTuss")?.Trim() ?? string.Empty;
+            if (string.IsNullOrEmpty(codigoTuss))
+            {
+                ignorados++;
+                continue;
+            }
+
+            var valorStr = GetColValue(cols, colIdx, "Valor")?.Trim() ?? string.Empty;
+            if (!decimal.TryParse(valorStr,
+                System.Globalization.NumberStyles.Any,
+                System.Globalization.CultureInfo.InvariantCulture,
+                out var valor))
+            {
+                erros.Add(new ErroCsvLinha(lineNum, $"Valor '{valorStr}' não é um número válido."));
+                continue;
+            }
+
+            if (valor <= 0)
+            {
+                erros.Add(new ErroCsvLinha(lineNum, "Valor deve ser maior que zero."));
+                continue;
+            }
+
+            validRows.Add((lineNum, codigoTuss, valor));
+        }
+
+        var codes = validRows.Select(r => r.CodigoTuss).Distinct().ToList();
+        var procedimentos = await _db.Procedimentos
+            .Where(p => codes.Contains(p.CodigoTuss))
+            .Select(p => new { p.CodigoTuss, p.Id })
+            .ToDictionaryAsync(p => p.CodigoTuss, p => p.Id, ct);
+
+        var rowsParaUpsert = new List<(Guid ProcedimentoId, decimal Valor)>();
+        foreach (var row in validRows)
+        {
+            if (!procedimentos.TryGetValue(row.CodigoTuss, out var procedimentoId))
+            {
+                erros.Add(new ErroCsvLinha(row.LineNum,
+                    $"Código TUSS '{row.CodigoTuss}' não encontrado no catálogo."));
+                continue;
+            }
+
+            rowsParaUpsert.Add((procedimentoId, row.Valor));
+        }
+
+        var procedimentoIds = rowsParaUpsert.Select(r => r.ProcedimentoId).ToList();
+        var existentes = await _db.TabelasProcedimento
+            .Where(t => t.OperadoraId == operadoraId && procedimentoIds.Contains(t.ProcedimentoId))
+            .ToDictionaryAsync(t => t.ProcedimentoId, ct);
+
+        var atualizados = 0;
+        var novos = new List<TabelaProcedimento>();
+
+        foreach (var row in rowsParaUpsert)
+        {
+            if (existentes.TryGetValue(row.ProcedimentoId, out var existente))
+            {
+                existente.AtualizarValor(row.Valor);
+                atualizados++;
+            }
+            else
+            {
+                novos.Add(TabelaProcedimento.Create(tenantId, operadoraId, row.ProcedimentoId, row.Valor));
+            }
+        }
+
+        _db.TabelasProcedimento.AddRange(novos);
+        await _db.SaveChangesAsync(ct);
+
+        return new ImportarCsvResult(novos.Count, atualizados, ignorados, erros);
+    }
 
     // ── Prestador ─────────────────────────────────────────────────────────────
 

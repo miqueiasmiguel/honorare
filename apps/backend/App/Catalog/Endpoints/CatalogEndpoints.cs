@@ -21,6 +21,15 @@ internal static class CatalogEndpoints
         gp.MapDelete("{id:guid}", ExcluirProcedimentoAsync);
         gp.MapPost("importar-csv", ImportarCsvAsync).DisableAntiforgery();
 
+        var gta = app.MapGroup("/api/v1/admin/tabelas").RequireAuthorization("TenantAccess");
+
+        gta.MapGet("", ListarTabelasAsync);
+        gta.MapGet("{id:guid}", ObterTabelaAsync);
+        gta.MapPost("", CriarTabelaAsync);
+        gta.MapPut("{id:guid}", AtualizarTabelaAsync);
+        gta.MapDelete("{id:guid}", ExcluirTabelaAsync);
+        gta.MapPost("importar-csv", ImportarTabelaCsvAsync).DisableAntiforgery();
+
         var gpr = app.MapGroup("/api/v1/admin/prestadores").RequireAuthorization("TenantAccess");
 
         gpr.MapGet("", ListarPrestadoresAsync);
@@ -187,6 +196,104 @@ internal static class CatalogEndpoints
         return Results.NoContent();
     }
 
+    // ── Tabela handlers ───────────────────────────────────────────────────────
+
+    private static async Task<IResult> ListarTabelasAsync(
+        [AsParameters] ListarTabelasRequest req,
+        CatalogService service, CancellationToken ct)
+    {
+        var query = new ListarTabelasQuery(req.OperadoraId, req.CodigoTuss, req.Pagina, req.ItensPorPagina);
+        var result = await service.ListarTabelasAsync(query, ct);
+        return Results.Ok(result);
+    }
+
+    private static async Task<IResult> ObterTabelaAsync(
+        Guid id, CatalogService service, CancellationToken ct)
+    {
+        var result = await service.ObterTabelaPorIdAsync(id, ct);
+        if (result.IsFailure)
+        {
+            return Results.Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                detail: result.Error!.Message);
+        }
+
+        return Results.Ok(result.Value);
+    }
+
+    private static async Task<IResult> CriarTabelaAsync(
+        SalvarTabelaRequest body, CatalogService service, CancellationToken ct)
+    {
+        var cmd = new SalvarTabelaCommand(body.OperadoraId, body.ProcedimentoId, body.Valor);
+        var result = await service.CriarTabelaAsync(cmd, ct);
+        if (result.IsFailure)
+        {
+            var statusCode = result.Error switch
+            {
+                ConflictError => StatusCodes.Status409Conflict,
+                _ => StatusCodes.Status400BadRequest,
+            };
+            return Results.Problem(statusCode: statusCode, detail: result.Error!.Message);
+        }
+
+        return Results.Created($"/api/v1/admin/tabelas/{result.Value!.Id}", result.Value);
+    }
+
+    private static async Task<IResult> AtualizarTabelaAsync(
+        Guid id, SalvarTabelaRequest body, CatalogService service, CancellationToken ct)
+    {
+        var cmd = new SalvarTabelaCommand(body.OperadoraId, body.ProcedimentoId, body.Valor);
+        var result = await service.AtualizarTabelaAsync(id, cmd, ct);
+        if (result.IsFailure)
+        {
+            var statusCode = result.Error switch
+            {
+                NotFoundError => StatusCodes.Status404NotFound,
+                _ => StatusCodes.Status400BadRequest,
+            };
+            return Results.Problem(statusCode: statusCode, detail: result.Error!.Message);
+        }
+
+        return Results.Ok(result.Value);
+    }
+
+    private static async Task<IResult> ExcluirTabelaAsync(
+        Guid id, CatalogService service, CancellationToken ct)
+    {
+        var result = await service.ExcluirTabelaAsync(id, ct);
+        if (result.IsFailure)
+        {
+            return Results.Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                detail: result.Error!.Message);
+        }
+
+        return Results.NoContent();
+    }
+
+    private static async Task<IResult> ImportarTabelaCsvAsync(
+        Guid operadoraId, IFormFile? file, CatalogService service, CancellationToken ct)
+    {
+        if (file is null ||
+            !Path.GetExtension(file.FileName).Equals(".csv", StringComparison.OrdinalIgnoreCase))
+        {
+            return Results.Problem(
+                statusCode: StatusCodes.Status400BadRequest,
+                detail: "É necessário enviar um arquivo com extensão .csv.");
+        }
+
+        if (file.Length > 5 * 1024 * 1024)
+        {
+            return Results.Problem(
+                statusCode: StatusCodes.Status400BadRequest,
+                detail: "O arquivo excede o tamanho máximo de 5 MB.");
+        }
+
+        using var stream = file.OpenReadStream();
+        var result = await service.ImportarTabelaCsvAsync(stream, operadoraId, ct);
+        return Results.Ok(result);
+    }
+
     // ── Prestador handlers ────────────────────────────────────────────────────
 
     private static async Task<IResult> ListarPrestadoresAsync(
@@ -319,6 +426,17 @@ internal sealed record SalvarProcedimentoRequest(
     bool EhSadt,
     bool TemPorteProprioVideo,
     bool Ativo);
+
+internal sealed record ListarTabelasRequest(
+    Guid? OperadoraId = null,
+    string? CodigoTuss = null,
+    int Pagina = 1,
+    int ItensPorPagina = 20);
+
+internal sealed record SalvarTabelaRequest(
+    Guid OperadoraId,
+    Guid ProcedimentoId,
+    decimal Valor);
 
 internal sealed record ListarPrestadoresRequest(
     string? Busca = null,
