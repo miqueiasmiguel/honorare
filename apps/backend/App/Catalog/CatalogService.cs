@@ -64,6 +64,19 @@ internal sealed record CriarOperadoraCommand(
 internal sealed record AtualizarOperadoraCommand(
     string Nome, string? RegistroAns, string? Cnpj, TipoRuleSet TipoRuleSet, bool Ativa);
 
+internal sealed record ListarBeneficiariosQuery(
+    string? Carteira, string? Nome, int Pagina, int ItensPorPagina);
+
+internal sealed record ListarBeneficiariosResult(
+    IReadOnlyList<BeneficiarioDto> Itens, int Total, int Pagina, int ItensPorPagina);
+
+internal sealed record BeneficiarioDto(
+    Guid Id, string Carteira, string Nome, DateTimeOffset CriadoEm);
+
+internal sealed record CriarBeneficiarioCommand(string Carteira, string Nome);
+
+internal sealed record AtualizarBeneficiarioCommand(string Nome);
+
 internal sealed class CatalogService(AppDbContext db, ICurrentUser currentUser)
 {
     private readonly AppDbContext _db = db;
@@ -915,6 +928,143 @@ internal sealed class CatalogService(AppDbContext db, ICurrentUser currentUser)
         if (cmd.Percentual > 200)
         {
             return new ValidationError("Percentual não pode exceder 200.");
+        }
+
+        return null;
+    }
+
+    // ── Beneficiário ──────────────────────────────────────────────────────────
+
+    internal async Task<ListarBeneficiariosResult> ListarBeneficiariosAsync(
+        ListarBeneficiariosQuery query, CancellationToken ct = default)
+    {
+        var q = _db.Beneficiarios.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(query.Carteira))
+        {
+            var pattern = $"%{query.Carteira.Trim().ToUpperInvariant()}%";
+            q = q.Where(b => EF.Functions.ILike(b.Carteira, pattern));
+        }
+
+        if (!string.IsNullOrWhiteSpace(query.Nome))
+        {
+            var pattern = $"%{query.Nome}%";
+            q = q.Where(b => EF.Functions.ILike(b.Nome, pattern));
+        }
+
+        var total = await q.CountAsync(ct);
+        var itensPorPagina = Math.Min(query.ItensPorPagina, 100);
+        var skip = (query.Pagina - 1) * itensPorPagina;
+
+        var itens = await q
+            .OrderBy(b => b.Nome)
+            .Skip(skip)
+            .Take(itensPorPagina)
+            .Select(b => new BeneficiarioDto(b.Id, b.Carteira, b.Nome, b.CriadoEm))
+            .ToListAsync(ct);
+
+        return new ListarBeneficiariosResult(itens, total, query.Pagina, query.ItensPorPagina);
+    }
+
+    internal async Task<Result<BeneficiarioDto>> ObterBeneficiarioPorIdAsync(
+        Guid id, CancellationToken ct = default)
+    {
+        var beneficiario = await _db.Beneficiarios.FirstOrDefaultAsync(b => b.Id == id, ct);
+        if (beneficiario is null)
+        {
+            return Result<BeneficiarioDto>.Fail(new NotFoundError("Beneficiário não encontrado."));
+        }
+
+        return Result<BeneficiarioDto>.Ok(ToBeneficiarioDto(beneficiario));
+    }
+
+    internal async Task<Result<BeneficiarioDto>> CriarBeneficiarioAsync(
+        CriarBeneficiarioCommand cmd, CancellationToken ct = default)
+    {
+        var erro = ValidarComandoBeneficiario(cmd.Carteira, cmd.Nome);
+        if (erro is not null)
+        {
+            return Result<BeneficiarioDto>.Fail(erro);
+        }
+
+        var carteiraNormalizada = cmd.Carteira.Trim().ToUpperInvariant();
+        var existe = await _db.Beneficiarios
+            .AnyAsync(b => b.Carteira == carteiraNormalizada, ct);
+        if (existe)
+        {
+            return Result<BeneficiarioDto>.Fail(
+                new ConflictError("Carteira já cadastrada neste tenant."));
+        }
+
+        var tenantId = _currentUser.TenantId!.Value;
+        var beneficiario = App.Catalog.Beneficiario.Create(tenantId, cmd.Carteira, cmd.Nome);
+        _db.Beneficiarios.Add(beneficiario);
+        await _db.SaveChangesAsync(ct);
+        return Result<BeneficiarioDto>.Ok(ToBeneficiarioDto(beneficiario));
+    }
+
+    internal async Task<Result<BeneficiarioDto>> AtualizarBeneficiarioAsync(
+        Guid id, AtualizarBeneficiarioCommand cmd, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(cmd.Nome))
+        {
+            return Result<BeneficiarioDto>.Fail(new ValidationError("Nome é obrigatório."));
+        }
+
+        if (cmd.Nome.Trim().Length > 150)
+        {
+            return Result<BeneficiarioDto>.Fail(
+                new ValidationError("Nome deve ter no máximo 150 caracteres."));
+        }
+
+        var beneficiario = await _db.Beneficiarios.FirstOrDefaultAsync(b => b.Id == id, ct);
+        if (beneficiario is null)
+        {
+            return Result<BeneficiarioDto>.Fail(new NotFoundError("Beneficiário não encontrado."));
+        }
+
+        beneficiario.Atualizar(cmd.Nome);
+        await _db.SaveChangesAsync(ct);
+        return Result<BeneficiarioDto>.Ok(ToBeneficiarioDto(beneficiario));
+    }
+
+    internal async Task<Result> ExcluirBeneficiarioAsync(Guid id, CancellationToken ct = default)
+    {
+        var beneficiario = await _db.Beneficiarios.FirstOrDefaultAsync(b => b.Id == id, ct);
+        if (beneficiario is null)
+        {
+            return Result.Fail(new NotFoundError("Beneficiário não encontrado."));
+        }
+
+        // TODO F3.1: verificar Guias associadas antes de excluir (retornar 409 se houver)
+        _db.Beneficiarios.Remove(beneficiario);
+        await _db.SaveChangesAsync(ct);
+        return Result.Ok();
+    }
+
+    private static BeneficiarioDto ToBeneficiarioDto(App.Catalog.Beneficiario b) =>
+        new(b.Id, b.Carteira, b.Nome, b.CriadoEm);
+
+    private static ValidationError? ValidarComandoBeneficiario(string carteira, string nome)
+    {
+        if (string.IsNullOrWhiteSpace(carteira))
+        {
+            return new ValidationError("Carteira é obrigatória.");
+        }
+
+        if (carteira.Trim().Length > 50)
+        {
+            return new ValidationError("Carteira deve ter no máximo 50 caracteres.");
+        }
+
+        if (string.IsNullOrWhiteSpace(nome))
+        {
+            return new ValidationError("Nome é obrigatório.");
+        }
+
+        if (nome.Trim().Length > 150)
+        {
+            return new ValidationError("Nome deve ter no máximo 150 caracteres.");
         }
 
         return null;
