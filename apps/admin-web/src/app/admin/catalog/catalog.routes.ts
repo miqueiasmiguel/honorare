@@ -69,4 +69,11 @@ export const catalogRoutes: Routes = [
     loadComponent: () =>
       import('./tabelas/tabela-list/tabela-list.component').then((m) => m.TabelaListComponent),
   },
+  {
+    path: 'beneficiarios',
+    loadComponent: () =>
+      import('./beneficiarios/beneficiario-autocomplete/beneficiario-autocomplete.component').then(
+        (m) => m.BeneficiarioAutocompleteComponent,
+      ),
+  },
 ];

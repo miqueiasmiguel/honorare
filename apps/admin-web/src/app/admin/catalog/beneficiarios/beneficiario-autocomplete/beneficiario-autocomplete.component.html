@@ -1,0 +1,78 @@
+<div class="beneficiario-autocomplete">
+  <label class="beneficiario-autocomplete__label" for="beneficiario-carteira">
+    {{ label() }}
+  </label>
+
+  <div class="beneficiario-autocomplete__field">
+    @if (disabled()) {
+      <input
+        type="text"
+        id="beneficiario-carteira"
+        class="beneficiario-autocomplete__input"
+        [value]="carteira()"
+        placeholder="Número da carteirinha"
+        disabled
+      />
+    } @else {
+      <input
+        type="text"
+        id="beneficiario-carteira"
+        class="beneficiario-autocomplete__input"
+        [value]="carteira()"
+        placeholder="Número da carteirinha"
+        (input)="onCarteiraChange($any($event.target).value)"
+      />
+    }
+    @if (estado() === 'buscando') {
+      <span class="beneficiario-autocomplete__spinner" aria-label="Buscando beneficiário">
+        <span class="beneficiario-autocomplete__spinner-dot"></span>
+      </span>
+    }
+  </div>
+
+  @if (estado() === 'encontrado' || (estado() === 'novo' && beneficiarioAtual() !== null)) {
+    <div class="beneficiario-autocomplete__resultado">
+      <span
+        class="beneficiario-autocomplete__badge"
+        [class.beneficiario-autocomplete__badge--encontrado]="estado() === 'encontrado'"
+        [class.beneficiario-autocomplete__badge--novo]="estado() === 'novo'"
+      >
+        {{ estado() === 'encontrado' ? 'Encontrado' : 'Novo' }}
+      </span>
+      <span class="beneficiario-autocomplete__nome">{{ nomeSelecionado() }}</span>
+    </div>
+  }
+
+  @if (estado() === 'novo' && beneficiarioAtual() === null) {
+    <div class="beneficiario-autocomplete__nome-form">
+      <label class="beneficiario-autocomplete__label-nome" for="beneficiario-nome">
+        Nome do Paciente
+      </label>
+      <input
+        type="text"
+        id="beneficiario-nome"
+        class="beneficiario-autocomplete__input beneficiario-autocomplete__input--nome"
+        [value]="nomeInput()"
+        placeholder="Nome completo do paciente"
+        (input)="onNomeInputChange($any($event.target).value)"
+        (keydown.enter)="confirmarNovo()"
+      />
+      @if (erroNome()) {
+        <span class="beneficiario-autocomplete__erro-nome" role="alert">{{ erroNome() }}</span>
+      }
+      <button
+        type="button"
+        class="beneficiario-autocomplete__btn-confirmar"
+        (click)="confirmarNovo()"
+      >
+        Confirmar
+      </button>
+    </div>
+  }
+
+  @if (estado() === 'erro') {
+    <div class="beneficiario-autocomplete__erro" role="alert">
+      Erro ao buscar beneficiário. Tente novamente.
+    </div>
+  }
+</div>

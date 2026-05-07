@@ -516,7 +516,7 @@ excluirBeneficiario_enviaDELETE
 
 ---
 
-### TASK-F24-06 — Angular: `BeneficiarioAutocompleteComponent`
+### TASK-F24-06 ✅ — Angular: `BeneficiarioAutocompleteComponent`
 
 **Objetivo:** Componente reutilizável que o formulário de Guia (F3.1) usará. Recebe uma carteira,
 busca/cria o beneficiário e emite o resultado.
