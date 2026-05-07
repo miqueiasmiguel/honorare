@@ -26,6 +26,11 @@ internal sealed record PrestadorDto(
 
 internal sealed record SalvarPrestadorCommand(string Nome, string? RegistroProfissional, bool Ativo);
 
+internal sealed record DeflatorDto(
+    Guid Id, Guid PrestadorId, Guid OperadoraId, PosicaoExecutor Posicao, decimal Percentual);
+
+internal sealed record SalvarDeflatorCommand(Guid OperadoraId, PosicaoExecutor Posicao, decimal Percentual);
+
 internal sealed record ListarProcedimentosQuery(string? Busca, bool? Ativo, int Pagina, int ItensPorPagina);
 
 internal sealed record ListarProcedimentosResult(
@@ -809,6 +814,107 @@ internal sealed class CatalogService(AppDbContext db, ICurrentUser currentUser)
         if (cmd.Nome.Trim().Length > 150)
         {
             return new ValidationError("Nome deve ter no máximo 150 caracteres.");
+        }
+
+        return null;
+    }
+
+    // ── DeflatorPrestador ─────────────────────────────────────────────────────
+
+    internal async Task<IReadOnlyList<DeflatorDto>> ListarDeflatoresAsync(
+        Guid prestadorId, CancellationToken ct = default)
+    {
+        return await _db.DeflatoresPrestador
+            .Where(d => d.PrestadorId == prestadorId)
+            .OrderBy(d => d.Posicao)
+            .Select(d => new DeflatorDto(d.Id, d.PrestadorId, d.OperadoraId, d.Posicao, d.Percentual))
+            .ToListAsync(ct);
+    }
+
+    internal async Task<Result<DeflatorDto>> CriarDeflatorAsync(
+        Guid prestadorId, SalvarDeflatorCommand cmd, CancellationToken ct = default)
+    {
+        var erro = ValidarComandoDeflator(cmd);
+        if (erro is not null)
+        {
+            return Result<DeflatorDto>.Fail(erro);
+        }
+
+        var prestador = await _db.Prestadores.FirstOrDefaultAsync(p => p.Id == prestadorId, ct);
+        if (prestador is null)
+        {
+            return Result<DeflatorDto>.Fail(new NotFoundError("Prestador não encontrado."));
+        }
+
+        if (await _db.DeflatoresPrestador.AnyAsync(
+            d => d.PrestadorId == prestadorId &&
+                 d.OperadoraId == cmd.OperadoraId &&
+                 d.Posicao == cmd.Posicao, ct))
+        {
+            return Result<DeflatorDto>.Fail(
+                new ConflictError("Já existe um deflator para este prestador, operadora e posição."));
+        }
+
+        var tenantId = _currentUser.TenantId!.Value;
+        var deflator = DeflatorPrestador.Create(
+            tenantId, prestadorId, cmd.OperadoraId, cmd.Posicao, cmd.Percentual);
+        _db.DeflatoresPrestador.Add(deflator);
+        await _db.SaveChangesAsync(ct);
+
+        return Result<DeflatorDto>.Ok(
+            new DeflatorDto(deflator.Id, deflator.PrestadorId, deflator.OperadoraId,
+                deflator.Posicao, deflator.Percentual));
+    }
+
+    internal async Task<Result<DeflatorDto>> AtualizarDeflatorAsync(
+        Guid prestadorId, Guid id, SalvarDeflatorCommand cmd, CancellationToken ct = default)
+    {
+        var erro = ValidarComandoDeflator(cmd);
+        if (erro is not null)
+        {
+            return Result<DeflatorDto>.Fail(erro);
+        }
+
+        var deflator = await _db.DeflatoresPrestador
+            .FirstOrDefaultAsync(d => d.Id == id && d.PrestadorId == prestadorId, ct);
+        if (deflator is null)
+        {
+            return Result<DeflatorDto>.Fail(new NotFoundError("Deflator não encontrado."));
+        }
+
+        deflator.AtualizarPercentual(cmd.Percentual);
+        await _db.SaveChangesAsync(ct);
+
+        return Result<DeflatorDto>.Ok(
+            new DeflatorDto(deflator.Id, deflator.PrestadorId, deflator.OperadoraId,
+                deflator.Posicao, deflator.Percentual));
+    }
+
+    internal async Task<Result> ExcluirDeflatorAsync(
+        Guid prestadorId, Guid id, CancellationToken ct = default)
+    {
+        var deflator = await _db.DeflatoresPrestador
+            .FirstOrDefaultAsync(d => d.Id == id && d.PrestadorId == prestadorId, ct);
+        if (deflator is null)
+        {
+            return Result.Fail(new NotFoundError("Deflator não encontrado."));
+        }
+
+        _db.DeflatoresPrestador.Remove(deflator);
+        await _db.SaveChangesAsync(ct);
+        return Result.Ok();
+    }
+
+    private static ValidationError? ValidarComandoDeflator(SalvarDeflatorCommand cmd)
+    {
+        if (cmd.Percentual <= 0)
+        {
+            return new ValidationError("Percentual deve ser maior que zero.");
+        }
+
+        if (cmd.Percentual > 200)
+        {
+            return new ValidationError("Percentual não pode exceder 200.");
         }
 
         return null;

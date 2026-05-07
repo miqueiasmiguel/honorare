@@ -37,6 +37,15 @@ internal static class CatalogEndpoints
         gpr.MapPost("", CriarPrestadorAsync);
         gpr.MapPut("{id:guid}", AtualizarPrestadorAsync);
         gpr.MapDelete("{id:guid}", ExcluirPrestadorAsync);
+
+        var gdef = app
+            .MapGroup("/api/v1/admin/prestadores/{prestadorId:guid}/deflatores")
+            .RequireAuthorization("TenantAccess");
+
+        gdef.MapGet("", ListarDeflatoresAsync);
+        gdef.MapPost("", CriarDeflatorAsync);
+        gdef.MapPut("{id:guid}", AtualizarDeflatorAsync);
+        gdef.MapDelete("{id:guid}", ExcluirDeflatorAsync);
     }
 
     // ── Operadora handlers ────────────────────────────────────────────────────
@@ -369,6 +378,68 @@ internal static class CatalogEndpoints
         return Results.NoContent();
     }
 
+    // ── Deflator handlers ─────────────────────────────────────────────────────
+
+    private static async Task<IResult> ListarDeflatoresAsync(
+        Guid prestadorId, CatalogService service, CancellationToken ct)
+    {
+        var result = await service.ListarDeflatoresAsync(prestadorId, ct);
+        return Results.Ok(result);
+    }
+
+    private static async Task<IResult> CriarDeflatorAsync(
+        Guid prestadorId, SalvarDeflatorRequest body, CatalogService service, CancellationToken ct)
+    {
+        var cmd = new SalvarDeflatorCommand(body.OperadoraId, body.Posicao, body.Percentual);
+        var result = await service.CriarDeflatorAsync(prestadorId, cmd, ct);
+        if (result.IsFailure)
+        {
+            var statusCode = result.Error switch
+            {
+                ConflictError => StatusCodes.Status409Conflict,
+                NotFoundError => StatusCodes.Status404NotFound,
+                _ => StatusCodes.Status400BadRequest,
+            };
+            return Results.Problem(statusCode: statusCode, detail: result.Error!.Message);
+        }
+
+        return Results.Created(
+            $"/api/v1/admin/prestadores/{prestadorId}/deflatores/{result.Value!.Id}",
+            result.Value);
+    }
+
+    private static async Task<IResult> AtualizarDeflatorAsync(
+        Guid prestadorId, Guid id, SalvarDeflatorRequest body, CatalogService service, CancellationToken ct)
+    {
+        var cmd = new SalvarDeflatorCommand(body.OperadoraId, body.Posicao, body.Percentual);
+        var result = await service.AtualizarDeflatorAsync(prestadorId, id, cmd, ct);
+        if (result.IsFailure)
+        {
+            var statusCode = result.Error switch
+            {
+                NotFoundError => StatusCodes.Status404NotFound,
+                _ => StatusCodes.Status400BadRequest,
+            };
+            return Results.Problem(statusCode: statusCode, detail: result.Error!.Message);
+        }
+
+        return Results.Ok(result.Value);
+    }
+
+    private static async Task<IResult> ExcluirDeflatorAsync(
+        Guid prestadorId, Guid id, CatalogService service, CancellationToken ct)
+    {
+        var result = await service.ExcluirDeflatorAsync(prestadorId, id, ct);
+        if (result.IsFailure)
+        {
+            return Results.Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                detail: result.Error!.Message);
+        }
+
+        return Results.NoContent();
+    }
+
     private static async Task<IResult> ImportarCsvAsync(
         IFormFile? file, CatalogService service, CancellationToken ct)
     {
@@ -448,3 +519,8 @@ internal sealed record SalvarPrestadorRequest(
     string Nome,
     string? RegistroProfissional,
     bool Ativo);
+
+internal sealed record SalvarDeflatorRequest(
+    Guid OperadoraId,
+    PosicaoExecutor Posicao,
+    decimal Percentual);

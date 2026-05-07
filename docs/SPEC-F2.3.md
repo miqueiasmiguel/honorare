@@ -237,7 +237,7 @@ Listar_NaoRetornaTabelasDeOutroTenant
 
 ---
 
-### TASK-F23-04 — DeflatorService + Endpoints
+### TASK-F23-04 — DeflatorService + Endpoints ✅
 
 **Red (arquivo `Catalog.Tests/DeflatorServiceTests.cs`):**
 
