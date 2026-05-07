@@ -2,14 +2,20 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import type {
+  DeflatorItem,
   ImportarCsvResult,
   ListarOperadorasParams,
   ListarOperadorasResult,
+  ListarPrestadoresParams,
+  ListarPrestadoresResult,
   ListarProcedimentosParams,
   ListarProcedimentosResult,
   OperadoraItem,
+  PrestadorItem,
   ProcedimentoItem,
+  SalvarDeflatorPayload,
   SalvarOperadoraPayload,
+  SalvarPrestadorPayload,
   SalvarProcedimentoPayload,
 } from './catalog.types';
 
@@ -98,5 +104,72 @@ export class CatalogService {
     const formData = new FormData();
     formData.append('file', file);
     return this._http.post<ImportarCsvResult>('/api/v1/admin/procedimentos/importar-csv', formData);
+  }
+
+  listarPrestadores(params: ListarPrestadoresParams): Observable<ListarPrestadoresResult> {
+    let httpParams = new HttpParams()
+      .set('pagina', params.pagina.toString())
+      .set('itensPorPagina', params.itensPorPagina.toString());
+
+    if (params.busca) {
+      httpParams = httpParams.set('busca', params.busca);
+    }
+    if (params.ativo !== undefined) {
+      httpParams = httpParams.set('ativo', params.ativo.toString());
+    }
+
+    return this._http.get<ListarPrestadoresResult>('/api/v1/admin/prestadores', {
+      params: httpParams,
+    });
+  }
+
+  obterPrestador(id: string): Observable<PrestadorItem> {
+    return this._http.get<PrestadorItem>(`/api/v1/admin/prestadores/${id}`);
+  }
+
+  criarPrestador(payload: SalvarPrestadorPayload): Observable<PrestadorItem> {
+    return this._http.post<PrestadorItem>('/api/v1/admin/prestadores', payload);
+  }
+
+  atualizarPrestador(id: string, payload: SalvarPrestadorPayload): Observable<PrestadorItem> {
+    return this._http.put<PrestadorItem>(`/api/v1/admin/prestadores/${id}`, payload);
+  }
+
+  excluirPrestador(id: string): Observable<void> {
+    return this._http.delete(`/api/v1/admin/prestadores/${id}`).pipe(
+      map(() => {
+        return;
+      }),
+    );
+  }
+
+  listarDeflatores(prestadorId: string): Observable<DeflatorItem[]> {
+    return this._http.get<DeflatorItem[]>(`/api/v1/admin/prestadores/${prestadorId}/deflatores`);
+  }
+
+  criarDeflator(prestadorId: string, payload: SalvarDeflatorPayload): Observable<DeflatorItem> {
+    return this._http.post<DeflatorItem>(
+      `/api/v1/admin/prestadores/${prestadorId}/deflatores`,
+      payload,
+    );
+  }
+
+  atualizarDeflator(
+    prestadorId: string,
+    id: string,
+    payload: SalvarDeflatorPayload,
+  ): Observable<DeflatorItem> {
+    return this._http.put<DeflatorItem>(
+      `/api/v1/admin/prestadores/${prestadorId}/deflatores/${id}`,
+      payload,
+    );
+  }
+
+  excluirDeflator(prestadorId: string, id: string): Observable<void> {
+    return this._http.delete(`/api/v1/admin/prestadores/${prestadorId}/deflatores/${id}`).pipe(
+      map(() => {
+        return;
+      }),
+    );
   }
 }

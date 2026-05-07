@@ -43,4 +43,25 @@ export const catalogRoutes: Routes = [
         (m) => m.ProcedimentoFormComponent,
       ),
   },
+  {
+    path: 'prestadores',
+    loadComponent: () =>
+      import('./prestadores/prestador-list/prestador-list.component').then(
+        (m) => m.PrestadorListComponent,
+      ),
+  },
+  {
+    path: 'prestadores/novo',
+    loadComponent: () =>
+      import('./prestadores/prestador-form/prestador-form.component').then(
+        (m) => m.PrestadorFormComponent,
+      ),
+  },
+  {
+    path: 'prestadores/:id',
+    loadComponent: () =>
+      import('./prestadores/prestador-form/prestador-form.component').then(
+        (m) => m.PrestadorFormComponent,
+      ),
+  },
 ];

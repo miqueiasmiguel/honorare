@@ -1,0 +1,298 @@
+@use 'styles/tokens' as *;
+
+.prestador-form {
+  padding: space(8);
+  max-width: 640px;
+}
+
+.prestador-form__title {
+  @include text-h2;
+
+  margin: 0 0 space(8);
+  padding-bottom: space(4);
+  color: var(--color-tinta);
+  border-bottom: 1px solid var(--color-borda-discreta);
+}
+
+.prestador-form__loading {
+  @include text-body;
+
+  color: var(--color-tinta-secundaria);
+}
+
+.prestador-form__form {
+  display: flex;
+  flex-direction: column;
+  gap: space(6);
+}
+
+.prestador-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: space(2);
+
+  &--inline {
+    flex-direction: row;
+    align-items: center;
+    gap: space(3);
+  }
+}
+
+.prestador-form__label {
+  @include text-label;
+
+  color: var(--color-tinta);
+}
+
+.prestador-form__input {
+  height: 40px;
+  width: 100%;
+  padding: 0 space(3);
+  border: 1px solid var(--color-borda-media);
+  border-radius: space(1);
+  background-color: var(--color-pergaminho-claro);
+  color: var(--color-tinta);
+
+  @include text-body;
+  @include transition(border-color);
+
+  &::placeholder {
+    color: var(--color-tinta-terciaria);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-terracota);
+  }
+
+  &--invalid {
+    border-color: var(--color-ferrugem);
+  }
+}
+
+.prestador-form__select {
+  height: 40px;
+  width: 100%;
+  padding: 0 space(3);
+  border: 1px solid var(--color-borda-media);
+  border-radius: space(1);
+  background-color: var(--color-pergaminho-claro);
+  color: var(--color-tinta);
+  cursor: pointer;
+
+  @include text-body;
+  @include transition(border-color);
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-terracota);
+  }
+}
+
+.prestador-form__checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--color-terracota);
+}
+
+.prestador-form__error {
+  @include text-label;
+
+  color: var(--color-ferrugem);
+}
+
+.prestador-form__actions {
+  display: flex;
+  align-items: center;
+  gap: space(4);
+  padding-top: space(2);
+}
+
+.prestador-form__btn-salvar {
+  height: 40px;
+  padding: 0 space(6);
+  border: none;
+  border-radius: space(1);
+  background-color: var(--color-terracota);
+  color: var(--color-pergaminho-claro);
+  cursor: pointer;
+
+  @include text-label;
+  @include transition(background-color);
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  &:hover:not(:disabled) {
+    background-color: var(--color-terracota-escuro);
+  }
+}
+
+.prestador-form__btn-cancelar {
+  height: 40px;
+  padding: 0 space(4);
+  border: 1px solid var(--color-borda-media);
+  border-radius: space(1);
+  background-color: transparent;
+  color: var(--color-tinta-secundaria);
+  cursor: pointer;
+
+  @include text-label;
+  @include transition-fast(background-color, border-color);
+
+  &:hover {
+    background-color: var(--color-pergaminho-claro);
+    border-color: var(--color-tinta-terciaria);
+  }
+}
+
+.prestador-form__deflatores {
+  margin-top: space(8);
+  padding-top: space(6);
+  border-top: 1px solid var(--color-borda-discreta);
+}
+
+.prestador-form__deflatores-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: space(4);
+}
+
+.prestador-form__deflatores-title {
+  @include text-h3;
+
+  margin: 0;
+  color: var(--color-tinta);
+}
+
+.prestador-form__btn-deflator {
+  height: 36px;
+  padding: 0 space(4);
+  border: 1px solid var(--color-terracota);
+  border-radius: space(1);
+  background-color: transparent;
+  color: var(--color-terracota);
+  cursor: pointer;
+
+  @include text-label;
+  @include transition-fast(background-color, color);
+
+  &:hover {
+    background-color: var(--color-terracota);
+    color: var(--color-pergaminho-claro);
+  }
+}
+
+.prestador-form__deflator-form {
+  display: flex;
+  flex-direction: column;
+  gap: space(4);
+  padding: space(4);
+  margin-bottom: space(4);
+  border: 1px solid var(--color-borda-discreta);
+  border-radius: space(1);
+  background-color: var(--color-pergaminho-claro);
+}
+
+.prestador-form__deflator-field {
+  display: flex;
+  flex-direction: column;
+  gap: space(2);
+}
+
+.prestador-form__deflator-actions {
+  display: flex;
+  align-items: center;
+  gap: space(3);
+}
+
+.prestador-form__btn-salvar-deflator {
+  height: 36px;
+  padding: 0 space(4);
+  border: none;
+  border-radius: space(1);
+  background-color: var(--color-terracota);
+  color: var(--color-pergaminho-claro);
+  cursor: pointer;
+
+  @include text-label;
+  @include transition(background-color);
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  &:hover:not(:disabled) {
+    background-color: var(--color-terracota-escuro);
+  }
+}
+
+.prestador-form__btn-cancelar-deflator {
+  height: 36px;
+  padding: 0 space(3);
+  border: 1px solid var(--color-borda-media);
+  border-radius: space(1);
+  background-color: transparent;
+  color: var(--color-tinta-secundaria);
+  cursor: pointer;
+
+  @include text-label;
+  @include transition-fast(background-color);
+
+  &:hover {
+    background-color: var(--color-pergaminho-claro);
+  }
+}
+
+.prestador-form__deflator-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.prestador-form__deflator-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: space(3) space(4);
+  border-bottom: 1px solid var(--color-borda-discreta);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.prestador-form__deflator-info {
+  @include text-body;
+
+  color: var(--color-tinta);
+}
+
+.prestador-form__deflator-empty {
+  padding: space(4);
+  color: var(--color-tinta-secundaria);
+
+  @include text-body;
+}
+
+.prestador-form__btn-excluir-deflator {
+  padding: space(1) space(3);
+  border: 1px solid var(--color-borda-media);
+  border-radius: 4px;
+  background-color: transparent;
+  color: var(--color-ferrugem);
+  cursor: pointer;
+
+  @include text-label;
+  @include transition-fast(background-color, border-color);
+
+  &:hover {
+    background-color: var(--color-ferrugem-claro);
+    border-color: var(--color-ferrugem);
+  }
+}

@@ -81,3 +81,53 @@ export interface ImportarCsvResult {
   ignorados: number;
   erros: ImportarCsvErro[];
 }
+
+export type PosicaoExecutor =
+  | 'Cirurgiao'
+  | 'PrimeiroAuxiliar'
+  | 'SegundoAuxiliar'
+  | 'TerceiroAuxiliar'
+  | 'Anestesista'
+  | 'ClinicoAssistente';
+
+export interface PrestadorItem {
+  id: string;
+  nome: string;
+  registroProfissional: string | null;
+  ativo: boolean;
+  criadoEm: string;
+}
+
+export interface ListarPrestadoresParams {
+  busca?: string;
+  ativo?: boolean;
+  pagina: number;
+  itensPorPagina: number;
+}
+
+export interface ListarPrestadoresResult {
+  itens: PrestadorItem[];
+  total: number;
+  pagina: number;
+  itensPorPagina: number;
+}
+
+export interface SalvarPrestadorPayload {
+  nome: string;
+  registroProfissional: string | null;
+  ativo: boolean;
+}
+
+export interface DeflatorItem {
+  id: string;
+  prestadorId: string;
+  operadoraId: string;
+  posicao: PosicaoExecutor;
+  percentual: number;
+}
+
+export interface SalvarDeflatorPayload {
+  operadoraId: string;
+  posicao: PosicaoExecutor;
+  percentual: number;
+}

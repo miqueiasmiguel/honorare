@@ -1,0 +1,86 @@
+<section class="prestador-list">
+  <header class="prestador-list__header">
+    <h1 class="prestador-list__title">Prestadores</h1>
+    <button type="button" class="prestador-list__btn-novo" (click)="novo()">Novo prestador</button>
+  </header>
+
+  @if (erroExclusao()) {
+    <div class="prestador-list__erro" role="alert">{{ erroExclusao() }}</div>
+  }
+
+  <div class="prestador-list__toolbar">
+    <input
+      type="text"
+      class="prestador-list__busca"
+      placeholder="Buscar por nome…"
+      (input)="onBuscaChange($any($event.target).value)"
+    />
+    <label class="prestador-list__toggle-label">
+      <input
+        type="checkbox"
+        class="prestador-list__toggle"
+        [checked]="exibirInativos()"
+        (change)="toggleExibirInativos()"
+      />
+      Exibir inativos
+    </label>
+  </div>
+
+  <table class="prestador-list__table">
+    <thead>
+      <tr>
+        <th class="prestador-list__th">Nome</th>
+        <th class="prestador-list__th">Registro</th>
+        <th class="prestador-list__th">Status</th>
+        <th class="prestador-list__th">Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (p of prestadores(); track p.id) {
+        <tr class="prestador-list__row">
+          <td class="prestador-list__cell">{{ p.nome }}</td>
+          <td class="prestador-list__cell">{{ p.registroProfissional ?? '—' }}</td>
+          <td class="prestador-list__cell">
+            <span [class]="p.ativo ? 'badge badge--ativo' : 'badge badge--inativo'">{{
+              p.ativo ? 'Ativo' : 'Inativo'
+            }}</span>
+          </td>
+          <td class="prestador-list__cell">
+            <button type="button" class="prestador-list__btn-editar" (click)="editar(p)">
+              Editar
+            </button>
+            <button type="button" class="prestador-list__btn-excluir" (click)="excluir(p, $event)">
+              Excluir
+            </button>
+          </td>
+        </tr>
+      } @empty {
+        <tr>
+          <td colspan="4" class="prestador-list__empty">Nenhum prestador cadastrado.</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+
+  @if (total() > itensPorPagina()) {
+    <div class="prestador-list__paginacao">
+      <button
+        type="button"
+        class="prestador-list__btn-pag"
+        [disabled]="pagina() === 1"
+        (click)="paginaAnterior()"
+      >
+        Anterior
+      </button>
+      <span class="prestador-list__pag-info">Página {{ pagina() }}</span>
+      <button
+        type="button"
+        class="prestador-list__btn-pag"
+        [disabled]="pagina() * itensPorPagina() >= total()"
+        (click)="proximaPagina()"
+      >
+        Próxima
+      </button>
+    </div>
+  }
+</section>
