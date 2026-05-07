@@ -46,4 +46,21 @@ internal sealed class Guia : ITenantEntity
             AtualizadoEm = now,
         };
     }
+
+    internal void Atualizar(
+        Guid operadoraId,
+        Guid beneficiarioId,
+        string senha,
+        DateOnly dataAtendimento,
+        bool ehPacote,
+        string observacao)
+    {
+        OperadoraId = operadoraId;
+        BeneficiarioId = beneficiarioId;
+        Senha = senha;
+        DataAtendimento = dataAtendimento;
+        EhPacote = ehPacote;
+        Observacao = observacao;
+        AtualizadoEm = DateTimeOffset.UtcNow;
+    }
 }

@@ -1,0 +1,293 @@
+using App;
+using App.Catalog;
+using App.Data;
+using App.Faturamento;
+using App.Identity;
+using Faturamento.Tests.Fixtures;
+using Microsoft.EntityFrameworkCore;
+
+namespace Faturamento.Tests.Service;
+
+[Collection(nameof(PostgresCollection))]
+public sealed class GuiaCrudTests(PostgresContainerFixture db)
+{
+    private (AppDbContext ctx, ICurrentUser user) BuildTenant(Guid tenantId)
+    {
+        var currentUser = new FakeTenantUser(tenantId);
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseNpgsql(db.ConnectionString)
+            .Options;
+        return (new AppDbContext(options, currentUser), currentUser);
+    }
+
+    private static async Task<(Guid prestadorId, Guid operadoraId, Guid beneficiarioId, Guid procedimentoId)>
+        SeedCatalogAsync(AppDbContext ctx, Guid tenantId)
+    {
+        var prestador = Prestador.Create(tenantId, "Dr. Crud Teste", null);
+        var operadora = Operadora.Create(tenantId, "UNIMED Crud", null, null, TipoRuleSet.Unimed);
+        var beneficiario = Beneficiario.Create(tenantId, "CRUD" + tenantId.ToString("N")[..6].ToUpperInvariant(), "Paciente Crud");
+        var procedimento = Procedimento.Create(tenantId, "90001" + tenantId.ToString("N")[..5].ToUpperInvariant(), "Consulta Crud", "1", null, false, false);
+
+        ctx.Add(prestador);
+        ctx.Add(operadora);
+        ctx.Add(beneficiario);
+        ctx.Add(procedimento);
+        await ctx.SaveChangesAsync();
+
+        return (prestador.Id, operadora.Id, beneficiario.Id, procedimento.Id);
+    }
+
+    private static CriarItemGuiaCommand ItemPadrao(Guid procedimentoId, decimal? valorApurado = null) =>
+        new(procedimentoId, PosicaoExecutor.Cirurgiao, OrdemProcedimento.Unico,
+            ViaAcesso.Convencional, Acomodacao.Enfermaria, false, valorApurado);
+
+    [Fact]
+    public async Task Criar_ComDadosValidos_RetornaGuiaDetalheDtoAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (prestadorId, operadoraId, beneficiarioId, procedimentoId) = await SeedCatalogAsync(ctx, tenantId);
+        var service = new GuiaService(ctx, user);
+
+        var cmd = new CriarGuiaCommand(
+            prestadorId, operadoraId, beneficiarioId,
+            "SEN001", new DateOnly(2025, 6, 1), false, "Obs",
+            [ItemPadrao(procedimentoId)]);
+
+        var result = await service.CriarAsync(cmd);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(prestadorId, result.Value!.PrestadorId);
+        Assert.Equal(operadoraId, result.Value.OperadoraId);
+        Assert.Equal(beneficiarioId, result.Value.BeneficiarioId);
+        Assert.Equal("SEN001", result.Value.Senha);
+        Assert.Equal(SituacaoGuia.Apresentada, result.Value.Situacao);
+        Assert.Single(result.Value.Itens);
+    }
+
+    [Fact]
+    public async Task Criar_SemItens_RetornaValidationErrorAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (prestadorId, operadoraId, beneficiarioId, _) = await SeedCatalogAsync(ctx, tenantId);
+        var service = new GuiaService(ctx, user);
+
+        var cmd = new CriarGuiaCommand(
+            prestadorId, operadoraId, beneficiarioId,
+            "SEN002", new DateOnly(2025, 6, 1), false, "Obs",
+            []);
+
+        var result = await service.CriarAsync(cmd);
+
+        Assert.True(result.IsFailure);
+        Assert.IsType<ValidationError>(result.Error);
+    }
+
+    [Fact]
+    public async Task Criar_EhPacoteItemSemValorApurado_RetornaValidationErrorAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (prestadorId, operadoraId, beneficiarioId, procedimentoId) = await SeedCatalogAsync(ctx, tenantId);
+        var service = new GuiaService(ctx, user);
+
+        var cmd = new CriarGuiaCommand(
+            prestadorId, operadoraId, beneficiarioId,
+            "SEN003", new DateOnly(2025, 6, 1), true, "Obs",
+            [ItemPadrao(procedimentoId, null)]);
+
+        var result = await service.CriarAsync(cmd);
+
+        Assert.True(result.IsFailure);
+        Assert.IsType<ValidationError>(result.Error);
+    }
+
+    [Fact]
+    public async Task Criar_PrestadorInexistente_RetornaNotFoundAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (_, operadoraId, beneficiarioId, procedimentoId) = await SeedCatalogAsync(ctx, tenantId);
+        var service = new GuiaService(ctx, user);
+
+        var cmd = new CriarGuiaCommand(
+            Guid.NewGuid(), operadoraId, beneficiarioId,
+            "SEN004", new DateOnly(2025, 6, 1), false, "Obs",
+            [ItemPadrao(procedimentoId)]);
+
+        var result = await service.CriarAsync(cmd);
+
+        Assert.True(result.IsFailure);
+        Assert.IsType<NotFoundError>(result.Error);
+    }
+
+    [Fact]
+    public async Task Criar_OperadoraInexistente_RetornaNotFoundAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (prestadorId, _, beneficiarioId, procedimentoId) = await SeedCatalogAsync(ctx, tenantId);
+        var service = new GuiaService(ctx, user);
+
+        var cmd = new CriarGuiaCommand(
+            prestadorId, Guid.NewGuid(), beneficiarioId,
+            "SEN005", new DateOnly(2025, 6, 1), false, "Obs",
+            [ItemPadrao(procedimentoId)]);
+
+        var result = await service.CriarAsync(cmd);
+
+        Assert.True(result.IsFailure);
+        Assert.IsType<NotFoundError>(result.Error);
+    }
+
+    [Fact]
+    public async Task Criar_BeneficiarioInexistente_RetornaNotFoundAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (prestadorId, operadoraId, _, procedimentoId) = await SeedCatalogAsync(ctx, tenantId);
+        var service = new GuiaService(ctx, user);
+
+        var cmd = new CriarGuiaCommand(
+            prestadorId, operadoraId, Guid.NewGuid(),
+            "SEN006", new DateOnly(2025, 6, 1), false, "Obs",
+            [ItemPadrao(procedimentoId)]);
+
+        var result = await service.CriarAsync(cmd);
+
+        Assert.True(result.IsFailure);
+        Assert.IsType<NotFoundError>(result.Error);
+    }
+
+    [Fact]
+    public async Task Atualizar_GuiaInexistente_RetornaNotFoundAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (_, operadoraId, beneficiarioId, procedimentoId) = await SeedCatalogAsync(ctx, tenantId);
+        var service = new GuiaService(ctx, user);
+
+        var cmd = new AtualizarGuiaCommand(
+            operadoraId, beneficiarioId, "SEN-UPD",
+            new DateOnly(2025, 7, 1), false, "Obs atualizada",
+            [ItemPadrao(procedimentoId)]);
+
+        var result = await service.AtualizarAsync(Guid.NewGuid(), cmd);
+
+        Assert.True(result.IsFailure);
+        Assert.IsType<NotFoundError>(result.Error);
+    }
+
+    [Fact]
+    public async Task Atualizar_SubstituiTodosItensAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (prestadorId, operadoraId, beneficiarioId, procedimentoId) = await SeedCatalogAsync(ctx, tenantId);
+        var service = new GuiaService(ctx, user);
+
+        var criar = new CriarGuiaCommand(
+            prestadorId, operadoraId, beneficiarioId,
+            "SEN-SUBST", new DateOnly(2025, 6, 1), false, "Original",
+            [ItemPadrao(procedimentoId)]);
+        var criado = await service.CriarAsync(criar);
+        Assert.True(criado.IsSuccess);
+
+        var atualizar = new AtualizarGuiaCommand(
+            operadoraId, beneficiarioId, "SEN-SUBST2",
+            new DateOnly(2025, 6, 15), false, "Atualizado",
+            [ItemPadrao(procedimentoId), ItemPadrao(procedimentoId)]);
+
+        var result = await service.AtualizarAsync(criado.Value!.Id, atualizar);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(2, result.Value!.Itens.Count);
+        Assert.Equal(2, result.Value.TotalItens);
+    }
+
+    [Fact]
+    public async Task Excluir_GuiaInexistente_RetornaNotFoundAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var service = new GuiaService(ctx, user);
+
+        var result = await service.ExcluirAsync(Guid.NewGuid());
+
+        Assert.True(result.IsFailure);
+        Assert.IsType<NotFoundError>(result.Error);
+    }
+
+    [Fact]
+    public async Task Excluir_RemoveGuiaEItensAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (prestadorId, operadoraId, beneficiarioId, procedimentoId) = await SeedCatalogAsync(ctx, tenantId);
+        var service = new GuiaService(ctx, user);
+
+        var cmd = new CriarGuiaCommand(
+            prestadorId, operadoraId, beneficiarioId,
+            "SEN-DEL", new DateOnly(2025, 6, 1), false, "Obs",
+            [ItemPadrao(procedimentoId)]);
+        var criado = await service.CriarAsync(cmd);
+        Assert.True(criado.IsSuccess);
+        var guiaId = criado.Value!.Id;
+
+        var result = await service.ExcluirAsync(guiaId);
+
+        Assert.True(result.IsSuccess);
+
+        await using var adminCtx = db.CreateContext();
+        Assert.Null(await adminCtx.Guias.FirstOrDefaultAsync(g => g.Id == guiaId));
+        Assert.Equal(0, await adminCtx.ItensGuia.CountAsync(i => i.GuiaId == guiaId));
+    }
+
+    [Fact]
+    public async Task ObterPorId_TenantDiferente_RetornaNotFoundAsync()
+    {
+        var tenantA = Guid.NewGuid();
+        var tenantB = Guid.NewGuid();
+
+        var (ctxA, userA) = BuildTenant(tenantA);
+        await using var _a = ctxA;
+        var (prestadorId, operadoraId, beneficiarioId, procedimentoId) = await SeedCatalogAsync(ctxA, tenantA);
+        var serviceA = new GuiaService(ctxA, userA);
+
+        var cmd = new CriarGuiaCommand(
+            prestadorId, operadoraId, beneficiarioId,
+            "SEN-ISO", new DateOnly(2025, 6, 1), false, "Obs",
+            [ItemPadrao(procedimentoId)]);
+        var criado = await serviceA.CriarAsync(cmd);
+        Assert.True(criado.IsSuccess);
+
+        var (ctxB, userB) = BuildTenant(tenantB);
+        await using var _b = ctxB;
+        var serviceB = new GuiaService(ctxB, userB);
+
+        var result = await serviceB.ObterPorIdAsync(criado.Value!.Id);
+
+        Assert.True(result.IsFailure);
+        Assert.IsType<NotFoundError>(result.Error);
+    }
+}
+
+file sealed class FakeTenantUser(Guid tenantId) : ICurrentUser
+{
+    public Guid UserId => Guid.Empty;
+    public Guid? TenantId => tenantId;
+    public Guid? MedicoId => null;
+    public bool IsSaasAdmin => false;
+    public bool IsAuthenticated => true;
+}
