@@ -1,5 +1,6 @@
 using System.Reflection;
 using App.Catalog;
+using App.Faturamento;
 using App.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -21,6 +22,8 @@ internal class AppDbContext(
     public DbSet<TabelaProcedimento> TabelasProcedimento => Set<TabelaProcedimento>();
     public DbSet<DeflatorPrestador> DeflatoresPrestador => Set<DeflatorPrestador>();
     public DbSet<Beneficiario> Beneficiarios => Set<Beneficiario>();
+    public DbSet<Guia> Guias => Set<Guia>();
+    public DbSet<ItemGuia> ItensGuia => Set<ItemGuia>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
