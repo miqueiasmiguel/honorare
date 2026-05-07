@@ -1,0 +1,114 @@
+<section class="beneficiario-list">
+  <header class="beneficiario-list__header">
+    <h1 class="beneficiario-list__title">Beneficiários</h1>
+  </header>
+
+  @if (erroExclusao()) {
+    <div class="beneficiario-list__erro" role="alert">{{ erroExclusao() }}</div>
+  }
+
+  @if (erroEdicao()) {
+    <div class="beneficiario-list__erro" role="alert">{{ erroEdicao() }}</div>
+  }
+
+  <div class="beneficiario-list__toolbar">
+    <input
+      type="text"
+      class="beneficiario-list__busca"
+      placeholder="Filtrar por carteira…"
+      (input)="onFiltroCarteiraChange($any($event.target).value)"
+    />
+    <input
+      type="text"
+      class="beneficiario-list__busca"
+      placeholder="Filtrar por nome…"
+      (input)="onFiltroNomeChange($any($event.target).value)"
+    />
+  </div>
+
+  <table class="beneficiario-list__table">
+    <thead>
+      <tr>
+        <th class="beneficiario-list__th">Carteira</th>
+        <th class="beneficiario-list__th">Nome</th>
+        <th class="beneficiario-list__th">Criado em</th>
+        <th class="beneficiario-list__th">Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (b of beneficiarios(); track b.id) {
+        <tr class="beneficiario-list__row">
+          <td class="beneficiario-list__cell">{{ b.carteira }}</td>
+          <td class="beneficiario-list__cell">
+            @if (editandoId() === b.id) {
+              <input
+                type="text"
+                class="beneficiario-list__input-nome"
+                [value]="editandoNome()"
+                (input)="editandoNome.set($any($event.target).value)"
+              />
+            } @else {
+              {{ b.nome }}
+            }
+          </td>
+          <td class="beneficiario-list__cell">{{ b.criadoEm | date: 'dd/MM/yyyy' }}</td>
+          <td class="beneficiario-list__cell">
+            @if (editandoId() === b.id) {
+              <button
+                type="button"
+                class="beneficiario-list__btn-salvar"
+                (click)="salvarEdicao(b.id)"
+              >
+                Salvar
+              </button>
+              <button
+                type="button"
+                class="beneficiario-list__btn-cancelar"
+                (click)="cancelarEdicao()"
+              >
+                Cancelar
+              </button>
+            } @else {
+              <button
+                type="button"
+                class="beneficiario-list__btn-editar"
+                (click)="iniciarEdicao(b)"
+              >
+                Editar
+              </button>
+              <button type="button" class="beneficiario-list__btn-excluir" (click)="excluir(b)">
+                Excluir
+              </button>
+            }
+          </td>
+        </tr>
+      } @empty {
+        <tr>
+          <td colspan="4" class="beneficiario-list__empty">Nenhum beneficiário encontrado.</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+
+  @if (total() > itensPorPagina()) {
+    <div class="beneficiario-list__paginacao">
+      <button
+        type="button"
+        class="beneficiario-list__btn-pag"
+        [disabled]="pagina() === 1"
+        (click)="paginaAnterior()"
+      >
+        Anterior
+      </button>
+      <span class="beneficiario-list__pag-info">Página {{ pagina() }}</span>
+      <button
+        type="button"
+        class="beneficiario-list__btn-pag"
+        [disabled]="pagina() * itensPorPagina() >= total()"
+        (click)="proximaPagina()"
+      >
+        Próxima
+      </button>
+    </div>
+  }
+</section>

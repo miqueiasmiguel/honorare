@@ -600,7 +600,7 @@ disabled_true_bloqueiaCampoAsync
 
 ---
 
-### TASK-F24-07 — Angular: `BeneficiarioListComponent` (admin view)
+### TASK-F24-07 ✅ — Angular: `BeneficiarioListComponent` (admin view)
 
 **Objetivo:** Tela de listagem para o admin consultar e editar beneficiários existentes.
 
