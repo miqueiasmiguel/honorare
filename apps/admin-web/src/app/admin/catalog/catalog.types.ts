@@ -131,3 +131,33 @@ export interface SalvarDeflatorPayload {
   posicao: PosicaoExecutor;
   percentual: number;
 }
+
+export interface TabelaItem {
+  id: string;
+  operadoraId: string;
+  procedimentoId: string;
+  codigoTuss: string;
+  descricao: string;
+  valor: number;
+  atualizadoEm: string;
+}
+
+export interface ListarTabelasParams {
+  operadoraId?: string;
+  codigoTuss?: string;
+  pagina: number;
+  itensPorPagina: number;
+}
+
+export interface ListarTabelasResult {
+  itens: TabelaItem[];
+  total: number;
+  pagina: number;
+  itensPorPagina: number;
+}
+
+export interface SalvarTabelaPayload {
+  operadoraId: string;
+  procedimentoId: string;
+  valor: number;
+}

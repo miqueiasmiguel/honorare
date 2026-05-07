@@ -1,0 +1,118 @@
+<section class="tabela-list">
+  <header class="tabela-list__header">
+    <h1 class="tabela-list__title">Tabelas de Valores</h1>
+    <div class="tabela-list__header-actions">
+      <button
+        type="button"
+        class="tabela-list__btn-csv"
+        [disabled]="!selectedOperadoraId()"
+        (click)="abrirCsvModal()"
+      >
+        Importar CSV
+      </button>
+      <button
+        type="button"
+        class="tabela-list__btn-novo"
+        [disabled]="!selectedOperadoraId()"
+        (click)="novo()"
+      >
+        Nova entrada
+      </button>
+    </div>
+  </header>
+
+  <div class="tabela-list__filtro">
+    <label class="tabela-list__filtro-label" for="operadora">Operadora *</label>
+    <select
+      id="operadora"
+      class="tabela-list__select-operadora"
+      (change)="onOperadoraChange($any($event.target).value)"
+    >
+      <option value="">Selecionar operadora…</option>
+      @for (op of operadoras(); track op.id) {
+        <option [value]="op.id">{{ op.nome }}</option>
+      }
+    </select>
+  </div>
+
+  @if (selectedOperadoraId()) {
+    <table class="tabela-list__table">
+      <thead>
+        <tr>
+          <th class="tabela-list__th">Código TUSS</th>
+          <th class="tabela-list__th">Descrição</th>
+          <th class="tabela-list__th">Valor</th>
+          <th class="tabela-list__th">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (t of tabelas(); track t.id) {
+          <tr class="tabela-list__row">
+            <td class="tabela-list__cell">{{ t.codigoTuss }}</td>
+            <td class="tabela-list__cell">{{ t.descricao }}</td>
+            <td class="tabela-list__cell tabela-list__cell--valor">{{ formatarValor(t.valor) }}</td>
+            <td class="tabela-list__cell">
+              <button type="button" class="tabela-list__btn-editar" (click)="editar(t)">
+                Editar
+              </button>
+              <button type="button" class="tabela-list__btn-excluir" (click)="excluir(t, $event)">
+                Excluir
+              </button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="4" class="tabela-list__empty">Nenhuma entrada cadastrada.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    @if (total() > itensPorPagina()) {
+      <div class="tabela-list__paginacao">
+        <button
+          type="button"
+          class="tabela-list__btn-pag"
+          [disabled]="pagina() === 1"
+          (click)="paginaAnterior()"
+        >
+          Anterior
+        </button>
+        <span class="tabela-list__pag-info">Página {{ pagina() }}</span>
+        <button
+          type="button"
+          class="tabela-list__btn-pag"
+          [disabled]="pagina() * itensPorPagina() >= total()"
+          (click)="proximaPagina()"
+        >
+          Próxima
+        </button>
+      </div>
+    }
+  }
+
+  @if (mostrarForm()) {
+    <div class="tabela-list__modal-backdrop">
+      <div class="tabela-list__modal">
+        <app-tabela-form
+          [tabelaId]="editandoTabelaId()"
+          [preselectedOperadoraId]="selectedOperadoraId()"
+          (salvo)="onFormSalvo()"
+          (cancelado)="onFormCancelado()"
+        />
+      </div>
+    </div>
+  }
+
+  @if (mostrarCsvModal()) {
+    <div class="tabela-list__modal-backdrop">
+      <div class="tabela-list__modal">
+        <app-tabela-csv-modal
+          [operadoraId]="selectedOperadoraId()"
+          (concluido)="onCsvConcluido()"
+          (cancelado)="mostrarCsvModal.set(false)"
+        />
+      </div>
+    </div>
+  }
+</section>

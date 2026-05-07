@@ -10,6 +10,8 @@ import type {
   ListarPrestadoresResult,
   ListarProcedimentosParams,
   ListarProcedimentosResult,
+  ListarTabelasParams,
+  ListarTabelasResult,
   OperadoraItem,
   PrestadorItem,
   ProcedimentoItem,
@@ -17,6 +19,8 @@ import type {
   SalvarOperadoraPayload,
   SalvarPrestadorPayload,
   SalvarProcedimentoPayload,
+  SalvarTabelaPayload,
+  TabelaItem,
 } from './catalog.types';
 
 @Injectable({ providedIn: 'root' })
@@ -171,5 +175,49 @@ export class CatalogService {
         return;
       }),
     );
+  }
+
+  listarTabelas(params: ListarTabelasParams): Observable<ListarTabelasResult> {
+    let httpParams = new HttpParams()
+      .set('pagina', params.pagina.toString())
+      .set('itensPorPagina', params.itensPorPagina.toString());
+
+    if (params.operadoraId) {
+      httpParams = httpParams.set('operadoraId', params.operadoraId);
+    }
+    if (params.codigoTuss) {
+      httpParams = httpParams.set('codigoTuss', params.codigoTuss);
+    }
+
+    return this._http.get<ListarTabelasResult>('/api/v1/admin/tabelas', { params: httpParams });
+  }
+
+  obterTabela(id: string): Observable<TabelaItem> {
+    return this._http.get<TabelaItem>(`/api/v1/admin/tabelas/${id}`);
+  }
+
+  criarTabela(payload: SalvarTabelaPayload): Observable<TabelaItem> {
+    return this._http.post<TabelaItem>('/api/v1/admin/tabelas', payload);
+  }
+
+  atualizarTabela(id: string, payload: SalvarTabelaPayload): Observable<TabelaItem> {
+    return this._http.put<TabelaItem>(`/api/v1/admin/tabelas/${id}`, payload);
+  }
+
+  excluirTabela(id: string): Observable<void> {
+    return this._http.delete(`/api/v1/admin/tabelas/${id}`).pipe(
+      map(() => {
+        return;
+      }),
+    );
+  }
+
+  importarTabelaCsv(operadoraId: string, file: File): Observable<ImportarCsvResult> {
+    const formData = new FormData();
+    formData.append('file', file);
+    const httpParams = new HttpParams().set('operadoraId', operadoraId);
+    return this._http.post<ImportarCsvResult>('/api/v1/admin/tabelas/importar-csv', formData, {
+      params: httpParams,
+    });
   }
 }

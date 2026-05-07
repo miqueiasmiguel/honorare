@@ -64,4 +64,9 @@ export const catalogRoutes: Routes = [
         (m) => m.PrestadorFormComponent,
       ),
   },
+  {
+    path: 'tabelas',
+    loadComponent: () =>
+      import('./tabelas/tabela-list/tabela-list.component').then((m) => m.TabelaListComponent),
+  },
 ];

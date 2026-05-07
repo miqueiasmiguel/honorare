@@ -264,7 +264,7 @@ Excluir_DeflatorInexistente_RetornaNotFoundError
 
 ---
 
-### TASK-F23-05 — Angular: Telas Prestador
+### TASK-F23-05 — Angular: Telas Prestador ✅
 
 **Red (escrever specs Vitest primeiro):**
 
@@ -301,7 +301,7 @@ excluir deflator chama DELETE deflatores/{id}
 
 ---
 
-### TASK-F23-06 — Angular: Telas Tabela
+### TASK-F23-06 — Angular: Telas Tabela ✅
 
 **Red:**
 
