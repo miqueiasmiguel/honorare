@@ -17,6 +17,9 @@ internal class AppDbContext(
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<Operadora> Operadoras => Set<Operadora>();
     public DbSet<Procedimento> Procedimentos => Set<Procedimento>();
+    public DbSet<Prestador> Prestadores => Set<Prestador>();
+    public DbSet<TabelaProcedimento> TabelasProcedimento => Set<TabelaProcedimento>();
+    public DbSet<DeflatorPrestador> DeflatoresPrestador => Set<DeflatorPrestador>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

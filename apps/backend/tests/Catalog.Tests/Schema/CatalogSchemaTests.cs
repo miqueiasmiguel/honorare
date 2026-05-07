@@ -141,6 +141,104 @@ public sealed class CatalogSchemaTests(PostgresContainerFixture db)
         Assert.Equal(10L, maxLen);
     }
 
+    // ── F2.3: Prestadores ────────────────────────────────────────────────────
+
+    [Fact]
+    public async Task Tabela_Prestadores_Existe_Async()
+    {
+        var count = await ContarTabelasAsync("prestadores");
+        Assert.Equal(1L, count);
+    }
+
+    [Fact]
+    public async Task Prestadores_ColunaNome_NaoNula_Async()
+    {
+        var nullable = await ObterNullabilityAsync("prestadores", "Nome");
+        Assert.Equal("NO", nullable);
+    }
+
+    [Fact]
+    public async Task Prestadores_ColunaTenantId_NaoNula_Async()
+    {
+        var nullable = await ObterNullabilityAsync("prestadores", "TenantId");
+        Assert.Equal("NO", nullable);
+    }
+
+    [Fact]
+    public async Task Prestadores_ColunaRegistroProfissional_Nullable_Async()
+    {
+        var nullable = await ObterNullabilityAsync("prestadores", "RegistroProfissional");
+        Assert.Equal("YES", nullable);
+    }
+
+    [Fact]
+    public async Task Prestadores_ColunaNome_MaxLength150_Async()
+    {
+        var maxLen = await ObterMaxLengthAsync("prestadores", "Nome");
+        Assert.Equal(150L, maxLen);
+    }
+
+    // ── F2.3: TabelasProcedimento ────────────────────────────────────────────
+
+    [Fact]
+    public async Task Tabela_TabelasProcedimento_Existe_Async()
+    {
+        var count = await ContarTabelasAsync("tabelas_procedimento");
+        Assert.Equal(1L, count);
+    }
+
+    [Fact]
+    public async Task TabelasProcedimento_ColunaValor_NaoNula_Async()
+    {
+        var nullable = await ObterNullabilityAsync("tabelas_procedimento", "Valor");
+        Assert.Equal("NO", nullable);
+    }
+
+    [Fact]
+    public async Task TabelasProcedimento_IndiceUnico_TenantId_OperadoraId_ProcedimentoId_Async()
+    {
+        var count = await ContarIndicesAsync(
+            tableName: "tabelas_procedimento",
+            mustBeUnique: true,
+            likePatterns: ["%TenantId%", "%OperadoraId%", "%ProcedimentoId%"]);
+        Assert.Equal(1L, count);
+    }
+
+    // ── F2.3: DeflatoresPrestador ────────────────────────────────────────────
+
+    [Fact]
+    public async Task Tabela_DeflatoresPrestador_Existe_Async()
+    {
+        var count = await ContarTabelasAsync("deflatores_prestador");
+        Assert.Equal(1L, count);
+    }
+
+    [Fact]
+    public async Task DeflatoresPrestador_ColunaPercentual_NaoNula_Async()
+    {
+        var nullable = await ObterNullabilityAsync("deflatores_prestador", "Percentual");
+        Assert.Equal("NO", nullable);
+    }
+
+    [Fact]
+    public async Task DeflatoresPrestador_ColunaPosicao_ArmazenadaComoTexto_Async()
+    {
+        var type = await ObterTipoColunaAsync("deflatores_prestador", "Posicao");
+        Assert.True(
+            type is "character varying" or "text",
+            $"Esperado character varying ou text, obtido: {type}");
+    }
+
+    [Fact]
+    public async Task DeflatoresPrestador_IndiceUnico_TenantId_PrestadorId_OperadoraId_Posicao_Async()
+    {
+        var count = await ContarIndicesAsync(
+            tableName: "deflatores_prestador",
+            mustBeUnique: true,
+            likePatterns: ["%TenantId%", "%PrestadorId%", "%OperadoraId%", "%Posicao%"]);
+        Assert.Equal(1L, count);
+    }
+
     // ── Helpers ──────────────────────────────────────────────────────────────
 
     private async Task<long> ContarTabelasAsync(string tableName)
