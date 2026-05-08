@@ -4,6 +4,10 @@
   display: flex;
   flex-direction: column;
   gap: space(4);
+  border: 1px solid var(--color-borda-media);
+  border-radius: 6px;
+  padding: space(4);
+  background-color: var(--color-pergaminho-claro);
 
   &__field {
     display: flex;
@@ -23,11 +27,36 @@
     color: var(--color-tinta);
   }
 
-  &__actions {
-    display: flex;
-    gap: space(2);
-    justify-content: flex-end;
-    padding-top: space(2);
+  &__input--busca-procedimento,
+  &__input--valor-apurado {
+    @include text-body;
+    @include transition(border-color, box-shadow);
+
+    height: 40px;
+    border: 1px solid var(--color-borda-media);
+    border-radius: 6px;
+    padding: 0 space(3);
+    color: var(--color-tinta);
+    background-color: var(--color-pergaminho-claro);
+
+    &:focus {
+      outline: none;
+      border-color: var(--color-terracota);
+    }
+
+    &::placeholder {
+      color: var(--color-tinta-terciaria);
+    }
+  }
+
+  &__spinner {
+    display: inline-block;
+    width: space(4);
+    height: space(4);
+    border: 2px solid var(--color-borda-media);
+    border-top-color: var(--color-terracota);
+    border-radius: 50%;
+    animation: spin var(--duration-base) linear infinite;
   }
 
   &__sugestoes {
@@ -35,17 +64,29 @@
     padding: 0;
     margin: 0;
     border: 1px solid var(--color-borda-media);
+    border-radius: 6px;
     max-height: space(24);
     overflow-y: auto;
   }
 
+  &__sugestao {
+    border-bottom: 1px solid var(--color-borda-discreta);
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
   &__sugestao-btn {
+    @include text-body;
+
     width: 100%;
     text-align: left;
     background: none;
     border: none;
     cursor: pointer;
     padding: space(2) space(3);
+    color: var(--color-tinta);
 
     &:hover {
       background-color: var(--color-pergaminho);
@@ -56,5 +97,75 @@
     @include text-body;
 
     color: var(--color-tinta);
+    padding: space(2) space(3);
+    background-color: var(--color-pergaminho);
+    border-radius: 4px;
+  }
+
+  &__select--posicao,
+  &__select--ordem,
+  &__select--via,
+  &__select--acomodacao {
+    @include text-body;
+    @include transition(border-color, box-shadow);
+
+    height: 40px;
+    border: 1px solid var(--color-borda-media);
+    border-radius: 6px;
+    padding: 0 space(3);
+    color: var(--color-tinta);
+    background-color: var(--color-pergaminho-claro);
+
+    &:focus {
+      outline: none;
+      border-color: var(--color-terracota);
+    }
+  }
+
+  &__actions {
+    display: flex;
+    gap: space(2);
+    justify-content: flex-end;
+    padding-top: space(2);
+  }
+
+  &__btn-cancelar {
+    @include text-label;
+    @include transition(background-color);
+
+    height: 40px;
+    padding: 0 space(4);
+    border-radius: 6px;
+    border: 1px solid var(--color-borda-media);
+    background-color: transparent;
+    color: var(--color-tinta);
+    cursor: pointer;
+
+    &:hover {
+      background-color: var(--color-pergaminho);
+    }
+  }
+
+  &__btn-salvar {
+    @include text-label;
+    @include transition(background-color);
+
+    height: 40px;
+    padding: 0 space(4);
+    border-radius: 6px;
+    border: none;
+    background-color: var(--color-terracota);
+    color: var(--color-pergaminho-claro);
+    cursor: pointer;
+
+    &:hover {
+      background-color: var(--color-terracota-escuro);
+    }
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
 }
