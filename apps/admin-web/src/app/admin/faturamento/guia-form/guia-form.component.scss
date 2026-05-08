@@ -5,6 +5,7 @@
   flex-direction: column;
   gap: space(4);
   max-width: 720px;
+  padding: space(6);
 }
 
 .guia-form__field {
@@ -25,11 +26,54 @@
   color: var(--color-tinta);
 }
 
+.guia-form__select--prestador,
+.guia-form__select--operadora,
+.guia-form__input--senha,
+.guia-form__input--data-atendimento {
+  @include text-body;
+  @include transition(border-color, box-shadow);
+
+  height: 40px;
+  border: 1px solid var(--color-borda-media);
+  border-radius: 6px;
+  padding: 0 space(3);
+  color: var(--color-tinta);
+  background-color: var(--color-pergaminho-claro);
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-terracota);
+  }
+}
+
+.guia-form__textarea--observacao {
+  @include text-body;
+  @include transition(border-color, box-shadow);
+
+  min-height: space(16);
+  border: 1px solid var(--color-borda-media);
+  border-radius: 6px;
+  padding: space(2) space(3);
+  color: var(--color-tinta);
+  background-color: var(--color-pergaminho-claro);
+  resize: vertical;
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-terracota);
+  }
+
+  &::placeholder {
+    color: var(--color-tinta-terciaria);
+  }
+}
+
 .guia-form__itens {
   display: flex;
   flex-direction: column;
   gap: space(2);
-  border: 1px solid var(--color-borda);
+  border: 1px solid var(--color-borda-media);
+  border-radius: 6px;
   padding: space(3);
 }
 
@@ -45,7 +89,8 @@
   align-items: center;
   justify-content: space-between;
   padding: space(2) space(3);
-  background: var(--color-superficie);
+  background-color: var(--color-pergaminho);
+  border-radius: 4px;
 }
 
 .guia-form__item-procedimento {
@@ -54,10 +99,39 @@
   color: var(--color-tinta);
 }
 
+.guia-form__btn-remover-item {
+  @include text-label;
+  @include transition(color);
+
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-ferrugem);
+  padding: space(1) space(2);
+}
+
+.guia-form__btn-adicionar-item {
+  @include text-label;
+  @include transition(background-color);
+
+  align-self: flex-start;
+  height: 40px;
+  padding: 0 space(4);
+  border-radius: 6px;
+  border: 1px dashed var(--color-borda-media);
+  background-color: transparent;
+  color: var(--color-tinta-secundaria);
+  cursor: pointer;
+
+  &:hover {
+    background-color: var(--color-pergaminho);
+  }
+}
+
 .guia-form__erro-validacao {
   @include text-label;
 
-  color: var(--color-perigo);
+  color: var(--color-ferrugem);
 }
 
 .guia-form__actions {
@@ -65,4 +139,38 @@
   gap: space(3);
   justify-content: flex-end;
   padding-top: space(4);
+}
+
+.guia-form__btn-cancelar {
+  @include text-label;
+  @include transition(background-color);
+
+  height: 40px;
+  padding: 0 space(4);
+  border-radius: 6px;
+  border: 1px solid var(--color-borda-media);
+  background-color: transparent;
+  color: var(--color-tinta);
+  cursor: pointer;
+
+  &:hover {
+    background-color: var(--color-pergaminho);
+  }
+}
+
+.guia-form__btn-salvar {
+  @include text-label;
+  @include transition(background-color);
+
+  height: 40px;
+  padding: 0 space(4);
+  border-radius: 6px;
+  border: none;
+  background-color: var(--color-terracota);
+  color: var(--color-pergaminho-claro);
+  cursor: pointer;
+
+  &:hover {
+    background-color: var(--color-terracota-escuro);
+  }
 }

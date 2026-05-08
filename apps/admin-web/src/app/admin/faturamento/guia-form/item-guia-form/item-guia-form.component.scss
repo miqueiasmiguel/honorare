@@ -34,7 +34,7 @@
     list-style: none;
     padding: 0;
     margin: 0;
-    border: 1px solid var(--color-borda);
+    border: 1px solid var(--color-borda-media);
     max-height: space(24);
     overflow-y: auto;
   }
@@ -48,7 +48,7 @@
     padding: space(2) space(3);
 
     &:hover {
-      background: var(--color-superficie);
+      background-color: var(--color-pergaminho);
     }
   }
 
