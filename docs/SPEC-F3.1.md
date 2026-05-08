@@ -509,7 +509,7 @@ interface AtualizarGuiaPayload extends Omit<CriarGuiaPayload, "prestadorId"> {}
 
 ### TASK-F31-09 — Rotas, sidebar e smoke test
 
-**Status:** [ ] pendente  
+**Status:** [x] concluída  
 **Depende de:** TASK-F31-07, TASK-F31-08
 
 **Arquivos a criar/modificar:**
@@ -551,7 +551,7 @@ Acessível em `/admin/guias/`.
 - [x] TASK-F31-06 — ItemGuiaFormComponent (4 testes)
 - [x] TASK-F31-07 — GuiaFormComponent (4 testes)
 - [x] TASK-F31-08 — GuiaListComponent (6 testes)
-- [ ] TASK-F31-09 — rotas + sidebar (2 testes + smoke manual)
+- [x] TASK-F31-09 — rotas + sidebar (2 testes + smoke manual)
 - [ ] `dotnet test` passa (cobertura ≥ 80% em Faturamento.Tests)
 - [ ] `pnpm -F admin-web test:ci` passa
 - [ ] `pnpm -F admin-web lint` zero warnings
