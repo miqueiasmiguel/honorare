@@ -1,0 +1,68 @@
+@use 'styles/tokens' as *;
+
+.guia-form {
+  display: flex;
+  flex-direction: column;
+  gap: space(4);
+  max-width: 720px;
+}
+
+.guia-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: space(1);
+}
+
+.guia-form__field--checkbox {
+  flex-direction: row;
+  align-items: center;
+  gap: space(2);
+}
+
+.guia-form__label {
+  @include text-label;
+
+  color: var(--color-tinta);
+}
+
+.guia-form__itens {
+  display: flex;
+  flex-direction: column;
+  gap: space(2);
+  border: 1px solid var(--color-borda);
+  padding: space(3);
+}
+
+.guia-form__itens-titulo {
+  @include text-h3;
+
+  color: var(--color-tinta);
+  margin: 0;
+}
+
+.guia-form__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: space(2) space(3);
+  background: var(--color-superficie);
+}
+
+.guia-form__item-procedimento {
+  @include text-body;
+
+  color: var(--color-tinta);
+}
+
+.guia-form__erro-validacao {
+  @include text-label;
+
+  color: var(--color-perigo);
+}
+
+.guia-form__actions {
+  display: flex;
+  gap: space(3);
+  justify-content: flex-end;
+  padding-top: space(4);
+}
