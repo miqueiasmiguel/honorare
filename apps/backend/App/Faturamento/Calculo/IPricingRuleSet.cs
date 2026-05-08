@@ -1,4 +1,4 @@
-namespace App.Faturamento.Calculo;
+namespace App.Faturamento.Motor;
 
 internal interface IPricingRuleSet
 {

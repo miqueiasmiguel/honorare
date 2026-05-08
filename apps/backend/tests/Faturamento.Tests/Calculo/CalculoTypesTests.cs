@@ -1,6 +1,6 @@
-using App.Faturamento.Calculo;
+using App.Faturamento.Motor;
 
-namespace Faturamento.Tests.Calculo;
+namespace Faturamento.Tests.Motor;
 
 public sealed class CalculoTypesTests
 {

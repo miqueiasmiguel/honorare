@@ -24,6 +24,8 @@ internal class AppDbContext(
     public DbSet<Beneficiario> Beneficiarios => Set<Beneficiario>();
     public DbSet<Guia> Guias => Set<Guia>();
     public DbSet<ItemGuia> ItensGuia => Set<ItemGuia>();
+    public DbSet<Calculo> Calculos => Set<Calculo>();
+    public DbSet<PassoCalculo> PassosCalculo => Set<PassoCalculo>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

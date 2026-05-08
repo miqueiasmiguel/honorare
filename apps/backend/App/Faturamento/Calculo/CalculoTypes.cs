@@ -1,6 +1,6 @@
 using App.Catalog;
 
-namespace App.Faturamento.Calculo;
+namespace App.Faturamento.Motor;
 
 internal enum SituacaoApuracao
 {
