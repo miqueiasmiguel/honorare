@@ -49,6 +49,22 @@ internal sealed record GuiaDetalheDto(
 internal sealed record ListarGuiasResult(
     IReadOnlyList<GuiaDto> Itens, int Total, int Pagina, int ItensPorPagina);
 
+internal sealed record PassoCalculoDto(string Regra, decimal Fator, decimal ValorResultante);
+
+internal sealed record ItemCalculoDto(
+    Guid ItemGuiaId,
+    string CodigoTuss,
+    string DescricaoProcedimento,
+    string Situacao,
+    decimal? ValorApurado,
+    IReadOnlyList<PassoCalculoDto> Passos);
+
+internal sealed record GuiaCalculoDto(
+    Guid GuiaId,
+    bool EhPacote,
+    DateTimeOffset? RealizadoEm,
+    IReadOnlyList<ItemCalculoDto> Itens);
+
 internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, PricingRuleSetFactory factory)
 {
     private readonly AppDbContext _db = db;
@@ -256,6 +272,65 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
         }
 
         return await ObterDetalheDtoInternalAsync(id, ct);
+    }
+
+    internal async Task<Result<GuiaCalculoDto>> ObterCalculoAsync(
+        Guid guiaId, CancellationToken ct = default)
+    {
+        var guia = await _db.Guias.FirstOrDefaultAsync(g => g.Id == guiaId, ct);
+        if (guia is null)
+        {
+            return Result<GuiaCalculoDto>.Fail(new NotFoundError("Guia não encontrada."));
+        }
+
+        var itensComProc = await (
+            from i in _db.ItensGuia
+            join p in _db.Procedimentos on i.ProcedimentoId equals p.Id
+            where i.GuiaId == guiaId
+            select new { i.Id, i.ValorApurado, p.CodigoTuss, p.Descricao }
+        ).ToListAsync(ct);
+
+        if (guia.EhPacote)
+        {
+            var pacoteItens = itensComProc
+                .Select(i => new ItemCalculoDto(i.Id, i.CodigoTuss, i.Descricao, "Pacote", i.ValorApurado, []))
+                .ToList();
+            return Result<GuiaCalculoDto>.Ok(new GuiaCalculoDto(guiaId, true, null, pacoteItens));
+        }
+
+        var calculo = await _db.Calculos.FirstOrDefaultAsync(c => c.GuiaId == guiaId, ct);
+
+        Dictionary<Guid, List<PassoCalculoDto>> passosPorItem;
+        if (calculo is null)
+        {
+            passosPorItem = [];
+        }
+        else
+        {
+            var rawPassos = await _db.PassosCalculo
+                .Where(p => p.CalculoId == calculo.Id)
+                .OrderBy(p => p.Sequencia)
+                .Select(p => new { p.ItemGuiaId, p.Regra, p.Fator, p.ValorResultante })
+                .ToListAsync(ct);
+
+            passosPorItem = rawPassos
+                .GroupBy(p => p.ItemGuiaId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(p => new PassoCalculoDto(p.Regra, p.Fator, p.ValorResultante)).ToList());
+        }
+
+        var itensDtos = itensComProc.Select(i =>
+        {
+            var passos = passosPorItem.TryGetValue(i.Id, out var p)
+                ? (IReadOnlyList<PassoCalculoDto>)p
+                : [];
+            var situacao = i.ValorApurado.HasValue ? "Calculado" : "SemTabela";
+            return new ItemCalculoDto(i.Id, i.CodigoTuss, i.Descricao, situacao, i.ValorApurado, passos);
+        }).ToList();
+
+        return Result<GuiaCalculoDto>.Ok(
+            new GuiaCalculoDto(guiaId, false, calculo?.RealizadoEm, itensDtos));
     }
 
     internal async Task<Result> ExcluirAsync(Guid id, CancellationToken ct = default)
