@@ -6,6 +6,7 @@ import type {
   CriarGuiaPayload,
   AtualizarGuiaPayload,
   GuiaDetalheItem,
+  GuiaCalculoResult,
   ListarGuiasResult,
 } from './guia.types';
 
@@ -67,6 +68,22 @@ const CRIAR_PAYLOAD: CriarGuiaPayload = {
 function makeListResult(itens: GuiaDetalheItem[] = []): ListarGuiasResult {
   return { itens, total: itens.length, pagina: 1, itensPorPagina: 20 };
 }
+
+const GUIA_CALCULO_RESULT: GuiaCalculoResult = {
+  guiaId: 'guia-1',
+  ehPacote: false,
+  realizadoEm: '2026-05-01T00:00:00Z',
+  itens: [
+    {
+      itemGuiaId: 'item-1',
+      codigoTuss: '31303079',
+      descricaoProcedimento: 'Consulta médica',
+      situacao: 'Calculado',
+      valorApurado: 200,
+      passos: [{ regra: 'ValorBase', fator: 1, valorResultante: 200 }],
+    },
+  ],
+};
 
 describe('GuiaService', () => {
   let service: GuiaService;
@@ -145,5 +162,26 @@ describe('GuiaService', () => {
     req.flush(null, { status: 204, statusText: 'No Content' });
 
     expect(called).toBe(true);
+  });
+
+  it('obterCalculo_chamaCaminhoCorreto', () => {
+    let result: GuiaCalculoResult | undefined;
+    service.obterCalculo('guia-1').subscribe((v) => (result = v));
+
+    const req = httpMock.expectOne('/api/v1/admin/guias/guia-1/calculo');
+    expect(req.request.method).toBe('GET');
+    req.flush(GUIA_CALCULO_RESULT);
+
+    expect(result?.guiaId).toBe('guia-1');
+  });
+
+  it('obterCalculo_respostaPassThrough', () => {
+    let result: GuiaCalculoResult | undefined;
+    service.obterCalculo('guia-2').subscribe((v) => (result = v));
+
+    const req = httpMock.expectOne('/api/v1/admin/guias/guia-2/calculo');
+    req.flush(GUIA_CALCULO_RESULT);
+
+    expect(result).toEqual(GUIA_CALCULO_RESULT);
   });
 });

@@ -91,3 +91,25 @@ export interface CriarGuiaPayload {
 }
 
 export type AtualizarGuiaPayload = Omit<CriarGuiaPayload, 'prestadorId'>;
+
+export interface PassoCalculoItem {
+  regra: string;
+  fator: number;
+  valorResultante: number;
+}
+
+export interface ItemCalculoItem {
+  itemGuiaId: string;
+  codigoTuss: string;
+  descricaoProcedimento: string;
+  situacao: 'Calculado' | 'SemTabela' | 'SemDeflator' | 'Indeterminado' | 'Pacote';
+  valorApurado: number | null;
+  passos: PassoCalculoItem[];
+}
+
+export interface GuiaCalculoResult {
+  guiaId: string;
+  ehPacote: boolean;
+  realizadoEm: string | null;
+  itens: ItemCalculoItem[];
+}
