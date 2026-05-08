@@ -333,6 +333,6 @@ Arquivo: `item-guia-form.component.spec.ts` (adicionar aos testes existentes)
 | AN-01 ✅ | ✓       | —        | ✓         | AnestesiaSchemaTests         |
 | AN-02 ✅ | ✓       | —        | —         | AnestesiaCalculatorTests     |
 | AN-03 ✅ | ✓       | —        | —         | UnimedAnestesiaPipelineTests |
-| AN-04    | —       | ✓        | —         | item-guia-form.spec.ts       |
+| AN-04 ✅ | —       | ✓        | —         | item-guia-form.spec.ts       |
 
 **Após AN-03:** atualizar `PROXIMOS_PASSOS.md` marcando F3.3 como ✅ e descrever entregues.
