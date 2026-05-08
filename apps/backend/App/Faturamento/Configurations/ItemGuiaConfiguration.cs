@@ -17,6 +17,7 @@ internal sealed class ItemGuiaConfiguration : IEntityTypeConfiguration<ItemGuia>
         builder.Property(i => i.ViaAcesso).HasConversion<string>().IsRequired();
         builder.Property(i => i.Acomodacao).HasConversion<string>().IsRequired();
         builder.Property(i => i.EhUrgencia).IsRequired();
+        builder.Property(i => i.TempoAnestesicoMin).IsRequired(false);
         builder.Property(i => i.ValorApurado).HasColumnType("decimal(12,2)");
         builder.Property(i => i.ValorLiquidado).HasColumnType("decimal(12,2)");
         builder.Property(i => i.CriadoEm).IsRequired();

@@ -12,6 +12,7 @@ internal sealed class ItemGuia
     public ViaAcesso ViaAcesso { get; private set; }
     public Acomodacao Acomodacao { get; private set; }
     public bool EhUrgencia { get; private set; }
+    public int? TempoAnestesicoMin { get; private set; }
     public decimal? ValorApurado { get; private set; }
     public decimal? ValorLiquidado { get; private set; }
     public DateTimeOffset CriadoEm { get; private set; }
@@ -19,6 +20,8 @@ internal sealed class ItemGuia
     private ItemGuia() { }
 
     internal void SetValorApurado(decimal? valor) => ValorApurado = valor;
+
+    internal void SetTempoAnestesicoMin(int? valor) => TempoAnestesicoMin = valor;
 
     internal static ItemGuia Create(
         Guid guiaId,
@@ -28,7 +31,8 @@ internal sealed class ItemGuia
         ViaAcesso via,
         Acomodacao acomodacao,
         bool ehUrgencia,
-        decimal? valorApurado)
+        decimal? valorApurado,
+        int? tempoAnestesicoMin = null)
     {
         return new ItemGuia
         {
@@ -40,6 +44,7 @@ internal sealed class ItemGuia
             ViaAcesso = via,
             Acomodacao = acomodacao,
             EhUrgencia = ehUrgencia,
+            TempoAnestesicoMin = tempoAnestesicoMin,
             ValorApurado = valorApurado,
             ValorLiquidado = null,
             CriadoEm = DateTimeOffset.UtcNow,

@@ -63,7 +63,7 @@ internal static class GuiaEndpoints
             body.Senha, body.DataAtendimento, body.EhPacote, body.Observacao,
             body.Itens.Select(i => new CriarItemGuiaCommand(
                 i.ProcedimentoId, i.PosicaoExecutor, i.OrdemProcedimento,
-                i.ViaAcesso, i.Acomodacao, i.EhUrgencia, i.ValorApurado)).ToList());
+                i.ViaAcesso, i.Acomodacao, i.EhUrgencia, i.ValorApurado, i.TempoAnestesicoMin)).ToList());
 
         var result = await service.CriarAsync(cmd, ct);
         if (result.IsFailure)
@@ -87,7 +87,7 @@ internal static class GuiaEndpoints
             body.Senha, body.DataAtendimento, body.EhPacote, body.Observacao,
             body.Itens.Select(i => new CriarItemGuiaCommand(
                 i.ProcedimentoId, i.PosicaoExecutor, i.OrdemProcedimento,
-                i.ViaAcesso, i.Acomodacao, i.EhUrgencia, i.ValorApurado)).ToList());
+                i.ViaAcesso, i.Acomodacao, i.EhUrgencia, i.ValorApurado, i.TempoAnestesicoMin)).ToList());
 
         var result = await service.AtualizarAsync(id, cmd, ct);
         if (result.IsFailure)
@@ -133,7 +133,8 @@ internal sealed record CriarItemGuiaRequest(
     ViaAcesso ViaAcesso,
     Acomodacao Acomodacao,
     bool EhUrgencia,
-    decimal? ValorApurado);
+    decimal? ValorApurado,
+    int? TempoAnestesicoMin = null);
 
 internal sealed record CriarGuiaRequest(
     Guid PrestadorId,

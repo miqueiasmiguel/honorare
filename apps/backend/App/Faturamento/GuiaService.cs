@@ -14,7 +14,7 @@ internal sealed record CriarGuiaCommand(
 internal sealed record CriarItemGuiaCommand(
     Guid ProcedimentoId, PosicaoExecutor PosicaoExecutor,
     OrdemProcedimento OrdemProcedimento, ViaAcesso ViaAcesso, Acomodacao Acomodacao,
-    bool EhUrgencia, decimal? ValorApurado);
+    bool EhUrgencia, decimal? ValorApurado, int? TempoAnestesicoMin = null);
 
 internal sealed record AtualizarGuiaCommand(
     Guid OperadoraId, Guid? BeneficiarioId, string Senha,
@@ -121,7 +121,7 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
             var item = ItemGuia.Create(
                 guia.Id, itemCmd.ProcedimentoId, itemCmd.PosicaoExecutor,
                 itemCmd.OrdemProcedimento, itemCmd.ViaAcesso, itemCmd.Acomodacao,
-                itemCmd.EhUrgencia, itemCmd.ValorApurado);
+                itemCmd.EhUrgencia, itemCmd.ValorApurado, itemCmd.TempoAnestesicoMin);
             _db.ItensGuia.Add(item);
             itens.Add(item);
         }
