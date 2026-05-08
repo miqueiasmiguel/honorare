@@ -287,7 +287,7 @@ Todos com `.RequireAuthorization("TenantAccess")`.
 
 ### TASK-F31-05 — Types TS e GuiaService Angular
 
-**Status:** [ ] pendente  
+**Status:** [x] concluída  
 **Depende de:** TASK-F31-03
 
 **Arquivos a criar/modificar:**
@@ -403,7 +403,7 @@ interface AtualizarGuiaPayload extends Omit<CriarGuiaPayload, "prestadorId"> {}
 
 ### TASK-F31-06 — ItemGuiaFormComponent
 
-**Status:** [ ] pendente  
+**Status:** [x] concluída  
 **Depende de:** TASK-F31-05
 
 **Arquivos a criar:**
@@ -547,8 +547,8 @@ Acessível em `/admin/guias/`.
 - [x] TASK-F31-02 — GuiaService (16 testes)
 - [x] TASK-F31-03 — GuiaEndpoints (9 testes)
 - [x] TASK-F31-04 — delete guards CatalogService (3 testes)
-- [ ] TASK-F31-05 — types TS + GuiaService Angular (4 testes)
-- [ ] TASK-F31-06 — ItemGuiaFormComponent (4 testes)
+- [x] TASK-F31-05 — types TS + GuiaService Angular (4 testes)
+- [x] TASK-F31-06 — ItemGuiaFormComponent (4 testes)
 - [ ] TASK-F31-07 — GuiaFormComponent (4 testes)
 - [ ] TASK-F31-08 — GuiaListComponent (6 testes)
 - [ ] TASK-F31-09 — rotas + sidebar (2 testes + smoke manual)

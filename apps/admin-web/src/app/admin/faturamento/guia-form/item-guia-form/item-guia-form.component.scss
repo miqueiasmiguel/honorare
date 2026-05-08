@@ -1,0 +1,60 @@
+@use 'styles/tokens' as *;
+
+.item-guia-form {
+  display: flex;
+  flex-direction: column;
+  gap: space(4);
+
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: space(1);
+
+    &--checkbox {
+      flex-direction: row;
+      align-items: center;
+      gap: space(2);
+    }
+  }
+
+  &__label {
+    @include text-label;
+
+    color: var(--color-tinta);
+  }
+
+  &__actions {
+    display: flex;
+    gap: space(2);
+    justify-content: flex-end;
+    padding-top: space(2);
+  }
+
+  &__sugestoes {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    border: 1px solid var(--color-borda);
+    max-height: space(40);
+    overflow-y: auto;
+  }
+
+  &__sugestao-btn {
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: space(2) space(3);
+
+    &:hover {
+      background: var(--color-superficie);
+    }
+  }
+
+  &__procedimento-selecionado {
+    @include text-body;
+
+    color: var(--color-tinta);
+  }
+}
