@@ -250,7 +250,7 @@ Cenários de teste (requerem `PostgresContainerFixture`):
 
 ---
 
-### TASK-F32-03 — NullRuleSet [ ] pendente
+### TASK-F32-03 — NullRuleSet [x] concluída
 
 **Escopo:** `App/Faturamento/Calculo/NullRuleSet.cs`
 **Depende de:** TASK-F32-01
