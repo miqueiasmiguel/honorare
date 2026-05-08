@@ -1,5 +1,4 @@
 using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using App;
@@ -122,7 +121,7 @@ public class RefreshTokenTests(PostgresContainerFixture db)
         Assert.True(result.IsSuccess);
         var claims = DecodeJwtClaims(result.Value!.AccessToken);
         Assert.Equal(user.Id.ToString(), claims[JwtRegisteredClaimNames.Sub]);
-        Assert.Equal("Medico", claims[ClaimTypes.Role]);
+        Assert.Equal("Medico", claims["role"]);
         Assert.Equal(user.TenantId!.Value.ToString(), claims["tenant_id"]);
         Assert.Equal(medicoId.ToString(), claims["medico_id"]);
     }

@@ -1,5 +1,4 @@
 using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using App;
@@ -187,7 +186,7 @@ public class AuthServiceTests(PostgresContainerFixture db)
 
         Assert.True(result.IsSuccess);
         var claims = DecodeJwtClaims(result.Value!.AccessToken);
-        Assert.Equal("SaasAdmin", claims[ClaimTypes.Role]);
+        Assert.Equal("SaasAdmin", claims["role"]);
         Assert.DoesNotContain("tenant_id", claims.Keys);
         Assert.DoesNotContain("medico_id", claims.Keys);
     }
@@ -211,7 +210,7 @@ public class AuthServiceTests(PostgresContainerFixture db)
 
         Assert.True(result.IsSuccess);
         var claims = DecodeJwtClaims(result.Value!.AccessToken);
-        Assert.Equal("TenantAdmin", claims[ClaimTypes.Role]);
+        Assert.Equal("TenantAdmin", claims["role"]);
         Assert.Equal(tenant.Id.ToString(), claims["tenant_id"]);
         Assert.DoesNotContain("medico_id", claims.Keys);
     }
@@ -236,7 +235,7 @@ public class AuthServiceTests(PostgresContainerFixture db)
 
         Assert.True(result.IsSuccess);
         var claims = DecodeJwtClaims(result.Value!.AccessToken);
-        Assert.Equal("Medico", claims[ClaimTypes.Role]);
+        Assert.Equal("Medico", claims["role"]);
         Assert.Equal(tenant.Id.ToString(), claims["tenant_id"]);
         Assert.Equal(medicoId.ToString(), claims["medico_id"]);
     }
@@ -357,7 +356,7 @@ public class AuthServiceTests(PostgresContainerFixture db)
 
         Assert.True(result.IsSuccess);
         var claims = DecodeJwtClaims(result.Value!.AccessToken);
-        Assert.Equal("SaasAdmin", claims[ClaimTypes.Role]);
+        Assert.Equal("SaasAdmin", claims["role"]);
         Assert.DoesNotContain("tenant_id", claims.Keys);
         Assert.DoesNotContain("medico_id", claims.Keys);
 
@@ -385,7 +384,7 @@ public class AuthServiceTests(PostgresContainerFixture db)
 
         Assert.True(result.IsSuccess);
         var claims = DecodeJwtClaims(result.Value!.AccessToken);
-        Assert.Equal("Medico", claims[ClaimTypes.Role]);
+        Assert.Equal("Medico", claims["role"]);
         Assert.Equal(tenant.Id.ToString(), claims["tenant_id"]);
         Assert.Equal(medicoId.ToString(), claims["medico_id"]);
 

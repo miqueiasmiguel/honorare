@@ -1,5 +1,4 @@
 using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using App;
 using App.Data;
 using App.Identity;
@@ -477,7 +476,7 @@ public class SaasServiceTests(PostgresContainerFixture db)
         var claims = jwt.Claims.ToDictionary(c => c.Type, c => c.Value);
 
         Assert.Equal(tenantId.ToString(), claims["tenant_id"]);
-        Assert.Equal("TenantAdmin", claims[ClaimTypes.Role]);
+        Assert.Equal("TenantAdmin", claims["role"]);
         Assert.DoesNotContain("medico_id", claims.Keys);
     }
 }
