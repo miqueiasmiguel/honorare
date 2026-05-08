@@ -10,6 +10,7 @@ internal static class GuiaEndpoints
 
         g.MapGet("", ListarGuiasAsync);
         g.MapGet("{id:guid}", ObterGuiaPorIdAsync);
+        g.MapGet("{id:guid}/calculo", ObterCalculoAsync);
         g.MapPost("", CriarGuiaAsync);
         g.MapPut("{id:guid}", AtualizarGuiaAsync);
         g.MapDelete("{id:guid}", ExcluirGuiaAsync);
@@ -30,6 +31,20 @@ internal static class GuiaEndpoints
         Guid id, GuiaService service, CancellationToken ct)
     {
         var result = await service.ObterPorIdAsync(id, ct);
+        if (result.IsFailure)
+        {
+            return Results.Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                detail: result.Error!.Message);
+        }
+
+        return Results.Ok(result.Value);
+    }
+
+    private static async Task<IResult> ObterCalculoAsync(
+        Guid id, GuiaService service, CancellationToken ct)
+    {
+        var result = await service.ObterCalculoAsync(id, ct);
         if (result.IsFailure)
         {
             return Results.Problem(
