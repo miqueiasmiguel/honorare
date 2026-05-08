@@ -1,9 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { CatalogService } from '../../catalog/catalog.service';
 import { GuiaService } from '../guia.service';
-import type { GuiaDetalheItem } from '../guia.types';
+import type { GuiaCalculoResult, GuiaDetalheItem } from '../guia.types';
 import { GuiaFormComponent } from './guia-form.component';
 
 const mockGuia: GuiaDetalheItem = {
@@ -40,11 +40,19 @@ const mockGuia: GuiaDetalheItem = {
   ],
 };
 
+const mockCalculo: GuiaCalculoResult = {
+  guiaId: 'guia-1',
+  ehPacote: false,
+  realizadoEm: '2024-03-15',
+  itens: [],
+};
+
 function makeGuiaServiceSpy(guia: GuiaDetalheItem | null = null) {
   return {
     criar: vi.fn().mockReturnValue(of(guia ?? mockGuia)),
     atualizar: vi.fn().mockReturnValue(of(guia ?? mockGuia)),
     obterPorId: vi.fn().mockReturnValue(of(guia ?? mockGuia)),
+    obterCalculo: vi.fn().mockReturnValue(of(mockCalculo)),
   };
 }
 
@@ -142,6 +150,47 @@ describe('GuiaFormComponent', () => {
     expect(component.senha()).toBe('SENHA01');
     expect(component.dataAtendimento()).toBe('2024-03-15');
     expect(component.itens()).toHaveLength(1);
+  });
+
+  it('modo criacao nao renderiza app-calculo-detalhe', () => {
+    const { el } = setup();
+
+    expect(el.querySelector('app-calculo-detalhe')).toBeNull();
+  });
+
+  it('modo edicao chama obterCalculo com id correto e renderiza app-calculo-detalhe', () => {
+    const { el, guiaService } = setup({ id: 'guia-1', guia: mockGuia });
+
+    expect(guiaService.obterCalculo).toHaveBeenCalledWith('guia-1');
+    expect(el.querySelector('app-calculo-detalhe')).not.toBeNull();
+  });
+
+  it('erro em obterCalculo nao trava o form e oculta secao de calculo', () => {
+    const guiaService = {
+      ...makeGuiaServiceSpy(mockGuia),
+      obterCalculo: vi.fn().mockReturnValue(throwError(() => new Error('server error'))),
+    };
+    const catalogService = makeCatalogServiceSpy();
+    const router = makeRouterSpy();
+    const activatedRoute = {
+      snapshot: { paramMap: { get: (key: string) => (key === 'id' ? 'guia-1' : null) } },
+    };
+
+    TestBed.configureTestingModule({
+      imports: [GuiaFormComponent],
+      providers: [
+        { provide: GuiaService, useValue: guiaService },
+        { provide: CatalogService, useValue: catalogService },
+        { provide: Router, useValue: router },
+        { provide: ActivatedRoute, useValue: activatedRoute },
+      ],
+    });
+    const fixture = TestBed.createComponent(GuiaFormComponent);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+
+    expect(el.querySelector('app-calculo-detalhe')).toBeNull();
+    expect(el.querySelector('.guia-form__btn-salvar')).not.toBeNull();
   });
 
   it('submit com dados validos chama GuiaService criar e navega para guias', () => {

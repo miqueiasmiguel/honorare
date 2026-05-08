@@ -3,8 +3,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { BeneficiarioAutocompleteComponent } from '../../catalog/beneficiarios/beneficiario-autocomplete/beneficiario-autocomplete.component';
 import type { BeneficiarioItem, OperadoraItem, PrestadorItem } from '../../catalog/catalog.types';
 import { CatalogService } from '../../catalog/catalog.service';
+import { CalculoDetalheComponent } from '../calculo-detalhe/calculo-detalhe.component';
 import { GuiaService } from '../guia.service';
-import type { CriarItemGuiaPayload } from '../guia.types';
+import type { CriarItemGuiaPayload, GuiaCalculoResult } from '../guia.types';
 import { ItemGuiaFormComponent } from './item-guia-form/item-guia-form.component';
 
 @Component({
@@ -117,6 +118,13 @@ import { ItemGuiaFormComponent } from './item-guia-form/item-guia-form.component
         <app-item-guia-form [ehPacote]="ehPacote()" (itemChange)="onItemChange($event)" />
       }
 
+      @if (modoEditar() && calculo() !== null) {
+        <section class="guia-form__apuracao">
+          <h3 class="guia-form__apuracao-titulo">Apuração</h3>
+          <app-calculo-detalhe [calculo]="calculo()" />
+        </section>
+      }
+
       @if (erroValidacao()) {
         <span class="guia-form__erro-validacao">{{ erroValidacao() }}</span>
       }
@@ -130,7 +138,7 @@ import { ItemGuiaFormComponent } from './item-guia-form/item-guia-form.component
     </form>
   `,
   styleUrl: './guia-form.component.scss',
-  imports: [BeneficiarioAutocompleteComponent, ItemGuiaFormComponent],
+  imports: [BeneficiarioAutocompleteComponent, ItemGuiaFormComponent, CalculoDetalheComponent],
 })
 export class GuiaFormComponent implements OnInit {
   private readonly _guiaService = inject(GuiaService);
@@ -156,6 +164,7 @@ export class GuiaFormComponent implements OnInit {
 
   readonly itens = signal<CriarItemGuiaPayload[]>([]);
   readonly adicionandoItem = signal(false);
+  readonly calculo = signal<GuiaCalculoResult | null>(null);
 
   ngOnInit(): void {
     this._carregarPrestadores();
@@ -166,6 +175,7 @@ export class GuiaFormComponent implements OnInit {
       this.modoEditar.set(true);
       this.guiaId.set(id);
       this._carregarGuia(id);
+      this._carregarCalculo(id);
     }
   }
 
@@ -272,6 +282,17 @@ export class GuiaFormComponent implements OnInit {
           this.operadoras.set(result.itens);
         },
       });
+  }
+
+  private _carregarCalculo(id: string): void {
+    this._guiaService.obterCalculo(id).subscribe({
+      next: (result) => {
+        this.calculo.set(result);
+      },
+      error: () => {
+        this.calculo.set(null);
+      },
+    });
   }
 
   private _carregarGuia(id: string): void {

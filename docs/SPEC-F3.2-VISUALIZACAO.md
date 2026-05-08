@@ -150,7 +150,7 @@ Badge CSS classes: `.badge--calculado`, `.badge--sem-tabela`, `.badge--indetermi
 
 ## Sessão 4 — Frontend: integração na tela de guia
 
-### TASK-VIS-05 — Seção de cálculo no `GuiaFormComponent`
+### TASK-VIS-05 — Seção de cálculo no `GuiaFormComponent` ✓
 
 **Arquivo:** `apps/admin-web/src/app/admin/faturamento/guia-form/guia-form.component.ts`
 
