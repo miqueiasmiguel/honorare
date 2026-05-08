@@ -438,7 +438,7 @@ interface AtualizarGuiaPayload extends Omit<CriarGuiaPayload, "prestadorId"> {}
 
 ### TASK-F31-07 — GuiaFormComponent (criar / editar)
 
-**Status:** [ ] pendente  
+**Status:** [x] concluída  
 **Depende de:** TASK-F31-06
 
 **Arquivos a criar:**
@@ -471,7 +471,7 @@ interface AtualizarGuiaPayload extends Omit<CriarGuiaPayload, "prestadorId"> {}
 
 ### TASK-F31-08 — GuiaListComponent (Controle de Pagamentos)
 
-**Status:** [ ] pendente  
+**Status:** [x] concluída  
 **Depende de:** TASK-F31-05
 
 **Arquivos a criar:**
@@ -549,8 +549,8 @@ Acessível em `/admin/guias/`.
 - [x] TASK-F31-04 — delete guards CatalogService (3 testes)
 - [x] TASK-F31-05 — types TS + GuiaService Angular (4 testes)
 - [x] TASK-F31-06 — ItemGuiaFormComponent (4 testes)
-- [ ] TASK-F31-07 — GuiaFormComponent (4 testes)
-- [ ] TASK-F31-08 — GuiaListComponent (6 testes)
+- [x] TASK-F31-07 — GuiaFormComponent (4 testes)
+- [x] TASK-F31-08 — GuiaListComponent (6 testes)
 - [ ] TASK-F31-09 — rotas + sidebar (2 testes + smoke manual)
 - [ ] `dotnet test` passa (cobertura ≥ 80% em Faturamento.Tests)
 - [ ] `pnpm -F admin-web test:ci` passa

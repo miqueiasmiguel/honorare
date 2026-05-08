@@ -1,0 +1,123 @@
+@use 'styles/tokens' as *;
+
+.guia-list {
+  padding: space(6);
+}
+
+.guia-list__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: space(4);
+}
+
+.guia-list__title {
+  @include text-h2;
+
+  color: var(--color-tinta);
+}
+
+.guia-list__btn-nova {
+  @include text-label;
+
+  background-color: var(--color-terracota);
+  color: var(--color-pergaminho-claro);
+  border: none;
+  border-radius: 4px;
+  padding: space(2) space(4);
+  cursor: pointer;
+}
+
+.guia-list__filters {
+  display: flex;
+  gap: space(3);
+  margin-bottom: space(4);
+}
+
+.guia-list__select--situacao,
+.guia-list__input--data-inicio,
+.guia-list__input--data-fim {
+  @include text-body;
+
+  border: 1px solid var(--color-borda-media);
+  border-radius: 4px;
+  padding: space(2) space(3);
+}
+
+.guia-list__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.guia-list__head-row {
+  background-color: var(--color-pergaminho);
+}
+
+.guia-list__th {
+  @include text-label;
+
+  color: var(--color-tinta-secundaria);
+  text-align: left;
+  padding: space(2) space(3);
+  border-bottom: 1px solid var(--color-borda-media);
+}
+
+.guia-list__row {
+  border-bottom: 1px solid var(--color-borda-discreta);
+}
+
+.guia-list__row--apresentada {
+  background-color: var(--color-ambar-claro);
+}
+
+.guia-list__row--liquidada {
+  background-color: var(--color-verde-musgo-claro);
+}
+
+.guia-list__row--em-recurso {
+  background-color: var(--color-ferrugem-claro);
+}
+
+.guia-list__cell {
+  @include text-body;
+
+  color: var(--color-tinta);
+  padding: space(2) space(3);
+}
+
+.guia-list__cell--mono {
+  @include text-mono-value;
+}
+
+.guia-list__empty {
+  @include text-body;
+
+  color: var(--color-tinta-secundaria);
+  text-align: center;
+  padding: space(6);
+}
+
+.guia-list__btn-editar,
+.guia-list__btn-excluir {
+  @include text-label;
+
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: space(1) space(2);
+}
+
+.guia-list__btn-editar {
+  color: var(--color-terracota);
+}
+
+.guia-list__btn-excluir {
+  color: var(--color-ferrugem);
+}
+
+.guia-list__erro {
+  @include text-body;
+
+  color: var(--color-ferrugem);
+  margin-top: space(3);
+}
