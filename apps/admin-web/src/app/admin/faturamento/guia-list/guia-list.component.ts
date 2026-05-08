@@ -87,23 +87,7 @@ import type { GuiaItem, SituacaoGuia } from '../guia.types';
       }
     </div>
   `,
-  styles: [
-    `
-      .guia-list__row--apresentada {
-        background-color: var(--color-alerta-bg, #fffbeb);
-      }
-    `,
-    `
-      .guia-list__row--liquidada {
-        background-color: var(--color-sucesso-bg, #f0fdf4);
-      }
-    `,
-    `
-      .guia-list__row--em-recurso {
-        background-color: var(--color-perigo-bg, #fef2f2);
-      }
-    `,
-  ],
+  styleUrl: './guia-list.component.scss',
   imports: [DatePipe],
 })
 export class GuiaListComponent implements OnInit {

@@ -147,51 +147,7 @@ import type {
       </div>
     </form>
   `,
-  styles: [
-    `
-      .item-guia-form {
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
-      }
-      .item-guia-form__field {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-      }
-      .item-guia-form__field--checkbox {
-        flex-direction: row;
-        align-items: center;
-        gap: 8px;
-      }
-      .item-guia-form__label {
-        font-weight: 500;
-      }
-      .item-guia-form__actions {
-        display: flex;
-        gap: 8px;
-        justify-content: flex-end;
-        padding-top: 8px;
-      }
-      .item-guia-form__sugestoes {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-        border: 1px solid var(--color-borda);
-      }
-      .item-guia-form__sugestao-btn {
-        width: 100%;
-        text-align: left;
-        background: none;
-        border: none;
-        cursor: pointer;
-        padding: 8px 12px;
-      }
-      .item-guia-form__sugestao-btn:hover {
-        background: var(--color-superficie);
-      }
-    `,
-  ],
+  styleUrl: './item-guia-form.component.scss',
 })
 export class ItemGuiaFormComponent implements OnInit {
   private readonly _catalogService = inject(CatalogService);
