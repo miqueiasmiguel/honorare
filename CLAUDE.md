@@ -116,6 +116,22 @@ Reporting → Faturamento → Catalog → Identity
 | `Faturamento` | Invoices (guias), UNIMED calculation engine, statement reconciliation |
 | `Reporting`   | Aggregated queries for admin dashboard and doctor portal              |
 
+### Cross-Context Foreign Keys (EF Core)
+
+When an entity in a downstream context (e.g., `Faturamento`) references an entity from an upstream context (e.g., `Catalog`), use **bare FK properties with no navigation properties**. Configure in EF as:
+
+```csharp
+builder.HasOne<Prestador>().WithMany()
+    .HasForeignKey(g => g.PrestadorId)
+    .OnDelete(DeleteBehavior.Restrict);
+```
+
+Rules:
+
+- `Restrict` for references to catalog entities (prevent orphan deletion)
+- `Cascade` only for owned child rows within the same context (e.g., `ItemGuia → Guia`)
+- Never add a navigation property pointing back to an upstream context
+
 ### Multi-Tenancy
 
 Every operational entity carries `TenantId`. A global EF Core query filter enforces this — never bypass it. Each billing company is a tenant; doctors are end-users within a tenant. LGPD compliance depends on this isolation.
@@ -165,11 +181,28 @@ span?.SetTag("guia.id", guiaId);
 
 Register the source name in `Program.cs` inside `.WithTracing(t => t.AddSource("Honorare.Faturamento"))`.
 
+### Exception handler
+
+`Program.cs` configures a global exception handler (`UseExceptionHandler`) that must do three things on every unhandled exception:
+
+1. **Log** via `ILogger` so the full stacktrace appears in Loki.
+2. **Record on the active span** via `Activity.Current?.AddException(ex)` (use `AddException`, not the deprecated `RecordException`) so Jaeger shows the exception event.
+3. **Return a sanitized response** — never expose internal details to the client.
+
+Status code mapping:
+
+| Exception type                                              | HTTP status                   | Rationale                                                        |
+| ----------------------------------------------------------- | ----------------------------- | ---------------------------------------------------------------- |
+| `BadHttpRequestException { InnerException: JsonException }` | **422** Unprocessable Entity  | JSON syntactically valid but field values are semantically wrong |
+| Other `BadHttpRequestException`                             | **400** Bad Request           | Genuinely malformed HTTP request                                 |
+| Anything else                                               | **500** Internal Server Error | Server-side fault                                                |
+
 ### Rules
 
 - Never disable telemetry in production. The `Otlp:Endpoint` can be set to a no-op address if a collector is unavailable, but instrumentation stays active.
 - Custom span/metric names must follow the `Honorare.<Context>` prefix convention.
 - The `TenantId` must be added as a span attribute on every request that touches tenant data — this is essential for debugging multi-tenant issues without violating data isolation.
+- When a 500 occurs and the exception has no Jaeger event, check that the exception handler is calling `Activity.Current?.AddException(ex)` — a missing call leaves the span with `error: true` but no detail.
 
 ## Engineering Harness
 
@@ -188,6 +221,18 @@ The goal is zero tolerance for quality regressions: every linter warning is a bu
 ### `.editorconfig` structure
 
 A single root `.editorconfig` (`root = true`) covers every file type with explicit rules (max_line_length, charset, indent, eol per extension). App-level configs under `apps/admin-web/` and `apps/medico-pwa/` inherit from it — they do **not** set `root = true`. The backend has a dedicated `apps/backend/.editorconfig` with Roslyn analyzer severity rules and C# code-style preferences.
+
+Every EF Core `Migrations/` folder requires its own `.editorconfig` suppressing the four rules that conflict with auto-generated migration code:
+
+```ini
+[*.cs]
+dotnet_diagnostic.IDE0005.severity = none
+dotnet_diagnostic.IDE0161.severity = none
+dotnet_diagnostic.CA1515.severity = none
+dotnet_diagnostic.CA1861.severity = none
+```
+
+Without this file the build fails (`TreatWarningsAsErrors`) on every new migration. See `App/Faturamento/Migrations/.editorconfig` as the reference.
 
 ### .NET: `Directory.Build.props`
 
@@ -297,12 +342,18 @@ public class MinhaIntegrationTest(PostgresContainerFixture db)
     [Fact]
     public async Task Exemplo()
     {
-        var options = db.BuildOptions<AppDbContext>();
-        await using var ctx = new AppDbContext(options);
+        // SaaS admin context — no tenant filter:
+        await using var ctx = db.CreateContext();
+
+        // Tenant-scoped context — global query filter active:
+        var tenantId = Guid.NewGuid();
+        await using var tenantCtx = db.CreateTenantContext(tenantId);
         // …
     }
 }
 ```
+
+The fixture container is **shared across all tests in the collection** — never assume an empty database. Always use a fresh `Guid.NewGuid()` as `tenantId` to isolate each test's data.
 
 ## Authentication & Authorization
 
@@ -392,6 +443,51 @@ Jwt__RefreshTokenDays=7
 ### What is NOT implemented (by design)
 
 Magic links, passkeys, MFA, additional social providers, email invites, RBAC beyond roles, auth audit log, rate limiting on auth endpoints.
+
+---
+
+## Frontend Conventions (Angular)
+
+### Observable error handling
+
+Every `.subscribe()` call **must** include an `error` handler. Omitting it causes silent failures — the HTTP request fails, the loading state never clears, and the user sees nothing. This applies to all HTTP calls in services and components.
+
+```typescript
+this._service.criar(payload).subscribe({
+  next: () => {
+    /* success path */
+  },
+  error: () => {
+    this.erroValidacao.set("Mensagem amigável ao operador.");
+  },
+});
+```
+
+### Nullable GUID fields
+
+When a backend field is `Guid?`, the corresponding TypeScript type must be `string | null`. When building the request payload, never send `""` (empty string) — the .NET JSON deserializer cannot convert it to `Guid?` and throws a 422 error. Use `field || null`:
+
+```typescript
+// signal initialized as signal('')
+beneficiarioId: this.beneficiarioId() || null,  // sends null, not ""
+```
+
+When reading the field back from a response DTO, use `?? ''` to convert `null` back to empty string for the signal:
+
+```typescript
+this.beneficiarioId.set(guia.beneficiarioId ?? "");
+```
+
+### Optional FK left join (EF Core)
+
+When a FK becomes `Guid?` on an entity, every LINQ query joining that table must become a **left join** or rows without the FK will be excluded:
+
+```csharp
+join b in _db.Beneficiarios on g.BeneficiarioId equals (Guid?)b.Id into bs
+from b in bs.DefaultIfEmpty()
+// nullable projection:
+BeneficiarioNome = (string?)b.Nome,
+```
 
 ---
 

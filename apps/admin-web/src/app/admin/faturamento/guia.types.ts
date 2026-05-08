@@ -36,7 +36,7 @@ export interface GuiaItem {
   prestadorNome: string;
   operadoraId: string;
   operadoraNome: string;
-  beneficiarioId: string;
+  beneficiarioId: string | null;
   beneficiarioNome: string;
   beneficiarioCarteira: string;
   senha: string;
@@ -82,7 +82,7 @@ export interface CriarItemGuiaPayload {
 export interface CriarGuiaPayload {
   prestadorId: string;
   operadoraId: string;
-  beneficiarioId: string;
+  beneficiarioId: string | null;
   senha: string;
   dataAtendimento: string;
   ehPacote: boolean;

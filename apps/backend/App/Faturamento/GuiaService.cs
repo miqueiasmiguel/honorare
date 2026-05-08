@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 namespace App.Faturamento;
 
 internal sealed record CriarGuiaCommand(
-    Guid PrestadorId, Guid OperadoraId, Guid BeneficiarioId,
+    Guid PrestadorId, Guid OperadoraId, Guid? BeneficiarioId,
     string Senha, DateOnly DataAtendimento, bool EhPacote, string Observacao,
     IReadOnlyList<CriarItemGuiaCommand> Itens);
 
@@ -16,7 +16,7 @@ internal sealed record CriarItemGuiaCommand(
     bool EhUrgencia, decimal? ValorApurado);
 
 internal sealed record AtualizarGuiaCommand(
-    Guid OperadoraId, Guid BeneficiarioId, string Senha,
+    Guid OperadoraId, Guid? BeneficiarioId, string Senha,
     DateOnly DataAtendimento, bool EhPacote, string Observacao,
     IReadOnlyList<CriarItemGuiaCommand> Itens);
 
@@ -26,8 +26,8 @@ internal sealed record ListarGuiasQuery(
 
 internal sealed record GuiaDto(
     Guid Id, Guid PrestadorId, string PrestadorNome,
-    Guid OperadoraId, string OperadoraNome, Guid BeneficiarioId,
-    string BeneficiarioNome, string BeneficiarioCarteira, string Senha,
+    Guid OperadoraId, string OperadoraNome, Guid? BeneficiarioId,
+    string? BeneficiarioNome, string? BeneficiarioCarteira, string Senha,
     DateOnly DataAtendimento, SituacaoGuia Situacao, bool EhPacote,
     string Observacao, int TotalItens, DateTimeOffset CriadoEm, DateTimeOffset AtualizadoEm);
 
@@ -39,8 +39,8 @@ internal sealed record ItemGuiaDto(
 
 internal sealed record GuiaDetalheDto(
     Guid Id, Guid PrestadorId, string PrestadorNome,
-    Guid OperadoraId, string OperadoraNome, Guid BeneficiarioId,
-    string BeneficiarioNome, string BeneficiarioCarteira, string Senha,
+    Guid OperadoraId, string OperadoraNome, Guid? BeneficiarioId,
+    string? BeneficiarioNome, string? BeneficiarioCarteira, string Senha,
     DateOnly DataAtendimento, SituacaoGuia Situacao, bool EhPacote,
     string Observacao, int TotalItens, DateTimeOffset CriadoEm, DateTimeOffset AtualizadoEm,
     IReadOnlyList<ItemGuiaDto> Itens);
@@ -82,10 +82,13 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser)
             return Result<GuiaDetalheDto>.Fail(new NotFoundError("Operadora não encontrada."));
         }
 
-        var beneficiario = await _db.Beneficiarios.FirstOrDefaultAsync(b => b.Id == cmd.BeneficiarioId, ct);
-        if (beneficiario is null)
+        if (cmd.BeneficiarioId.HasValue)
         {
-            return Result<GuiaDetalheDto>.Fail(new NotFoundError("Beneficiário não encontrado."));
+            var beneficiario = await _db.Beneficiarios.FirstOrDefaultAsync(b => b.Id == cmd.BeneficiarioId.Value, ct);
+            if (beneficiario is null)
+            {
+                return Result<GuiaDetalheDto>.Fail(new NotFoundError("Beneficiário não encontrado."));
+            }
         }
 
         var guia = Guia.Create(
@@ -114,7 +117,8 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser)
         var q = from g in _db.Guias
                 join pr in _db.Prestadores on g.PrestadorId equals pr.Id
                 join op in _db.Operadoras on g.OperadoraId equals op.Id
-                join b in _db.Beneficiarios on g.BeneficiarioId equals b.Id
+                join b in _db.Beneficiarios on g.BeneficiarioId equals (Guid?)b.Id into bs
+                from b in bs.DefaultIfEmpty()
                 select new
                 {
                     g.Id,
@@ -123,8 +127,8 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser)
                     g.OperadoraId,
                     OperadoraNome = op.Nome,
                     g.BeneficiarioId,
-                    BeneficiarioNome = b.Nome,
-                    BeneficiarioCarteira = b.Carteira,
+                    BeneficiarioNome = (string?)b.Nome,
+                    BeneficiarioCarteira = (string?)b.Carteira,
                     g.Senha,
                     g.DataAtendimento,
                     g.Situacao,
@@ -249,7 +253,8 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser)
         var header = await (from g in _db.Guias
                             join pr in _db.Prestadores on g.PrestadorId equals pr.Id
                             join op in _db.Operadoras on g.OperadoraId equals op.Id
-                            join b in _db.Beneficiarios on g.BeneficiarioId equals b.Id
+                            join b in _db.Beneficiarios on g.BeneficiarioId equals (Guid?)b.Id into bs
+                            from b in bs.DefaultIfEmpty()
                             where g.Id == guiaId
                             select new
                             {
@@ -259,8 +264,8 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser)
                                 g.OperadoraId,
                                 OperadoraNome = op.Nome,
                                 g.BeneficiarioId,
-                                BeneficiarioNome = b.Nome,
-                                BeneficiarioCarteira = b.Carteira,
+                                BeneficiarioNome = (string?)b.Nome,
+                                BeneficiarioCarteira = (string?)b.Carteira,
                                 g.Senha,
                                 g.DataAtendimento,
                                 g.Situacao,

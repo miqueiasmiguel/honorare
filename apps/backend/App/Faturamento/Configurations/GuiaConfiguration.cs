@@ -13,7 +13,7 @@ internal sealed class GuiaConfiguration : IEntityTypeConfiguration<Guia>
         builder.Property(g => g.TenantId).IsRequired();
         builder.Property(g => g.PrestadorId).IsRequired();
         builder.Property(g => g.OperadoraId).IsRequired();
-        builder.Property(g => g.BeneficiarioId).IsRequired();
+        builder.Property(g => g.BeneficiarioId);
         builder.Property(g => g.Senha).HasMaxLength(30).IsRequired();
         builder.Property(g => g.DataAtendimento).IsRequired();
         builder.Property(g => g.Situacao).HasConversion<string>().IsRequired();

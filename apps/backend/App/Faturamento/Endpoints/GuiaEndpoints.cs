@@ -123,7 +123,7 @@ internal sealed record CriarItemGuiaRequest(
 internal sealed record CriarGuiaRequest(
     Guid PrestadorId,
     Guid OperadoraId,
-    Guid BeneficiarioId,
+    Guid? BeneficiarioId,
     string Senha,
     DateOnly DataAtendimento,
     bool EhPacote,
@@ -132,7 +132,7 @@ internal sealed record CriarGuiaRequest(
 
 internal sealed record AtualizarGuiaRequest(
     Guid OperadoraId,
-    Guid BeneficiarioId,
+    Guid? BeneficiarioId,
     string Senha,
     DateOnly DataAtendimento,
     bool EhPacote,

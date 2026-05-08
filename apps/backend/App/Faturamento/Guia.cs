@@ -8,7 +8,7 @@ internal sealed class Guia : ITenantEntity
     public Guid TenantId { get; private set; }
     public Guid PrestadorId { get; private set; }
     public Guid OperadoraId { get; private set; }
-    public Guid BeneficiarioId { get; private set; }
+    public Guid? BeneficiarioId { get; private set; }
     public string Senha { get; private set; } = string.Empty;
     public DateOnly DataAtendimento { get; private set; }
     public SituacaoGuia Situacao { get; private set; }
@@ -23,7 +23,7 @@ internal sealed class Guia : ITenantEntity
         Guid tenantId,
         Guid prestadorId,
         Guid operadoraId,
-        Guid beneficiarioId,
+        Guid? beneficiarioId,
         string senha,
         DateOnly dataAtendimento,
         bool ehPacote,
@@ -49,7 +49,7 @@ internal sealed class Guia : ITenantEntity
 
     internal void Atualizar(
         Guid operadoraId,
-        Guid beneficiarioId,
+        Guid? beneficiarioId,
         string senha,
         DateOnly dataAtendimento,
         bool ehPacote,

@@ -28,6 +28,9 @@ builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new() { Title = "Honorare API", Version = "v1" });
 });
+builder.Services.AddProblemDetails(options =>
+    options.CustomizeProblemDetails = ctx =>
+        ctx.ProblemDetails.Extensions.Remove("exception"));
 builder.Services.ConfigureHttpJsonOptions(opt =>
     opt.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
@@ -120,6 +123,34 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
 {
     ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
 });
+
+app.UseExceptionHandler(exApp => exApp.Run(async ctx =>
+{
+    var ex = ctx.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>()?.Error;
+    if (ex is null)
+    {
+        return;
+    }
+
+    var logger = ctx.RequestServices.GetRequiredService<ILoggerFactory>()
+        .CreateLogger("Honorare.ExceptionHandler");
+    logger.LogError(ex, "Unhandled exception on {Method} {Path}", ctx.Request.Method, ctx.Request.Path);
+
+    System.Diagnostics.Activity.Current?.AddException(ex);
+    System.Diagnostics.Activity.Current?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, ex.Message);
+
+    var (statusCode, detail) = ex switch
+    {
+        BadHttpRequestException { InnerException: System.Text.Json.JsonException }
+            => (StatusCodes.Status422UnprocessableEntity, "Os dados enviados não puderam ser processados. Verifique o formato dos campos."),
+        BadHttpRequestException b => (b.StatusCode, b.Message),
+        _ => (StatusCodes.Status500InternalServerError, "Erro interno do servidor."),
+    };
+
+    ctx.Response.StatusCode = statusCode;
+    ctx.Response.ContentType = "application/problem+json";
+    await ctx.Response.WriteAsJsonAsync(new { status = statusCode, detail });
+}));
 
 if (app.Environment.IsDevelopment())
 {

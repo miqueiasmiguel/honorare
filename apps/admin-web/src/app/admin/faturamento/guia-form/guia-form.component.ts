@@ -192,6 +192,18 @@ export class GuiaFormComponent implements OnInit {
     event.preventDefault();
     this.erroValidacao.set('');
 
+    if (!this.prestadorId()) {
+      this.erroValidacao.set('Selecione um prestador.');
+      return;
+    }
+    if (!this.operadoraId()) {
+      this.erroValidacao.set('Selecione uma operadora.');
+      return;
+    }
+    if (!this.dataAtendimento()) {
+      this.erroValidacao.set('Informe a data de atendimento.');
+      return;
+    }
     if (this.itens().length === 0) {
       this.erroValidacao.set('A guia deve ter pelo menos um item.');
       return;
@@ -204,7 +216,7 @@ export class GuiaFormComponent implements OnInit {
       this._guiaService
         .atualizar(editId, {
           operadoraId: this.operadoraId(),
-          beneficiarioId: this.beneficiarioId(),
+          beneficiarioId: this.beneficiarioId() || null,
           senha: this.senha(),
           dataAtendimento: this.dataAtendimento(),
           ehPacote: this.ehPacote(),
@@ -215,13 +227,16 @@ export class GuiaFormComponent implements OnInit {
           next: () => {
             void this._router.navigate(['/admin/guias']);
           },
+          error: () => {
+            this.erroValidacao.set('Erro ao salvar a guia. Verifique os dados e tente novamente.');
+          },
         });
     } else {
       this._guiaService
         .criar({
           prestadorId: this.prestadorId(),
           operadoraId: this.operadoraId(),
-          beneficiarioId: this.beneficiarioId(),
+          beneficiarioId: this.beneficiarioId() || null,
           senha: this.senha(),
           dataAtendimento: this.dataAtendimento(),
           ehPacote: this.ehPacote(),
@@ -231,6 +246,9 @@ export class GuiaFormComponent implements OnInit {
         .subscribe({
           next: () => {
             void this._router.navigate(['/admin/guias']);
+          },
+          error: () => {
+            this.erroValidacao.set('Erro ao criar a guia. Verifique os dados e tente novamente.');
           },
         });
     }
@@ -262,7 +280,7 @@ export class GuiaFormComponent implements OnInit {
       next: (guia) => {
         this.prestadorId.set(guia.prestadorId);
         this.operadoraId.set(guia.operadoraId);
-        this.beneficiarioId.set(guia.beneficiarioId);
+        this.beneficiarioId.set(guia.beneficiarioId ?? '');
         this.senha.set(guia.senha);
         this.dataAtendimento.set(guia.dataAtendimento);
         this.ehPacote.set(guia.ehPacote);
