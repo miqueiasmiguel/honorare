@@ -1,5 +1,6 @@
 using App.Catalog;
 using App.Data;
+using App.Faturamento.Motor.Unimed.Modifiers;
 using Microsoft.EntityFrameworkCore;
 
 namespace App.Faturamento.Motor.Unimed;
@@ -45,10 +46,32 @@ internal sealed class UnimedRuleSet(AppDbContext db) : IPricingRuleSet
             return new ApuracaoItemResult(item.ItemGuiaId, SituacaoApuracao.SemDeflator, null, []);
         }
 
-        var fator = deflator.Percentual / 100m;
-        var valorBase = tabela.Valor * fator;
-        var passos = new List<PassoApuracao> { new("ValorBase", fator, valorBase) };
+        var procedimento = await db.Procedimentos
+            .Where(p => p.Id == item.ProcedimentoId)
+            .FirstOrDefaultAsync(ct);
 
-        return new ApuracaoItemResult(item.ItemGuiaId, SituacaoApuracao.Calculado, valorBase, passos);
+        var fatorBase = deflator.Percentual / 100m;
+        var valorBase = tabela.Valor * fatorBase;
+        var passos = new List<PassoApuracao> { new("ValorBase", fatorBase, valorBase) };
+
+        var valorAtual = valorBase;
+        valorAtual = AplicarModifier(OrdemProcedimentoModifier.Aplicar(item.Ordem, valorAtual), passos);
+        valorAtual = AplicarModifier(VideolaparoscopiaModifier.Aplicar(item.Via, procedimento?.TemPorteProprioVideo ?? false, valorAtual), passos);
+        valorAtual = AplicarModifier(AcomodacaoModifier.Aplicar(item.Acomodacao, valorAtual), passos);
+        valorAtual = AplicarModifier(UrgenciaModifier.Aplicar(item.EhUrgencia, procedimento?.EhSadt ?? false, valorAtual), passos);
+        AplicarModifier(PosicaoExecutorModifier.Aplicar(item.Posicao, valorAtual), passos);
+
+        var valorFinal = passos[^1].ValorResultante;
+        return new ApuracaoItemResult(item.ItemGuiaId, SituacaoApuracao.Calculado, valorFinal, passos);
+    }
+
+    private static decimal AplicarModifier(PassoApuracao passo, List<PassoApuracao> passos)
+    {
+        if (passo.Fator != 1.0m)
+        {
+            passos.Add(passo);
+        }
+
+        return passo.ValorResultante;
     }
 }

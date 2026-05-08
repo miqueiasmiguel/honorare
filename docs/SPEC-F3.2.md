@@ -325,7 +325,7 @@ Nesta task, **nenhum modifier** é aplicado ainda — apenas o passo ValorBase.
 
 ---
 
-### TASK-F32-05 — Modifiers [ ] pendente
+### TASK-F32-05 — Modifiers [x] concluída
 
 **Escopo:**
 
