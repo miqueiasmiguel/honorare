@@ -20,6 +20,11 @@ export const adminRoutes: Routes = [
         path: 'catalog',
         loadChildren: () => import('./catalog/catalog.routes').then((m) => m.catalogRoutes),
       },
+      {
+        path: 'guias',
+        loadChildren: () =>
+          import('./faturamento/faturamento.routes').then((m) => m.faturamentoRoutes),
+      },
       { path: '', redirectTo: 'users', pathMatch: 'full' },
     ],
   },
