@@ -283,7 +283,7 @@ Implementar `NullRuleSet.ApurarAsync`: para cada item em `ctx.Itens`, projetar `
 
 ---
 
-### TASK-F32-04 — UnimedRuleSet: valor base [ ] pendente
+### TASK-F32-04 — UnimedRuleSet: valor base [x] concluída
 
 **Escopo:** `App/Faturamento/Calculo/Unimed/UnimedRuleSet.cs`
 **Depende de:** TASK-F32-01, TASK-F32-02
