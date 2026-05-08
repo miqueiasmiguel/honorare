@@ -128,9 +128,14 @@ A entidade `Procedimento` deve ter flag `TemPorteProprioVideo` para o motor sabe
 
 ### Auxiliares cirúrgicos
 
-- 1º auxiliar: **30%** do honorário do cirurgião.
-- 2º e 3º auxiliares: **20%** do honorário do cirurgião.
+Percentuais **CBHPM 2018+** (atualização vs. regra antiga de 30%/20%):
+
+- 1º auxiliar: **60%** do honorário do cirurgião.
+- 2º auxiliar: **40%** do honorário do cirurgião.
+- 3º auxiliar: **30%** do honorário do cirurgião.
 - Aplica sobre o valor já com todos os outros multiplicadores.
+
+> ⚠️ Confirmar com guias reais (P0.2) — a Singular pode ter deflator diferente negociado em `DeflatorPrestador`.
 
 ### Urgência/emergência
 
@@ -140,16 +145,16 @@ A entidade `Procedimento` deve ter flag `TemPorteProprioVideo` para o motor sabe
 
 ### Ordem dos modifiers no pipeline
 
-Importante: a ordem afeta o resultado.
+A ordem afeta o resultado. **Esta é a ordem implementada no `UnimedRuleSet`, validada por 10 cenários E2E (F3.2).**
 
-1. Valor base (porte × deflator)
-2. Redutor de procedimento múltiplo (50% mesma via / 70% via diferente)
-3. Acréscimo de videolaparoscopia (+50%, se aplicável)
-4. Dobra por acomodação (×2 se apartamento contratado)
-5. Acréscimo de urgência (+30%, se aplicável e não SADT)
-6. Ajuste por papel do executor (auxiliares 30%/20% do total)
+1. Valor base: `TabelaProcedimento.Valor × (DeflatorPrestador.Percentual / 100)`
+2. Ordem de procedimento: Único/Principal=1.0 · SecundarioMesmaVia=0.5 · SecundarioViaDiferente=0.7
+3. Videolaparoscopia: `Via=Videolaparoscopia` e `!TemPorteProprioVideo` → ×1.5; senão ×1.0
+4. Acomodação: Apartamento → ×2.0; Ambulatorial/Enfermaria → ×1.0
+5. Urgência: `EhUrgencia` e `!EhSadt` → ×1.3; senão ×1.0
+6. Posição do executor: PrimeiroAuxiliar=0.6 · SegundoAuxiliar=0.4 · TerceiroAuxiliar=0.3 · demais=1.0
 
-**Validar essa ordem contra casos reais.** A ordem aqui é hipótese baseada em prática comum; pode haver variação por Singular.
+Confirmar com guias reais (P0.2) se há variação por Singular. Anestesista retorna `SituacaoApuracao.Indeterminado` sem executar pipeline — aguarda F3.3.
 
 ## Anestesia — caso especial
 

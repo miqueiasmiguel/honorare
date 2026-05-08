@@ -109,25 +109,17 @@ Telas do admin-web para o `TenantAdmin` gerenciar usuários dentro do seu tenant
 
 O coração do MVP.
 
-### F3.1 — Entrada manual de guia e controle de pagamentos
+### F3.1 — Entrada manual de guia e controle de pagamentos ✅
 
-O admin entra **todas** as guias de um médico (pagas e pendentes), não só as disputadas. A tela principal do admin-web é o "Controle de Pagamentos" por médico: lista de guias com código de cor por situação (verde = Liquidada, vermelho = Em Recurso, amarelo = Apresentada).
+**Entregues:** Enums `SituacaoGuia` (Apresentada/Liquidada/EmRecurso), `ViaAcesso`, `OrdemProcedimento`, `Acomodacao` em `App/Faturamento/`; entidades `Guia` (table `guias`, ITenantEntity) e `ItemGuia` (table `itens_guia`, cascade delete); configurações EF Core e migration `AddGuias`; `GuiaService` com CRUD completo (`CriarAsync`, `ListarAsync`, `ObterPorIdAsync`, `AtualizarAsync`, `ExcluirAsync`) — atualização faz replace completo dos itens; endpoints REST em `/api/v1/admin/guias` com policy `TenantAccess`; guards de delete no `CatalogService` (Prestador/Operadora/Procedimento bloqueados quando possuem guias associadas). Camada Angular: `guia.types.ts`, `GuiaService` Angular, `ItemGuiaFormComponent` (autocomplete TUSS, campo `valorApurado` condicional ao `ehPacote`), `GuiaFormComponent` (modo criar/editar, lista de itens inline), `GuiaListComponent` (tabela paginada com color-coding por situação, filtros por prestador/período/situação); rotas `/admin/guias`, `/admin/guias/nova`, `/admin/guias/:id`; sidebar com seção "Faturamento" → "Controle de Pagamentos". Guias tipo Pacote (`EhPacote = true`) têm `ValorApurado` informado manualmente — motor de cálculo não é invocado nesta fase. Suites de testes backend (`GuiaSchemaTests`, `GuiaCrudTests`, `GuiaListTests`, `GuiaEndpointTests`) e Angular (`guia.service.spec`, `item-guia-form.spec`, `guia-form.spec`, `guia-list.spec`, `faturamento.routes.spec`) cobrindo 29 casos.
 
-Campos obrigatórios da `Guia`: Data, Senha (pré-autorização), Carteira do beneficiário, Nome do paciente, Procedimentos (múltiplos por guia), Hospital/Operadora, Situação.
+### F3.2 — Motor de cálculo (UNIMED) ✅
 
-Campo `Observacao` (texto livre) é obrigatório — é a justificativa da divergência, exibida em vermelho no recurso e no portal do médico.
+**Entregues:** Interface `IPricingRuleSet` e types `ApurarGuiaContext`/`ApuracaoItemResult`/`PassoApuracao`/`SituacaoApuracao`; `NullRuleSet` (retorna `Indeterminado` para todos os itens — operadoras sem tabela UNIMED); `UnimedRuleSet` com pipeline de 6 passos (ValorBase → OrdemProcedimento → Videolaparoscopia → Acomodacao → Urgencia → PosicaoExecutor); modifiers estáticos em `App/Faturamento/Calculo/Unimed/Modifiers/`; entidades `Calculo` + `PassoCalculo` com migration `AddCalculo` (trace completo por guia); `PricingRuleSetFactory`; `GuiaService` integrado — motor invocado ao criar/atualizar guias não-pacote, `Calculo` anterior excluído no recálculo via cascade delete. Anestesista retorna `SituacaoApuracao.Indeterminado` aguardando F3.3. 10 cenários E2E passando em `UnimedPipelineTests`.
 
-Para guias do tipo **Pacote** (preço flat negociado), o admin informa manualmente o `ValorApurado` — o motor não é invocado. A guia entra normalmente no recurso.
+**Visualização da apuração (entregues):** Endpoint `GET /api/v1/admin/guias/{id}/calculo` retornando `GuiaCalculoDto` com lista de `ItemCalculoDto` (situação, `ValorApurado`, passos de cálculo `PassoCalculoDto`); `CalculoDetalheComponent` Angular com accordion por item — header com badge de situação e valor apurado, body com tabela Regra/Fator/Valor Resultante (fallback "Sem detalhes de cálculo" quando sem passos); seção "Apuração" no `GuiaFormComponent` em modo edição, carregada via `obterCalculo()` com tolerância a erro. Situações possíveis por item: `Calculado`, `SemTabela`, `SemDeflator`, `Indeterminado`, `Pacote`.
 
-Autocomplete de procedimento TUSS. Validações. Listagem paginada e filtrada por médico/período/situação.
-
-**Atenção:** UX deste formulário é crítica. Se for mais lento que a planilha atual, cliente não usa.
-
-### F3.2 — Motor de cálculo (UNIMED)
-
-`IPricingRuleSet` + `UnimedRuleSet` + pipeline de modifiers. Calcula valor esperado ao salvar a guia. Salva trace completo em `Calculo` + `PassoCalculo`.
-
-**Validação:** os 15-20 casos reais devem todos passar antes de seguir para F3.3.
+**Pendente:** validar os percentuais do pipeline contra os 15-20 casos reais (P0.2) antes de seguir para F3.3.
 
 ### F3.3 — Anestesia
 
