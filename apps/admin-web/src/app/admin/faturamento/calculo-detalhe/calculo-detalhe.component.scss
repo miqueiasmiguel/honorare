@@ -1,0 +1,108 @@
+@use 'styles/tokens' as *;
+
+.calculo-detalhe {
+  display: flex;
+  flex-direction: column;
+  gap: space(2);
+}
+
+.calculo-detalhe__item {
+  border: 1px solid var(--color-borda-media);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.calculo-detalhe__header {
+  @include text-body;
+  @include transition(background-color);
+
+  display: flex;
+  align-items: center;
+  gap: space(3);
+  width: 100%;
+  padding: space(3) space(4);
+  background-color: var(--color-pergaminho);
+  border: none;
+  cursor: pointer;
+  color: var(--color-tinta);
+  text-align: left;
+
+  &:hover {
+    background-color: var(--color-pergaminho-claro);
+  }
+}
+
+.calculo-detalhe__valor {
+  @include text-mono-value;
+
+  margin-left: auto;
+  color: var(--color-tinta);
+}
+
+.calculo-detalhe__body {
+  padding: space(4);
+  background-color: var(--color-pergaminho-claro);
+  border-top: 1px solid var(--color-borda-discreta);
+}
+
+.calculo-detalhe__tabela {
+  width: 100%;
+  border-collapse: collapse;
+
+  th {
+    @include text-label;
+
+    padding: space(2) space(3);
+    text-align: left;
+    color: var(--color-tinta-secundaria);
+    border-bottom: 1px solid var(--color-borda-media);
+  }
+}
+
+.calculo-detalhe__passo {
+  td {
+    @include text-body-small;
+
+    padding: space(2) space(3);
+    color: var(--color-tinta);
+    border-bottom: 1px solid var(--color-borda-discreta);
+  }
+
+  &:last-child td {
+    border-bottom: none;
+  }
+}
+
+.calculo-detalhe__sem-passos {
+  @include text-body-small;
+
+  margin: 0;
+  color: var(--color-tinta-secundaria);
+}
+
+.badge {
+  @include text-label;
+
+  display: inline-block;
+  padding: space(1) space(2);
+  border-radius: 100px;
+  white-space: nowrap;
+}
+
+.badge--calculado {
+  color: var(--color-verde-musgo);
+  background-color: var(--color-verde-musgo-claro);
+}
+
+.badge--sem-tabela,
+.badge--sem-deflator {
+  color: var(--color-ambar);
+  background-color: var(--color-ambar-claro);
+}
+
+.badge--indeterminado,
+.badge--pacote {
+  color: var(--color-tinta-secundaria);
+  background-color: var(--color-pergaminho);
+  border: 1px solid var(--color-borda-media);
+}

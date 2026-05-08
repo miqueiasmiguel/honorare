@@ -128,6 +128,19 @@
   }
 }
 
+.guia-form__apuracao {
+  border: 1px solid var(--color-borda-media);
+  border-radius: 6px;
+  padding: space(3);
+}
+
+.guia-form__apuracao-titulo {
+  @include text-h3;
+
+  color: var(--color-tinta);
+  margin: 0 0 space(3);
+}
+
 .guia-form__erro-validacao {
   @include text-label;
 

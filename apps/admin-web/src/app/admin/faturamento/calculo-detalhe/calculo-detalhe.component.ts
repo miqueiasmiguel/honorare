@@ -48,7 +48,7 @@ import type { GuiaCalculoResult, ItemCalculoItem } from '../guia.types';
       </div>
     }
   `,
-  styles: [],
+  styleUrl: './calculo-detalhe.component.scss',
 })
 export class CalculoDetalheComponent {
   readonly calculo = input<GuiaCalculoResult | null>(null);
