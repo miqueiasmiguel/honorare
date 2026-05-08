@@ -126,7 +126,7 @@ Arquivo: `tests/Faturamento.Tests/Calculo/AnestesiaSchemaTests.cs`
 
 ---
 
-## TASK-AN-02 — AnestesiaCalculator (puro, sem DB)
+## TASK-AN-02 — AnestesiaCalculator (puro, sem DB) ✅
 
 **Sessão única. TDD: todos os testes antes do código de produção.**
 
@@ -331,7 +331,7 @@ Arquivo: `item-guia-form.component.spec.ts` (adicionar aos testes existentes)
 | Task     | Backend | Frontend | Migration | Testes novos                 |
 | -------- | ------- | -------- | --------- | ---------------------------- |
 | AN-01 ✅ | ✓       | —        | ✓         | AnestesiaSchemaTests         |
-| AN-02    | ✓       | —        | —         | AnestesiaCalculatorTests     |
+| AN-02 ✅ | ✓       | —        | —         | AnestesiaCalculatorTests     |
 | AN-03    | ✓       | —        | —         | UnimedAnestesiaPipelineTests |
 | AN-04    | —       | ✓        | —         | item-guia-form.spec.ts       |
 
