@@ -209,7 +209,7 @@ Arquivo: `tests/Faturamento.Tests/Calculo/Unimed/AnestesiaCalculatorTests.cs`
 
 ---
 
-## TASK-AN-03 — Integração no UnimedRuleSet
+## TASK-AN-03 — Integração no UnimedRuleSet ✅
 
 **Sessão única. TDD: pipeline E2E tests com Postgres → produção.**
 
@@ -332,7 +332,7 @@ Arquivo: `item-guia-form.component.spec.ts` (adicionar aos testes existentes)
 | -------- | ------- | -------- | --------- | ---------------------------- |
 | AN-01 ✅ | ✓       | —        | ✓         | AnestesiaSchemaTests         |
 | AN-02 ✅ | ✓       | —        | —         | AnestesiaCalculatorTests     |
-| AN-03    | ✓       | —        | —         | UnimedAnestesiaPipelineTests |
+| AN-03 ✅ | ✓       | —        | —         | UnimedAnestesiaPipelineTests |
 | AN-04    | —       | ✓        | —         | item-guia-form.spec.ts       |
 
 **Após AN-03:** atualizar `PROXIMOS_PASSOS.md` marcando F3.3 como ✅ e descrever entregues.

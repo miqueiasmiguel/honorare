@@ -259,7 +259,7 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
             var item = ItemGuia.Create(
                 id, itemCmd.ProcedimentoId, itemCmd.PosicaoExecutor,
                 itemCmd.OrdemProcedimento, itemCmd.ViaAcesso, itemCmd.Acomodacao,
-                itemCmd.EhUrgencia, itemCmd.ValorApurado);
+                itemCmd.EhUrgencia, itemCmd.ValorApurado, itemCmd.TempoAnestesicoMin);
             _db.ItensGuia.Add(item);
             itens.Add(item);
         }
@@ -360,7 +360,8 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
         var ctx = new ApurarGuiaContext(tenantId, guia.PrestadorId, guia.OperadoraId,
             itens.Select(i => new ApurarItemInput(
                 i.Id, i.ProcedimentoId, i.PosicaoExecutor,
-                i.OrdemProcedimento, i.ViaAcesso, i.Acomodacao, i.EhUrgencia))
+                i.OrdemProcedimento, i.ViaAcesso, i.Acomodacao, i.EhUrgencia,
+                i.TempoAnestesicoMin))
             .ToList());
 
         var resultados = await ruleSet.ApurarAsync(ctx, ct);

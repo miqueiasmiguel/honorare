@@ -121,9 +121,11 @@ O coração do MVP.
 
 **Pendente:** validar os percentuais do pipeline contra os 15-20 casos reais (P0.2) antes de seguir para F3.3.
 
-### F3.3 — Anestesia
+### F3.3 — Anestesia ✅
 
-Calculator separado para anestesia (tempo anestésico, porte AN, multiplicador 17,19%). Validar contra casos reais que envolvam anestesistas.
+**Entregues (AN-01–AN-03):** `TempoAnestesicoMin int?` em `ItemGuia` com migration `AddTempoAnestesicoMin`; `AnestesiaCalculator` (puro, sem DB) com pipeline de 6 passos (ValorBase → UnimedAN×1,1719 → OrdemProcedimento → Acomodacao → Urgencia → TempoExtra) e tabela `TempoBasePorPorte` por porte 1–8; integração em `UnimedRuleSet.ApurarAnestesistaAsync` — early-exit para `SemTabela`/`SemDeflator`/`Indeterminado` (PorteAnestesico nulo), retorna `Calculado` com trace completo; `ApurarItemInput` atualizado com `TempoAnestesicoMin`; 8 cenários E2E passando em `UnimedAnestesiaPipelineTests`. AN-04 (UI Angular) pendente.
+
+**Pendente:** AN-04 (campo `tempoAnestesicoMin` no formulário Angular); validar percentuais do pipeline contra casos reais (P0.2).
 
 ### F3.4 — Demonstrativos e conciliação manual
 

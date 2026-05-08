@@ -25,7 +25,7 @@ internal sealed class UnimedRuleSet(AppDbContext db) : IPricingRuleSet
     {
         if (item.Posicao == PosicaoExecutor.Anestesista)
         {
-            return new ApuracaoItemResult(item.ItemGuiaId, SituacaoApuracao.Indeterminado, null, []);
+            return await ApurarAnestesistaAsync(ctx, item, ct);
         }
 
         var tabela = await db.TabelasProcedimento
@@ -62,6 +62,46 @@ internal sealed class UnimedRuleSet(AppDbContext db) : IPricingRuleSet
         AplicarModifier(PosicaoExecutorModifier.Aplicar(item.Posicao, valorAtual), passos);
 
         var valorFinal = passos[^1].ValorResultante;
+        return new ApuracaoItemResult(item.ItemGuiaId, SituacaoApuracao.Calculado, valorFinal, passos);
+    }
+
+    private async Task<ApuracaoItemResult> ApurarAnestesistaAsync(
+        ApurarGuiaContext ctx, ApurarItemInput item, CancellationToken ct)
+    {
+        var tabela = await db.TabelasProcedimento
+            .Where(t => t.OperadoraId == ctx.OperadoraId && t.ProcedimentoId == item.ProcedimentoId)
+            .FirstOrDefaultAsync(ct);
+
+        if (tabela is null)
+        {
+            return new ApuracaoItemResult(item.ItemGuiaId, SituacaoApuracao.SemTabela, null, []);
+        }
+
+        var deflator = await db.DeflatoresPrestador
+            .Where(d => d.PrestadorId == ctx.PrestadorId && d.OperadoraId == ctx.OperadoraId
+                        && d.Posicao == PosicaoExecutor.Anestesista)
+            .FirstOrDefaultAsync(ct);
+
+        if (deflator is null)
+        {
+            return new ApuracaoItemResult(item.ItemGuiaId, SituacaoApuracao.SemDeflator, null, []);
+        }
+
+        var procedimento = await db.Procedimentos
+            .Where(p => p.Id == item.ProcedimentoId)
+            .FirstOrDefaultAsync(ct);
+
+        if (procedimento?.PorteAnestesico is null)
+        {
+            return new ApuracaoItemResult(item.ItemGuiaId, SituacaoApuracao.Indeterminado, null, []);
+        }
+
+        var (valorFinal, passos) = AnestesiaCalculator.Calcular(
+            tabela.Valor, deflator.Percentual,
+            procedimento.PorteAnestesico.Value,
+            item.TempoAnestesicoMin,
+            item.Ordem, item.Acomodacao, item.EhUrgencia, procedimento.EhSadt);
+
         return new ApuracaoItemResult(item.ItemGuiaId, SituacaoApuracao.Calculado, valorFinal, passos);
     }
 

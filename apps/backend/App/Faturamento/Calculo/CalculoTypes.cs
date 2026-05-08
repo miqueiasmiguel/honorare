@@ -25,7 +25,8 @@ internal sealed record ApurarItemInput(
     OrdemProcedimento Ordem,
     ViaAcesso Via,
     Acomodacao Acomodacao,
-    bool EhUrgencia);
+    bool EhUrgencia,
+    int? TempoAnestesicoMin = null);
 
 internal sealed record ApurarGuiaContext(
     Guid TenantId,
