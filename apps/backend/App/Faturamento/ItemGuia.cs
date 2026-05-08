@@ -18,6 +18,8 @@ internal sealed class ItemGuia
 
     private ItemGuia() { }
 
+    internal void SetValorApurado(decimal? valor) => ValorApurado = valor;
+
     internal static ItemGuia Create(
         Guid guiaId,
         Guid procedimentoId,

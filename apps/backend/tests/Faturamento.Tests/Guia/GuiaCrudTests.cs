@@ -2,6 +2,7 @@ using App;
 using App.Catalog;
 using App.Data;
 using App.Faturamento;
+using App.Faturamento.Motor;
 using App.Identity;
 using Faturamento.Tests.Fixtures;
 using Microsoft.EntityFrameworkCore;
@@ -11,13 +12,14 @@ namespace Faturamento.Tests.Service;
 [Collection(nameof(PostgresCollection))]
 public sealed class GuiaCrudTests(PostgresContainerFixture db)
 {
-    private (AppDbContext ctx, ICurrentUser user) BuildTenant(Guid tenantId)
+    private (AppDbContext ctx, ICurrentUser user, PricingRuleSetFactory factory) BuildTenant(Guid tenantId)
     {
         var currentUser = new FakeTenantUser(tenantId);
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseNpgsql(db.ConnectionString)
             .Options;
-        return (new AppDbContext(options, currentUser), currentUser);
+        var ctx = new AppDbContext(options, currentUser);
+        return (ctx, currentUser, new PricingRuleSetFactory(ctx));
     }
 
     private static async Task<(Guid prestadorId, Guid operadoraId, Guid beneficiarioId, Guid procedimentoId)>
@@ -45,10 +47,10 @@ public sealed class GuiaCrudTests(PostgresContainerFixture db)
     public async Task Criar_ComDadosValidos_RetornaGuiaDetalheDtoAsync()
     {
         var tenantId = Guid.NewGuid();
-        var (ctx, user) = BuildTenant(tenantId);
+        var (ctx, user, factory) = BuildTenant(tenantId);
         await using var _ = ctx;
         var (prestadorId, operadoraId, beneficiarioId, procedimentoId) = await SeedCatalogAsync(ctx, tenantId);
-        var service = new GuiaService(ctx, user);
+        var service = new GuiaService(ctx, user, factory);
 
         var cmd = new CriarGuiaCommand(
             prestadorId, operadoraId, beneficiarioId,
@@ -70,10 +72,10 @@ public sealed class GuiaCrudTests(PostgresContainerFixture db)
     public async Task Criar_SemItens_RetornaValidationErrorAsync()
     {
         var tenantId = Guid.NewGuid();
-        var (ctx, user) = BuildTenant(tenantId);
+        var (ctx, user, factory) = BuildTenant(tenantId);
         await using var _ = ctx;
         var (prestadorId, operadoraId, beneficiarioId, _) = await SeedCatalogAsync(ctx, tenantId);
-        var service = new GuiaService(ctx, user);
+        var service = new GuiaService(ctx, user, factory);
 
         var cmd = new CriarGuiaCommand(
             prestadorId, operadoraId, beneficiarioId,
@@ -90,10 +92,10 @@ public sealed class GuiaCrudTests(PostgresContainerFixture db)
     public async Task Criar_EhPacoteItemSemValorApurado_RetornaValidationErrorAsync()
     {
         var tenantId = Guid.NewGuid();
-        var (ctx, user) = BuildTenant(tenantId);
+        var (ctx, user, factory) = BuildTenant(tenantId);
         await using var _ = ctx;
         var (prestadorId, operadoraId, beneficiarioId, procedimentoId) = await SeedCatalogAsync(ctx, tenantId);
-        var service = new GuiaService(ctx, user);
+        var service = new GuiaService(ctx, user, factory);
 
         var cmd = new CriarGuiaCommand(
             prestadorId, operadoraId, beneficiarioId,
@@ -110,10 +112,10 @@ public sealed class GuiaCrudTests(PostgresContainerFixture db)
     public async Task Criar_PrestadorInexistente_RetornaNotFoundAsync()
     {
         var tenantId = Guid.NewGuid();
-        var (ctx, user) = BuildTenant(tenantId);
+        var (ctx, user, factory) = BuildTenant(tenantId);
         await using var _ = ctx;
         var (_, operadoraId, beneficiarioId, procedimentoId) = await SeedCatalogAsync(ctx, tenantId);
-        var service = new GuiaService(ctx, user);
+        var service = new GuiaService(ctx, user, factory);
 
         var cmd = new CriarGuiaCommand(
             Guid.NewGuid(), operadoraId, beneficiarioId,
@@ -130,10 +132,10 @@ public sealed class GuiaCrudTests(PostgresContainerFixture db)
     public async Task Criar_OperadoraInexistente_RetornaNotFoundAsync()
     {
         var tenantId = Guid.NewGuid();
-        var (ctx, user) = BuildTenant(tenantId);
+        var (ctx, user, factory) = BuildTenant(tenantId);
         await using var _ = ctx;
         var (prestadorId, _, beneficiarioId, procedimentoId) = await SeedCatalogAsync(ctx, tenantId);
-        var service = new GuiaService(ctx, user);
+        var service = new GuiaService(ctx, user, factory);
 
         var cmd = new CriarGuiaCommand(
             prestadorId, Guid.NewGuid(), beneficiarioId,
@@ -150,10 +152,10 @@ public sealed class GuiaCrudTests(PostgresContainerFixture db)
     public async Task Criar_BeneficiarioInexistente_RetornaNotFoundAsync()
     {
         var tenantId = Guid.NewGuid();
-        var (ctx, user) = BuildTenant(tenantId);
+        var (ctx, user, factory) = BuildTenant(tenantId);
         await using var _ = ctx;
         var (prestadorId, operadoraId, _, procedimentoId) = await SeedCatalogAsync(ctx, tenantId);
-        var service = new GuiaService(ctx, user);
+        var service = new GuiaService(ctx, user, factory);
 
         var cmd = new CriarGuiaCommand(
             prestadorId, operadoraId, Guid.NewGuid(),
@@ -170,10 +172,10 @@ public sealed class GuiaCrudTests(PostgresContainerFixture db)
     public async Task Atualizar_GuiaInexistente_RetornaNotFoundAsync()
     {
         var tenantId = Guid.NewGuid();
-        var (ctx, user) = BuildTenant(tenantId);
+        var (ctx, user, factory) = BuildTenant(tenantId);
         await using var _ = ctx;
         var (_, operadoraId, beneficiarioId, procedimentoId) = await SeedCatalogAsync(ctx, tenantId);
-        var service = new GuiaService(ctx, user);
+        var service = new GuiaService(ctx, user, factory);
 
         var cmd = new AtualizarGuiaCommand(
             operadoraId, beneficiarioId, "SEN-UPD",
@@ -190,10 +192,10 @@ public sealed class GuiaCrudTests(PostgresContainerFixture db)
     public async Task Atualizar_SubstituiTodosItensAsync()
     {
         var tenantId = Guid.NewGuid();
-        var (ctx, user) = BuildTenant(tenantId);
+        var (ctx, user, factory) = BuildTenant(tenantId);
         await using var _ = ctx;
         var (prestadorId, operadoraId, beneficiarioId, procedimentoId) = await SeedCatalogAsync(ctx, tenantId);
-        var service = new GuiaService(ctx, user);
+        var service = new GuiaService(ctx, user, factory);
 
         var criar = new CriarGuiaCommand(
             prestadorId, operadoraId, beneficiarioId,
@@ -218,9 +220,9 @@ public sealed class GuiaCrudTests(PostgresContainerFixture db)
     public async Task Excluir_GuiaInexistente_RetornaNotFoundAsync()
     {
         var tenantId = Guid.NewGuid();
-        var (ctx, user) = BuildTenant(tenantId);
+        var (ctx, user, factory) = BuildTenant(tenantId);
         await using var _ = ctx;
-        var service = new GuiaService(ctx, user);
+        var service = new GuiaService(ctx, user, factory);
 
         var result = await service.ExcluirAsync(Guid.NewGuid());
 
@@ -232,10 +234,10 @@ public sealed class GuiaCrudTests(PostgresContainerFixture db)
     public async Task Excluir_RemoveGuiaEItensAsync()
     {
         var tenantId = Guid.NewGuid();
-        var (ctx, user) = BuildTenant(tenantId);
+        var (ctx, user, factory) = BuildTenant(tenantId);
         await using var _ = ctx;
         var (prestadorId, operadoraId, beneficiarioId, procedimentoId) = await SeedCatalogAsync(ctx, tenantId);
-        var service = new GuiaService(ctx, user);
+        var service = new GuiaService(ctx, user, factory);
 
         var cmd = new CriarGuiaCommand(
             prestadorId, operadoraId, beneficiarioId,
@@ -260,10 +262,10 @@ public sealed class GuiaCrudTests(PostgresContainerFixture db)
         var tenantA = Guid.NewGuid();
         var tenantB = Guid.NewGuid();
 
-        var (ctxA, userA) = BuildTenant(tenantA);
+        var (ctxA, userA, factoryA) = BuildTenant(tenantA);
         await using var _a = ctxA;
         var (prestadorId, operadoraId, beneficiarioId, procedimentoId) = await SeedCatalogAsync(ctxA, tenantA);
-        var serviceA = new GuiaService(ctxA, userA);
+        var serviceA = new GuiaService(ctxA, userA, factoryA);
 
         var cmd = new CriarGuiaCommand(
             prestadorId, operadoraId, beneficiarioId,
@@ -272,9 +274,9 @@ public sealed class GuiaCrudTests(PostgresContainerFixture db)
         var criado = await serviceA.CriarAsync(cmd);
         Assert.True(criado.IsSuccess);
 
-        var (ctxB, userB) = BuildTenant(tenantB);
+        var (ctxB, userB, factoryB) = BuildTenant(tenantB);
         await using var _b = ctxB;
-        var serviceB = new GuiaService(ctxB, userB);
+        var serviceB = new GuiaService(ctxB, userB, factoryB);
 
         var result = await serviceB.ObterPorIdAsync(criado.Value!.Id);
 

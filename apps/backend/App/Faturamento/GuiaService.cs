@@ -1,5 +1,6 @@
 using App.Catalog;
 using App.Data;
+using App.Faturamento.Motor;
 using App.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -48,10 +49,11 @@ internal sealed record GuiaDetalheDto(
 internal sealed record ListarGuiasResult(
     IReadOnlyList<GuiaDto> Itens, int Total, int Pagina, int ItensPorPagina);
 
-internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser)
+internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, PricingRuleSetFactory factory)
 {
     private readonly AppDbContext _db = db;
     private readonly ICurrentUser _currentUser = currentUser;
+    private readonly PricingRuleSetFactory _factory = factory;
 
     internal async Task<Result<GuiaDetalheDto>> CriarAsync(
         CriarGuiaCommand cmd, CancellationToken ct = default)
@@ -97,6 +99,7 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser)
 
         _db.Guias.Add(guia);
 
+        var itens = new List<ItemGuia>(cmd.Itens.Count);
         foreach (var itemCmd in cmd.Itens)
         {
             var item = ItemGuia.Create(
@@ -104,9 +107,15 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser)
                 itemCmd.OrdemProcedimento, itemCmd.ViaAcesso, itemCmd.Acomodacao,
                 itemCmd.EhUrgencia, itemCmd.ValorApurado);
             _db.ItensGuia.Add(item);
+            itens.Add(item);
         }
 
         await _db.SaveChangesAsync(ct);
+
+        if (!guia.EhPacote)
+        {
+            await ExecutarCalculoAsync(guia, operadora, itens, ct);
+        }
 
         return await ObterDetalheDtoInternalAsync(guia.Id, ct);
     }
@@ -214,12 +223,21 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser)
             return Result<GuiaDetalheDto>.Fail(new NotFoundError("Guia não encontrada."));
         }
 
+        var operadora = await _db.Operadoras.FirstOrDefaultAsync(o => o.Id == cmd.OperadoraId, ct);
+        if (operadora is null)
+        {
+            return Result<GuiaDetalheDto>.Fail(new NotFoundError("Operadora não encontrada."));
+        }
+
+        // Excluir Calculo anterior (cascade apaga PassoCalculo) antes de deletar ItensGuia
+        await _db.Calculos.Where(c => c.GuiaId == id).ExecuteDeleteAsync(ct);
         await _db.ItensGuia.Where(i => i.GuiaId == id).ExecuteDeleteAsync(ct);
 
         guia.Atualizar(
             cmd.OperadoraId, cmd.BeneficiarioId,
             cmd.Senha.Trim(), cmd.DataAtendimento, cmd.EhPacote, cmd.Observacao.Trim());
 
+        var itens = new List<ItemGuia>(cmd.Itens.Count);
         foreach (var itemCmd in cmd.Itens)
         {
             var item = ItemGuia.Create(
@@ -227,9 +245,15 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser)
                 itemCmd.OrdemProcedimento, itemCmd.ViaAcesso, itemCmd.Acomodacao,
                 itemCmd.EhUrgencia, itemCmd.ValorApurado);
             _db.ItensGuia.Add(item);
+            itens.Add(item);
         }
 
         await _db.SaveChangesAsync(ct);
+
+        if (!guia.EhPacote)
+        {
+            await ExecutarCalculoAsync(guia, operadora, itens, ct);
+        }
 
         return await ObterDetalheDtoInternalAsync(id, ct);
     }
@@ -242,9 +266,53 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser)
             return Result.Fail(new NotFoundError("Guia não encontrada."));
         }
 
+        // Marcar Calculos como Deleted no tracker (cascade DB apaga PassoCalculo)
+        // antes de Remove(guia) para não violar a FK Restrict de Calculo->Guia
+        var calculos = await _db.Calculos.Where(c => c.GuiaId == id).ToListAsync(ct);
+        _db.Calculos.RemoveRange(calculos);
+
         _db.Guias.Remove(guia);
         await _db.SaveChangesAsync(ct);
         return Result.Ok();
+    }
+
+    private async Task ExecutarCalculoAsync(
+        Guia guia, Operadora operadora, List<ItemGuia> itens, CancellationToken ct)
+    {
+        var tenantId = _currentUser.TenantId!.Value;
+        var ruleSet = _factory.Criar(operadora.TipoRuleSet);
+
+        var ctx = new ApurarGuiaContext(tenantId, guia.PrestadorId, guia.OperadoraId,
+            itens.Select(i => new ApurarItemInput(
+                i.Id, i.ProcedimentoId, i.PosicaoExecutor,
+                i.OrdemProcedimento, i.ViaAcesso, i.Acomodacao, i.EhUrgencia))
+            .ToList());
+
+        var resultados = await ruleSet.ApurarAsync(ctx, ct);
+
+        var calculo = Calculo.Create(tenantId, guia.Id);
+        _db.Calculos.Add(calculo);
+
+        var seq = 0;
+        foreach (var resultado in resultados)
+        {
+            if (resultado.Situacao != SituacaoApuracao.Calculado)
+            {
+                continue;
+            }
+
+            var item = itens.First(i => i.Id == resultado.ItemGuiaId);
+            item.SetValorApurado(resultado.ValorApurado);
+
+            foreach (var passo in resultado.Passos)
+            {
+                _db.PassosCalculo.Add(PassoCalculo.Create(
+                    calculo.Id, resultado.ItemGuiaId, ++seq,
+                    passo.Regra, passo.Fator, passo.ValorResultante));
+            }
+        }
+
+        await _db.SaveChangesAsync(ct);
     }
 
     private async Task<Result<GuiaDetalheDto>> ObterDetalheDtoInternalAsync(

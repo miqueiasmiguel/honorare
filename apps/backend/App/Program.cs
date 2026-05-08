@@ -6,6 +6,8 @@ using App.Catalog.Endpoints;
 using App.Data;
 using App.Faturamento;
 using App.Faturamento.Endpoints;
+using App.Faturamento.Motor;
+using App.Faturamento.Motor.Unimed;
 using App.Identity;
 using App.Identity.Endpoints;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -40,6 +42,9 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<SaasService>();
 builder.Services.AddScoped<AdminService>();
 builder.Services.AddScoped<CatalogService>();
+builder.Services.AddScoped<UnimedRuleSet>();
+builder.Services.AddScoped<NullRuleSet>();
+builder.Services.AddScoped<PricingRuleSetFactory>();
 builder.Services.AddScoped<GuiaService>();
 
 builder.Services.AddDbContext<AppDbContext>(options =>

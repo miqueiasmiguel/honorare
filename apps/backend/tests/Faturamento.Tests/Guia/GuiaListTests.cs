@@ -1,6 +1,7 @@
 using App.Catalog;
 using App.Data;
 using App.Faturamento;
+using App.Faturamento.Motor;
 using App.Identity;
 using Faturamento.Tests.Fixtures;
 using Microsoft.EntityFrameworkCore;
@@ -10,13 +11,14 @@ namespace Faturamento.Tests.Service;
 [Collection(nameof(PostgresCollection))]
 public sealed class GuiaListTests(PostgresContainerFixture db)
 {
-    private (AppDbContext ctx, ICurrentUser user) BuildTenant(Guid tenantId)
+    private (AppDbContext ctx, ICurrentUser user, PricingRuleSetFactory factory) BuildTenant(Guid tenantId)
     {
         var currentUser = new FakeListTenantUser(tenantId);
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseNpgsql(db.ConnectionString)
             .Options;
-        return (new AppDbContext(options, currentUser), currentUser);
+        var ctx = new AppDbContext(options, currentUser);
+        return (ctx, currentUser, new PricingRuleSetFactory(ctx));
     }
 
     private static async Task<(Guid prestadorId, Guid operadoraId, Guid beneficiarioId, Guid procedimentoId)>
@@ -59,7 +61,7 @@ public sealed class GuiaListTests(PostgresContainerFixture db)
     public async Task Listar_FiltraPorPrestadorIdAsync()
     {
         var tenantId = Guid.NewGuid();
-        var (ctx, user) = BuildTenant(tenantId);
+        var (ctx, user, factory) = BuildTenant(tenantId);
         await using var _ = ctx;
         var (prestadorA, operadoraId, beneficiarioId, procedimentoId) = await SeedCatalogAsync(ctx, tenantId);
 
@@ -67,7 +69,7 @@ public sealed class GuiaListTests(PostgresContainerFixture db)
         ctx.Add(prestadorB);
         await ctx.SaveChangesAsync();
 
-        var service = new GuiaService(ctx, user);
+        var service = new GuiaService(ctx, user, factory);
         await CriarGuiaAsync(service, prestadorA, operadoraId, beneficiarioId, procedimentoId, "SFA001", new DateOnly(2025, 1, 10));
         await CriarGuiaAsync(service, prestadorA, operadoraId, beneficiarioId, procedimentoId, "SFA002", new DateOnly(2025, 1, 11));
         await CriarGuiaAsync(service, prestadorB.Id, operadoraId, beneficiarioId, procedimentoId, "SFB001", new DateOnly(2025, 1, 12));
@@ -82,10 +84,10 @@ public sealed class GuiaListTests(PostgresContainerFixture db)
     public async Task Listar_FiltraPorPeriodoAsync()
     {
         var tenantId = Guid.NewGuid();
-        var (ctx, user) = BuildTenant(tenantId);
+        var (ctx, user, factory) = BuildTenant(tenantId);
         await using var _ = ctx;
         var (prestadorId, operadoraId, beneficiarioId, procedimentoId) = await SeedCatalogAsync(ctx, tenantId);
-        var service = new GuiaService(ctx, user);
+        var service = new GuiaService(ctx, user, factory);
 
         await CriarGuiaAsync(service, prestadorId, operadoraId, beneficiarioId, procedimentoId, "SFP001", new DateOnly(2025, 1, 15));
         await CriarGuiaAsync(service, prestadorId, operadoraId, beneficiarioId, procedimentoId, "SFP002", new DateOnly(2025, 3, 15));
@@ -101,10 +103,10 @@ public sealed class GuiaListTests(PostgresContainerFixture db)
     public async Task Listar_FiltraPorSituacaoAsync()
     {
         var tenantId = Guid.NewGuid();
-        var (ctx, user) = BuildTenant(tenantId);
+        var (ctx, user, factory) = BuildTenant(tenantId);
         await using var _ = ctx;
         var (prestadorId, operadoraId, beneficiarioId, procedimentoId) = await SeedCatalogAsync(ctx, tenantId);
-        var service = new GuiaService(ctx, user);
+        var service = new GuiaService(ctx, user, factory);
 
         await CriarGuiaAsync(service, prestadorId, operadoraId, beneficiarioId, procedimentoId, "SFS001", new DateOnly(2025, 6, 1));
 
@@ -121,10 +123,10 @@ public sealed class GuiaListTests(PostgresContainerFixture db)
     public async Task Listar_PaginacaoCorretaAsync()
     {
         var tenantId = Guid.NewGuid();
-        var (ctx, user) = BuildTenant(tenantId);
+        var (ctx, user, factory) = BuildTenant(tenantId);
         await using var _ = ctx;
         var (prestadorId, operadoraId, beneficiarioId, procedimentoId) = await SeedCatalogAsync(ctx, tenantId);
-        var service = new GuiaService(ctx, user);
+        var service = new GuiaService(ctx, user, factory);
 
         for (var i = 0; i < 5; i++)
         {
@@ -148,16 +150,16 @@ public sealed class GuiaListTests(PostgresContainerFixture db)
         var tenantA = Guid.NewGuid();
         var tenantB = Guid.NewGuid();
 
-        var (ctxA, userA) = BuildTenant(tenantA);
+        var (ctxA, userA, factoryA) = BuildTenant(tenantA);
         await using var _a = ctxA;
         var (prestadorA, operadoraA, beneficiarioA, procedimentoA) = await SeedCatalogAsync(ctxA, tenantA);
-        var serviceA = new GuiaService(ctxA, userA);
+        var serviceA = new GuiaService(ctxA, userA, factoryA);
         await CriarGuiaAsync(serviceA, prestadorA, operadoraA, beneficiarioA, procedimentoA, "SFISO-A", new DateOnly(2025, 6, 1));
 
-        var (ctxB, userB) = BuildTenant(tenantB);
+        var (ctxB, userB, factoryB) = BuildTenant(tenantB);
         await using var _b = ctxB;
         var (prestadorB, operadoraB, beneficiarioB, procedimentoB) = await SeedCatalogAsync(ctxB, tenantB);
-        var serviceB = new GuiaService(ctxB, userB);
+        var serviceB = new GuiaService(ctxB, userB, factoryB);
         await CriarGuiaAsync(serviceB, prestadorB, operadoraB, beneficiarioB, procedimentoB, "SFISO-B", new DateOnly(2025, 6, 2));
 
         var resultA = await serviceA.ListarAsync(new ListarGuiasQuery(null, null, null, null, 1, 100));
