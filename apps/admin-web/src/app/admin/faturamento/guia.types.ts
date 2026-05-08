@@ -28,6 +28,7 @@ export interface ItemGuiaItem {
   ehUrgencia: boolean;
   valorApurado: number | null;
   valorLiquidado: number | null;
+  tempoAnestesicoMin?: number | null;
 }
 
 export interface GuiaItem {
@@ -77,6 +78,7 @@ export interface CriarItemGuiaPayload {
   acomodacao: Acomodacao;
   ehUrgencia: boolean;
   valorApurado: number | null;
+  tempoAnestesicoMin?: number | null;
 }
 
 export interface CriarGuiaPayload {

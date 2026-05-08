@@ -123,6 +123,21 @@ import type {
         <label class="item-guia-form__label" for="eh-urgencia">Urgência</label>
       </div>
 
+      @if (posicaoExecutor() === 'Anestesista') {
+        <div class="item-guia-form__field">
+          <label class="item-guia-form__label" for="tempo-anestesico">Tempo anestésico (min)</label>
+          <input
+            type="number"
+            id="tempo-anestesico"
+            data-testid="tempo-anestesico"
+            class="item-guia-form__input--tempo-anestesico"
+            min="0"
+            [value]="tempoAnestesicoMin() ?? ''"
+            (input)="onTempoAnestesicoChange($any($event.target).value)"
+          />
+        </div>
+      }
+
       @if (ehPacote()) {
         <div class="item-guia-form__field">
           <label class="item-guia-form__label" for="valor-apurado">Valor Apurado (R$)</label>
@@ -170,6 +185,7 @@ export class ItemGuiaFormComponent implements OnInit {
   readonly acomodacao = signal<Acomodacao>('Enfermaria');
   readonly ehUrgencia = signal(false);
   readonly valorApurado = signal('');
+  readonly tempoAnestesicoMin = signal<number | null>(null);
 
   ngOnInit(): void {
     this._busca$
@@ -204,6 +220,7 @@ export class ItemGuiaFormComponent implements OnInit {
       this.acomodacao.set(current.acomodacao);
       this.ehUrgencia.set(current.ehUrgencia);
       this.valorApurado.set(current.valorApurado !== null ? String(current.valorApurado) : '');
+      this.tempoAnestesicoMin.set(current.tempoAnestesicoMin ?? null);
     }
   }
 
@@ -239,6 +256,10 @@ export class ItemGuiaFormComponent implements OnInit {
     this.ehUrgencia.set(checked);
   }
 
+  onTempoAnestesicoChange(value: string): void {
+    this.tempoAnestesicoMin.set(value ? parseInt(value, 10) : null);
+  }
+
   onFormSubmit(event: Event): void {
     event.preventDefault();
     const valorApuradoStr = this.valorApurado();
@@ -250,6 +271,7 @@ export class ItemGuiaFormComponent implements OnInit {
       acomodacao: this.acomodacao(),
       ehUrgencia: this.ehUrgencia(),
       valorApurado: valorApuradoStr ? parseFloat(valorApuradoStr) : null,
+      tempoAnestesicoMin: this.tempoAnestesicoMin(),
     });
   }
 

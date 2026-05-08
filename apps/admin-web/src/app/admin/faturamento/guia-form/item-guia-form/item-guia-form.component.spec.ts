@@ -196,4 +196,75 @@ describe('ItemGuiaFormComponent', () => {
       vi.useRealTimers();
     }
   });
+
+  it('campo tempo oculto para Cirurgiao', () => {
+    const { component, fixture, el } = setup();
+    component.posicaoExecutor.set('Cirurgiao');
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="tempo-anestesico"]')).toBeNull();
+  });
+
+  it('campo tempo visivel para Anestesista', () => {
+    const { component, fixture, el } = setup();
+    component.posicaoExecutor.set('Anestesista');
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="tempo-anestesico"]')).not.toBeNull();
+  });
+
+  it('emite tempoAnestesicoMin ao mudar campo', () => {
+    const { component, fixture, el } = setup();
+    const emitSpy = vi.spyOn(component.itemChange, 'emit');
+
+    component.procedimentoId.set('proc-an');
+    component.posicaoExecutor.set('Anestesista');
+    fixture.detectChanges();
+
+    const input = el.querySelector<HTMLInputElement>('[data-testid="tempo-anestesico"]');
+    if (input) {
+      input.value = '180';
+      input.dispatchEvent(new Event('input'));
+      fixture.detectChanges();
+    }
+
+    el.querySelector<HTMLButtonElement>('.item-guia-form__btn-salvar')?.click();
+
+    expect(emitSpy).toHaveBeenCalledWith(expect.objectContaining({ tempoAnestesicoMin: 180 }));
+  });
+
+  it('emite null quando campo tempo vazio', () => {
+    const { component, fixture, el } = setup();
+    const emitSpy = vi.spyOn(component.itemChange, 'emit');
+
+    component.procedimentoId.set('proc-an');
+    component.posicaoExecutor.set('Anestesista');
+    fixture.detectChanges();
+
+    el.querySelector<HTMLButtonElement>('.item-guia-form__btn-salvar')?.click();
+
+    expect(emitSpy).toHaveBeenCalledWith(expect.objectContaining({ tempoAnestesicoMin: null }));
+  });
+
+  it('popula campo ao carregar item existente com tempo', () => {
+    const catalogService = makeServiceSpy();
+    TestBed.configureTestingModule({
+      imports: [ItemGuiaFormComponent],
+      providers: [{ provide: CatalogService, useValue: catalogService }],
+    });
+    const fixture = TestBed.createComponent(ItemGuiaFormComponent);
+    Object.assign(fixture.componentInstance, {
+      item: signal({
+        procedimentoId: 'proc-an',
+        posicaoExecutor: 'Anestesista' as const,
+        ordemProcedimento: 'Unico' as const,
+        viaAcesso: 'Convencional' as const,
+        acomodacao: 'Enfermaria' as const,
+        ehUrgencia: false,
+        valorApurado: null,
+        tempoAnestesicoMin: 120,
+      }),
+    });
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.tempoAnestesicoMin()).toBe(120);
+  });
 });
