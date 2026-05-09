@@ -21,6 +21,8 @@ internal sealed class ItemGuia
 
     internal void SetValorApurado(decimal? valor) => ValorApurado = valor;
 
+    internal void SetValorLiquidado(decimal? valor) => ValorLiquidado = valor;
+
     internal void SetTempoAnestesicoMin(int? valor) => TempoAnestesicoMin = valor;
 
     internal static ItemGuia Create(

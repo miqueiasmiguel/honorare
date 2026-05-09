@@ -47,6 +47,10 @@ internal sealed class Guia : ITenantEntity
         };
     }
 
+    internal void Liquidar() => Situacao = SituacaoGuia.Liquidada;
+
+    internal void ReverterParaApresentada() => Situacao = SituacaoGuia.Apresentada;
+
     internal void Atualizar(
         Guid operadoraId,
         Guid? beneficiarioId,
