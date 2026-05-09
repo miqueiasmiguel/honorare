@@ -34,7 +34,7 @@ jobs:
       ConnectionStrings__Default: "Host=localhost;Port=5432;Database=honorare_test;Username=honorare;Password=honorare"
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup .NET 10
         uses: actions/setup-dotnet@v4
