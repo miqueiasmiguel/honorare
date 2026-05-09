@@ -84,7 +84,7 @@ apps/admin-web/src/app/admin/faturamento/
 
 ---
 
-## TASK-DM-01 — Schema: Demonstrativo + ItemDemonstrativo
+## TASK-DM-01 — Schema: Demonstrativo + ItemDemonstrativo ✅
 
 **TDD: testes de schema → entidades → migration → build.**
 
@@ -443,12 +443,12 @@ Rota: `/admin/demonstrativos/:id/conciliar`
 
 ## Resumo de entregáveis por task
 
-| Task  | Backend | Frontend | Migration | Testes                          |
-| ----- | ------- | -------- | --------- | ------------------------------- |
-| DM-01 | ✓       | —        | ✓         | DemonstrativoSchemaTests        |
-| DM-02 | ✓       | —        | —         | DemonstrativoCrudTests          |
-| DM-03 | ✓       | —        | —         | ConciliacaoTests                |
-| DM-04 | —       | ✓        | —         | demonstrativo-list/form.spec.ts |
-| DM-05 | —       | ✓        | —         | conciliacao.component.spec.ts   |
+| Task     | Backend | Frontend | Migration | Testes                          |
+| -------- | ------- | -------- | --------- | ------------------------------- |
+| DM-01 ✅ | ✓       | —        | ✓         | DemonstrativoSchemaTests        |
+| DM-02    | ✓       | —        | —         | DemonstrativoCrudTests          |
+| DM-03    | ✓       | —        | —         | ConciliacaoTests                |
+| DM-04    | —       | ✓        | —         | demonstrativo-list/form.spec.ts |
+| DM-05    | —       | ✓        | —         | conciliacao.component.spec.ts   |
 
 **Após DM-05:** atualizar `PROXIMOS_PASSOS.md` marcando F3.4 como ✅.
