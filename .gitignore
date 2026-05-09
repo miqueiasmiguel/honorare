@@ -47,3 +47,6 @@ packages/api-contracts/src/generated/
 
 # Docker volumes
 infra/postgres/data/
+
+# Claude Code local settings (machine-specific)
+.claude/settings.local.json

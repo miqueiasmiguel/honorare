@@ -28,7 +28,8 @@
   }
 
   &__input--busca-procedimento,
-  &__input--valor-apurado {
+  &__input--valor-apurado,
+  &__input--tempo-anestesico {
     @include text-body;
     @include transition(border-color, box-shadow);
 
