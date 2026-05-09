@@ -154,17 +154,29 @@ A ordem afeta o resultado. **Esta é a ordem implementada no `UnimedRuleSet`, va
 5. Urgência: `EhUrgencia` e `!EhSadt` → ×1.3; senão ×1.0
 6. Posição do executor: PrimeiroAuxiliar=0.6 · SegundoAuxiliar=0.4 · TerceiroAuxiliar=0.3 · demais=1.0
 
-Confirmar com guias reais (P0.2) se há variação por Singular. Anestesista retorna `SituacaoApuracao.Indeterminado` sem executar pipeline — aguarda F3.3.
+Confirmar com guias reais (P0.2) se há variação por Singular. Anestesista usa pipeline próprio — ver seção abaixo.
 
-## Anestesia — caso especial
+## Anestesia — pipeline próprio (F3.3)
 
-Anestesia tem mecânica suficientemente diferente de honorários cirúrgicos:
+Anestesista tem mecânica separada dos honorários cirúrgicos, implementada em `AnestesiaCalculator` dentro de `App/Faturamento/Calculo/Unimed/`. O pipeline de 6 passos (ordem obrigatória):
 
-- Porte AN próprio (1 a 8), não o porte cirúrgico
-- Cálculo envolve tempo anestésico em minutos
-- Multiplicador 17,19% UNIMED sobre CBHPM 2015
+1. `ValorBase = TabelaProcedimento.Valor × (DeflatorPrestador.Percentual / 100)`
+2. `UnimedAN = ValorBase × 1.1719` — acréscimo de 17,19% sobre CBHPM 2015
+3. `OrdemProcedimento`: Único/Principal=1.0 · SecundarioMesmaVia=0.5 · SecundarioViaDiferente=0.7
+4. `Acomodacao`: Apartamento=2.0 · Ambulatorial/Enfermaria=1.0
+5. `Urgencia`: `EhUrgencia && !EhSadt` → ×1.3; senão ×1.0
+6. `TempoExtra`: acréscimo por hora cheia excedente ao tempo base do porte anestésico (PA)
 
-Recomendação: **`AnestesiaCalculator` separado** dentro de `Faturamento/Calculo/Unimed/`, ou `IPricingRuleSet` próprio. Não enfiar no mesmo pipeline dos honorários cirúrgicos.
+**Tempo extra:**
+
+- `TempoBaseMin` por PA: 1→60, 2→90, 3→120, 4→150, 5→180, 6→240, 7→300, 8→360 minutos
+- `TempoExtraHoras = max(0, ceil((TempoAnestesicoMin − TempoBaseMin) / 60))`
+- `FatorExtra`: PA ≤ 4 → 0,30; PA ≥ 5 → 0,50
+- `AcrescimoTempo = TempoExtraHoras × FatorExtra × (ValorBase × 1.1719)` — incide sobre passo 2, não sobre valor pós-acomodação
+
+**Early-exits:** `SemTabela` (sem TabelaProcedimento), `SemDeflator` (sem DeflatorPrestador para Anestesista), `Indeterminado` (PorteAnestesico nulo no Procedimento).
+
+`TempoAnestesicoMin` é opcional — quando nulo, passo 6 não aplica. Campo exibido no formulário Angular apenas quando `posicaoExecutor === 'Anestesista'`.
 
 ## Casos especiais não tratados no MVP
 

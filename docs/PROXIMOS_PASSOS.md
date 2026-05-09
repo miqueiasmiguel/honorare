@@ -123,9 +123,9 @@ O coração do MVP.
 
 ### F3.3 — Anestesia ✅
 
-**Entregues (AN-01–AN-03):** `TempoAnestesicoMin int?` em `ItemGuia` com migration `AddTempoAnestesicoMin`; `AnestesiaCalculator` (puro, sem DB) com pipeline de 6 passos (ValorBase → UnimedAN×1,1719 → OrdemProcedimento → Acomodacao → Urgencia → TempoExtra) e tabela `TempoBasePorPorte` por porte 1–8; integração em `UnimedRuleSet.ApurarAnestesistaAsync` — early-exit para `SemTabela`/`SemDeflator`/`Indeterminado` (PorteAnestesico nulo), retorna `Calculado` com trace completo; `ApurarItemInput` atualizado com `TempoAnestesicoMin`; 8 cenários E2E passando em `UnimedAnestesiaPipelineTests`. AN-04 (UI Angular) pendente.
+**Entregues:** `TempoAnestesicoMin int?` em `ItemGuia` com migration `AddTempoAnestesicoMin`; `AnestesiaCalculator` (puro, sem DB) com pipeline de 6 passos (ValorBase → UnimedAN×1,1719 → OrdemProcedimento → Acomodacao → Urgencia → TempoExtra) e tabela `TempoBasePorPorte` por porte 1–8; integração em `UnimedRuleSet.ApurarAnestesistaAsync` — early-exit para `SemTabela`/`SemDeflator`/`Indeterminado` (PorteAnestesico nulo), retorna `Calculado` com trace completo; `ApurarItemInput` atualizado com `TempoAnestesicoMin`; 8 cenários E2E passando em `UnimedAnestesiaPipelineTests`. Campo `tempoAnestesicoMin` no `ItemGuiaFormComponent` Angular com signal, visível apenas quando `posicaoExecutor === 'Anestesista'`, label "Tempo anestésico (min)", populado ao carregar item existente; `guia.types.ts` atualizado com `tempoAnestesicoMin?: number | null`; 5 casos de teste Vitest cobrindo visibilidade condicional, emissão e carga de item existente.
 
-**Pendente:** AN-04 (campo `tempoAnestesicoMin` no formulário Angular); validar percentuais do pipeline contra casos reais (P0.2).
+**Pendente:** validar percentuais do pipeline contra casos reais (P0.2).
 
 ### F3.4 — Demonstrativos e conciliação manual
 

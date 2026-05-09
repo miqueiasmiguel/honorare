@@ -257,6 +257,42 @@ namespace App.Identity.Migrations
                     b.ToTable("calculos", (string)null);
                 });
 
+            modelBuilder.Entity("App.Faturamento.Demonstrativo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Competencia")
+                        .IsRequired()
+                        .HasMaxLength(7)
+                        .HasColumnType("character varying(7)");
+
+                    b.Property<DateTimeOffset>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly>("DataRecebimento")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Observacao")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<Guid>("OperadoraId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OperadoraId");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("demonstrativos", (string)null);
+                });
+
             modelBuilder.Entity("App.Faturamento.Guia", b =>
                 {
                     b.Property<Guid>("Id")
@@ -312,6 +348,57 @@ namespace App.Identity.Migrations
                     b.HasIndex("TenantId");
 
                     b.ToTable("guias", (string)null);
+                });
+
+            modelBuilder.Entity("App.Faturamento.ItemDemonstrativo", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CodigoTuss")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTimeOffset>("CriadoEm")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("DemonstrativoId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Descricao")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<Guid?>("ItemGuiaId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("MotivoGlosa")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Senha")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<decimal>("ValorApresentado")
+                        .HasColumnType("decimal(12,2)");
+
+                    b.Property<decimal>("ValorGlosado")
+                        .HasColumnType("decimal(12,2)");
+
+                    b.Property<decimal>("ValorPago")
+                        .HasColumnType("decimal(12,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DemonstrativoId");
+
+                    b.HasIndex("ItemGuiaId");
+
+                    b.ToTable("itens_demonstrativo", (string)null);
                 });
 
             modelBuilder.Entity("App.Faturamento.ItemGuia", b =>
@@ -687,6 +774,15 @@ namespace App.Identity.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("App.Faturamento.Demonstrativo", b =>
+                {
+                    b.HasOne("App.Catalog.Operadora", null)
+                        .WithMany()
+                        .HasForeignKey("OperadoraId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("App.Faturamento.Guia", b =>
                 {
                     b.HasOne("App.Catalog.Beneficiario", null)
@@ -705,6 +801,20 @@ namespace App.Identity.Migrations
                         .HasForeignKey("PrestadorId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("App.Faturamento.ItemDemonstrativo", b =>
+                {
+                    b.HasOne("App.Faturamento.Demonstrativo", null)
+                        .WithMany()
+                        .HasForeignKey("DemonstrativoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("App.Faturamento.ItemGuia", null)
+                        .WithMany()
+                        .HasForeignKey("ItemGuiaId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("App.Faturamento.ItemGuia", b =>
