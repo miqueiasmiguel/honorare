@@ -236,7 +236,7 @@ Mapear `InvalidOperationException` para HTTP 409 no exception handler global.
 
 ---
 
-## TASK-DM-03 — Conciliação + auto-liquidação
+## TASK-DM-03 — Conciliação + auto-liquidação ✅
 
 **TDD: testes E2E com Postgres → produção.**
 

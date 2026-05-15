@@ -14,6 +14,8 @@ internal sealed record AdicionarItemCommand(
     string Senha, string CodigoTuss, string? Descricao,
     decimal ValorApresentado, decimal ValorPago, string? MotivoGlosa);
 
+internal sealed record ConciliarItemCommand(Guid ItemGuiaId);
+
 internal sealed record ListarDemonstrativosQuery(
     Guid? OperadoraId, string? Competencia, int Pagina, int ItensPorPagina);
 
@@ -202,6 +204,106 @@ internal sealed class DemonstrativoService(AppDbContext db, ICurrentUser current
         await _db.ItensDemonstrativo
             .Where(i => i.Id == itemId)
             .ExecuteDeleteAsync(ct);
+        return Result.Ok();
+    }
+
+    internal async Task<Result> ConciliarItemAsync(
+        Guid demonstrativoId, Guid itemDemId, ConciliarItemCommand cmd, CancellationToken ct = default)
+    {
+        var dem = await _db.Demonstrativos.FirstOrDefaultAsync(d => d.Id == demonstrativoId, ct);
+        if (dem is null)
+        {
+            return Result.Fail(new NotFoundError("Demonstrativo não encontrado."));
+        }
+
+        var itemDem = await _db.ItensDemonstrativo
+            .FirstOrDefaultAsync(i => i.Id == itemDemId && i.DemonstrativoId == demonstrativoId, ct);
+        if (itemDem is null)
+        {
+            return Result.Fail(new NotFoundError("Item do demonstrativo não encontrado."));
+        }
+
+        var itemGuia = await _db.ItensGuia.FirstOrDefaultAsync(i => i.Id == cmd.ItemGuiaId, ct);
+        if (itemGuia is null)
+        {
+            return Result.Fail(new NotFoundError("ItemGuia não encontrado."));
+        }
+
+        var guia = await _db.Guias.FirstOrDefaultAsync(g => g.Id == itemGuia.GuiaId, ct);
+        if (guia is null)
+        {
+            return Result.Fail(new NotFoundError("ItemGuia não encontrado ou pertence a outro tenant."));
+        }
+
+        if (itemDem.ItemGuiaId.HasValue && itemDem.ItemGuiaId != cmd.ItemGuiaId)
+        {
+            var oldItemGuia = await _db.ItensGuia
+                .FirstOrDefaultAsync(i => i.Id == itemDem.ItemGuiaId.Value, ct);
+            if (oldItemGuia != null)
+            {
+                var oldGuia = await _db.Guias.FirstOrDefaultAsync(g => g.Id == oldItemGuia.GuiaId, ct);
+                oldItemGuia.SetValorLiquidado(null);
+                if (oldGuia?.Situacao == SituacaoGuia.Liquidada)
+                {
+                    oldGuia.ReverterParaApresentada();
+                }
+            }
+        }
+
+        itemDem.Conciliar(cmd.ItemGuiaId);
+        itemGuia.SetValorLiquidado(itemDem.ValorPago);
+
+        var todosItens = await _db.ItensGuia
+            .Where(i => i.GuiaId == guia.Id)
+            .ToListAsync(ct);
+        if (todosItens.All(i => i.ValorLiquidado.HasValue))
+        {
+            guia.Liquidar();
+        }
+
+        await _db.SaveChangesAsync(ct);
+        return Result.Ok();
+    }
+
+    internal async Task<Result> DesconciliarItemAsync(
+        Guid demonstrativoId, Guid itemDemId, CancellationToken ct = default)
+    {
+        var dem = await _db.Demonstrativos.FirstOrDefaultAsync(d => d.Id == demonstrativoId, ct);
+        if (dem is null)
+        {
+            return Result.Fail(new NotFoundError("Demonstrativo não encontrado."));
+        }
+
+        var itemDem = await _db.ItensDemonstrativo
+            .FirstOrDefaultAsync(i => i.Id == itemDemId && i.DemonstrativoId == demonstrativoId, ct);
+        if (itemDem is null)
+        {
+            return Result.Fail(new NotFoundError("Item do demonstrativo não encontrado."));
+        }
+
+        if (itemDem.ItemGuiaId is null)
+        {
+            return Result.Ok();
+        }
+
+        var itemGuia = await _db.ItensGuia
+            .FirstOrDefaultAsync(i => i.Id == itemDem.ItemGuiaId.Value, ct);
+
+        Guia? guia = null;
+        if (itemGuia is not null)
+        {
+            guia = await _db.Guias.FirstOrDefaultAsync(g => g.Id == itemGuia.GuiaId, ct);
+            itemGuia.SetValorLiquidado(null);
+        }
+
+        itemDem.Desconciliar();
+
+        if (guia?.Situacao == SituacaoGuia.Liquidada)
+        {
+            guia.ReverterParaApresentada();
+        }
+
+        await _db.SaveChangesAsync(ct);
         return Result.Ok();
     }
 

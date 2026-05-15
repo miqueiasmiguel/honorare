@@ -14,6 +14,9 @@ internal static class DemonstrativoEndpoints
 
         g.MapPost("{id:guid}/itens", AdicionarItemAsync);
         g.MapDelete("{id:guid}/itens/{itemId:guid}", RemoverItemAsync);
+
+        g.MapPost("{id:guid}/itens/{itemId:guid}/conciliar", ConciliarItemAsync);
+        g.MapDelete("{id:guid}/itens/{itemId:guid}/conciliar", DesconciliarItemAsync);
     }
 
     private static async Task<IResult> ListarAsync(
@@ -123,6 +126,34 @@ internal static class DemonstrativoEndpoints
 
         return Results.NoContent();
     }
+
+    private static async Task<IResult> ConciliarItemAsync(
+        Guid id, Guid itemId, ConciliarItemRequest body, DemonstrativoService service, CancellationToken ct)
+    {
+        var result = await service.ConciliarItemAsync(id, itemId, new ConciliarItemCommand(body.ItemGuiaId), ct);
+        if (result.IsFailure)
+        {
+            return Results.Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                detail: result.Error!.Message);
+        }
+
+        return Results.NoContent();
+    }
+
+    private static async Task<IResult> DesconciliarItemAsync(
+        Guid id, Guid itemId, DemonstrativoService service, CancellationToken ct)
+    {
+        var result = await service.DesconciliarItemAsync(id, itemId, ct);
+        if (result.IsFailure)
+        {
+            return Results.Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                detail: result.Error!.Message);
+        }
+
+        return Results.NoContent();
+    }
 }
 
 internal sealed record ListarDemonstrativosRequest(
@@ -150,3 +181,5 @@ internal sealed record AdicionarItemRequest(
     decimal ValorApresentado,
     decimal ValorPago,
     string? MotivoGlosa);
+
+internal sealed record ConciliarItemRequest(Guid ItemGuiaId);
