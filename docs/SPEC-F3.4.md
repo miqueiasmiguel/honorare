@@ -448,7 +448,7 @@ Rota: `/admin/demonstrativos/:id/conciliar`
 | DM-01 ✅ | ✓       | —        | ✓         | DemonstrativoSchemaTests        |
 | DM-02    | ✓       | —        | —         | DemonstrativoCrudTests          |
 | DM-03    | ✓       | —        | —         | ConciliacaoTests                |
-| DM-04    | —       | ✓        | —         | demonstrativo-list/form.spec.ts |
+| DM-04 ✅ | —       | ✓        | —         | demonstrativo-list/form.spec.ts |
 | DM-05    | —       | ✓        | —         | conciliacao.component.spec.ts   |
 
 **Após DM-05:** atualizar `PROXIMOS_PASSOS.md` marcando F3.4 como ✅.
