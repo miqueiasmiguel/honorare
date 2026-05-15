@@ -63,4 +63,16 @@ export class DemonstrativoService {
       .delete(`/api/v1/admin/demonstrativos/${id}/itens/${itemId}`)
       .pipe(map(() => undefined));
   }
+
+  conciliarItem(id: string, itemId: string, itemGuiaId: string): Observable<void> {
+    return this._http
+      .post(`/api/v1/admin/demonstrativos/${id}/itens/${itemId}/conciliar`, { itemGuiaId })
+      .pipe(map(() => undefined));
+  }
+
+  desconciliarItem(id: string, itemId: string): Observable<void> {
+    return this._http
+      .delete(`/api/v1/admin/demonstrativos/${id}/itens/${itemId}/conciliar`)
+      .pipe(map(() => undefined));
+  }
 }

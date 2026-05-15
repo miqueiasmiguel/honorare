@@ -31,6 +31,11 @@ export const demonstrativoRoutes: Routes = [
       ),
   },
   {
+    path: ':id/conciliar',
+    loadComponent: () =>
+      import('./conciliacao/conciliacao.component').then((m) => m.ConciliacaoComponent),
+  },
+  {
     path: ':id',
     loadComponent: () =>
       import('./demonstrativo-form/demonstrativo-form.component').then(
