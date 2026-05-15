@@ -1,0 +1,131 @@
+@use 'styles/tokens' as *;
+
+.demonstrativo-list {
+  padding: space(6);
+}
+
+.demonstrativo-list__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: space(4);
+}
+
+.demonstrativo-list__title {
+  @include text-h2;
+
+  color: var(--color-tinta);
+}
+
+.demonstrativo-list__btn-novo {
+  @include text-label;
+
+  background-color: var(--color-terracota);
+  color: var(--color-pergaminho-claro);
+  border: none;
+  border-radius: 4px;
+  padding: space(2) space(4);
+  cursor: pointer;
+}
+
+.demonstrativo-list__filters {
+  display: flex;
+  gap: space(3);
+  margin-bottom: space(4);
+}
+
+.demonstrativo-list__input--competencia,
+.demonstrativo-list__input--operadora {
+  @include text-body;
+
+  border: 1px solid var(--color-borda-media);
+  border-radius: 4px;
+  padding: space(2) space(3);
+  color: var(--color-tinta);
+  background-color: var(--color-pergaminho-claro);
+}
+
+.demonstrativo-list__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.demonstrativo-list__head-row {
+  background-color: var(--color-pergaminho);
+}
+
+.demonstrativo-list__th {
+  @include text-label;
+
+  color: var(--color-tinta-secundaria);
+  text-align: left;
+  padding: space(2) space(3);
+  border-bottom: 1px solid var(--color-borda-media);
+}
+
+.demonstrativo-list__row {
+  border-bottom: 1px solid var(--color-borda-discreta);
+}
+
+.demonstrativo-list__cell {
+  @include text-body;
+
+  color: var(--color-tinta);
+  padding: space(2) space(3);
+}
+
+.demonstrativo-list__badge {
+  @include text-mono-value;
+
+  background-color: var(--color-ambar-claro);
+  border-radius: 12px;
+  padding: space(1) space(2);
+  color: var(--color-tinta);
+}
+
+.demonstrativo-list__btn-conciliar,
+.demonstrativo-list__btn-editar,
+.demonstrativo-list__btn-excluir {
+  @include text-label;
+
+  border: none;
+  border-radius: 4px;
+  padding: space(1) space(2);
+  cursor: pointer;
+  margin-right: space(1);
+}
+
+.demonstrativo-list__btn-conciliar {
+  background-color: var(--color-verde-musgo);
+  color: var(--color-pergaminho-claro);
+}
+
+.demonstrativo-list__btn-editar {
+  background-color: var(--color-borda-media);
+  color: var(--color-tinta);
+}
+
+.demonstrativo-list__btn-excluir {
+  background-color: var(--color-ferrugem);
+  color: var(--color-pergaminho-claro);
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+.demonstrativo-list__empty {
+  @include text-body;
+
+  color: var(--color-tinta-secundaria);
+  text-align: center;
+  padding: space(6);
+}
+
+.demonstrativo-list__erro {
+  @include text-body;
+
+  color: var(--color-ferrugem);
+  margin-top: space(3);
+}

@@ -25,6 +25,11 @@ export const adminRoutes: Routes = [
         loadChildren: () =>
           import('./faturamento/faturamento.routes').then((m) => m.faturamentoRoutes),
       },
+      {
+        path: 'demonstrativos',
+        loadChildren: () =>
+          import('./faturamento/faturamento.routes').then((m) => m.demonstrativoRoutes),
+      },
       { path: '', redirectTo: 'users', pathMatch: 'full' },
     ],
   },

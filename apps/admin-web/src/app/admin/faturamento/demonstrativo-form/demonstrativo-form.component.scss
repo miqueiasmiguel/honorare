@@ -1,0 +1,152 @@
+@use 'styles/tokens' as *;
+
+.demonstrativo-form {
+  padding: space(6);
+  max-width: 900px;
+}
+
+.demonstrativo-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: space(1);
+  margin-bottom: space(4);
+}
+
+.demonstrativo-form__label {
+  @include text-label;
+
+  color: var(--color-tinta-secundaria);
+}
+
+.demonstrativo-form__select--operadora,
+.demonstrativo-form__input--competencia,
+.demonstrativo-form__input--data-recebimento {
+  @include text-body;
+
+  border: 1px solid var(--color-borda-media);
+  border-radius: 4px;
+  padding: space(2) space(3);
+  color: var(--color-tinta);
+  background-color: var(--color-pergaminho-claro);
+}
+
+.demonstrativo-form__textarea--observacao {
+  @include text-body;
+
+  border: 1px solid var(--color-borda-media);
+  border-radius: 4px;
+  padding: space(2) space(3);
+  color: var(--color-tinta);
+  background-color: var(--color-pergaminho-claro);
+  min-height: 80px;
+  resize: vertical;
+}
+
+.demonstrativo-form__itens {
+  margin-bottom: space(4);
+}
+
+.demonstrativo-form__itens-titulo {
+  @include text-h3;
+
+  color: var(--color-tinta);
+  margin-bottom: space(3);
+}
+
+.demonstrativo-form__item-row {
+  display: flex;
+  align-items: center;
+  gap: space(2);
+  margin-bottom: space(2);
+  padding: space(2);
+  border: 1px solid var(--color-borda-discreta);
+  border-radius: 4px;
+}
+
+.demonstrativo-form__item-senha,
+.demonstrativo-form__item-codigo-tuss,
+.demonstrativo-form__item-descricao,
+.demonstrativo-form__item-valor-apresentado,
+.demonstrativo-form__item-valor-pago,
+.demonstrativo-form__item-motivo-glosa {
+  @include text-body;
+
+  border: 1px solid var(--color-borda-media);
+  border-radius: 4px;
+  padding: space(1) space(2);
+  color: var(--color-tinta);
+  background-color: var(--color-pergaminho-claro);
+  flex: 1;
+}
+
+.demonstrativo-form__valor-glosado {
+  @include text-mono-value;
+
+  color: var(--color-ferrugem);
+  min-width: 60px;
+  text-align: right;
+}
+
+.demonstrativo-form__btn-remover-item {
+  @include text-label;
+
+  background-color: var(--color-ferrugem);
+  color: var(--color-pergaminho-claro);
+  border: none;
+  border-radius: 4px;
+  padding: space(1) space(2);
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+.demonstrativo-form__btn-adicionar-item {
+  @include text-label;
+
+  background-color: var(--color-borda-media);
+  color: var(--color-tinta);
+  border: none;
+  border-radius: 4px;
+  padding: space(2) space(4);
+  cursor: pointer;
+  margin-top: space(2);
+}
+
+.demonstrativo-form__erro-validacao {
+  @include text-body;
+
+  color: var(--color-ferrugem);
+  display: block;
+  margin-bottom: space(3);
+}
+
+.demonstrativo-form__actions {
+  display: flex;
+  gap: space(3);
+}
+
+.demonstrativo-form__btn-cancelar {
+  @include text-label;
+
+  background-color: var(--color-borda-media);
+  color: var(--color-tinta);
+  border: none;
+  border-radius: 4px;
+  padding: space(2) space(4);
+  cursor: pointer;
+}
+
+.demonstrativo-form__btn-salvar {
+  @include text-label;
+
+  background-color: var(--color-terracota);
+  color: var(--color-pergaminho-claro);
+  border: none;
+  border-radius: 4px;
+  padding: space(2) space(4);
+  cursor: pointer;
+}
