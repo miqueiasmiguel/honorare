@@ -46,6 +46,7 @@ builder.Services.AddScoped<UnimedRuleSet>();
 builder.Services.AddScoped<NullRuleSet>();
 builder.Services.AddScoped<PricingRuleSetFactory>();
 builder.Services.AddScoped<GuiaService>();
+builder.Services.AddScoped<DemonstrativoService>();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
@@ -149,6 +150,7 @@ app.UseExceptionHandler(exApp => exApp.Run(async ctx =>
         BadHttpRequestException { InnerException: System.Text.Json.JsonException }
             => (StatusCodes.Status422UnprocessableEntity, "Os dados enviados não puderam ser processados. Verifique o formato dos campos."),
         BadHttpRequestException b => (b.StatusCode, b.Message),
+        InvalidOperationException ioe => (StatusCodes.Status409Conflict, ioe.Message),
         _ => (StatusCodes.Status500InternalServerError, "Erro interno do servidor."),
     };
 
@@ -180,6 +182,7 @@ app.MapSaasEndpoints();
 app.MapAdminEndpoints();
 app.MapCatalogEndpoints();
 app.MapGuiaEndpoints();
+app.MapDemonstrativoEndpoints();
 app.MapControllers();
 
 app.Run();

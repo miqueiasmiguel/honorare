@@ -173,7 +173,7 @@ apps/admin-web/src/app/admin/faturamento/
 
 ---
 
-## TASK-DM-02 — CRUD Demonstrativo
+## TASK-DM-02 — CRUD Demonstrativo ✅
 
 **TDD: testes → service → endpoints → build.**
 
