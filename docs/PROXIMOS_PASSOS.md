@@ -127,7 +127,7 @@ O coração do MVP.
 
 **Pendente:** validar percentuais do pipeline contra casos reais (P0.2).
 
-### F3.4 — Demonstrativos e conciliação manual
+### F3.4 ✅ — Demonstrativos e conciliação manual
 
 Entrada manual de demonstrativo. Conciliação item-a-item com botão "essa linha é esta guia". Registra `ValorLiquidado` (PG UNIMED) por item. Status da guia atualizado. Quando o convênio pagar integralmente, admin baixa a guia — ela sai do relatório de pendências.
 

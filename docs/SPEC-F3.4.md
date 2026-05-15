@@ -400,7 +400,7 @@ Arquivo: `demonstrativo-list.component.spec.ts` e `demonstrativo-form.component.
 
 ---
 
-## TASK-DM-05 — UI Angular: Tela de Conciliação
+## TASK-DM-05 — UI Angular: Tela de Conciliação ✅
 
 **TDD: testes Vitest → componente → build.**
 
@@ -449,6 +449,6 @@ Rota: `/admin/demonstrativos/:id/conciliar`
 | DM-02    | ✓       | —        | —         | DemonstrativoCrudTests          |
 | DM-03    | ✓       | —        | —         | ConciliacaoTests                |
 | DM-04 ✅ | —       | ✓        | —         | demonstrativo-list/form.spec.ts |
-| DM-05    | —       | ✓        | —         | conciliacao.component.spec.ts   |
+| DM-05 ✅ | —       | ✓        | —         | conciliacao.component.spec.ts   |
 
 **Após DM-05:** atualizar `PROXIMOS_PASSOS.md` marcando F3.4 como ✅.
