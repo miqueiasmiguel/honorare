@@ -22,8 +22,6 @@ using OpenTelemetry.Trace;
 
 var builder = WebApplication.CreateBuilder(args);
 
-ConfigurationValidator.Validate(builder.Configuration);
-
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -124,6 +122,8 @@ builder.Logging.AddOpenTelemetry(l =>
 });
 
 var app = builder.Build();
+
+ConfigurationValidator.Validate(app.Configuration);
 
 app.UseForwardedHeaders(new ForwardedHeadersOptions
 {
