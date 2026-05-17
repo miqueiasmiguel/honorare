@@ -1,3 +1,4 @@
+using App.Catalog;
 using App.Data;
 using App.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -25,6 +26,30 @@ internal sealed record RecursoDetalheDto(RecursoDto Header, IReadOnlyList<GuiaNo
 
 internal sealed record ListarRecursosQuery(
     Guid? OperadoraId, Guid? PrestadorId, int Pagina, int ItensPorPagina);
+
+internal sealed record RecursoPdfData(
+    string TenantName,
+    string OperadoraNome,
+    string PrestadorNome,
+    string? PrestadorRegistroProfissional,
+    string Numero,
+    IReadOnlyList<GuiaPdfData> Guias);
+
+internal sealed record GuiaPdfData(
+    DateOnly DataAtendimento,
+    string Senha,
+    string? BeneficiarioNome,
+    string? BeneficiarioCarteira,
+    string PosicaoExecutorLabel,
+    string? Observacao,
+    IReadOnlyList<ItemPdfData> Itens);
+
+internal sealed record ItemPdfData(
+    string CodigoTuss,
+    string Descricao,
+    string FatorEfetivo,
+    decimal ValorPago,
+    decimal ValorApurado);
 
 internal sealed record ListarRecursosResult(
     IReadOnlyList<RecursoDto> Itens, int Total, int Pagina, int ItensPorPagina);
@@ -268,4 +293,134 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser)
         guia.RemoverDoRecurso(todosLiquidados);
         await _db.SaveChangesAsync(ct);
     }
+
+    internal async Task<Result<RecursoPdfData>> ObterDadosPdfAsync(
+        Guid id, CancellationToken ct = default)
+    {
+        var recurso = await _db.Recursos.FirstOrDefaultAsync(r => r.Id == id, ct);
+        if (recurso is null)
+        {
+            return Result<RecursoPdfData>.Fail(new NotFoundError("Recurso não encontrado."));
+        }
+
+        var tenant = await _db.Tenants.FirstOrDefaultAsync(t => t.Id == recurso.TenantId, ct);
+        var operadora = await _db.Operadoras.FirstAsync(o => o.Id == recurso.OperadoraId, ct);
+        var prestador = await _db.Prestadores.FirstAsync(p => p.Id == recurso.PrestadorId, ct);
+
+        var guiasRaw = await (
+            from g in _db.Guias
+            where g.RecursoId == id
+            join b in _db.Beneficiarios on g.BeneficiarioId equals (Guid?)b.Id into bs
+            from b in bs.DefaultIfEmpty()
+            orderby g.DataAtendimento
+            select new
+            {
+                g.Id,
+                g.Senha,
+                g.DataAtendimento,
+                g.Observacao,
+                BeneficiarioNome = (string?)b.Nome,
+                BeneficiarioCarteira = (string?)b.Carteira,
+            }).ToListAsync(ct);
+
+        var guiaIds = guiasRaw.Select(g => g.Id).ToList();
+
+        var itensRaw = await (
+            from i in _db.ItensGuia
+            where guiaIds.Contains(i.GuiaId)
+            join p in _db.Procedimentos on i.ProcedimentoId equals p.Id
+            orderby i.OrdemProcedimento
+            select new
+            {
+                i.Id,
+                i.GuiaId,
+                p.CodigoTuss,
+                p.Descricao,
+                i.PosicaoExecutor,
+                i.ValorLiquidado,
+                i.ValorApurado,
+            }).ToListAsync(ct);
+
+        var calculosRaw = await _db.Calculos
+            .Where(c => guiaIds.Contains(c.GuiaId))
+            .Select(c => new { c.Id, c.GuiaId })
+            .ToListAsync(ct);
+
+        var calculoIds = calculosRaw.Select(c => c.Id).ToList();
+
+        var passosRaw = await _db.PassosCalculo
+            .Where(p => calculoIds.Contains(p.CalculoId))
+            .Select(p => new { p.ItemGuiaId, p.Regra, p.Fator })
+            .ToListAsync(ct);
+
+        var itensPorGuia = itensRaw
+            .GroupBy(i => i.GuiaId)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        var passosPorItem = passosRaw
+            .GroupBy(p => p.ItemGuiaId)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        var guiaDtos = guiasRaw.Select(g =>
+        {
+            var guiaItens = itensPorGuia.GetValueOrDefault(g.Id, []);
+            var primeiraPos = guiaItens.Count > 0
+                ? guiaItens[0].PosicaoExecutor
+                : PosicaoExecutor.Cirurgiao;
+
+            var itemDtos = guiaItens.Select(i =>
+            {
+                var itemPassos = passosPorItem.GetValueOrDefault(i.Id, []);
+                var fatoresNaoBase = itemPassos
+                    .Where(p => p.Regra != "ValorBase")
+                    .Select(p => p.Fator);
+                return new ItemPdfData(
+                    i.CodigoTuss,
+                    i.Descricao,
+                    CalcularFatorEfetivo(fatoresNaoBase),
+                    i.ValorLiquidado ?? 0m,
+                    i.ValorApurado ?? 0m);
+            }).ToList();
+
+            return new GuiaPdfData(
+                g.DataAtendimento,
+                g.Senha,
+                g.BeneficiarioNome,
+                g.BeneficiarioCarteira,
+                PosicaoLabel(primeiraPos),
+                string.IsNullOrEmpty(g.Observacao) ? null : g.Observacao,
+                itemDtos);
+        }).ToList();
+
+        return Result<RecursoPdfData>.Ok(new RecursoPdfData(
+            tenant?.Name ?? string.Empty,
+            operadora.Nome,
+            prestador.Nome,
+            prestador.RegistroProfissional,
+            recurso.Numero,
+            guiaDtos));
+    }
+
+    private static string CalcularFatorEfetivo(IEnumerable<decimal> fatores)
+    {
+        var lista = fatores.ToList();
+        if (lista.Count == 0)
+        {
+            return "—";
+        }
+
+        var produto = lista.Aggregate(1m, (acc, f) => acc * f);
+        return $"{(produto * 100).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)}%";
+    }
+
+    private static string PosicaoLabel(PosicaoExecutor p) => p switch
+    {
+        PosicaoExecutor.Cirurgiao => "Cirurgião",
+        PosicaoExecutor.PrimeiroAuxiliar => "1º Auxiliar",
+        PosicaoExecutor.SegundoAuxiliar => "2º Auxiliar",
+        PosicaoExecutor.TerceiroAuxiliar => "3º Auxiliar",
+        PosicaoExecutor.Anestesista => "Anestesista",
+        PosicaoExecutor.ClinicoAssistente => "Clínico Assistente",
+        _ => p.ToString(),
+    };
 }

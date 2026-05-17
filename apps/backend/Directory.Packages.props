@@ -19,6 +19,11 @@
     <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.17.0" />
   </ItemGroup>
 
+  <!-- PDF -->
+  <ItemGroup>
+    <PackageVersion Include="QuestPDF" Version="2025.12.4" />
+  </ItemGroup>
+
   <!-- OpenAPI -->
   <ItemGroup>
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="10.1.7" />

@@ -1,3 +1,5 @@
+using App.Faturamento.Pdf;
+
 namespace App.Faturamento.Endpoints;
 
 internal static class RecursoEndpoints
@@ -13,6 +15,7 @@ internal static class RecursoEndpoints
         g.MapDelete("{id:guid}", ExcluirRecursoAsync);
         g.MapPost("{id:guid}/guias/{guiaId:guid}", AdicionarGuiaAsync);
         g.MapDelete("{id:guid}/guias/{guiaId:guid}", RemoverGuiaAsync);
+        g.MapGet("{id:guid}/pdf", GerarPdfAsync);
     }
 
     private static async Task<IResult> ListarRecursosAsync(
@@ -86,6 +89,21 @@ internal static class RecursoEndpoints
     {
         await service.RemoverGuiaAsync(id, guiaId, ct);
         return Results.NoContent();
+    }
+
+    private static async Task<IResult> GerarPdfAsync(
+        Guid id, RecursoService service, CancellationToken ct)
+    {
+        var dados = await service.ObterDadosPdfAsync(id, ct);
+        if (dados.IsFailure)
+        {
+            return Results.NotFound();
+        }
+
+        var doc = new RecursoPdfDocument(dados.Value!);
+        var bytes = doc.GeneratePdf();
+        var nome = $"RECURSO_{dados.Value!.Numero}_{dados.Value.OperadoraNome}.pdf";
+        return Results.File(bytes, "application/pdf", nome);
     }
 }
 

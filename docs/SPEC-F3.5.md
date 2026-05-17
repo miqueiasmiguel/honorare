@@ -276,7 +276,7 @@ Guards:
 
 ---
 
-## TASK-RE-03 — Geração de PDF (QuestPDF)
+## TASK-RE-03 ✅ — Geração de PDF (QuestPDF)
 
 **TDD: testes de dados → documento → endpoint → build.**
 
@@ -518,7 +518,7 @@ Rota: `/admin/recursos/:id/guias`
 | -------- | ------- | -------- | --------- | ------------------------------- |
 | RE-01 ✅ | ✓       | —        | ✓         | RecursoSchemaTests              |
 | RE-02 ✅ | ✓       | —        | —         | RecursoCrudTests                |
-| RE-03    | ✓ (PDF) | —        | —         | RecursoPdfDataTests             |
+| RE-03 ✅ | ✓ (PDF) | —        | —         | RecursoPdfDataTests             |
 | RE-04    | —       | ✓        | —         | recurso-list/form.spec.ts       |
 | RE-05    | —       | ✓        | —         | recurso-guias.component.spec.ts |
 
