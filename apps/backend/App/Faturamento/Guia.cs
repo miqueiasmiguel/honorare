@@ -14,6 +14,7 @@ internal sealed class Guia : ITenantEntity
     public SituacaoGuia Situacao { get; private set; }
     public bool EhPacote { get; private set; }
     public string Observacao { get; private set; } = string.Empty;
+    public Guid? RecursoId { get; private set; }
     public DateTimeOffset CriadoEm { get; private set; }
     public DateTimeOffset AtualizadoEm { get; private set; }
 
@@ -50,6 +51,18 @@ internal sealed class Guia : ITenantEntity
     internal void Liquidar() => Situacao = SituacaoGuia.Liquidada;
 
     internal void ReverterParaApresentada() => Situacao = SituacaoGuia.Apresentada;
+
+    internal void MarcarEmRecurso(Guid recursoId)
+    {
+        RecursoId = recursoId;
+        Situacao = SituacaoGuia.EmRecurso;
+    }
+
+    internal void RemoverDoRecurso(bool todosItensLiquidados)
+    {
+        RecursoId = null;
+        Situacao = todosItensLiquidados ? SituacaoGuia.Liquidada : SituacaoGuia.Apresentada;
+    }
 
     internal void Atualizar(
         Guid operadoraId,

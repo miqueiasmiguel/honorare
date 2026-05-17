@@ -30,5 +30,7 @@ internal sealed class GuiaConfiguration : IEntityTypeConfiguration<Guia>
             .HasForeignKey(g => g.OperadoraId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne<Beneficiario>().WithMany()
             .HasForeignKey(g => g.BeneficiarioId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<Recurso>().WithMany()
+            .HasForeignKey(g => g.RecursoId).OnDelete(DeleteBehavior.Restrict);
     }
 }
