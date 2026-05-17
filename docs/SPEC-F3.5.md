@@ -519,7 +519,7 @@ Rota: `/admin/recursos/:id/guias`
 | RE-01 ✅ | ✓       | —        | ✓         | RecursoSchemaTests              |
 | RE-02 ✅ | ✓       | —        | —         | RecursoCrudTests                |
 | RE-03 ✅ | ✓ (PDF) | —        | —         | RecursoPdfDataTests             |
-| RE-04    | —       | ✓        | —         | recurso-list/form.spec.ts       |
+| RE-04 ✅ | —       | ✓        | —         | recurso-list/form.spec.ts       |
 | RE-05    | —       | ✓        | —         | recurso-guias.component.spec.ts |
 
 **Após RE-05:** atualizar `PROXIMOS_PASSOS.md` marcando F3.5 como ✅.
