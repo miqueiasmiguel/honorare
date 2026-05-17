@@ -215,7 +215,7 @@ internal void RemoverDoRecurso(bool todosItensLiquidados)
 
 ---
 
-## TASK-RE-02 — CRUD Recurso (service + endpoints)
+## TASK-RE-02 ✅ — CRUD Recurso (service + endpoints)
 
 **TDD: testes → service → endpoints → build.**
 
@@ -517,7 +517,7 @@ Rota: `/admin/recursos/:id/guias`
 | Task     | Backend | Frontend | Migration | Testes                          |
 | -------- | ------- | -------- | --------- | ------------------------------- |
 | RE-01 ✅ | ✓       | —        | ✓         | RecursoSchemaTests              |
-| RE-02    | ✓       | —        | —         | RecursoCrudTests                |
+| RE-02 ✅ | ✓       | —        | —         | RecursoCrudTests                |
 | RE-03    | ✓ (PDF) | —        | —         | RecursoPdfDataTests             |
 | RE-04    | —       | ✓        | —         | recurso-list/form.spec.ts       |
 | RE-05    | —       | ✓        | —         | recurso-guias.component.spec.ts |
