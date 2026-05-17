@@ -114,4 +114,27 @@ describe('RecursoService', () => {
 
     expect(called).toBe(true);
   });
+
+  it('adicionarGuia_chamaPOST', () => {
+    let called = false;
+    service.adicionarGuia('rec-1', 'guia-1').subscribe(() => (called = true));
+
+    const req = httpMock.expectOne('/api/v1/admin/recursos/rec-1/guias');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ guiaId: 'guia-1' });
+    req.flush(null, { status: 204, statusText: 'No Content' });
+
+    expect(called).toBe(true);
+  });
+
+  it('removerGuia_chamaDELETE', () => {
+    let called = false;
+    service.removerGuia('rec-1', 'guia-1').subscribe(() => (called = true));
+
+    const req = httpMock.expectOne('/api/v1/admin/recursos/rec-1/guias/guia-1');
+    expect(req.request.method).toBe('DELETE');
+    req.flush(null, { status: 204, statusText: 'No Content' });
+
+    expect(called).toBe(true);
+  });
 });

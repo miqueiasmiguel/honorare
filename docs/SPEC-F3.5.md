@@ -468,7 +468,7 @@ export interface RecursoDetalheDto {
 
 ---
 
-## TASK-RE-05 — UI Angular: Seleção de guias + download PDF
+## TASK-RE-05 ✅ — UI Angular: Seleção de guias + download PDF
 
 **TDD: testes Vitest → componente → build.**
 
@@ -520,6 +520,6 @@ Rota: `/admin/recursos/:id/guias`
 | RE-02 ✅ | ✓       | —        | —         | RecursoCrudTests                |
 | RE-03 ✅ | ✓ (PDF) | —        | —         | RecursoPdfDataTests             |
 | RE-04 ✅ | —       | ✓        | —         | recurso-list/form.spec.ts       |
-| RE-05    | —       | ✓        | —         | recurso-guias.component.spec.ts |
+| RE-05 ✅ | —       | ✓        | —         | recurso-guias.component.spec.ts |
 
 **Após RE-05:** atualizar `PROXIMOS_PASSOS.md` marcando F3.5 como ✅.

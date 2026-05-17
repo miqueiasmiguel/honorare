@@ -44,7 +44,31 @@ export class RecursoService {
     return this._http.delete(`/api/v1/admin/recursos/${id}`).pipe(map(() => undefined));
   }
 
+  adicionarGuia(recursoId: string, guiaId: string): Observable<void> {
+    return this._http
+      .post(`/api/v1/admin/recursos/${recursoId}/guias`, { guiaId })
+      .pipe(map(() => undefined));
+  }
+
+  removerGuia(recursoId: string, guiaId: string): Observable<void> {
+    return this._http
+      .delete(`/api/v1/admin/recursos/${recursoId}/guias/${guiaId}`)
+      .pipe(map(() => undefined));
+  }
+
   baixarPdf(id: string): void {
-    window.open(`/api/v1/admin/recursos/${id}/pdf`, '_blank');
+    this._http.get(`/api/v1/admin/recursos/${id}/pdf`, { responseType: 'blob' }).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `RECURSO_${id}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      },
+      error: () => undefined,
+    });
   }
 }

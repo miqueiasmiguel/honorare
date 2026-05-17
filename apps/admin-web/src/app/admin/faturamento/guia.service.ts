@@ -31,6 +31,9 @@ export class GuiaService {
     if (params.situacao) {
       httpParams = httpParams.set('situacao', params.situacao);
     }
+    if (params.senha) {
+      httpParams = httpParams.set('senha', params.senha);
+    }
 
     return this._http.get<ListarGuiasResult>('/api/v1/admin/guias', { params: httpParams });
   }

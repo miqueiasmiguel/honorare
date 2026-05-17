@@ -12,6 +12,11 @@ export const recursoRoutes: Routes = [
       import('./recurso-form/recurso-form.component').then((m) => m.RecursoFormComponent),
   },
   {
+    path: ':id/guias',
+    loadComponent: () =>
+      import('./recurso-guias/recurso-guias.component').then((m) => m.RecursoGuiasComponent),
+  },
+  {
     path: ':id',
     loadComponent: () =>
       import('./recurso-form/recurso-form.component').then((m) => m.RecursoFormComponent),

@@ -59,6 +59,7 @@ export interface ListarGuiasParams {
   dataInicio?: string;
   dataFim?: string;
   situacao?: SituacaoGuia;
+  senha?: string;
   pagina: number;
   itensPorPagina: number;
 }
