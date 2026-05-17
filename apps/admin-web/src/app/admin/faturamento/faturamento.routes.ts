@@ -1,5 +1,23 @@
 import { Routes } from '@angular/router';
 
+export const recursoRoutes: Routes = [
+  {
+    path: '',
+    loadComponent: () =>
+      import('./recurso-list/recurso-list.component').then((m) => m.RecursoListComponent),
+  },
+  {
+    path: 'novo',
+    loadComponent: () =>
+      import('./recurso-form/recurso-form.component').then((m) => m.RecursoFormComponent),
+  },
+  {
+    path: ':id',
+    loadComponent: () =>
+      import('./recurso-form/recurso-form.component').then((m) => m.RecursoFormComponent),
+  },
+];
+
 export const faturamentoRoutes: Routes = [
   {
     path: '',

@@ -1,0 +1,78 @@
+@use 'styles/tokens' as *;
+
+.recurso-list {
+  padding: space(6);
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: space(4);
+  }
+
+  &__title {
+    @include text-h2;
+
+    color: var(--color-tinta);
+  }
+
+  &__filters {
+    display: flex;
+    gap: space(3);
+    margin-bottom: space(4);
+  }
+
+  &__table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  &__head-row {
+    border-bottom: 2px solid var(--color-borda-media);
+  }
+
+  &__th {
+    @include text-label;
+
+    padding: space(2) space(3);
+    text-align: left;
+    color: var(--color-tinta-secundaria);
+  }
+
+  &__row {
+    border-bottom: 1px solid var(--color-borda-discreta);
+  }
+
+  &__cell {
+    @include text-body;
+
+    padding: space(2) space(3);
+    color: var(--color-tinta);
+  }
+
+  &__badge {
+    @include text-label;
+
+    display: inline-block;
+    padding: space(1) space(2);
+    background-color: var(--color-pergaminho-claro);
+    border: 1px solid var(--color-borda-discreta);
+    border-radius: 4px;
+    color: var(--color-tinta);
+  }
+
+  &__empty {
+    @include text-body;
+
+    padding: space(4) space(3);
+    color: var(--color-tinta-secundaria);
+    text-align: center;
+  }
+
+  &__erro {
+    @include text-body;
+
+    color: var(--color-ferrugem);
+    margin-top: space(3);
+  }
+}
