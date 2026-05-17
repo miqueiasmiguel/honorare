@@ -195,6 +195,7 @@ Status code mapping:
 | ----------------------------------------------------------- | ----------------------------- | ---------------------------------------------------------------- |
 | `BadHttpRequestException { InnerException: JsonException }` | **422** Unprocessable Entity  | JSON syntactically valid but field values are semantically wrong |
 | Other `BadHttpRequestException`                             | **400** Bad Request           | Genuinely malformed HTTP request                                 |
+| `InvalidOperationException`                                 | **409** Conflict              | Business rule violation (e.g., delete entity with active links)  |
 | Anything else                                               | **500** Internal Server Error | Server-side fault                                                |
 
 ### Rules
