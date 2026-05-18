@@ -133,28 +133,7 @@ O coração do MVP.
 
 ### F3.5 ✅ — Geração de recurso (PDF)
 
-Feature central do produto. O admin cria um `Recurso` (recebe número automático no formato `AAAAMM`), seleciona as guias em divergência e gera o PDF. As guias incluídas têm situação atualizada para `EmRecurso` com referência ao número.
-
-Estrutura do PDF:
-
-- Cabeçalho: logo + nome da billing company (por tenant)
-- Título: `[Nome do médico] - CRM [número] - RECURSO [OPERADORA] [AAAAMM]`
-- Por guia: data, senha, carteira do beneficiário, nome do paciente, papel do executor (ex: CIRURGIÃO)
-- Por item da guia: código TUSS + descrição + % aplicado, **PAGO**, **CORRETO**
-- Subtotais por guia; **RESTA PAGAR** em destaque (= `sum(CORRETO) − sum(PAGO)`)
-- Observação em vermelho (campo `Observacao` da guia)
-
-Labels das colunas: usar **PAGO** e **CORRETO** como padrão (não "PG UNIMED"/"VL CORRETO" — labels variam entre documentos do cliente; a forma curta é mais limpa e não amarra na operadora).
-
-Semântica dos valores:
-
-- **VL CORRETO** por item = `ValorApurado` (o que o motor diz que deveria ser pago; para pacotes, valor informado manualmente)
-- **PG UNIMED** por item = `ValorLiquidado` (o que o demonstrativo registrou)
-- **RESTA PAGAR** por guia = `sum(ValorApurado) − sum(ValorLiquidado)`
-
-O PDF é o documento que o admin envia à operadora para contestar. Sem esta feature o sistema não substitui a planilha atual.
-
-**Critério de pronto:** PDF gerado é indistinguível (em informação) do documento que o cliente monta hoje manualmente.
+**Entregues:** Entidade `Recurso` (ITenantEntity, FKs `OperadoraId` e `PrestadorId` Restrict) com número automático `Numero = DataEmissao.ToString("yyyyMM")` (informativo, não único), configuração EF Core e migration `AddRecurso`. `Guia` recebeu `RecursoId Guid?` e métodos `MarcarEmRecurso(Guid)` / `RemoverDoRecurso(bool)` — reversão automática para `Liquidada` ou `Apresentada` conforme presença de `ValorLiquidado`. `RecursoService` com CRUD completo (`CriarAsync`, `ListarAsync`, `ObterPorIdAsync`, `AtualizarAsync`, `ExcluirAsync`), `AdicionarGuiaAsync` (409 se guia já está em outro recurso), `RemoverGuiaAsync` e `ObterDadosPdfAsync` (JOIN completo Recurso → Operadora, Prestador, Tenant, Guias → Beneficiário, ItemGuia → Procedimento, Cálculo/PassoCalculo). `RecursoPdfDocument` (QuestPDF Community, `IDocument`) gerando PDF estruturado: cabeçalho com logo e nome do tenant; título `[Prestador] - CRM [registro] - RECURSO [Operadora] [AAAAMM]`; por guia — linha de resumo (data, senha, carteira, paciente, executor), tabela de itens com colunas Cód. TUSS / Descrição / % / PAGO / CORRETO, subtotais **RESTA PAGAR** em negrito, observação em vermelho (`#CC0000`); totais finais ao final do documento. Fator efetivo por item = produto dos `PassoCalculo.Fator` excluindo `ValorBase` (exibe "—" para pacotes ou sem passos). Endpoints REST em `/api/v1/admin/recursos` (`POST`, `GET` lista paginada, `GET /{id}` com guias, `PUT /{id}`, `DELETE /{id}` com guard 409, `POST /{id}/guias`, `DELETE /{id}/guias/{guiaId}`, `GET /{id}/pdf` retorna `application/pdf`). Suites xUnit (`RecursoSchemaTests`, `RecursoCrudTests`, `RecursoPdfDataTests`) cobrindo 20 casos. Telas Angular: `RecursoListComponent` (tabela paginada, filtros por operadora e prestador com debounce 400 ms, badge de guias, botão "Gerenciar guias", botão "PDF", botão excluir), `RecursoFormComponent` (criar/editar, número calculado no template), `RecursoGuiasComponent` (guias vinculadas com remoção, busca inline por senha filtrada por `Apresentada/Liquidada`, adição via POST, download de PDF via blob URL); sidebar atualizado com "Recursos" em "Faturamento".
 
 ## Fase 4 — Visualização (2-3 semanas)
 
