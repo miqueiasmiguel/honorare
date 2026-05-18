@@ -13,7 +13,7 @@
 
   <!-- Auth -->
   <ItemGroup>
-    <PackageVersion Include="Microsoft.AspNetCore.Authentication.Google" Version="10.0.7" />
+    <PackageVersion Include="Microsoft.AspNetCore.Authentication.Google" Version="10.0.8" />
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.7" />
     <PackageVersion Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.7" />
     <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.17.0" />
