@@ -107,7 +107,7 @@ Valida `currentUser.MedicoId ?? Results.Forbid()` no início de cada handler.
 
 ---
 
-## TASK-M-02 — medico-pwa: shell + GuiaListComponent
+## TASK-M-02 — medico-pwa: shell + GuiaListComponent [x] concluída
 
 **TDD: testes Vitest → componente → build.**
 
