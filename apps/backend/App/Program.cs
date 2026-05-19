@@ -185,6 +185,7 @@ app.MapCatalogEndpoints();
 app.MapGuiaEndpoints();
 app.MapDemonstrativoEndpoints();
 app.MapRecursoEndpoints();
+app.MapMedicoEndpoints();
 app.MapControllers();
 
 app.Run();
