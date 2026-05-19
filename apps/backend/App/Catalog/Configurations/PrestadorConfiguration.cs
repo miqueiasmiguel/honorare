@@ -14,6 +14,7 @@ internal sealed class PrestadorConfiguration : IEntityTypeConfiguration<Prestado
         builder.Property(p => p.RegistroProfissional).HasMaxLength(20);
         builder.Property(p => p.Ativo).IsRequired();
         builder.Property(p => p.CriadoEm).IsRequired();
+        builder.Property(p => p.EmailAcesso).HasMaxLength(256);
 
         builder.HasIndex(p => new { p.TenantId, p.Ativo });
     }

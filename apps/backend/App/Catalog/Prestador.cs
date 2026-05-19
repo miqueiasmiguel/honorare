@@ -10,6 +10,7 @@ internal sealed class Prestador : ITenantEntity
     public string? RegistroProfissional { get; private set; }
     public bool Ativo { get; private set; }
     public DateTimeOffset CriadoEm { get; private set; }
+    public string? EmailAcesso { get; private set; }
 
     private Prestador() { }
 
@@ -31,5 +32,18 @@ internal sealed class Prestador : ITenantEntity
         Nome = nome;
         RegistroProfissional = registroProfissional;
         Ativo = ativo;
+    }
+
+    internal Result SetEmailAcesso(string email)
+    {
+        if (EmailAcesso is not null)
+        {
+            return Result.Fail(new ConflictError("E-mail de acesso já definido para este prestador."));
+        }
+
+#pragma warning disable CA1308 // e-mail deve ser armazenado em minúsculas por convenção
+        EmailAcesso = email.Trim().ToLowerInvariant();
+#pragma warning restore CA1308
+        return Result.Ok();
     }
 }

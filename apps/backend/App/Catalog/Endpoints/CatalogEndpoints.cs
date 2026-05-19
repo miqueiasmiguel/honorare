@@ -337,24 +337,27 @@ internal static class CatalogEndpoints
     }
 
     private static async Task<IResult> CriarPrestadorAsync(
-        SalvarPrestadorRequest body, CatalogService service, CancellationToken ct)
+        CriarPrestadorRequest body, CatalogService service, CancellationToken ct)
     {
-        var cmd = new SalvarPrestadorCommand(body.Nome, body.RegistroProfissional, body.Ativo);
+        var cmd = new CriarPrestadorCommand(body.Nome, body.RegistroProfissional, body.EmailAcesso);
         var result = await service.CriarPrestadorAsync(cmd, ct);
         if (result.IsFailure)
         {
-            return Results.Problem(
-                statusCode: StatusCodes.Status400BadRequest,
-                detail: result.Error!.Message);
+            var statusCode = result.Error switch
+            {
+                ConflictError => StatusCodes.Status409Conflict,
+                _ => StatusCodes.Status400BadRequest,
+            };
+            return Results.Problem(statusCode: statusCode, detail: result.Error!.Message);
         }
 
         return Results.Created($"/api/v1/admin/prestadores/{result.Value!.Id}", result.Value);
     }
 
     private static async Task<IResult> AtualizarPrestadorAsync(
-        Guid id, SalvarPrestadorRequest body, CatalogService service, CancellationToken ct)
+        Guid id, AtualizarPrestadorRequest body, CatalogService service, CancellationToken ct)
     {
-        var cmd = new SalvarPrestadorCommand(body.Nome, body.RegistroProfissional, body.Ativo);
+        var cmd = new AtualizarPrestadorCommand(body.Nome, body.RegistroProfissional, body.Ativo);
         var result = await service.AtualizarPrestadorAsync(id, cmd, ct);
         if (result.IsFailure)
         {
@@ -606,7 +609,12 @@ internal sealed record ListarPrestadoresRequest(
     int Pagina = 1,
     int ItensPorPagina = 20);
 
-internal sealed record SalvarPrestadorRequest(
+internal sealed record CriarPrestadorRequest(
+    string Nome,
+    string? RegistroProfissional,
+    string? EmailAcesso);
+
+internal sealed record AtualizarPrestadorRequest(
     string Nome,
     string? RegistroProfissional,
     bool Ativo);

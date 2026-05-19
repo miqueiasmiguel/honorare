@@ -21,7 +21,7 @@ public sealed class DeflatorServiceTests(PostgresContainerFixture db)
 
     private static async Task<PrestadorDto> CriarPrestadorAsync(CatalogService service, string nome = "Dr. Teste")
     {
-        var result = await service.CriarPrestadorAsync(new SalvarPrestadorCommand(nome, null, true));
+        var result = await service.CriarPrestadorAsync(new CriarPrestadorCommand(nome, null, null));
         return result.Value!;
     }
 

@@ -22,9 +22,13 @@ internal sealed record ListarPrestadoresResult(
     IReadOnlyList<PrestadorDto> Itens, int Total, int Pagina, int ItensPorPagina);
 
 internal sealed record PrestadorDto(
-    Guid Id, string Nome, string? RegistroProfissional, bool Ativo, DateTimeOffset CriadoEm);
+    Guid Id, string Nome, string? RegistroProfissional,
+    bool Ativo, DateTimeOffset CriadoEm,
+    string? EmailAcesso, bool TemUsuario);
 
-internal sealed record SalvarPrestadorCommand(string Nome, string? RegistroProfissional, bool Ativo);
+internal sealed record CriarPrestadorCommand(string Nome, string? RegistroProfissional, string? EmailAcesso);
+
+internal sealed record AtualizarPrestadorCommand(string Nome, string? RegistroProfissional, bool Ativo);
 
 internal sealed record DeflatorDto(
     Guid Id, Guid PrestadorId, Guid OperadoraId, PosicaoExecutor Posicao, decimal Percentual);
@@ -756,10 +760,20 @@ internal sealed class CatalogService(AppDbContext db, ICurrentUser currentUser)
             .OrderBy(p => p.Nome)
             .Skip(skip)
             .Take(itensPorPagina)
-            .Select(p => new PrestadorDto(p.Id, p.Nome, p.RegistroProfissional, p.Ativo, p.CriadoEm))
             .ToListAsync(ct);
 
-        return new ListarPrestadoresResult(itens, total, query.Pagina, query.ItensPorPagina);
+        var idsList = itens.Select(p => p.Id).ToList();
+        var comUsuario = (await _db.Users
+            .Where(u => u.MedicoId.HasValue && idsList.Contains(u.MedicoId!.Value))
+            .Select(u => u.MedicoId!.Value)
+            .ToListAsync(ct))
+            .ToHashSet();
+
+        var dtos = itens
+            .Select(p => ToDto(p, comUsuario.Contains(p.Id)))
+            .ToList();
+
+        return new ListarPrestadoresResult(dtos, total, query.Pagina, query.ItensPorPagina);
     }
 
     internal async Task<Result<PrestadorDto>> ObterPrestadorPorIdAsync(
@@ -771,29 +785,54 @@ internal sealed class CatalogService(AppDbContext db, ICurrentUser currentUser)
             return Result<PrestadorDto>.Fail(new NotFoundError("Prestador não encontrado."));
         }
 
-        return Result<PrestadorDto>.Ok(ToDto(prestador));
+        var temUsuario = await _db.Users.AnyAsync(u => u.MedicoId == id, ct);
+        return Result<PrestadorDto>.Ok(ToDto(prestador, temUsuario));
     }
 
     internal async Task<Result<PrestadorDto>> CriarPrestadorAsync(
-        SalvarPrestadorCommand cmd, CancellationToken ct = default)
+        CriarPrestadorCommand cmd, CancellationToken ct = default)
     {
-        var erro = ValidarComandoPrestador(cmd);
+        var erro = ValidarComandoPrestador(cmd.Nome);
         if (erro is not null)
         {
             return Result<PrestadorDto>.Fail(erro);
         }
 
+        if (cmd.EmailAcesso is not null)
+        {
+#pragma warning disable CA1308 // e-mail deve ser normalizado em minúsculas por convenção
+            var email = cmd.EmailAcesso.Trim().ToLowerInvariant();
+#pragma warning restore CA1308
+            if (!ApplicationUser.IsValidEmail(email))
+            {
+                return Result<PrestadorDto>.Fail(new ValidationError("E-mail de acesso inválido."));
+            }
+
+            if (await _db.Users.AnyAsync(u => u.Email == email, ct))
+            {
+                return Result<PrestadorDto>.Fail(new ConflictError("E-mail já está em uso."));
+            }
+        }
+
         var tenantId = _currentUser.TenantId!.Value;
         var prestador = Prestador.Create(tenantId, cmd.Nome.Trim(), cmd.RegistroProfissional);
         _db.Prestadores.Add(prestador);
+
+        if (cmd.EmailAcesso is not null)
+        {
+            prestador.SetEmailAcesso(cmd.EmailAcesso);
+            var user = ApplicationUser.Create(prestador.EmailAcesso!, tenantId, prestador.Id);
+            _db.Users.Add(user);
+        }
+
         await _db.SaveChangesAsync(ct);
-        return Result<PrestadorDto>.Ok(ToDto(prestador));
+        return Result<PrestadorDto>.Ok(ToDto(prestador, cmd.EmailAcesso is not null));
     }
 
     internal async Task<Result<PrestadorDto>> AtualizarPrestadorAsync(
-        Guid id, SalvarPrestadorCommand cmd, CancellationToken ct = default)
+        Guid id, AtualizarPrestadorCommand cmd, CancellationToken ct = default)
     {
-        var erro = ValidarComandoPrestador(cmd);
+        var erro = ValidarComandoPrestador(cmd.Nome);
         if (erro is not null)
         {
             return Result<PrestadorDto>.Fail(erro);
@@ -806,8 +845,22 @@ internal sealed class CatalogService(AppDbContext db, ICurrentUser currentUser)
         }
 
         prestador.Atualizar(cmd.Nome.Trim(), cmd.RegistroProfissional, cmd.Ativo);
+
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.MedicoId == id, ct);
+        if (user is not null)
+        {
+            if (cmd.Ativo)
+            {
+                user.Activate();
+            }
+            else
+            {
+                user.Deactivate();
+            }
+        }
+
         await _db.SaveChangesAsync(ct);
-        return Result<PrestadorDto>.Ok(ToDto(prestador));
+        return Result<PrestadorDto>.Ok(ToDto(prestador, user is not null));
     }
 
     internal async Task<Result> ExcluirPrestadorAsync(Guid id, CancellationToken ct = default)
@@ -823,22 +876,34 @@ internal sealed class CatalogService(AppDbContext db, ICurrentUser currentUser)
             return Result.Fail(new ConflictError("Prestador possui guias associadas."));
         }
 
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.MedicoId == id, ct);
+        if (user?.GoogleId is not null)
+        {
+            return Result.Fail(new ConflictError(
+                "Prestador possui usuário que já acessou o sistema. Desative-o em vez de excluir."));
+        }
+
+        if (user is not null)
+        {
+            _db.Users.Remove(user);
+        }
+
         _db.Prestadores.Remove(prestador);
         await _db.SaveChangesAsync(ct);
         return Result.Ok();
     }
 
-    private static PrestadorDto ToDto(Prestador p) =>
-        new(p.Id, p.Nome, p.RegistroProfissional, p.Ativo, p.CriadoEm);
+    private static PrestadorDto ToDto(Prestador p, bool temUsuario) =>
+        new(p.Id, p.Nome, p.RegistroProfissional, p.Ativo, p.CriadoEm, p.EmailAcesso, temUsuario);
 
-    private static ValidationError? ValidarComandoPrestador(SalvarPrestadorCommand cmd)
+    private static ValidationError? ValidarComandoPrestador(string nome)
     {
-        if (string.IsNullOrWhiteSpace(cmd.Nome))
+        if (string.IsNullOrWhiteSpace(nome))
         {
             return new ValidationError("Nome é obrigatório.");
         }
 
-        if (cmd.Nome.Trim().Length > 150)
+        if (nome.Trim().Length > 150)
         {
             return new ValidationError("Nome deve ter no máximo 150 caracteres.");
         }
