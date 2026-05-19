@@ -21,9 +21,24 @@ pnpm -F medico-pwa dev              # Dev server: doctor Angular PWA  (http://lo
 pnpm generate-api-client            # Regenerate TS client from OpenAPI spec
 
 # ── Backend (.NET) ─────────────────────────────────────────────────────────────
-dotnet build apps/backend/Honorare.sln            # Build (warnings = errors)
+# NOTE: solution file is Honorare.slnx (not .sln)
+dotnet build apps/backend/Honorare.slnx           # Build (warnings = errors)
 dotnet run --project apps/backend/App             # Run in development
-dotnet test apps/backend/Honorare.sln             # Run all xUnit tests + coverage
+dotnet test apps/backend/Honorare.slnx            # Run all xUnit tests + coverage
+
+# ── EF Core migrations ─────────────────────────────────────────────────────────
+# dotnet-ef is a global tool at ~/.dotnet/tools/ — requires DOTNET_ROOT + PATH.
+# Add to ~/.zshrc (asdf manages the runtime at a non-standard path):
+#
+#   export DOTNET_ROOT="$(asdf where dotnet 2>/dev/null)"
+#   export PATH="$HOME/.dotnet/tools:$PATH"
+#
+# Run migrations from INSIDE the App project directory (--output-dir is relative to it):
+#
+#   cd apps/backend/App
+#   dotnet ef migrations add <Name> --output-dir Catalog/Migrations --namespace App.Catalog.Migrations
+#   dotnet ef migrations add <Name> --output-dir Faturamento/Migrations --namespace App.Faturamento.Migrations
+#   dotnet ef migrations add <Name> --output-dir Identity/Migrations --namespace App.Identity.Migrations
 
 # ── Frontend — lint ────────────────────────────────────────────────────────────
 pnpm -F admin-web lint              # ESLint (--max-warnings 0)
