@@ -96,6 +96,8 @@ export interface PrestadorItem {
   registroProfissional: string | null;
   ativo: boolean;
   criadoEm: string;
+  emailAcesso: string | null;
+  temUsuario: boolean;
 }
 
 export interface ListarPrestadoresParams {
@@ -112,7 +114,13 @@ export interface ListarPrestadoresResult {
   itensPorPagina: number;
 }
 
-export interface SalvarPrestadorPayload {
+export interface CriarPrestadorPayload {
+  nome: string;
+  registroProfissional: string | null;
+  emailAcesso: string | null;
+}
+
+export interface AtualizarPrestadorPayload {
   nome: string;
   registroProfissional: string | null;
   ativo: boolean;

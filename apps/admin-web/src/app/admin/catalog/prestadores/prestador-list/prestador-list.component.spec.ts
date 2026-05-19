@@ -13,6 +13,8 @@ const mockPrestadores: PrestadorItem[] = [
     registroProfissional: 'CRM-12345',
     ativo: true,
     criadoEm: '2026-01-01T00:00:00Z',
+    emailAcesso: 'jose@example.com',
+    temUsuario: true,
   },
   {
     id: 'prest-2',
@@ -20,6 +22,8 @@ const mockPrestadores: PrestadorItem[] = [
     registroProfissional: null,
     ativo: false,
     criadoEm: '2026-02-01T00:00:00Z',
+    emailAcesso: null,
+    temUsuario: false,
   },
 ];
 
@@ -136,5 +140,19 @@ describe('PrestadorListComponent', () => {
     const erro = el.querySelector('.prestador-list__erro');
     const text = erro?.textContent ?? '';
     expect(text.trim()).toContain('guias');
+  });
+
+  it('exibe badge "Com acesso" para prestador com temUsuario = true', () => {
+    const { el } = setup([{ ...mockPrestadores[0], temUsuario: true }]);
+    const badge = el.querySelector('.prestador-list__badge-acesso');
+    expect(badge).not.toBeNull();
+    const text = badge?.textContent ?? '';
+    expect(text.trim()).toBe('Com acesso');
+  });
+
+  it('não exibe badge para prestador com temUsuario = false', () => {
+    const { el } = setup([{ ...mockPrestadores[0], temUsuario: false }]);
+    const badge = el.querySelector('.prestador-list__badge-acesso');
+    expect(badge).toBeNull();
   });
 });

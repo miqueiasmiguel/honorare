@@ -11,6 +11,8 @@ const mockPrestador: PrestadorItem = {
   registroProfissional: 'CRM-12345',
   ativo: true,
   criadoEm: '2026-01-01T00:00:00Z',
+  emailAcesso: 'jose@example.com',
+  temUsuario: true,
 };
 
 const mockDeflator: DeflatorItem = {
@@ -31,11 +33,11 @@ const mockOperadora: OperadoraItem = {
   criadaEm: '2026-01-01T00:00:00Z',
 };
 
-function setup(prestadorId: string | null = null) {
+function setup(prestadorId: string | null = null, prestador: PrestadorItem = mockPrestador) {
   const catalogServiceSpy = {
-    obterPrestador: vi.fn().mockReturnValue(of(mockPrestador)),
-    criarPrestador: vi.fn().mockReturnValue(of(mockPrestador)),
-    atualizarPrestador: vi.fn().mockReturnValue(of(mockPrestador)),
+    obterPrestador: vi.fn().mockReturnValue(of(prestador)),
+    criarPrestador: vi.fn().mockReturnValue(of(prestador)),
+    atualizarPrestador: vi.fn().mockReturnValue(of(prestador)),
     listarDeflatores: vi.fn().mockReturnValue(of([mockDeflator])),
     listarOperadoras: vi
       .fn()
@@ -94,9 +96,34 @@ describe('PrestadorFormComponent', () => {
       expect(catalogService.criarPrestador).toHaveBeenCalledWith({
         nome: 'Dr. José Silva',
         registroProfissional: 'CRM-12345',
-        ativo: true,
+        emailAcesso: null,
       });
       expect(router.navigate).toHaveBeenCalledWith(['/admin/catalog/prestadores']);
+    });
+
+    it('modo criação exibe campo emailAcesso editável', () => {
+      const { el } = setup(null);
+      const input = el.querySelector('#emailAcesso');
+      expect(input).not.toBeNull();
+    });
+
+    it('modo criação envia emailAcesso preenchido no payload', () => {
+      const { component, catalogService } = setup(null);
+      component.form.controls.nome.setValue('Dr. José Silva');
+      component.form.controls.emailAcesso.setValue('jose@example.com');
+      component.salvar();
+      expect(catalogService.criarPrestador).toHaveBeenCalledWith(
+        expect.objectContaining({ emailAcesso: 'jose@example.com' }),
+      );
+    });
+
+    it('modo criação envia null quando emailAcesso vazio', () => {
+      const { component, catalogService } = setup(null);
+      component.form.controls.nome.setValue('Dr. José Silva');
+      component.salvar();
+      expect(catalogService.criarPrestador).toHaveBeenCalledWith(
+        expect.objectContaining({ emailAcesso: null }),
+      );
     });
   });
 
@@ -148,6 +175,41 @@ describe('PrestadorFormComponent', () => {
       fixture.detectChanges();
 
       expect(catalogService.excluirDeflator).toHaveBeenCalledWith('prest-1', 'def-1');
+    });
+
+    it('modo edição não exibe campo emailAcesso editável', () => {
+      const { el } = setup('prest-1');
+      const input = el.querySelector('#emailAcesso');
+      expect(input).toBeNull();
+    });
+
+    it('modo edição exibe emailAcesso como texto somente-leitura', () => {
+      const { el } = setup('prest-1');
+      const valor = el.querySelector('.prestador-form__email-acesso-valor');
+      const text = valor?.textContent ?? '';
+      expect(text.trim()).toBe('jose@example.com');
+    });
+
+    it('modo edição exibe badge "Com acesso" quando temUsuario = true', () => {
+      const { el } = setup('prest-1');
+      const badge = el.querySelector('.prestador-form__badge-acesso');
+      expect(badge).not.toBeNull();
+      const text = badge?.textContent ?? '';
+      expect(text.trim()).toBe('Com acesso ao portal');
+    });
+
+    it('modo edição exibe "Sem acesso ao portal" quando temUsuario = false', () => {
+      const mockSemAcesso: PrestadorItem = {
+        ...mockPrestador,
+        emailAcesso: null,
+        temUsuario: false,
+      };
+      const { el } = setup('prest-1', mockSemAcesso);
+      const badge = el.querySelector('.prestador-form__badge-acesso');
+      expect(badge).toBeNull();
+      const valor = el.querySelector('.prestador-form__email-acesso-valor');
+      const text = valor?.textContent ?? '';
+      expect(text.trim()).toBe('Sem acesso ao portal');
     });
   });
 });

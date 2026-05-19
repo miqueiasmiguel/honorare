@@ -37,15 +37,39 @@
         />
       </div>
 
-      <div class="prestador-form__field prestador-form__field--inline">
-        <label class="prestador-form__label" for="ativo">Ativo</label>
-        <input
-          id="ativo"
-          type="checkbox"
-          class="prestador-form__checkbox"
-          formControlName="ativo"
-        />
-      </div>
+      @if (!modoEdicao) {
+        <div class="prestador-form__field">
+          <label class="prestador-form__label" for="emailAcesso">E-mail de acesso</label>
+          <input
+            id="emailAcesso"
+            type="email"
+            class="prestador-form__input"
+            [class.prestador-form__input--invalid]="
+              form.controls.emailAcesso.touched && form.controls.emailAcesso.invalid
+            "
+            formControlName="emailAcesso"
+            maxlength="150"
+            placeholder="email@exemplo.com"
+          />
+          @if (form.controls.emailAcesso.touched && form.controls.emailAcesso.hasError('email')) {
+            <span class="prestador-form__error prestador-form__error--email-acesso"
+              >E-mail inválido.</span
+            >
+          }
+        </div>
+      }
+
+      @if (modoEdicao) {
+        <div class="prestador-form__field prestador-form__field--inline">
+          <label class="prestador-form__label" for="ativo">Ativo</label>
+          <input
+            id="ativo"
+            type="checkbox"
+            class="prestador-form__checkbox"
+            formControlName="ativo"
+          />
+        </div>
+      }
 
       <div class="prestador-form__actions">
         <button type="submit" class="prestador-form__btn-salvar" [disabled]="saving()">
@@ -58,6 +82,16 @@
     </form>
 
     @if (modoEdicao) {
+      <div class="prestador-form__field">
+        <span class="prestador-form__label">E-mail de acesso</span>
+        @if (prestadorTemUsuario()) {
+          <span class="prestador-form__badge-acesso">Com acesso ao portal</span>
+        }
+        <span class="prestador-form__email-acesso-valor">{{
+          prestadorEmailAcesso() ?? 'Sem acesso ao portal'
+        }}</span>
+      </div>
+
       <section class="prestador-form__deflatores">
         <div class="prestador-form__deflatores-header">
           <h2 class="prestador-form__deflatores-title">Deflatores por Operadora</h2>

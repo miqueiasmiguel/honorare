@@ -283,7 +283,7 @@ var comUsuario = await _db.Users
 
 ---
 
-## TASK-UP-02 — Frontend: campo e-mail no formulário de prestador
+## TASK-UP-02 — Frontend: campo e-mail no formulário de prestador [x] concluída
 
 **TDD: testes Vitest → componentes → build.**
 

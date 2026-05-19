@@ -32,6 +32,8 @@ export class PrestadorFormComponent implements OnInit {
   readonly operadoras = signal<OperadoraItem[]>([]);
   readonly mostrarFormDeflator = signal(false);
   readonly posicaoOpcoes = POSICAO_OPCOES;
+  readonly prestadorEmailAcesso = signal<string | null>(null);
+  readonly prestadorTemUsuario = signal(false);
 
   readonly form = new FormGroup({
     nome: new FormControl('', {
@@ -40,6 +42,10 @@ export class PrestadorFormComponent implements OnInit {
     }),
     registroProfissional: new FormControl('', { nonNullable: true }),
     ativo: new FormControl(true, { nonNullable: true }),
+    emailAcesso: new FormControl('', {
+      nonNullable: true,
+      validators: [(c) => (c.value ? Validators.email(c) : null)],
+    }),
   });
 
   readonly deflatorForm = new FormGroup({
@@ -83,6 +89,8 @@ export class PrestadorFormComponent implements OnInit {
             registroProfissional: p.registroProfissional ?? '',
             ativo: p.ativo,
           });
+          this.prestadorEmailAcesso.set(p.emailAcesso);
+          this.prestadorTemUsuario.set(p.temUsuario);
           this.loading.set(false);
         },
         error: () => {
@@ -100,19 +108,21 @@ export class PrestadorFormComponent implements OnInit {
     }
 
     const raw = this.form.getRawValue();
-    const payload = {
-      nome: raw.nome,
-      registroProfissional: raw.registroProfissional || null,
-      ativo: raw.ativo,
-    };
-
     this.saving.set(true);
 
     const id = this.prestadorId();
     const op$ =
       id !== null
-        ? this._catalogService.atualizarPrestador(id, payload)
-        : this._catalogService.criarPrestador(payload);
+        ? this._catalogService.atualizarPrestador(id, {
+            nome: raw.nome,
+            registroProfissional: raw.registroProfissional || null,
+            ativo: raw.ativo,
+          })
+        : this._catalogService.criarPrestador({
+            nome: raw.nome,
+            registroProfissional: raw.registroProfissional || null,
+            emailAcesso: raw.emailAcesso || null,
+          });
 
     op$.subscribe({
       next: () => {

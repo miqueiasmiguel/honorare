@@ -3,7 +3,9 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import type {
   AtualizarBeneficiarioPayload,
+  AtualizarPrestadorPayload,
   BeneficiarioItem,
+  CriarPrestadorPayload,
   DeflatorItem,
   ImportarCsvResult,
   ListarBeneficiariosParams,
@@ -22,7 +24,6 @@ import type {
   ProcedimentoItem,
   SalvarDeflatorPayload,
   SalvarOperadoraPayload,
-  SalvarPrestadorPayload,
   SalvarProcedimentoPayload,
   SalvarTabelaPayload,
   TabelaItem,
@@ -136,11 +137,11 @@ export class CatalogService {
     return this._http.get<PrestadorItem>(`/api/v1/admin/prestadores/${id}`);
   }
 
-  criarPrestador(payload: SalvarPrestadorPayload): Observable<PrestadorItem> {
+  criarPrestador(payload: CriarPrestadorPayload): Observable<PrestadorItem> {
     return this._http.post<PrestadorItem>('/api/v1/admin/prestadores', payload);
   }
 
-  atualizarPrestador(id: string, payload: SalvarPrestadorPayload): Observable<PrestadorItem> {
+  atualizarPrestador(id: string, payload: AtualizarPrestadorPayload): Observable<PrestadorItem> {
     return this._http.put<PrestadorItem>(`/api/v1/admin/prestadores/${id}`, payload);
   }
 

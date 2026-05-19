@@ -32,6 +32,7 @@
         <th class="prestador-list__th">Nome</th>
         <th class="prestador-list__th">Registro</th>
         <th class="prestador-list__th">Status</th>
+        <th class="prestador-list__th">Acesso</th>
         <th class="prestador-list__th">Ações</th>
       </tr>
     </thead>
@@ -46,6 +47,13 @@
             }}</span>
           </td>
           <td class="prestador-list__cell">
+            @if (p.temUsuario) {
+              <span class="prestador-list__badge-acesso badge badge--acesso">Com acesso</span>
+            } @else {
+              <span class="prestador-list__sem-acesso">—</span>
+            }
+          </td>
+          <td class="prestador-list__cell">
             <button type="button" class="prestador-list__btn-editar" (click)="editar(p)">
               Editar
             </button>
@@ -56,7 +64,7 @@
         </tr>
       } @empty {
         <tr>
-          <td colspan="4" class="prestador-list__empty">Nenhum prestador cadastrado.</td>
+          <td colspan="5" class="prestador-list__empty">Nenhum prestador cadastrado.</td>
         </tr>
       }
     </tbody>
