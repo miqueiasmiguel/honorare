@@ -25,6 +25,21 @@ export class AuthService {
     return token !== null && exp !== null && Date.now() < exp;
   });
 
+  readonly userEmail = computed((): string | null => {
+    const token = this._accessToken();
+    if (!token) {
+      return null;
+    }
+    try {
+      const segment = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+      const padded = segment + '='.repeat((4 - (segment.length % 4)) % 4);
+      const payload = JSON.parse(atob(padded)) as Record<string, unknown>;
+      return (payload['email'] as string | undefined) ?? null;
+    } catch {
+      return null;
+    }
+  });
+
   getAccessToken(): string | null {
     return this._accessToken();
   }

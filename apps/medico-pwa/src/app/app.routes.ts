@@ -14,6 +14,17 @@ export const routes: Routes = [
     path: '',
     canActivate: [authGuard],
     loadComponent: () => import('./painel/painel').then((m) => m.Painel),
+    children: [
+      {
+        path: 'guias',
+        loadComponent: () => import('./guias/guia-list/guia-list').then((m) => m.GuiaListComponent),
+      },
+      {
+        path: '',
+        redirectTo: 'guias',
+        pathMatch: 'full',
+      },
+    ],
   },
   {
     path: '**',

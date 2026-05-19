@@ -1,0 +1,22 @@
+@use 'sass:map';
+
+// 4px grid — only these values are allowed
+$spacing-scale: (
+  1: 4px,
+  2: 8px,
+  3: 12px,
+  4: 16px,
+  6: 24px,
+  8: 32px,
+  12: 48px,
+  16: 64px,
+  24: 96px,
+);
+
+@function space($step) {
+  @if not map.has-key($spacing-scale, $step) {
+    @error "Invalid spacing step #{$step}. Valid: 1(4px) 2(8px) 3(12px) 4(16px) 6(24px) 8(32px) 12(48px) 16(64px) 24(96px)";
+  }
+
+  @return map.get($spacing-scale, $step);
+}
