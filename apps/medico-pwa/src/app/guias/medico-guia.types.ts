@@ -33,3 +33,25 @@ export interface ListarGuiasParams {
   pagina: number;
   itensPorPagina: number;
 }
+
+export interface MedicoItemGuiaDto {
+  id: string;
+  codigoTuss: string;
+  descricao: string;
+  posicao: number;
+  valorApurado: number;
+  valorPago: number;
+  situacaoCalculo: SituacaoCalculo;
+}
+
+export interface MedicoGuiaDetalheDto {
+  id: string;
+  operadoraNome: string;
+  beneficiarioNome: string | null;
+  beneficiarioCarteira: string | null;
+  dataAtendimento: string;
+  senha: string | null;
+  situacao: SituacaoGuia;
+  observacao: string | null;
+  itens: MedicoItemGuiaDto[];
+}

@@ -168,7 +168,7 @@ export interface ListarGuiasParams { operadoraId?: string; dataInicio?: string; 
 
 ---
 
-## TASK-M-03 — medico-pwa: GuiaDetalheComponent
+## TASK-M-03 — medico-pwa: GuiaDetalheComponent [x] concluída
 
 **TDD: testes Vitest → componente → build.**
 

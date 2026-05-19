@@ -145,6 +145,8 @@ Resumo financeiro (total apresentado vs. pago vs. em aberto) é fase 2 — no MV
 
 **Cuidado:** garantir filtro automático por executor via global query filter. Não confiar em filtros manuais por endpoint.
 
+**Spec:** [`docs/SPEC-F4.1.md`](SPEC-F4.1.md) — 3 tasks (M-01 backend, M-02 GuiaList, M-03 GuiaDetalhe). ✅
+
 ### F4.2 — Tela admin com auditoria de divergências
 
 Lista de divergências classificadas por severidade. Detalhe de cada uma com explicação (do trace). Botão "marcar como contestada".

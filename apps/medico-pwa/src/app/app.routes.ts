@@ -20,6 +20,11 @@ export const routes: Routes = [
         loadComponent: () => import('./guias/guia-list/guia-list').then((m) => m.GuiaListComponent),
       },
       {
+        path: 'guias/:id',
+        loadComponent: () =>
+          import('./guias/guia-detalhe/guia-detalhe').then((m) => m.GuiaDetalheComponent),
+      },
+      {
         path: '',
         redirectTo: 'guias',
         pathMatch: 'full',

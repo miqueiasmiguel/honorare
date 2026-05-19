@@ -1,7 +1,11 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import type { ListarGuiasParams, MedicoListarGuiasResult } from './medico-guia.types';
+import type {
+  ListarGuiasParams,
+  MedicoGuiaDetalheDto,
+  MedicoListarGuiasResult,
+} from './medico-guia.types';
 
 @Injectable({ providedIn: 'root' })
 export class MedicoGuiaService {
@@ -25,5 +29,9 @@ export class MedicoGuiaService {
     return this._http.get<MedicoListarGuiasResult>('/api/v1/medico/guias', {
       params: httpParams,
     });
+  }
+
+  obterPorId(id: string): Observable<MedicoGuiaDetalheDto> {
+    return this._http.get<MedicoGuiaDetalheDto>(`/api/v1/medico/guias/${id}`);
   }
 }
