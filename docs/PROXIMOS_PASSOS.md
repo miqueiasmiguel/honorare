@@ -137,15 +137,11 @@ O coração do MVP.
 
 ## Fase 4 — Visualização (2-3 semanas)
 
-### F4.1 — Portal do médico (PWA)
+### F4.1 ✅ — Portal do médico (PWA)
 
-Lista de guias pendentes onde o médico é executor (guias já baixadas não aparecem). Filtros (período, operadora). Detalhe da guia com observação do admin em destaque — é o que permite ao médico entender o status de cada paciente (não pago, pago parcial, motivo).
+**Entregues:** Endpoints `GET /api/v1/medico/guias` (lista paginada com filtros por operadora/período, exclui `Liquidada`, filtro hard `PrestadorId == currentUser.MedicoId`) e `GET /api/v1/medico/guias/{id}` (detalhe com itens e `situacaoCalculo` por item, 404 se guia não pertence ao médico) em `App/Faturamento/Endpoints/MedicoEndpoints.cs`, registrados em `Program.cs`; policy `MedicoAccess` em todos os handlers; DTOs `MedicoGuiaSummaryDto`/`MedicoListarGuiasResult` e `MedicoGuiaDetalheDto`/`MedicoItemGuiaDto` (`situacaoCalculo` derivado do `Calculo` mais recente por item, `"NaoCalculado"` quando sem cálculo). Suite xUnit `MedicoGuiaTests.cs` cobrindo 8 casos (isolamento por médico, exclusão de liquidadas, filtros, 404 e `situacaoCalculo`). No `medico-pwa`: `medico-guia.types.ts` com tipos `SituacaoGuia`, `SituacaoCalculo`, `MedicoGuiaSummaryItem`, `MedicoGuiaDetalheDto` e `MedicoItemGuiaDto`; `MedicoGuiaService` com `listar()` e `obterPorId()`; `PainelComponent` atualizado como shell mobile-first (top bar nome do médico + logo, `<router-outlet>`); `GuiaListComponent` (lista responsiva, filtros debounce 400 ms, paginação anterior/próximo, badge âmbar/ferrugem por situação, ícone de observação, clique navega para `/guias/:id`) com 7 testes Vitest; `GuiaDetalheComponent` (cabeçalho, bloco observação sempre visível com fundo âmbar-claro, tabela de itens com badge verde/ferrugem/âmbar por `situacaoCalculo`, totais no rodapé, botão Voltar) com 9 testes Vitest; rotas `/guias` e `/guias/:id` em `app.routes.ts` dentro do `PainelComponent`.
 
-Resumo financeiro (total apresentado vs. pago vs. em aberto) é fase 2 — no MVP o médico precisa ver o status e a justificativa, não necessariamente os totais.
-
-**Cuidado:** garantir filtro automático por executor via global query filter. Não confiar em filtros manuais por endpoint.
-
-**Spec:** [`docs/SPEC-F4.1.md`](SPEC-F4.1.md) — 3 tasks (M-01 backend, M-02 GuiaList, M-03 GuiaDetalhe). ✅
+**Não inclui:** resumo financeiro (total apresentado vs. pago vs. em aberto) — médico vê status e observação no MVP; totais ficam para fase 2.
 
 ### F4.2 — Tela admin com auditoria de divergências
 
