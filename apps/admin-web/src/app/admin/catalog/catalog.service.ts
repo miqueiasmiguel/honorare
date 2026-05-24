@@ -8,6 +8,7 @@ import type {
   CriarPrestadorPayload,
   DeflatorItem,
   ImportarCsvResult,
+  ImportarTabelaPorteResult,
   ListarBeneficiariosParams,
   ListarBeneficiariosResult,
   ListarOperadorasParams,
@@ -27,6 +28,7 @@ import type {
   SalvarProcedimentoPayload,
   SalvarTabelaPayload,
   TabelaItem,
+  TabelaPorteAnestesicoItem,
 } from './catalog.types';
 
 @Injectable({ providedIn: 'root' })
@@ -269,6 +271,29 @@ export class CatalogService {
       map(() => {
         return;
       }),
+    );
+  }
+
+  // ── Tabela Porte Anestésico ────────────────────────────────────────────────
+
+  listarPortesAnestesico(operadoraId: string): Observable<TabelaPorteAnestesicoItem[]> {
+    const params = new HttpParams().set('operadoraId', operadoraId);
+    return this._http.get<TabelaPorteAnestesicoItem[]>('/api/v1/admin/tabelas-porte-anestesico', {
+      params,
+    });
+  }
+
+  importarTabelaPorteAnestesico(
+    operadoraId: string,
+    file: File,
+  ): Observable<ImportarTabelaPorteResult> {
+    const form = new FormData();
+    form.append('file', file);
+    const params = new HttpParams().set('operadoraId', operadoraId);
+    return this._http.post<ImportarTabelaPorteResult>(
+      '/api/v1/admin/tabelas-porte-anestesico/importar-unimed-csv',
+      form,
+      { params },
     );
   }
 }

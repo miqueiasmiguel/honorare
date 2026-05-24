@@ -389,7 +389,7 @@ Verificar que a migration gerada inclui:
 
 ---
 
-## PA-06 · Run all backend tests [ ]
+## PA-06 · Run all backend tests [x]
 
 ```bash
 dotnet test apps/backend/Honorare.slnx
@@ -399,7 +399,7 @@ Todos os testes verdes. Cobertura ≥ 80%.
 
 ---
 
-## PA-07 · Admin-web: tipos + serviço [ ]
+## PA-07 · Admin-web: tipos + serviço [x]
 
 ### Arquivos
 

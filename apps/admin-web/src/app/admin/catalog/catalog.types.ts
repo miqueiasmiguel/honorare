@@ -200,3 +200,21 @@ export interface LookupOrCreateResult extends BeneficiarioItem {
 export interface AtualizarBeneficiarioPayload {
   nome: string;
 }
+
+// ── Tabela Porte Anestésico ──────────────────────────────────────────────────
+
+export interface TabelaPorteAnestesicoItem {
+  id: string;
+  porteletra: string;
+  valorEnfermaria: number;
+  valorApartamento: number;
+  valorAmbulatorial: number | null;
+  atualizadoEm: string;
+}
+
+export interface ImportarTabelaPorteResult {
+  portesAtualizados: number;
+  procedimentosAtualizados: number;
+  procedimentosNaoEncontrados: string[];
+  erros: ImportarCsvErro[];
+}
