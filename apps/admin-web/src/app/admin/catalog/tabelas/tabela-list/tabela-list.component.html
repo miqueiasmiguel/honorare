@@ -12,6 +12,14 @@
       </button>
       <button
         type="button"
+        class="tabela-list__btn-porte"
+        [disabled]="!selectedOperadoraId()"
+        (click)="abrirModalPorte()"
+      >
+        Importar Tabela Anestesista
+      </button>
+      <button
+        type="button"
         class="tabela-list__btn-novo"
         [disabled]="!selectedOperadoraId()"
         (click)="novo()"
@@ -111,6 +119,18 @@
           [operadoraId]="selectedOperadoraId()"
           (concluido)="onCsvConcluido()"
           (cancelado)="mostrarCsvModal.set(false)"
+        />
+      </div>
+    </div>
+  }
+
+  @if (mostrarModalPorte()) {
+    <div class="tabela-list__modal-backdrop">
+      <div class="tabela-list__modal">
+        <app-tabela-porte-anestesico-csv-modal
+          [operadoraId]="selectedOperadoraId()"
+          (concluido)="mostrarModalPorte.set(false)"
+          (cancelado)="mostrarModalPorte.set(false)"
         />
       </div>
     </div>

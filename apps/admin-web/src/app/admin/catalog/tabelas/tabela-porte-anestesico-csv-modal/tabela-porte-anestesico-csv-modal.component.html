@@ -1,0 +1,62 @@
+<div class="tabela-porte-csv-modal">
+  <header class="tabela-porte-csv-modal__header">
+    <h2 class="tabela-porte-csv-modal__title">Importar Tabela Anestesista</h2>
+  </header>
+
+  <p class="tabela-porte-csv-modal__instrucao">
+    Exporte o arquivo XLSX como CSV (separador vírgula) antes de importar.
+  </p>
+
+  <div class="tabela-porte-csv-modal__upload">
+    <input
+      #csvInput
+      type="file"
+      accept=".csv"
+      class="tabela-porte-csv-modal__input-csv"
+      (change)="onFileChange($event)"
+    />
+    <button
+      type="button"
+      class="tabela-porte-csv-modal__btn-selecionar"
+      [disabled]="uploading()"
+      (click)="csvInput.click()"
+    >
+      {{ uploading() ? 'Enviando…' : 'Selecionar arquivo' }}
+    </button>
+  </div>
+
+  @if (resultado(); as res) {
+    <div class="tabela-porte-csv-modal__resultado">
+      <span class="tabela-porte-csv-modal__portes-atualizados"
+        >Portes atualizados: {{ res.portesAtualizados }}</span
+      >
+      <span class="tabela-porte-csv-modal__procedimentos-atualizados"
+        >Procedimentos atualizados: {{ res.procedimentosAtualizados }}</span
+      >
+
+      @if (res.procedimentosNaoEncontrados.length > 0) {
+        <div class="tabela-porte-csv-modal__nao-encontrados">
+          <p class="tabela-porte-csv-modal__nao-encontrados-titulo">
+            Procedimentos não encontrados:
+          </p>
+          <ul class="tabela-porte-csv-modal__nao-encontrados-lista">
+            @for (codigo of res.procedimentosNaoEncontrados; track codigo) {
+              <li class="tabela-porte-csv-modal__nao-encontrado-item">{{ codigo }}</li>
+            }
+          </ul>
+        </div>
+      }
+    </div>
+  }
+
+  <div class="tabela-porte-csv-modal__acoes">
+    @if (resultado()) {
+      <button type="button" class="tabela-porte-csv-modal__btn-concluir" (click)="concluir()">
+        Concluir
+      </button>
+    }
+    <button type="button" class="tabela-porte-csv-modal__btn-fechar" (click)="fechar()">
+      Fechar
+    </button>
+  </div>
+</div>

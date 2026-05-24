@@ -2,11 +2,12 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { CatalogService } from '../../catalog.service';
 import { TabelaFormComponent } from '../tabela-form/tabela-form.component';
 import { TabelaCsvModalComponent } from '../tabela-csv-modal/tabela-csv-modal.component';
+import { TabelaPorteAnestesicoCsvModalComponent } from '../tabela-porte-anestesico-csv-modal/tabela-porte-anestesico-csv-modal.component';
 import type { OperadoraItem, TabelaItem } from '../../catalog.types';
 
 @Component({
   selector: 'app-tabela-list',
-  imports: [TabelaFormComponent, TabelaCsvModalComponent],
+  imports: [TabelaFormComponent, TabelaCsvModalComponent, TabelaPorteAnestesicoCsvModalComponent],
   templateUrl: './tabela-list.component.html',
   styleUrl: './tabela-list.component.scss',
 })
@@ -23,6 +24,7 @@ export class TabelaListComponent implements OnInit {
   readonly mostrarForm = signal(false);
   readonly editandoTabelaId = signal<string | null>(null);
   readonly mostrarCsvModal = signal(false);
+  readonly mostrarModalPorte = signal(false);
 
   ngOnInit(): void {
     this._catalogService
@@ -71,6 +73,10 @@ export class TabelaListComponent implements OnInit {
 
   abrirCsvModal(): void {
     this.mostrarCsvModal.set(true);
+  }
+
+  abrirModalPorte(): void {
+    this.mostrarModalPorte.set(true);
   }
 
   onFormSalvo(): void {

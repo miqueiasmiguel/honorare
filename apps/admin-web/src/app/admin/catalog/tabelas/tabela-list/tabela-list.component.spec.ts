@@ -48,6 +48,16 @@ function setup() {
     importarTabelaCsv: vi
       .fn()
       .mockReturnValue(of({ inseridos: 1, atualizados: 0, ignorados: 0, erros: [] })),
+    importarTabelaPorteAnestesico: vi
+      .fn()
+      .mockReturnValue(
+        of({
+          portesAtualizados: 0,
+          procedimentosAtualizados: 0,
+          procedimentosNaoEncontrados: [],
+          erros: [],
+        }),
+      ),
   };
 
   TestBed.configureTestingModule({
@@ -111,6 +121,28 @@ describe('TabelaListComponent', () => {
     fixture.detectChanges();
 
     const modal = el.querySelector('app-tabela-csv-modal');
+    expect(modal).toBeTruthy();
+  });
+
+  it('botão "Importar Tabela Anestesista" está desabilitado sem operadora selecionada', () => {
+    const { el } = setup();
+    const btns = Array.from(el.querySelectorAll('button'));
+    const porteBtn = btns.find((b) => b.textContent.trim() === 'Importar Tabela Anestesista');
+    expect(porteBtn).toBeTruthy();
+    expect(porteBtn?.disabled).toBe(true);
+  });
+
+  it('clicar "Importar Tabela Anestesista" abre modal de porte anestésico', () => {
+    const { component, fixture, el } = setup();
+    component.onOperadoraChange('op-1');
+    fixture.detectChanges();
+
+    const btns = Array.from(el.querySelectorAll('button'));
+    const porteBtn = btns.find((b) => b.textContent.trim() === 'Importar Tabela Anestesista');
+    porteBtn?.click();
+    fixture.detectChanges();
+
+    const modal = el.querySelector('app-tabela-porte-anestesico-csv-modal');
     expect(modal).toBeTruthy();
   });
 
