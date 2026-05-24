@@ -10,7 +10,7 @@ const mockProcedimento: ProcedimentoItem = {
   codigoTuss: '30715013',
   descricao: 'Herniorrafia inguinal',
   porte: '6B',
-  porteAnestesico: 4,
+  porteAnestesico: 'E',
   ehSadt: false,
   temPorteProprioVideo: true,
   ativo: true,
@@ -88,15 +88,20 @@ describe('ProcedimentoFormComponent', () => {
       expect(text.trim()).toBeTruthy();
     });
 
-    it('exibe erro se porteAnestesico for maior que 8', () => {
-      const { component, fixture, el } = setup(null);
-      component.form.controls.porteAnestesico.setValue(9);
-      component.form.controls.porteAnestesico.markAsTouched();
-      expect(component.form.controls.porteAnestesico.hasError('max')).toBe(true);
-      fixture.detectChanges();
-      const error = el.querySelector('.procedimento-form__error--porte-anestesico');
-      const text = error?.textContent ?? '';
-      expect(text.trim()).toBeTruthy();
+    it('porteAnestesico inicia como string vazia', () => {
+      const { component } = setup(null);
+      expect(component.porteAnestesico()).toBe('');
+    });
+
+    it('envia porteAnestesico como null quando vazio', () => {
+      const { component, catalogService } = setup(null);
+      component.form.controls.codigoTuss.setValue('30715013');
+      component.form.controls.descricao.setValue('Herniorrafia inguinal');
+      component.porteAnestesico.set('');
+      component.salvar();
+      expect(catalogService.criarProcedimento).toHaveBeenCalledWith(
+        expect.objectContaining({ porteAnestesico: null }),
+      );
     });
 
     it('campo "SADT" possui atributo title com texto explicativo', () => {
@@ -137,7 +142,7 @@ describe('ProcedimentoFormComponent', () => {
       expect(component.form.controls.codigoTuss.value).toBe('30715013');
       expect(component.form.controls.descricao.value).toBe('Herniorrafia inguinal');
       expect(component.form.controls.porte.value).toBe('6B');
-      expect(component.form.controls.porteAnestesico.value).toBe(4);
+      expect(component.porteAnestesico()).toBe('E');
       expect(component.form.controls.ehSadt.value).toBe(false);
       expect(component.form.controls.temPorteProprioVideo.value).toBe(true);
       expect(component.form.controls.ativo.value).toBe(true);

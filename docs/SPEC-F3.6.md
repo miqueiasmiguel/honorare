@@ -448,7 +448,7 @@ listarPortesAnestesico(operadoraId: string): Observable<TabelaPorteAnestesicoIte
 
 ---
 
-## PA-08 · Admin-web: procedimento-form PorteAnestesico [ ]
+## PA-08 · Admin-web: procedimento-form PorteAnestesico [x]
 
 `apps/admin-web/src/app/admin/catalog/procedimentos/procedimento-form/procedimento-form.component.ts`
 

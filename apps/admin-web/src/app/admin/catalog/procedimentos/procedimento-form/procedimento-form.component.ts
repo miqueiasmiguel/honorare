@@ -18,6 +18,7 @@ export class ProcedimentoFormComponent implements OnInit {
   readonly procedimentoId = signal<string | null>(null);
   readonly loading = signal(false);
   readonly saving = signal(false);
+  readonly porteAnestesico = signal<string>('');
 
   readonly form = new FormGroup({
     codigoTuss: new FormControl('', {
@@ -29,9 +30,6 @@ export class ProcedimentoFormComponent implements OnInit {
       validators: [(c) => Validators.required(c)],
     }),
     porte: new FormControl('', { nonNullable: true }),
-    porteAnestesico: new FormControl<number | null>(null, {
-      validators: [(c) => Validators.min(0)(c), (c) => Validators.max(8)(c)],
-    }),
     ehSadt: new FormControl(false, { nonNullable: true }),
     temPorteProprioVideo: new FormControl(false, { nonNullable: true }),
     ativo: new FormControl(true, { nonNullable: true }),
@@ -56,11 +54,11 @@ export class ProcedimentoFormComponent implements OnInit {
             codigoTuss: proc.codigoTuss,
             descricao: proc.descricao,
             porte: proc.porte ?? '',
-            porteAnestesico: proc.porteAnestesico,
             ehSadt: proc.ehSadt,
             temPorteProprioVideo: proc.temPorteProprioVideo,
             ativo: proc.ativo,
           });
+          this.porteAnestesico.set(proc.porteAnestesico ?? '');
           this.loading.set(false);
         },
         error: () => {
@@ -81,7 +79,7 @@ export class ProcedimentoFormComponent implements OnInit {
       codigoTuss: raw.codigoTuss,
       descricao: raw.descricao,
       porte: raw.porte || null,
-      porteAnestesico: raw.porteAnestesico,
+      porteAnestesico: this.porteAnestesico() || null,
       ehSadt: raw.ehSadt,
       temPorteProprioVideo: raw.temPorteProprioVideo,
       ativo: raw.ativo,

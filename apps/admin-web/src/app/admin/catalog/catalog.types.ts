@@ -39,7 +39,7 @@ export interface ProcedimentoItem {
   codigoTuss: string;
   descricao: string;
   porte: string | null;
-  porteAnestesico: number | null;
+  porteAnestesico: string | null;
   ehSadt: boolean;
   temPorteProprioVideo: boolean;
   ativo: boolean;
@@ -64,7 +64,7 @@ export interface SalvarProcedimentoPayload {
   codigoTuss: string;
   descricao: string;
   porte: string | null;
-  porteAnestesico: number | null;
+  porteAnestesico: string | null;
   ehSadt: boolean;
   temPorteProprioVideo: boolean;
   ativo: boolean;

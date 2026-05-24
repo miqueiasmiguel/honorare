@@ -67,25 +67,14 @@
           <label class="procedimento-form__label" for="porteAnestesico">Porte Anestésico</label>
           <input
             id="porteAnestesico"
-            type="number"
-            min="0"
-            max="8"
+            type="text"
             class="procedimento-form__input procedimento-form__input--narrow"
-            [class.procedimento-form__input--invalid]="
-              form.controls.porteAnestesico.touched && form.controls.porteAnestesico.invalid
-            "
-            formControlName="porteAnestesico"
-            placeholder="0–8"
+            [value]="porteAnestesico()"
+            (input)="porteAnestesico.set($any($event.target).value.toUpperCase().slice(0, 1))"
+            placeholder="ex: J"
+            maxlength="1"
+            pattern="[A-NP-Za-np-z]"
           />
-          @if (
-            form.controls.porteAnestesico.touched &&
-            (form.controls.porteAnestesico.hasError('max') ||
-              form.controls.porteAnestesico.hasError('min'))
-          ) {
-            <span class="procedimento-form__error procedimento-form__error--porte-anestesico"
-              >Porte anestésico deve ser entre 0 e 8.</span
-            >
-          }
         </div>
       </div>
 
