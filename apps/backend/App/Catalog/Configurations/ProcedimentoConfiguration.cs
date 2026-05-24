@@ -13,6 +13,7 @@ internal sealed class ProcedimentoConfiguration : IEntityTypeConfiguration<Proce
         builder.Property(p => p.CodigoTuss).HasMaxLength(10).IsRequired();
         builder.Property(p => p.Descricao).HasMaxLength(500).IsRequired();
         builder.Property(p => p.Porte).HasMaxLength(4);
+        builder.Property(p => p.PorteAnestesico).HasColumnType("varchar(2)");
         builder.Property(p => p.EhSadt).IsRequired();
         builder.Property(p => p.TemPorteProprioVideo).IsRequired();
         builder.Property(p => p.Ativo).IsRequired();

@@ -41,11 +41,11 @@ internal sealed record ListarProcedimentosResult(
     IReadOnlyList<ProcedimentoDto> Itens, int Total, int Pagina, int ItensPorPagina);
 
 internal sealed record ProcedimentoDto(
-    Guid Id, string CodigoTuss, string Descricao, string? Porte, int? PorteAnestesico,
+    Guid Id, string CodigoTuss, string Descricao, string? Porte, string? PorteAnestesico,
     bool EhSadt, bool TemPorteProprioVideo, bool Ativo, DateTimeOffset CriadoEm);
 
 internal sealed record SalvarProcedimentoCommand(
-    string CodigoTuss, string Descricao, string? Porte, int? PorteAnestesico,
+    string CodigoTuss, string Descricao, string? Porte, string? PorteAnestesico,
     bool EhSadt, bool TemPorteProprioVideo, bool Ativo);
 
 internal sealed record ImportarCsvResult(
@@ -383,7 +383,7 @@ internal sealed class CatalogService(AppDbContext db, ICurrentUser currentUser)
         var erros = new List<ErroCsvLinha>();
         var ignorados = 0;
 
-        var validRows = new Dictionary<string, (string CodigoTuss, string Descricao, string? Porte, int? PorteAnestesico, bool EhSadt, bool TemPorteProprioVideo)>(
+        var validRows = new Dictionary<string, (string CodigoTuss, string Descricao, string? Porte, string? PorteAnestesico, bool EhSadt, bool TemPorteProprioVideo)>(
             StringComparer.Ordinal);
 
         for (var i = 1; i < linhas.Count; i++)
@@ -415,25 +415,18 @@ internal sealed class CatalogService(AppDbContext db, ICurrentUser currentUser)
             var porteStr = GetColValue(cols, colIdx, "Porte")?.Trim();
             string? porte = string.IsNullOrEmpty(porteStr) ? null : porteStr;
 
-            int? porteAnestesico = null;
+            string? porteAnestesico = null;
             var porteAnestesicoStr = GetColValue(cols, colIdx, "PorteAnestesico")?.Trim();
             if (!string.IsNullOrEmpty(porteAnestesicoStr))
             {
-                if (!int.TryParse(porteAnestesicoStr, out var pa))
+                if (!System.Text.RegularExpressions.Regex.IsMatch(porteAnestesicoStr, @"^[A-NP-Z]$"))
                 {
                     erros.Add(new ErroCsvLinha(lineNum,
-                        $"PorteAnestesico '{porteAnestesicoStr}' não é um número válido."));
+                        $"PorteAnestesico '{porteAnestesicoStr}' deve ser letra A–Z exceto O."));
                     continue;
                 }
 
-                if (pa < 0 || pa > 8)
-                {
-                    erros.Add(new ErroCsvLinha(lineNum,
-                        $"PorteAnestesico deve ser entre 0 e 8."));
-                    continue;
-                }
-
-                porteAnestesico = pa;
+                porteAnestesico = porteAnestesicoStr;
             }
 
             var ehSadtStr = GetColValue(cols, colIdx, "EhSadt")?.Trim();
@@ -511,9 +504,10 @@ internal sealed class CatalogService(AppDbContext db, ICurrentUser currentUser)
             return new ValidationError("Descrição é obrigatória.");
         }
 
-        if (cmd.PorteAnestesico.HasValue && (cmd.PorteAnestesico.Value < 0 || cmd.PorteAnestesico.Value > 8))
+        if (!string.IsNullOrEmpty(cmd.PorteAnestesico) &&
+            !System.Text.RegularExpressions.Regex.IsMatch(cmd.PorteAnestesico, @"^[A-NP-Z]$"))
         {
-            return new ValidationError("Porte Anestésico deve ser entre 0 e 8.");
+            return new ValidationError("PorteAnestesico deve ser letra A–Z exceto O");
         }
 
         return null;

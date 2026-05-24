@@ -33,7 +33,7 @@ public sealed class ProcedimentoCsvImportTests(PostgresContainerFixture db)
         await using var _ = ctx;
         var service = new CatalogService(ctx, user);
 
-        var csv = $"{Header}\n30715013;Herniorrafia inguinal;6B;4;false;false\n40314340;Eletroencefalograma;;;true;false\n";
+        var csv = $"{Header}\n30715013;Herniorrafia inguinal;6B;D;false;false\n40314340;Eletroencefalograma;;;true;false\n";
         var result = await service.ImportarProcedimentosCsvAsync(ToCsvStream(csv));
 
         Assert.Equal(2, result.Inseridos);
@@ -53,7 +53,7 @@ public sealed class ProcedimentoCsvImportTests(PostgresContainerFixture db)
         var csvInicial = $"{Header}\n30715013;Descricao original;6B;;;false\n";
         await service.ImportarProcedimentosCsvAsync(ToCsvStream(csvInicial));
 
-        var csvAtualiza = $"{Header}\n30715013;Descricao atualizada;7A;3;false;false\n";
+        var csvAtualiza = $"{Header}\n30715013;Descricao atualizada;7A;J;false;false\n";
         var result = await service.ImportarProcedimentosCsvAsync(ToCsvStream(csvAtualiza));
 
         Assert.Equal(0, result.Inseridos);
@@ -64,7 +64,7 @@ public sealed class ProcedimentoCsvImportTests(PostgresContainerFixture db)
         var proc = Assert.Single(listar.Itens);
         Assert.Equal("Descricao atualizada", proc.Descricao);
         Assert.Equal("7A", proc.Porte);
-        Assert.Equal(3, proc.PorteAnestesico);
+        Assert.Equal("J", proc.PorteAnestesico);
     }
 
     [Fact]
@@ -114,7 +114,7 @@ public sealed class ProcedimentoCsvImportTests(PostgresContainerFixture db)
     }
 
     [Fact]
-    public async Task ImportarCsv_PorteAnestesicoInvalido_RegistraErroMasContinuaAsync()
+    public async Task ImportarCsv_PorteAnestesicoDigito_RegistraErroMasContinuaAsync()
     {
         var tenantId = Guid.NewGuid();
         var (ctx, user) = BuildTenant(tenantId);
@@ -122,6 +122,22 @@ public sealed class ProcedimentoCsvImportTests(PostgresContainerFixture db)
         var service = new CatalogService(ctx, user);
 
         var csv = $"{Header}\n30715013;Proc valido;;;false;false\n40314340;Proc invalido;;9;false;false\n";
+        var result = await service.ImportarProcedimentosCsvAsync(ToCsvStream(csv));
+
+        Assert.Equal(1, result.Inseridos);
+        Assert.Single(result.Erros);
+        Assert.Equal(3, result.Erros[0].Linha);
+    }
+
+    [Fact]
+    public async Task ImportarCsv_PorteAnestesicoLetraO_RegistraErroMasContinuaAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var service = new CatalogService(ctx, user);
+
+        var csv = $"{Header}\n30715013;Proc valido;;;false;false\n40314340;Proc invalido;;O;false;false\n";
         var result = await service.ImportarProcedimentosCsvAsync(ToCsvStream(csv));
 
         Assert.Equal(1, result.Inseridos);
@@ -160,7 +176,7 @@ public sealed class ProcedimentoCsvImportTests(PostgresContainerFixture db)
         await using var _ = ctx;
         var service = new CatalogService(ctx, user);
 
-        var csv = "CodigoTuss;Descricao;Porte;PorteAnestesico;EhSadt;TemPorteProprioVideo\n30715013;Herniorrafia inguinal;6B;4;false;false\n";
+        var csv = "CodigoTuss;Descricao;Porte;PorteAnestesico;EhSadt;TemPorteProprioVideo\n30715013;Herniorrafia inguinal;6B;D;false;false\n";
         var result = await service.ImportarProcedimentosCsvAsync(ToCsvStream(csv));
 
         Assert.Equal(1, result.Inseridos);

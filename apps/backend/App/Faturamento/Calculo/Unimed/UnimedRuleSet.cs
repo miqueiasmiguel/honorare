@@ -91,14 +91,15 @@ internal sealed class UnimedRuleSet(AppDbContext db) : IPricingRuleSet
             .Where(p => p.Id == item.ProcedimentoId)
             .FirstOrDefaultAsync(ct);
 
-        if (procedimento?.PorteAnestesico is null)
+        if (procedimento?.PorteAnestesico is null ||
+            !int.TryParse(procedimento.PorteAnestesico, out var porteAnestesicoInt))
         {
             return new ApuracaoItemResult(item.ItemGuiaId, SituacaoApuracao.Indeterminado, null, []);
         }
 
         var (valorFinal, passos) = AnestesiaCalculator.Calcular(
             tabela.Valor, deflator.Percentual,
-            procedimento.PorteAnestesico.Value,
+            porteAnestesicoInt,
             item.TempoAnestesicoMin,
             item.Ordem, item.Acomodacao, item.EhUrgencia, procedimento.EhSadt);
 

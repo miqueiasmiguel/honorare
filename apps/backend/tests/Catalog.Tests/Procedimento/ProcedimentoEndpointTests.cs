@@ -114,7 +114,7 @@ public sealed class ProcedimentoEndpointTests : IAsyncLifetime
             codigoTuss = "30715013",
             descricao = "Herniorrafia inguinal",
             porte = "6B",
-            porteAnestesico = 4,
+            porteAnestesico = "D",
             ehSadt = false,
             temPorteProprioVideo = false,
             ativo = true,
@@ -181,7 +181,7 @@ public sealed class ProcedimentoEndpointTests : IAsyncLifetime
             codigoTuss = "50000099",
             descricao = "Proc PUT Atualizado",
             porte = "6B",
-            porteAnestesico = 3,
+            porteAnestesico = "C",
             ehSadt = true,
             temPorteProprioVideo = false,
             ativo = true,
@@ -225,7 +225,7 @@ public sealed class ProcedimentoEndpointTests : IAsyncLifetime
         using var client = CreateAuthenticatedClient();
         var csv = "CodigoTuss;Descricao;Porte;PorteAnestesico;EhSadt;TemPorteProprioVideo\n" +
                   "11111001;Proc CSV 1;;;false;false\n" +
-                  "11111002;Proc CSV 2;6B;4;false;false\n";
+                  "11111002;Proc CSV 2;6B;D;false;false\n";
         var csvBytes = Encoding.UTF8.GetBytes(csv);
         using var byteContent = new ByteArrayContent(csvBytes);
         byteContent.Headers.ContentType = new MediaTypeHeaderValue("text/csv");

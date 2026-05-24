@@ -625,7 +625,7 @@ internal sealed record SalvarProcedimentoRequest(
     string CodigoTuss,
     string Descricao,
     string? Porte,
-    int? PorteAnestesico,
+    string? PorteAnestesico,
     bool EhSadt,
     bool TemPorteProprioVideo,
     bool Ativo);

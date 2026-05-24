@@ -23,7 +23,7 @@ public sealed class UnimedAnestesiaPipelineTests(PostgresContainerFixture db)
     }
 
     private static async Task<(Guid prestadorId, Guid operadoraId, Guid procedimentoId)>
-        SeedCompletoAsync(AppDbContext ctx, Guid tenantId, int? porteAnestesico = 5)
+        SeedCompletoAsync(AppDbContext ctx, Guid tenantId, string? porteAnestesico = "5")
     {
         var prestador = Prestador.Create(tenantId, "Dr. Anestesia", null);
         var operadora = Operadora.Create(tenantId, "UNIMED-AN" + tenantId.ToString("N")[..6], null, null, TipoRuleSet.Unimed);
@@ -45,7 +45,7 @@ public sealed class UnimedAnestesiaPipelineTests(PostgresContainerFixture db)
     {
         var prestador = Prestador.Create(tenantId, "Dr. SemTabela", null);
         var operadora = Operadora.Create(tenantId, "UNIMED-ST" + tenantId.ToString("N")[..6], null, null, TipoRuleSet.Unimed);
-        var proc = Procedimento.Create(tenantId, tenantId.ToString("N")[..8], "Proc SemTabela", "1", 5, false, false);
+        var proc = Procedimento.Create(tenantId, tenantId.ToString("N")[..8], "Proc SemTabela", "1", "5", false, false);
         ctx.Add(prestador);
         ctx.Add(operadora);
         ctx.Add(proc);
@@ -62,7 +62,7 @@ public sealed class UnimedAnestesiaPipelineTests(PostgresContainerFixture db)
     {
         var prestador = Prestador.Create(tenantId, "Dr. SemDeflator", null);
         var operadora = Operadora.Create(tenantId, "UNIMED-SD" + tenantId.ToString("N")[..6], null, null, TipoRuleSet.Unimed);
-        var proc = Procedimento.Create(tenantId, tenantId.ToString("N")[..8], "Proc SemDeflator", "1", 5, false, false);
+        var proc = Procedimento.Create(tenantId, tenantId.ToString("N")[..8], "Proc SemDeflator", "1", "5", false, false);
         ctx.Add(prestador);
         ctx.Add(operadora);
         ctx.Add(proc);
@@ -105,7 +105,7 @@ public sealed class UnimedAnestesiaPipelineTests(PostgresContainerFixture db)
         var tenantId = Guid.NewGuid();
         var (ctx, service) = Build(tenantId);
         await using var _ = ctx;
-        var (pId, oId, procId) = await SeedCompletoAsync(ctx, tenantId, porteAnestesico: null);
+        var (pId, oId, procId) = await SeedCompletoAsync(ctx, tenantId, porteAnestesico: (string?)null);
 
         var result = await service.CriarAsync(
             Cmd(pId, oId, procId, "SEN-AN02", Acomodacao.Enfermaria, false));

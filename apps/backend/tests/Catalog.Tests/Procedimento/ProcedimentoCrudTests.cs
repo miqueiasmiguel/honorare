@@ -108,7 +108,7 @@ public sealed class ProcedimentoCrudTests(PostgresContainerFixture db)
     }
 
     [Fact]
-    public async Task CriarProcedimento_PorteAnestesico9_RetornaValidationErrorAsync()
+    public async Task CriarProcedimento_PorteAnestesicoDigito_RetornaValidationErrorAsync()
     {
         var tenantId = Guid.NewGuid();
         var (ctx, user) = BuildTenant(tenantId);
@@ -116,14 +116,14 @@ public sealed class ProcedimentoCrudTests(PostgresContainerFixture db)
         var service = new CatalogService(ctx, user);
 
         var result = await service.CriarProcedimentoAsync(
-            new SalvarProcedimentoCommand("30715013", "Herniorrafia inguinal", null, 9, false, false, true));
+            new SalvarProcedimentoCommand("30715013", "Herniorrafia inguinal", null, "9", false, false, true));
 
         Assert.True(result.IsFailure);
         Assert.IsType<ValidationError>(result.Error);
     }
 
     [Fact]
-    public async Task CriarProcedimento_PorteAnestesico0_PermitidoAsync()
+    public async Task CriarProcedimento_PorteAnestesicoLetraO_RetornaValidationErrorAsync()
     {
         var tenantId = Guid.NewGuid();
         var (ctx, user) = BuildTenant(tenantId);
@@ -131,10 +131,25 @@ public sealed class ProcedimentoCrudTests(PostgresContainerFixture db)
         var service = new CatalogService(ctx, user);
 
         var result = await service.CriarProcedimentoAsync(
-            new SalvarProcedimentoCommand("30715014", "Herniorrafia inguinal", null, 0, false, false, true));
+            new SalvarProcedimentoCommand("30715013", "Herniorrafia inguinal", null, "O", false, false, true));
+
+        Assert.True(result.IsFailure);
+        Assert.IsType<ValidationError>(result.Error);
+    }
+
+    [Fact]
+    public async Task CriarProcedimento_PorteAnestesicoA_PermitidoAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var service = new CatalogService(ctx, user);
+
+        var result = await service.CriarProcedimentoAsync(
+            new SalvarProcedimentoCommand("30715014", "Herniorrafia inguinal", null, "A", false, false, true));
 
         Assert.True(result.IsSuccess);
-        Assert.Equal(0, result.Value!.PorteAnestesico);
+        Assert.Equal("A", result.Value!.PorteAnestesico);
     }
 
     [Fact]
@@ -244,12 +259,12 @@ public sealed class ProcedimentoCrudTests(PostgresContainerFixture db)
 
         var result = await service.AtualizarProcedimentoAsync(
             created.Value!.Id,
-            new SalvarProcedimentoCommand("70000001", "Proc flags atualizado", "6B", 4, true, true, true));
+            new SalvarProcedimentoCommand("70000001", "Proc flags atualizado", "6B", "D", true, true, true));
 
         Assert.True(result.IsSuccess);
         Assert.Equal("Proc flags atualizado", result.Value!.Descricao);
         Assert.Equal("6B", result.Value.Porte);
-        Assert.Equal(4, result.Value.PorteAnestesico);
+        Assert.Equal("D", result.Value.PorteAnestesico);
         Assert.True(result.Value.EhSadt);
         Assert.True(result.Value.TemPorteProprioVideo);
     }

@@ -116,7 +116,7 @@ GET  /api/v1/admin/tabelas-porte-anestesico?operadoraId={guid}
 
 ---
 
-## PA-02 · Procedimento.PorteAnestesico: int? → string? [ ]
+## PA-02 · Procedimento.PorteAnestesico: int? → string? [x]
 
 ### Testes a modificar
 

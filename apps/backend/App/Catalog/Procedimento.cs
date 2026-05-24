@@ -9,7 +9,7 @@ internal sealed class Procedimento : ITenantEntity
     public string CodigoTuss { get; private set; } = string.Empty;
     public string Descricao { get; private set; } = string.Empty;
     public string? Porte { get; private set; }
-    public int? PorteAnestesico { get; private set; }
+    public string? PorteAnestesico { get; private set; }
     public bool EhSadt { get; private set; }
     public bool TemPorteProprioVideo { get; private set; }
     public bool Ativo { get; private set; }
@@ -22,7 +22,7 @@ internal sealed class Procedimento : ITenantEntity
         string codigoTuss,
         string descricao,
         string? porte,
-        int? porteAnestesico,
+        string? porteAnestesico,
         bool ehSadt,
         bool temPorteProprioVideo)
     {
@@ -45,7 +45,7 @@ internal sealed class Procedimento : ITenantEntity
         string codigoTuss,
         string descricao,
         string? porte,
-        int? porteAnestesico,
+        string? porteAnestesico,
         bool ehSadt,
         bool temPorteProprioVideo,
         bool ativo)
