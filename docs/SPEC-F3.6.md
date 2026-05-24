@@ -473,7 +473,7 @@ Atualizar spec do componente: `porteAnestesico` signal de `''` string, não núm
 
 ---
 
-## PA-09 · Admin-web: modal importação porte anestésico [ ]
+## PA-09 · Admin-web: modal importação porte anestésico [x]
 
 Criar seguindo o padrão exato de `apps/admin-web/src/app/admin/catalog/tabelas/tabela-csv-modal/`.
 
