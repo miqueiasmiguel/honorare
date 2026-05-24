@@ -369,7 +369,7 @@ SegundoAuxiliar_Apartamento_NaoDobra
 
 ---
 
-## PA-05 · Migration [ ]
+## PA-05 · Migration [x]
 
 Executar de dentro de `apps/backend/App/`:
 
