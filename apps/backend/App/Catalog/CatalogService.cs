@@ -71,6 +71,18 @@ internal sealed record AtualizarOperadoraCommand(
 internal sealed record ListarBeneficiariosQuery(
     string? Carteira, string? Nome, int Pagina, int ItensPorPagina);
 
+internal sealed record TabelaPorteAnestesicoItem(
+    Guid Id, string PorteLetra, decimal ValorEnfermaria, decimal ValorApartamento,
+    decimal? ValorAmbulatorial, DateTimeOffset AtualizadoEm);
+
+internal sealed record ImportarCsvErro(int Linha, string Mensagem);
+
+internal sealed record ImportarTabelaPorteResult(
+    int PortesAtualizados,
+    int ProcedimentosAtualizados,
+    IReadOnlyList<string> ProcedimentosNaoEncontrados,
+    IReadOnlyList<ImportarCsvErro> Erros);
+
 internal sealed record ListarBeneficiariosResult(
     IReadOnlyList<BeneficiarioDto> Itens, int Total, int Pagina, int ItensPorPagina);
 
@@ -1179,5 +1191,172 @@ internal sealed class CatalogService(AppDbContext db, ICurrentUser currentUser)
         }
 
         return null;
+    }
+
+    // ── TabelaPorteAnestesico ─────────────────────────────────────────────────
+
+    internal async Task<IReadOnlyList<TabelaPorteAnestesicoItem>> ListarPortesAnestesicoAsync(
+        Guid operadoraId, CancellationToken ct = default)
+    {
+        return await _db.TabelasPorteAnestesico
+            .Where(t => t.OperadoraId == operadoraId)
+            .OrderBy(t => t.PorteLetra)
+            .Select(t => new TabelaPorteAnestesicoItem(
+                t.Id, t.PorteLetra, t.ValorEnfermaria, t.ValorApartamento,
+                t.ValorAmbulatorial, t.AtualizadoEm))
+            .ToListAsync(ct);
+    }
+
+    internal async Task<ImportarTabelaPorteResult> ImportarTabelaUnimedAnestesistaAsync(
+        Stream csvStream, Guid operadoraId, CancellationToken ct = default)
+    {
+        var tenantId = _currentUser.TenantId!.Value;
+        using var reader = new StreamReader(csvStream, Encoding.UTF8);
+
+        var allLines = new List<string>();
+        string? lida;
+        while ((lida = await reader.ReadLineAsync(ct)) is not null)
+        {
+            allLines.Add(lida);
+        }
+
+        // skip 8 header lines + 1 data-header (line 9) = skip first 9 lines
+        const int LinesToSkip = 9;
+        var erros = new List<ImportarCsvErro>();
+
+        var parsedRows = new List<(int LineNum, string CodigoTuss, string PorteLetra, decimal ValEnf, decimal ValAp)>();
+
+        for (var i = LinesToSkip; i < allLines.Count; i++)
+        {
+            var lineNum = i + 1;
+            var line = allLines[i].Trim();
+            if (string.IsNullOrEmpty(line))
+            {
+                continue;
+            }
+
+            var cols = SplitCsvLine(line);
+            if (cols.Length < 7)
+            {
+                erros.Add(new ImportarCsvErro(lineNum, "Linha com colunas insuficientes."));
+                continue;
+            }
+
+            var codigoTuss = cols[0].Trim();
+            var porteLetra = cols[6].Trim().ToUpperInvariant();
+            var valEnfStr = cols[4].Trim().Replace(',', '.');
+            var valApStr = cols[5].Trim().Replace(',', '.');
+
+            if (string.IsNullOrEmpty(codigoTuss))
+            {
+                erros.Add(new ImportarCsvErro(lineNum, "CodigoTuss vazio."));
+                continue;
+            }
+
+            if (string.IsNullOrEmpty(porteLetra) || porteLetra.Length != 1)
+            {
+                erros.Add(new ImportarCsvErro(lineNum, $"PorteLetra inválido: '{porteLetra}'."));
+                continue;
+            }
+
+            if (!decimal.TryParse(valEnfStr, System.Globalization.NumberStyles.Any,
+                System.Globalization.CultureInfo.InvariantCulture, out var valEnf) || valEnf < 0)
+            {
+                erros.Add(new ImportarCsvErro(lineNum, $"ValorEnfermaria inválido: '{cols[4]}'."));
+                continue;
+            }
+
+            if (!decimal.TryParse(valApStr, System.Globalization.NumberStyles.Any,
+                System.Globalization.CultureInfo.InvariantCulture, out var valAp) || valAp < 0)
+            {
+                erros.Add(new ImportarCsvErro(lineNum, $"ValorApartamento inválido: '{cols[5]}'."));
+                continue;
+            }
+
+            parsedRows.Add((lineNum, codigoTuss, porteLetra, valEnf, valAp));
+        }
+
+        // upsert TabelaPorteAnestesico — one record per distinct PorteLetra
+        var distinctPortes = parsedRows
+            .GroupBy(r => r.PorteLetra)
+            .Select(g => g.First())
+            .ToList();
+
+        var porteLetras = distinctPortes.Select(r => r.PorteLetra).ToList();
+        var existingPortes = await _db.TabelasPorteAnestesico
+            .Where(t => t.OperadoraId == operadoraId && porteLetras.Contains(t.PorteLetra))
+            .ToDictionaryAsync(t => t.PorteLetra, ct);
+
+        var portesAtualizados = 0;
+        foreach (var row in distinctPortes)
+        {
+            if (existingPortes.TryGetValue(row.PorteLetra, out var existing))
+            {
+                existing.Atualizar(row.ValEnf, row.ValAp);
+            }
+            else
+            {
+                _db.TabelasPorteAnestesico.Add(
+                    TabelaPorteAnestesico.Create(tenantId, operadoraId, row.PorteLetra, row.ValEnf, row.ValAp));
+            }
+
+            portesAtualizados++;
+        }
+
+        await _db.SaveChangesAsync(ct);
+
+        // track which distinct TUSS from CSV exist in Procedimentos
+        var distinctTuss = parsedRows.Select(r => r.CodigoTuss).Distinct().ToList();
+        var foundTuss = await _db.Procedimentos
+            .Where(p => distinctTuss.Contains(p.CodigoTuss))
+            .Select(p => p.CodigoTuss)
+            .ToHashSetAsync(ct);
+
+        var procedimentosAtualizados = foundTuss.Count;
+        var procedimentosNaoEncontrados = distinctTuss
+            .Where(t => !foundTuss.Contains(t))
+            .ToList();
+
+        return new ImportarTabelaPorteResult(
+            portesAtualizados,
+            procedimentosAtualizados,
+            procedimentosNaoEncontrados,
+            erros);
+    }
+
+    private static string[] SplitCsvLine(string line)
+    {
+        var fields = new List<string>();
+        var inQuotes = false;
+        var sb = new StringBuilder();
+
+        for (var i = 0; i < line.Length; i++)
+        {
+            var c = line[i];
+            if (c == '"')
+            {
+                if (inQuotes && i + 1 < line.Length && line[i + 1] == '"')
+                {
+                    sb.Append('"');
+                    i++;
+                }
+                else
+                {
+                    inQuotes = !inQuotes;
+                }
+            }
+            else if (c == ',' && !inQuotes)
+            {
+                fields.Add(sb.ToString());
+                sb.Clear();
+            }
+            else
+            {
+                sb.Append(c);
+            }
+        }
+
+        fields.Add(sb.ToString());
+        return [.. fields];
     }
 }

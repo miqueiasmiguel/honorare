@@ -54,6 +54,13 @@ internal static class CatalogEndpoints
         gb.MapPost("lookup-or-create", LookupOrCreateBeneficiarioAsync);
         gb.MapPut("{id:guid}", AtualizarBeneficiarioAsync);
         gb.MapDelete("{id:guid}", ExcluirBeneficiarioAsync);
+
+        var gporte = app
+            .MapGroup("/api/v1/admin/tabelas-porte-anestesico")
+            .RequireAuthorization("TenantAccess");
+
+        gporte.MapGet("", ListarPortesAnestesicoAsync);
+        gporte.MapPost("importar-unimed-csv", ImportarPorteAnestesicoCsvAsync).DisableAntiforgery();
     }
 
     // ── Operadora handlers ────────────────────────────────────────────────────
@@ -554,6 +561,37 @@ internal static class CatalogEndpoints
 
         using var stream = file.OpenReadStream();
         var result = await service.ImportarProcedimentosCsvAsync(stream, ct);
+        return Results.Ok(result);
+    }
+
+    // ── TabelaPorteAnestesico handlers ────────────────────────────────────────
+
+    private static async Task<IResult> ListarPortesAnestesicoAsync(
+        Guid operadoraId, CatalogService service, CancellationToken ct)
+    {
+        var result = await service.ListarPortesAnestesicoAsync(operadoraId, ct);
+        return Results.Ok(result);
+    }
+
+    private static async Task<IResult> ImportarPorteAnestesicoCsvAsync(
+        IFormFile? file, Guid operadoraId, CatalogService service, CancellationToken ct)
+    {
+        if (file is null || file.Length == 0)
+        {
+            return Results.Problem(
+                statusCode: StatusCodes.Status400BadRequest,
+                detail: "É necessário enviar um arquivo CSV.");
+        }
+
+        if (file.Length > 5 * 1024 * 1024)
+        {
+            return Results.Problem(
+                statusCode: StatusCodes.Status400BadRequest,
+                detail: "O arquivo excede o tamanho máximo de 5 MB.");
+        }
+
+        using var stream = file.OpenReadStream();
+        var result = await service.ImportarTabelaUnimedAnestesistaAsync(stream, operadoraId, ct);
         return Results.Ok(result);
     }
 }

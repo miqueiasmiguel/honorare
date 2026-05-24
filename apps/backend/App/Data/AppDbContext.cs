@@ -22,6 +22,7 @@ internal class AppDbContext(
     public DbSet<TabelaProcedimento> TabelasProcedimento => Set<TabelaProcedimento>();
     public DbSet<DeflatorPrestador> DeflatoresPrestador => Set<DeflatorPrestador>();
     public DbSet<Beneficiario> Beneficiarios => Set<Beneficiario>();
+    public DbSet<TabelaPorteAnestesico> TabelasPorteAnestesico => Set<TabelaPorteAnestesico>();
     public DbSet<Guia> Guias => Set<Guia>();
     public DbSet<ItemGuia> ItensGuia => Set<ItemGuia>();
     public DbSet<Calculo> Calculos => Set<Calculo>();
