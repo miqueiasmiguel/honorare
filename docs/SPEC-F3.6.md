@@ -289,7 +289,7 @@ TracePersistePassos                   → passos.Count >= 1, contém "ValorBase"
 
 ---
 
-## PA-04B · AcomodacaoModifier — dobra apenas para cirurgião [ ]
+## PA-04B · AcomodacaoModifier — dobra apenas para cirurgião [x]
 
 **Bug atual:** `AcomodacaoModifier.Aplicar(Acomodacao, decimal)` aplica ×2 para qualquer posição em apartamento. 1º auxiliar em apto recebe hoje `valor × 2 × 0,6 = 1,2× valor` (errado; correto é `0,6× valor`). Nenhum teste de pipeline cobre `Auxiliar + Apartamento`, então o bug passou despercebido. Anestesista também ficava errado pela mesma razão, mas o novo pipeline de PA-03 já remove o passo Acomodação para anestesia — esta tarefa cobre só o pipeline cirúrgico.
 

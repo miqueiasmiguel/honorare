@@ -102,7 +102,7 @@ UNIMED aplica acréscimo de **17,19%** sobre o valor da CBHPM 2015 para o porte 
 ### Dobra por acomodação
 
 - **Enfermaria contratada:** valor de referência, sem multiplicador.
-- **Apartamento contratado:** honorários × 2 (a "dobra de apartamento").
+- **Apartamento contratado:** honorários × 2 (a "dobra de apartamento"). **Aplica-se exclusivamente ao cirurgião. Auxiliares (1º/2º/3º), clínico assistente e anestesista em apartamento recebem fator 1,0.**
 - **Ambulatorial:** sem dobra.
 - **UTI:** segue o tipo de acomodação contratada (regra própria).
 
@@ -152,33 +152,29 @@ A ordem afeta o resultado. **Esta é a ordem implementada no `UnimedRuleSet`, va
 1. Valor base: `TabelaProcedimento.Valor × (DeflatorPrestador.Percentual / 100)`
 2. Ordem de procedimento: Único/Principal=1.0 · SecundarioMesmaVia=0.5 · SecundarioViaDiferente=0.7
 3. Videolaparoscopia: `Via=Videolaparoscopia` e `!TemPorteProprioVideo` → ×1.5; senão ×1.0
-4. Acomodação: Apartamento → ×2.0; Ambulatorial/Enfermaria → ×1.0
+4. Acomodação: `Apartamento && Posicao == Cirurgiao` → ×2.0; demais → ×1.0
 5. Urgência: `EhUrgencia` e `!EhSadt` → ×1.3; senão ×1.0
 6. Posição do executor: PrimeiroAuxiliar=0.6 · SegundoAuxiliar=0.4 · TerceiroAuxiliar=0.3 · demais=1.0
 
 Confirmar com guias reais (P0.2) se há variação por Singular. Anestesista usa pipeline próprio — ver seção abaixo.
 
-## Anestesia — pipeline próprio (F3.3)
+## Anestesia — pipeline próprio (PA-03/PA-04)
 
-Anestesista tem mecânica separada dos honorários cirúrgicos, implementada em `AnestesiaCalculator` dentro de `App/Faturamento/Calculo/Unimed/`. O pipeline de 6 passos (ordem obrigatória):
+Anestesista tem mecânica separada dos honorários cirúrgicos, implementada em `UnimedRuleSet.ApurarAnestesistaAsync` + `AnestesiaCalculator`. **Não passa pelo `AcomodacaoModifier`** — a acomodação já determina o valor de referência na seleção da `TabelaPorteAnestesico`.
 
-1. `ValorBase = TabelaProcedimento.Valor × (DeflatorPrestador.Percentual / 100)`
-2. `UnimedAN = ValorBase × 1.1719` — acréscimo de 17,19% sobre CBHPM 2015
-3. `OrdemProcedimento`: Único/Principal=1.0 · SecundarioMesmaVia=0.5 · SecundarioViaDiferente=0.7
-4. `Acomodacao`: Apartamento=2.0 · Ambulatorial/Enfermaria=1.0
-5. `Urgencia`: `EhUrgencia && !EhSadt` → ×1.3; senão ×1.0
-6. `TempoExtra`: acréscimo por hora cheia excedente ao tempo base do porte anestésico (PA)
+**Seleção do valor de referência pela acomodação:**
 
-**Tempo extra:**
+- Apartamento → `TabelaPorteAnestesico.ValorApartamento`
+- Ambulatorial → `TabelaPorteAnestesico.ValorAmbulatorial ?? ValorEnfermaria`
+- Enfermaria / demais → `TabelaPorteAnestesico.ValorEnfermaria`
 
-- `TempoBaseMin` por PA: 1→60, 2→90, 3→120, 4→150, 5→180, 6→240, 7→300, 8→360 minutos
-- `TempoExtraHoras = max(0, ceil((TempoAnestesicoMin − TempoBaseMin) / 60))`
-- `FatorExtra`: PA ≤ 4 → 0,30; PA ≥ 5 → 0,50
-- `AcrescimoTempo = TempoExtraHoras × FatorExtra × (ValorBase × 1.1719)` — incide sobre passo 2, não sobre valor pós-acomodação
+**Pipeline (ordem obrigatória):**
 
-**Early-exits:** `SemTabela` (sem TabelaProcedimento), `SemDeflator` (sem DeflatorPrestador para Anestesista), `Indeterminado` (PorteAnestesico nulo no Procedimento).
+1. `ValorBase = valorReferencia × (DeflatorPrestador.Percentual / 100)`
+2. `OrdemProcedimento`: Único/Principal=1.0 · SecundarioMesmaVia=0.5 · SecundarioViaDiferente=0.7
+3. `Urgencia`: `EhUrgencia && !EhSadt` → ×1.3; senão ×1.0
 
-`TempoAnestesicoMin` é opcional — quando nulo, passo 6 não aplica. Campo exibido no formulário Angular apenas quando `posicaoExecutor === 'Anestesista'`.
+**Early-exits:** `Indeterminado` (PorteAnestesico nulo no Procedimento), `SemTabela` (sem TabelaPorteAnestesico para o porte), `SemDeflator` (sem DeflatorPrestador para Anestesista).
 
 ## Casos especiais não tratados no MVP
 

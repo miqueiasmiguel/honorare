@@ -57,7 +57,7 @@ internal sealed class UnimedRuleSet(AppDbContext db) : IPricingRuleSet
         var valorAtual = valorBase;
         valorAtual = AplicarModifier(OrdemProcedimentoModifier.Aplicar(item.Ordem, valorAtual), passos);
         valorAtual = AplicarModifier(VideolaparoscopiaModifier.Aplicar(item.Via, procedimento?.TemPorteProprioVideo ?? false, valorAtual), passos);
-        valorAtual = AplicarModifier(AcomodacaoModifier.Aplicar(item.Acomodacao, valorAtual), passos);
+        valorAtual = AplicarModifier(AcomodacaoModifier.Aplicar(item.Acomodacao, item.Posicao, valorAtual), passos);
         valorAtual = AplicarModifier(UrgenciaModifier.Aplicar(item.EhUrgencia, procedimento?.EhSadt ?? false, valorAtual), passos);
         AplicarModifier(PosicaoExecutorModifier.Aplicar(item.Posicao, valorAtual), passos);
 

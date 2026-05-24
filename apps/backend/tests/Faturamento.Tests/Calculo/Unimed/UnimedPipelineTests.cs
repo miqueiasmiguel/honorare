@@ -210,6 +210,38 @@ public sealed class UnimedPipelineTests(PostgresContainerFixture db)
         Assert.True(result.IsSuccess);
         Assert.Equal(3000m, result.Value!.Itens[0].ValorApurado);
     }
+
+    [Fact]
+    public async Task PrimeiroAuxiliar_Apartamento_NaoDobra_PipelineAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, service) = Build(tenantId);
+        await using var _ = ctx;
+        var (pId, oId, procId) = await SeedAsync(ctx, tenantId);
+
+        var result = await service.CriarAsync(
+            Cmd(pId, oId, procId, "SEN-P11", PosicaoExecutor.PrimeiroAuxiliar,
+                OrdemProcedimento.Unico, ViaAcesso.Convencional, Acomodacao.Apartamento, false));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(600m, result.Value!.Itens[0].ValorApurado); // 1000 × 1.0 × 0.6
+    }
+
+    [Fact]
+    public async Task SegundoAuxiliar_Apartamento_NaoDobra_PipelineAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, service) = Build(tenantId);
+        await using var _ = ctx;
+        var (pId, oId, procId) = await SeedAsync(ctx, tenantId);
+
+        var result = await service.CriarAsync(
+            Cmd(pId, oId, procId, "SEN-P12", PosicaoExecutor.SegundoAuxiliar,
+                OrdemProcedimento.Unico, ViaAcesso.Convencional, Acomodacao.Apartamento, false));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(400m, result.Value!.Itens[0].ValorApurado); // 1000 × 1.0 × 0.4
+    }
 }
 
 file sealed class FakePipelineUser(Guid tenantId) : ICurrentUser
