@@ -6,167 +6,102 @@ namespace Faturamento.Tests.Motor.Unimed;
 public sealed class AnestesiaCalculatorTests
 {
     [Fact]
-    public void Basico_SemTempoExtra_Enfermaria()
+    public void Basico_Enfermaria_SemUrgencia()
     {
-        var (valor, _) = AnestesiaCalculator.Calcular(
-            valorTabela: 1000m,
+        var (valor, passos) = AnestesiaCalculator.Calcular(
+            valorReferencia: 526.50m,
             deflatorPercentual: 100m,
-            porteAnestesico: 5,
-            tempoAnestesicoMin: 180,
             ordem: OrdemProcedimento.Unico,
-            acomodacao: Acomodacao.Enfermaria,
             ehUrgencia: false,
             ehSadt: false);
 
-        Assert.Equal(1171.90m, valor);
+        Assert.Equal(526.50m, valor);
+        Assert.Contains(passos, p => p.Regra == "ValorBase");
+        Assert.DoesNotContain(passos, p => p.Regra == "UnimedAN");
+        Assert.DoesNotContain(passos, p => p.Regra == "TempoExtra");
     }
 
     [Fact]
-    public void ComMultiplicadorApartamento()
+    public void ComDeflator80()
     {
         var (valor, _) = AnestesiaCalculator.Calcular(
-            valorTabela: 1000m,
-            deflatorPercentual: 100m,
-            porteAnestesico: 5,
-            tempoAnestesicoMin: 180,
+            valorReferencia: 526.50m,
+            deflatorPercentual: 80m,
             ordem: OrdemProcedimento.Unico,
-            acomodacao: Acomodacao.Apartamento,
             ehUrgencia: false,
             ehSadt: false);
 
-        Assert.Equal(2343.80m, valor);
+        Assert.Equal(421.20m, valor);
     }
 
     [Fact]
     public void ComUrgencia()
     {
         var (valor, _) = AnestesiaCalculator.Calcular(
-            valorTabela: 1000m,
+            valorReferencia: 526.50m,
             deflatorPercentual: 100m,
-            porteAnestesico: 5,
-            tempoAnestesicoMin: 180,
             ordem: OrdemProcedimento.Unico,
-            acomodacao: Acomodacao.Enfermaria,
             ehUrgencia: true,
             ehSadt: false);
 
-        Assert.Equal(1523.47m, valor);
+        Assert.Equal(684.45m, valor);
     }
 
     [Fact]
-    public void ComTempoExtraPA5_UmaHora()
+    public void UrgenciaEmSadt_NaoAplica()
     {
         var (valor, _) = AnestesiaCalculator.Calcular(
-            valorTabela: 1000m,
+            valorReferencia: 526.50m,
             deflatorPercentual: 100m,
-            porteAnestesico: 5,
-            tempoAnestesicoMin: 240,
             ordem: OrdemProcedimento.Unico,
-            acomodacao: Acomodacao.Enfermaria,
-            ehUrgencia: false,
-            ehSadt: false);
+            ehUrgencia: true,
+            ehSadt: true);
 
-        Assert.Equal(1757.85m, valor);
+        Assert.Equal(526.50m, valor);
     }
 
     [Fact]
-    public void ComTempoExtraPA3_UmaHora()
+    public void SecundarioMesmaVia()
     {
         var (valor, _) = AnestesiaCalculator.Calcular(
-            valorTabela: 1000m,
+            valorReferencia: 526.50m,
             deflatorPercentual: 100m,
-            porteAnestesico: 3,
-            tempoAnestesicoMin: 180,
-            ordem: OrdemProcedimento.Unico,
-            acomodacao: Acomodacao.Enfermaria,
-            ehUrgencia: false,
-            ehSadt: false);
-
-        Assert.Equal(1523.47m, valor);
-    }
-
-    [Fact]
-    public void TempoNulo_NaoAplicaAcrescimo()
-    {
-        var (valor, _) = AnestesiaCalculator.Calcular(
-            valorTabela: 1000m,
-            deflatorPercentual: 100m,
-            porteAnestesico: 5,
-            tempoAnestesicoMin: null,
-            ordem: OrdemProcedimento.Unico,
-            acomodacao: Acomodacao.Enfermaria,
-            ehUrgencia: false,
-            ehSadt: false);
-
-        Assert.Equal(1171.90m, valor);
-    }
-
-    [Fact]
-    public void TempoMenorQueBase_NaoAplicaAcrescimo()
-    {
-        var (valor, _) = AnestesiaCalculator.Calcular(
-            valorTabela: 1000m,
-            deflatorPercentual: 100m,
-            porteAnestesico: 5,
-            tempoAnestesicoMin: 120,
-            ordem: OrdemProcedimento.Unico,
-            acomodacao: Acomodacao.Enfermaria,
-            ehUrgencia: false,
-            ehSadt: false);
-
-        Assert.Equal(1171.90m, valor);
-    }
-
-    [Fact]
-    public void OrdemSecundarioMesmaVia_Aplicada()
-    {
-        var (valor, _) = AnestesiaCalculator.Calcular(
-            valorTabela: 1000m,
-            deflatorPercentual: 100m,
-            porteAnestesico: 5,
-            tempoAnestesicoMin: 180,
             ordem: OrdemProcedimento.SecundarioMesmaVia,
-            acomodacao: Acomodacao.Enfermaria,
             ehUrgencia: false,
             ehSadt: false);
 
-        Assert.Equal(585.95m, valor);
+        Assert.Equal(263.25m, valor);
     }
 
     [Fact]
-    public void Trace_ContemTodosPassosAplicados()
+    public void SecundarioViaDiferente()
+    {
+        var (valor, _) = AnestesiaCalculator.Calcular(
+            valorReferencia: 526.50m,
+            deflatorPercentual: 100m,
+            ordem: OrdemProcedimento.SecundarioViaDiferente,
+            ehUrgencia: false,
+            ehSadt: false);
+
+        Assert.Equal(368.55m, valor);
+    }
+
+    [Fact]
+    public void Trace_ContemPassosAplicados()
     {
         var (_, passos) = AnestesiaCalculator.Calcular(
-            valorTabela: 1000m,
-            deflatorPercentual: 100m,
-            porteAnestesico: 5,
-            tempoAnestesicoMin: 240,
+            valorReferencia: 526.50m,
+            deflatorPercentual: 80m,
             ordem: OrdemProcedimento.SecundarioMesmaVia,
-            acomodacao: Acomodacao.Apartamento,
             ehUrgencia: true,
             ehSadt: false);
 
         var regras = passos.Select(p => p.Regra).ToList();
         Assert.Contains("ValorBase", regras);
-        Assert.Contains("UnimedAN", regras);
         Assert.Contains("OrdemProcedimento", regras);
-        Assert.Contains("Acomodacao", regras);
         Assert.Contains("Urgencia", regras);
-        Assert.Contains("TempoExtra", regras);
-    }
-
-    [Fact]
-    public void PaForaDaFaixa_LancaArgumentException()
-    {
-        Assert.Throws<ArgumentOutOfRangeException>(() =>
-            AnestesiaCalculator.Calcular(
-                valorTabela: 1000m,
-                deflatorPercentual: 100m,
-                porteAnestesico: 9,
-                tempoAnestesicoMin: null,
-                ordem: OrdemProcedimento.Unico,
-                acomodacao: Acomodacao.Enfermaria,
-                ehUrgencia: false,
-                ehSadt: false));
+        Assert.DoesNotContain("Acomodacao", regras);
+        Assert.DoesNotContain("UnimedAN", regras);
+        Assert.DoesNotContain("TempoExtra", regras);
     }
 }

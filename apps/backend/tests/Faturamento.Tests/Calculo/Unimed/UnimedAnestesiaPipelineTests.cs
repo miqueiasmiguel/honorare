@@ -96,7 +96,7 @@ public sealed class UnimedAnestesiaPipelineTests(PostgresContainerFixture db)
             Cmd(pId, oId, procId, "SEN-AN01", Acomodacao.Enfermaria, false));
 
         Assert.True(result.IsSuccess);
-        Assert.Equal(1171.90m, result.Value!.Itens[0].ValorApurado);
+        Assert.Equal(1000m, result.Value!.Itens[0].ValorApurado);
     }
 
     [Fact]
@@ -156,7 +156,7 @@ public sealed class UnimedAnestesiaPipelineTests(PostgresContainerFixture db)
             Cmd(pId, oId, procId, "SEN-AN05", Acomodacao.Apartamento, false));
 
         Assert.True(result.IsSuccess);
-        Assert.Equal(2343.80m, result.Value!.Itens[0].ValorApurado);
+        Assert.Equal(1000m, result.Value!.Itens[0].ValorApurado);
     }
 
     [Fact]
@@ -171,7 +171,7 @@ public sealed class UnimedAnestesiaPipelineTests(PostgresContainerFixture db)
             Cmd(pId, oId, procId, "SEN-AN06", Acomodacao.Enfermaria, false, tempoAnestesicoMin: 240));
 
         Assert.True(result.IsSuccess);
-        Assert.Equal(1757.85m, result.Value!.Itens[0].ValorApurado);
+        Assert.Equal(1000m, result.Value!.Itens[0].ValorApurado);
     }
 
     [Fact]
@@ -186,7 +186,7 @@ public sealed class UnimedAnestesiaPipelineTests(PostgresContainerFixture db)
             Cmd(pId, oId, procId, "SEN-AN07", Acomodacao.Enfermaria, true));
 
         Assert.True(result.IsSuccess);
-        Assert.Equal(1523.47m, result.Value!.Itens[0].ValorApurado);
+        Assert.Equal(1300m, result.Value!.Itens[0].ValorApurado);
     }
 
     [Fact]
@@ -207,7 +207,7 @@ public sealed class UnimedAnestesiaPipelineTests(PostgresContainerFixture db)
 
         Assert.True(calculoResult.IsSuccess);
         var item = calculoResult.Value!.Itens[0];
-        Assert.True(item.Passos.Count >= 2);
+        Assert.True(item.Passos.Count >= 1);
     }
 }
 
