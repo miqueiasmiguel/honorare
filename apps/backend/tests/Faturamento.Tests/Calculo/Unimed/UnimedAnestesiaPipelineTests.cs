@@ -23,7 +23,8 @@ public sealed class UnimedAnestesiaPipelineTests(PostgresContainerFixture db)
     }
 
     private static async Task<(Guid prestadorId, Guid operadoraId, Guid procedimentoId)>
-        SeedCompletoAsync(AppDbContext ctx, Guid tenantId, string? porteAnestesico = "5")
+        SeedCompletoAsync(AppDbContext ctx, Guid tenantId, decimal deflatorPercentual = 100m,
+            string? porteAnestesico = "J")
     {
         var prestador = Prestador.Create(tenantId, "Dr. Anestesia", null);
         var operadora = Operadora.Create(tenantId, "UNIMED-AN" + tenantId.ToString("N")[..6], null, null, TipoRuleSet.Unimed);
@@ -33,19 +34,19 @@ public sealed class UnimedAnestesiaPipelineTests(PostgresContainerFixture db)
         ctx.Add(proc);
         await ctx.SaveChangesAsync();
 
-        ctx.Add(TabelaProcedimento.Create(tenantId, operadora.Id, proc.Id, 1000m));
-        ctx.Add(DeflatorPrestador.Create(tenantId, prestador.Id, operadora.Id, PosicaoExecutor.Anestesista, 100m));
+        ctx.Add(TabelaPorteAnestesico.Create(tenantId, operadora.Id, "J", 526.50m, 842.40m, null));
+        ctx.Add(DeflatorPrestador.Create(tenantId, prestador.Id, operadora.Id, PosicaoExecutor.Anestesista, deflatorPercentual));
         await ctx.SaveChangesAsync();
 
         return (prestador.Id, operadora.Id, proc.Id);
     }
 
     private static async Task<(Guid prestadorId, Guid operadoraId, Guid procedimentoId)>
-        SeedSemTabelaAsync(AppDbContext ctx, Guid tenantId)
+        SeedSemTabelaPorteAsync(AppDbContext ctx, Guid tenantId)
     {
         var prestador = Prestador.Create(tenantId, "Dr. SemTabela", null);
         var operadora = Operadora.Create(tenantId, "UNIMED-ST" + tenantId.ToString("N")[..6], null, null, TipoRuleSet.Unimed);
-        var proc = Procedimento.Create(tenantId, tenantId.ToString("N")[..8], "Proc SemTabela", "1", "5", false, false);
+        var proc = Procedimento.Create(tenantId, tenantId.ToString("N")[..8], "Proc SemTabela", "1", "J", false, false);
         ctx.Add(prestador);
         ctx.Add(operadora);
         ctx.Add(proc);
@@ -62,13 +63,13 @@ public sealed class UnimedAnestesiaPipelineTests(PostgresContainerFixture db)
     {
         var prestador = Prestador.Create(tenantId, "Dr. SemDeflator", null);
         var operadora = Operadora.Create(tenantId, "UNIMED-SD" + tenantId.ToString("N")[..6], null, null, TipoRuleSet.Unimed);
-        var proc = Procedimento.Create(tenantId, tenantId.ToString("N")[..8], "Proc SemDeflator", "1", "5", false, false);
+        var proc = Procedimento.Create(tenantId, tenantId.ToString("N")[..8], "Proc SemDeflator", "1", "J", false, false);
         ctx.Add(prestador);
         ctx.Add(operadora);
         ctx.Add(proc);
         await ctx.SaveChangesAsync();
 
-        ctx.Add(TabelaProcedimento.Create(tenantId, operadora.Id, proc.Id, 1000m));
+        ctx.Add(TabelaPorteAnestesico.Create(tenantId, operadora.Id, "J", 526.50m, 842.40m, null));
         await ctx.SaveChangesAsync();
 
         return (prestador.Id, operadora.Id, proc.Id);
@@ -85,7 +86,7 @@ public sealed class UnimedAnestesiaPipelineTests(PostgresContainerFixture db)
                 acomodacao, ehUrgencia, null, tempoAnestesicoMin)]);
 
     [Fact]
-    public async Task Anestesista_PA5_SemTempo_Enfermaria_CalculadoAsync()
+    public async Task Anestesista_PorteJ_Enfermaria_CalculadoAsync()
     {
         var tenantId = Guid.NewGuid();
         var (ctx, service) = Build(tenantId);
@@ -96,34 +97,64 @@ public sealed class UnimedAnestesiaPipelineTests(PostgresContainerFixture db)
             Cmd(pId, oId, procId, "SEN-AN01", Acomodacao.Enfermaria, false));
 
         Assert.True(result.IsSuccess);
-        Assert.Equal(1000m, result.Value!.Itens[0].ValorApurado);
+        Assert.Equal(526.50m, result.Value!.Itens[0].ValorApurado);
     }
 
     [Fact]
-    public async Task Anestesista_PA5_SemPorteAnestesico_IndeterminadoAsync()
+    public async Task Anestesista_PorteJ_Apartamento_CalculadoAsync()
     {
         var tenantId = Guid.NewGuid();
         var (ctx, service) = Build(tenantId);
         await using var _ = ctx;
-        var (pId, oId, procId) = await SeedCompletoAsync(ctx, tenantId, porteAnestesico: (string?)null);
+        var (pId, oId, procId) = await SeedCompletoAsync(ctx, tenantId);
 
         var result = await service.CriarAsync(
-            Cmd(pId, oId, procId, "SEN-AN02", Acomodacao.Enfermaria, false));
+            Cmd(pId, oId, procId, "SEN-AN02", Acomodacao.Apartamento, false));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(842.40m, result.Value!.Itens[0].ValorApurado);
+    }
+
+    [Fact]
+    public async Task Anestesista_PorteJ_Urgencia_Enfermaria_CalculadoAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, service) = Build(tenantId);
+        await using var _ = ctx;
+        var (pId, oId, procId) = await SeedCompletoAsync(ctx, tenantId);
+
+        var result = await service.CriarAsync(
+            Cmd(pId, oId, procId, "SEN-AN03", Acomodacao.Enfermaria, true));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(684.45m, result.Value!.Itens[0].ValorApurado);
+    }
+
+    [Fact]
+    public async Task Anestesista_SemTabelaPorte_RetornaSemTabelaAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, service) = Build(tenantId);
+        await using var _ = ctx;
+        var (pId, oId, procId) = await SeedSemTabelaPorteAsync(ctx, tenantId);
+
+        var result = await service.CriarAsync(
+            Cmd(pId, oId, procId, "SEN-AN04", Acomodacao.Enfermaria, false));
 
         Assert.True(result.IsSuccess);
         Assert.Null(result.Value!.Itens[0].ValorApurado);
     }
 
     [Fact]
-    public async Task Anestesista_SemTabela_RetornaSemTabelaAsync()
+    public async Task Anestesista_PorteAnestesicoNulo_RetornaIndeterminadoAsync()
     {
         var tenantId = Guid.NewGuid();
         var (ctx, service) = Build(tenantId);
         await using var _ = ctx;
-        var (pId, oId, procId) = await SeedSemTabelaAsync(ctx, tenantId);
+        var (pId, oId, procId) = await SeedCompletoAsync(ctx, tenantId, porteAnestesico: null);
 
         var result = await service.CriarAsync(
-            Cmd(pId, oId, procId, "SEN-AN03", Acomodacao.Enfermaria, false));
+            Cmd(pId, oId, procId, "SEN-AN05", Acomodacao.Enfermaria, false));
 
         Assert.True(result.IsSuccess);
         Assert.Null(result.Value!.Itens[0].ValorApurado);
@@ -138,55 +169,25 @@ public sealed class UnimedAnestesiaPipelineTests(PostgresContainerFixture db)
         var (pId, oId, procId) = await SeedSemDeflatorAsync(ctx, tenantId);
 
         var result = await service.CriarAsync(
-            Cmd(pId, oId, procId, "SEN-AN04", Acomodacao.Enfermaria, false));
+            Cmd(pId, oId, procId, "SEN-AN06", Acomodacao.Enfermaria, false));
 
         Assert.True(result.IsSuccess);
         Assert.Null(result.Value!.Itens[0].ValorApurado);
     }
 
     [Fact]
-    public async Task Anestesista_PA5_Apartamento_CalculadoAsync()
+    public async Task Anestesista_Deflator80_Enfermaria_CalculadoAsync()
     {
         var tenantId = Guid.NewGuid();
         var (ctx, service) = Build(tenantId);
         await using var _ = ctx;
-        var (pId, oId, procId) = await SeedCompletoAsync(ctx, tenantId);
+        var (pId, oId, procId) = await SeedCompletoAsync(ctx, tenantId, deflatorPercentual: 80m);
 
         var result = await service.CriarAsync(
-            Cmd(pId, oId, procId, "SEN-AN05", Acomodacao.Apartamento, false));
+            Cmd(pId, oId, procId, "SEN-AN07", Acomodacao.Enfermaria, false));
 
         Assert.True(result.IsSuccess);
-        Assert.Equal(1000m, result.Value!.Itens[0].ValorApurado);
-    }
-
-    [Fact]
-    public async Task Anestesista_PA5_ComTempoExtra_UmaHora_CalculadoAsync()
-    {
-        var tenantId = Guid.NewGuid();
-        var (ctx, service) = Build(tenantId);
-        await using var _ = ctx;
-        var (pId, oId, procId) = await SeedCompletoAsync(ctx, tenantId);
-
-        var result = await service.CriarAsync(
-            Cmd(pId, oId, procId, "SEN-AN06", Acomodacao.Enfermaria, false, tempoAnestesicoMin: 240));
-
-        Assert.True(result.IsSuccess);
-        Assert.Equal(1000m, result.Value!.Itens[0].ValorApurado);
-    }
-
-    [Fact]
-    public async Task Anestesista_PA5_Urgencia_CalculadoAsync()
-    {
-        var tenantId = Guid.NewGuid();
-        var (ctx, service) = Build(tenantId);
-        await using var _ = ctx;
-        var (pId, oId, procId) = await SeedCompletoAsync(ctx, tenantId);
-
-        var result = await service.CriarAsync(
-            Cmd(pId, oId, procId, "SEN-AN07", Acomodacao.Enfermaria, true));
-
-        Assert.True(result.IsSuccess);
-        Assert.Equal(1300m, result.Value!.Itens[0].ValorApurado);
+        Assert.Equal(421.20m, result.Value!.Itens[0].ValorApurado);
     }
 
     [Fact]
@@ -208,6 +209,7 @@ public sealed class UnimedAnestesiaPipelineTests(PostgresContainerFixture db)
         Assert.True(calculoResult.IsSuccess);
         var item = calculoResult.Value!.Itens[0];
         Assert.True(item.Passos.Count >= 1);
+        Assert.Contains(item.Passos, p => p.Regra == "ValorBase");
     }
 }
 

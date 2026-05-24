@@ -68,14 +68,30 @@ internal sealed class UnimedRuleSet(AppDbContext db) : IPricingRuleSet
     private async Task<ApuracaoItemResult> ApurarAnestesistaAsync(
         ApurarGuiaContext ctx, ApurarItemInput item, CancellationToken ct)
     {
-        var tabela = await db.TabelasProcedimento
-            .Where(t => t.OperadoraId == ctx.OperadoraId && t.ProcedimentoId == item.ProcedimentoId)
+        var procedimento = await db.Procedimentos
+            .Where(p => p.Id == item.ProcedimentoId)
             .FirstOrDefaultAsync(ct);
 
-        if (tabela is null)
+        if (procedimento?.PorteAnestesico is null)
+        {
+            return new ApuracaoItemResult(item.ItemGuiaId, SituacaoApuracao.Indeterminado, null, []);
+        }
+
+        var tabelaPorte = await db.TabelasPorteAnestesico
+            .Where(t => t.OperadoraId == ctx.OperadoraId && t.PorteLetra == procedimento.PorteAnestesico)
+            .FirstOrDefaultAsync(ct);
+
+        if (tabelaPorte is null)
         {
             return new ApuracaoItemResult(item.ItemGuiaId, SituacaoApuracao.SemTabela, null, []);
         }
+
+        var valorReferencia = item.Acomodacao switch
+        {
+            Acomodacao.Apartamento => tabelaPorte.ValorApartamento,
+            Acomodacao.Ambulatorial => tabelaPorte.ValorAmbulatorial ?? tabelaPorte.ValorEnfermaria,
+            _ => tabelaPorte.ValorEnfermaria,
+        };
 
         var deflator = await db.DeflatoresPrestador
             .Where(d => d.PrestadorId == ctx.PrestadorId && d.OperadoraId == ctx.OperadoraId
@@ -87,17 +103,8 @@ internal sealed class UnimedRuleSet(AppDbContext db) : IPricingRuleSet
             return new ApuracaoItemResult(item.ItemGuiaId, SituacaoApuracao.SemDeflator, null, []);
         }
 
-        var procedimento = await db.Procedimentos
-            .Where(p => p.Id == item.ProcedimentoId)
-            .FirstOrDefaultAsync(ct);
-
-        if (procedimento?.PorteAnestesico is null)
-        {
-            return new ApuracaoItemResult(item.ItemGuiaId, SituacaoApuracao.Indeterminado, null, []);
-        }
-
         var (valorFinal, passos) = AnestesiaCalculator.Calcular(
-            tabela.Valor, deflator.Percentual,
+            valorReferencia, deflator.Percentual,
             item.Ordem, item.EhUrgencia, procedimento.EhSadt);
 
         return new ApuracaoItemResult(item.ItemGuiaId, SituacaoApuracao.Calculado, valorFinal, passos);

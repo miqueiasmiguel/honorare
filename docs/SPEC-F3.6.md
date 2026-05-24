@@ -159,7 +159,7 @@ if (!System.Text.RegularExpressions.Regex.IsMatch(porteAnestesico, @"^[A-NP-Z]$"
 
 ---
 
-## PA-03 · AnestesiaCalculator — novo pipeline [ ]
+## PA-03 · AnestesiaCalculator — novo pipeline [x]
 
 ### Testes a substituir
 
@@ -236,7 +236,7 @@ internal static class AnestesiaCalculator {
 
 ---
 
-## PA-04 · UnimedRuleSet — ApurarAnestesistaAsync [ ]
+## PA-04 · UnimedRuleSet — ApurarAnestesistaAsync [x]
 
 ### Testes a substituir
 
