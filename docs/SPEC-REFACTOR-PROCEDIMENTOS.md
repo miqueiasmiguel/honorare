@@ -155,7 +155,7 @@ Excluir_PorteAnestesico_Remove
 
 ---
 
-## RP-03 · Frontend — Modal unificado de importação
+## RP-03 · Frontend — Modal unificado de importação [x]
 
 ### Arquivo novo
 

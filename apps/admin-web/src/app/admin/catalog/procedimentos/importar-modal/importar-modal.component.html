@@ -1,0 +1,160 @@
+@if (open) {
+  <div class="importar-modal__backdrop">
+    <div class="importar-modal">
+      <header class="importar-modal__header">
+        <h2 class="importar-modal__title">Importar dados</h2>
+      </header>
+
+      <section class="importar-modal__section">
+        <h3 class="importar-modal__section-title">Tipo de importação</h3>
+        <div class="importar-modal__tipo-opcoes">
+          @for (opc of tiposDisponiveis; track opc.valor) {
+            <label
+              class="importar-modal__tipo-card"
+              [class.importar-modal__tipo-card--ativa]="tipo() === opc.valor"
+            >
+              <input
+                type="radio"
+                name="importar-modal-tipo"
+                class="importar-modal__tipo-radio"
+                [value]="opc.valor"
+                [checked]="tipo() === opc.valor"
+                (change)="onTipoChange(opc.valor)"
+              />
+              <span class="importar-modal__tipo-label">{{ opc.label }}</span>
+            </label>
+          }
+        </div>
+      </section>
+
+      @if (requerOperadora()) {
+        <section class="importar-modal__section">
+          <label class="importar-modal__section-title" for="importar-modal-operadora">
+            Operadora
+          </label>
+          <select
+            id="importar-modal-operadora"
+            class="importar-modal__select-operadora"
+            (change)="onOperadoraChange($any($event.target).value)"
+          >
+            <option value="">Selecionar operadora…</option>
+            @for (op of operadoras(); track op.id) {
+              <option [value]="op.id" [selected]="operadoraId() === op.id">{{ op.nome }}</option>
+            }
+          </select>
+        </section>
+      }
+
+      <section class="importar-modal__section">
+        <h3 class="importar-modal__section-title">Formato esperado</h3>
+        <dl class="importar-modal__formato">
+          <dt class="importar-modal__formato-label">Separador</dt>
+          <dd class="importar-modal__formato-valor">{{ formato().separador }}</dd>
+          <dt class="importar-modal__formato-label">Encoding</dt>
+          <dd class="importar-modal__formato-valor">{{ formato().encoding }}</dd>
+          <dt class="importar-modal__formato-label">Colunas</dt>
+          <dd class="importar-modal__formato-valor">
+            <code>{{ formato().colunas }}</code>
+          </dd>
+        </dl>
+        <pre class="importar-modal__formato-exemplo">{{ formato().exemplo }}</pre>
+        @if (formato().obsExtra) {
+          <p class="importar-modal__formato-obs">{{ formato().obsExtra }}</p>
+        }
+      </section>
+
+      <div class="importar-modal__upload">
+        <button type="button" class="importar-modal__btn-exemplo" (click)="baixarExemplo()">
+          Baixar arquivo de exemplo
+        </button>
+        <input
+          #csvInput
+          type="file"
+          accept=".csv"
+          class="importar-modal__input-csv"
+          (change)="onFileChange($event)"
+        />
+        <button
+          type="button"
+          class="importar-modal__btn-escolher"
+          [disabled]="uploading()"
+          (click)="csvInput.click()"
+        >
+          @if (arquivo(); as a) {
+            {{ a.name }}
+          } @else {
+            Escolher arquivo
+          }
+        </button>
+      </div>
+
+      @if (resultadoCsv(); as res) {
+        <div class="importar-modal__resultado">
+          <span class="importar-modal__inseridos">Inseridos: {{ res.inseridos }}</span>
+          <span class="importar-modal__atualizados">Atualizados: {{ res.atualizados }}</span>
+          <span class="importar-modal__ignorados">Ignorados: {{ res.ignorados }}</span>
+          @if (res.erros.length > 0) {
+            <ul class="importar-modal__erros">
+              @for (erro of res.erros; track erro.linha) {
+                <li class="importar-modal__erro-item">
+                  Linha {{ erro.linha }}: {{ erro.mensagem }}
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      }
+
+      @if (resultadoPorte(); as res) {
+        <div class="importar-modal__resultado">
+          <span class="importar-modal__portes-atualizados">
+            Portes atualizados: {{ res.portesAtualizados }}
+          </span>
+          <span class="importar-modal__procedimentos-atualizados">
+            Procedimentos atualizados: {{ res.procedimentosAtualizados }}
+          </span>
+          @if (res.procedimentosNaoEncontrados.length > 0) {
+            <ul class="importar-modal__nao-encontrados">
+              @for (codigo of res.procedimentosNaoEncontrados; track codigo) {
+                <li class="importar-modal__nao-encontrado-item">{{ codigo }}</li>
+              }
+            </ul>
+          }
+          @if (res.erros.length > 0) {
+            <ul class="importar-modal__erros">
+              @for (erro of res.erros; track erro.linha) {
+                <li class="importar-modal__erro-item">
+                  Linha {{ erro.linha }}: {{ erro.mensagem }}
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      }
+
+      <div class="importar-modal__acoes">
+        @if (temResultado()) {
+          <button type="button" class="importar-modal__btn-concluir" (click)="concluir()">
+            Concluir
+          </button>
+        } @else {
+          <button
+            type="button"
+            class="importar-modal__btn-importar"
+            [disabled]="!podeImportar()"
+            (click)="importar()"
+          >
+            @if (uploading()) {
+              Enviando…
+            } @else {
+              Importar
+            }
+          </button>
+        }
+        <button type="button" class="importar-modal__btn-cancelar" (click)="cancelar()">
+          Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
+}
