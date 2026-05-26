@@ -63,6 +63,7 @@ internal static class CatalogEndpoints
             .RequireAuthorization("TenantAccess");
 
         gporte.MapGet("", ListarPortesAnestesicoAsync);
+        gporte.MapDelete("{id:guid}", ExcluirPorteAnestesicoAsync);
         gporte.MapPost("importar-unimed-csv", ImportarPorteAnestesicoCsvAsync).DisableAntiforgery();
     }
 
@@ -624,6 +625,13 @@ internal static class CatalogEndpoints
     {
         var result = await service.ListarPortesAnestesicoAsync(operadoraId, ct);
         return Results.Ok(result);
+    }
+
+    private static async Task<IResult> ExcluirPorteAnestesicoAsync(
+        Guid id, CatalogService service, CancellationToken ct)
+    {
+        await service.ExcluirPorteAnestesicoAsync(id, ct);
+        return Results.NoContent();
     }
 
     private static async Task<IResult> ImportarPorteAnestesicoCsvAsync(

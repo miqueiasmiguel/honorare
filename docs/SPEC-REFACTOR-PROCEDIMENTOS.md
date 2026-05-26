@@ -132,7 +132,7 @@ DELETE /api/v1/admin/procedimentos/{procId}/valores/{operadoraId}
 
 ---
 
-## RP-02 · Backend — endpoint de listagem porte anestésico já existe
+## RP-02 · Backend — endpoint de listagem porte anestésico já existe [x]
 
 Nada para implementar. `GET /api/v1/admin/tabelas-porte-anestesico?operadoraId={guid}` já está disponível desde PA-01 (`CatalogEndpoints.cs:59`).
 

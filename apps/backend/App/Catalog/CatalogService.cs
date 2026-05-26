@@ -1302,6 +1302,19 @@ internal sealed class CatalogService(AppDbContext db, ICurrentUser currentUser)
             .ToListAsync(ct);
     }
 
+    internal async Task<Result> ExcluirPorteAnestesicoAsync(Guid id, CancellationToken ct = default)
+    {
+        var porte = await _db.TabelasPorteAnestesico.FirstOrDefaultAsync(p => p.Id == id, ct);
+        if (porte is null)
+        {
+            return Result.Ok();
+        }
+
+        _db.TabelasPorteAnestesico.Remove(porte);
+        await _db.SaveChangesAsync(ct);
+        return Result.Ok();
+    }
+
     internal async Task<ImportarTabelaPorteResult> ImportarTabelaUnimedAnestesistaAsync(
         Stream csvStream, Guid operadoraId, CancellationToken ct = default)
     {
