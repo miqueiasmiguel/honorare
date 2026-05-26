@@ -23,12 +23,14 @@ import type {
   OperadoraItem,
   PrestadorItem,
   ProcedimentoItem,
+  ProcedimentoValorOperadoraItem,
   SalvarDeflatorPayload,
   SalvarOperadoraPayload,
   SalvarProcedimentoPayload,
   SalvarTabelaPayload,
   TabelaItem,
   TabelaPorteAnestesicoItem,
+  UpsertValorPayload,
 } from './catalog.types';
 
 @Injectable({ providedIn: 'root' })
@@ -227,6 +229,33 @@ export class CatalogService {
     return this._http.post<ImportarCsvResult>('/api/v1/admin/tabelas/importar-csv', formData, {
       params: httpParams,
     });
+  }
+
+  // ── Valores por procedimento (camada de conveniência) ──────────────────────
+
+  listarValoresPorProcedimento(procId: string): Observable<ProcedimentoValorOperadoraItem[]> {
+    return this._http.get<ProcedimentoValorOperadoraItem[]>(
+      `/api/v1/admin/procedimentos/${procId}/valores`,
+    );
+  }
+
+  upsertValorPorProcedimento(
+    procId: string,
+    operadoraId: string,
+    payload: UpsertValorPayload,
+  ): Observable<TabelaItem> {
+    return this._http.put<TabelaItem>(
+      `/api/v1/admin/procedimentos/${procId}/valores/${operadoraId}`,
+      payload,
+    );
+  }
+
+  excluirValorPorProcedimento(procId: string, operadoraId: string): Observable<void> {
+    return this._http.delete(`/api/v1/admin/procedimentos/${procId}/valores/${operadoraId}`).pipe(
+      map(() => {
+        return;
+      }),
+    );
   }
 
   // ── Beneficiários ────────────────────────────────────────────────────────────

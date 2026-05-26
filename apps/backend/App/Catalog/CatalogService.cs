@@ -16,6 +16,16 @@ internal sealed record TabelaDto(
 
 internal sealed record SalvarTabelaCommand(Guid OperadoraId, Guid ProcedimentoId, decimal Valor);
 
+internal sealed record ProcedimentoValorOperadoraItem(
+    Guid OperadoraId,
+    string OperadoraNome,
+    TipoRuleSet TipoRuleSet,
+    Guid? TabelaId,
+    decimal? Valor,
+    DateTimeOffset? AtualizadoEm);
+
+internal sealed record UpsertValorResult(TabelaDto Tabela, bool Criado);
+
 internal sealed record ListarPrestadoresQuery(string? Busca, bool? Ativo, int Pagina, int ItensPorPagina);
 
 internal sealed record ListarPrestadoresResult(
@@ -738,6 +748,97 @@ internal sealed class CatalogService(AppDbContext db, ICurrentUser currentUser)
         await _db.SaveChangesAsync(ct);
 
         return new ImportarCsvResult(novos.Count, atualizados, ignorados, erros);
+    }
+
+    // ── Valores por procedimento (camada de conveniência) ─────────────────────
+
+    internal async Task<Result<IReadOnlyList<ProcedimentoValorOperadoraItem>>>
+        ListarValoresPorProcedimentoAsync(Guid procedimentoId, CancellationToken ct = default)
+    {
+        var existe = await _db.Procedimentos.AnyAsync(p => p.Id == procedimentoId, ct);
+        if (!existe)
+        {
+            return Result<IReadOnlyList<ProcedimentoValorOperadoraItem>>.Fail(
+                new NotFoundError("Procedimento não encontrado."));
+        }
+
+        var itens = await (
+            from o in _db.Operadoras
+            where o.Ativa
+            join t in _db.TabelasProcedimento.Where(x => x.ProcedimentoId == procedimentoId)
+                on o.Id equals t.OperadoraId into ts
+            from t in ts.DefaultIfEmpty()
+            orderby o.Nome
+            select new ProcedimentoValorOperadoraItem(
+                o.Id,
+                o.Nome,
+                o.TipoRuleSet,
+                t != null ? (Guid?)t.Id : null,
+                t != null ? (decimal?)t.Valor : null,
+                t != null ? (DateTimeOffset?)t.AtualizadoEm : null))
+            .ToListAsync(ct);
+
+        return Result<IReadOnlyList<ProcedimentoValorOperadoraItem>>.Ok(itens);
+    }
+
+    internal async Task<Result<UpsertValorResult>> UpsertValorAsync(
+        Guid procedimentoId, Guid operadoraId, decimal valor, CancellationToken ct = default)
+    {
+        if (valor <= 0)
+        {
+            return Result<UpsertValorResult>.Fail(new ValidationError("Valor deve ser maior que zero."));
+        }
+
+        var proc = await _db.Procedimentos.FirstOrDefaultAsync(p => p.Id == procedimentoId, ct);
+        if (proc is null)
+        {
+            return Result<UpsertValorResult>.Fail(new NotFoundError("Procedimento não encontrado."));
+        }
+
+        var op = await _db.Operadoras.FirstOrDefaultAsync(o => o.Id == operadoraId, ct);
+        if (op is null)
+        {
+            return Result<UpsertValorResult>.Fail(new NotFoundError("Operadora não encontrada."));
+        }
+
+        var tabela = await _db.TabelasProcedimento.FirstOrDefaultAsync(
+            t => t.OperadoraId == operadoraId && t.ProcedimentoId == procedimentoId, ct);
+
+        bool criado;
+        if (tabela is null)
+        {
+            var tenantId = _currentUser.TenantId!.Value;
+            tabela = TabelaProcedimento.Create(tenantId, operadoraId, procedimentoId, valor);
+            _db.TabelasProcedimento.Add(tabela);
+            criado = true;
+        }
+        else
+        {
+            tabela.AtualizarValor(valor);
+            criado = false;
+        }
+
+        await _db.SaveChangesAsync(ct);
+
+        var dto = new TabelaDto(
+            tabela.Id, tabela.OperadoraId, tabela.ProcedimentoId,
+            proc.CodigoTuss, proc.Descricao, tabela.Valor, tabela.AtualizadoEm);
+        return Result<UpsertValorResult>.Ok(new UpsertValorResult(dto, criado));
+    }
+
+    internal async Task<Result> ExcluirValorPorProcOpAsync(
+        Guid procedimentoId, Guid operadoraId, CancellationToken ct = default)
+    {
+        var tabela = await _db.TabelasProcedimento.FirstOrDefaultAsync(
+            t => t.OperadoraId == operadoraId && t.ProcedimentoId == procedimentoId, ct);
+        if (tabela is null)
+        {
+            return Result.Ok();
+        }
+
+        _db.TabelasProcedimento.Remove(tabela);
+        await _db.SaveChangesAsync(ct);
+        return Result.Ok();
     }
 
     // ── Prestador ─────────────────────────────────────────────────────────────

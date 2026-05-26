@@ -170,6 +170,19 @@ export interface SalvarTabelaPayload {
   valor: number;
 }
 
+export interface ProcedimentoValorOperadoraItem {
+  operadoraId: string;
+  operadoraNome: string;
+  tipoRuleSet: TipoRuleSet;
+  tabelaId: string | null;
+  valor: number | null;
+  atualizadoEm: string | null;
+}
+
+export interface UpsertValorPayload {
+  valor: number;
+}
+
 // ── Beneficiário ────────────────────────────────────────────────────────────
 
 export interface BeneficiarioItem {

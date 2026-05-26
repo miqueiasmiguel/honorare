@@ -20,6 +20,9 @@ internal static class CatalogEndpoints
         gp.MapPut("{id:guid}", AtualizarProcedimentoAsync);
         gp.MapDelete("{id:guid}", ExcluirProcedimentoAsync);
         gp.MapPost("importar-csv", ImportarCsvAsync).DisableAntiforgery();
+        gp.MapGet("{procId:guid}/valores", ListarValoresProcedimentoAsync);
+        gp.MapPut("{procId:guid}/valores/{operadoraId:guid}", UpsertValorProcedimentoAsync);
+        gp.MapDelete("{procId:guid}/valores/{operadoraId:guid}", ExcluirValorProcedimentoAsync);
 
         var gta = app.MapGroup("/api/v1/admin/tabelas").RequireAuthorization("TenantAccess");
 
@@ -212,9 +215,12 @@ internal static class CatalogEndpoints
         var result = await service.ExcluirProcedimentoAsync(id, ct);
         if (result.IsFailure)
         {
-            return Results.Problem(
-                statusCode: StatusCodes.Status404NotFound,
-                detail: result.Error!.Message);
+            var statusCode = result.Error switch
+            {
+                ConflictError => StatusCodes.Status409Conflict,
+                _ => StatusCodes.Status404NotFound,
+            };
+            return Results.Problem(statusCode: statusCode, detail: result.Error!.Message);
         }
 
         return Results.NoContent();
@@ -292,6 +298,53 @@ internal static class CatalogEndpoints
                 detail: result.Error!.Message);
         }
 
+        return Results.NoContent();
+    }
+
+    private static async Task<IResult> ListarValoresProcedimentoAsync(
+        Guid procId, CatalogService service, CancellationToken ct)
+    {
+        var result = await service.ListarValoresPorProcedimentoAsync(procId, ct);
+        if (result.IsFailure)
+        {
+            return Results.Problem(
+                statusCode: StatusCodes.Status404NotFound,
+                detail: result.Error!.Message);
+        }
+
+        return Results.Ok(result.Value);
+    }
+
+    private static async Task<IResult> UpsertValorProcedimentoAsync(
+        Guid procId, Guid operadoraId, UpsertValorRequest body,
+        CatalogService service, CancellationToken ct)
+    {
+        var result = await service.UpsertValorAsync(procId, operadoraId, body.Valor, ct);
+        if (result.IsFailure)
+        {
+            var statusCode = result.Error switch
+            {
+                ValidationError => StatusCodes.Status422UnprocessableEntity,
+                NotFoundError => StatusCodes.Status404NotFound,
+                _ => StatusCodes.Status400BadRequest,
+            };
+            return Results.Problem(statusCode: statusCode, detail: result.Error!.Message);
+        }
+
+        if (result.Value!.Criado)
+        {
+            return Results.Created(
+                $"/api/v1/admin/tabelas/{result.Value.Tabela.Id}",
+                result.Value.Tabela);
+        }
+
+        return Results.Ok(result.Value.Tabela);
+    }
+
+    private static async Task<IResult> ExcluirValorProcedimentoAsync(
+        Guid procId, Guid operadoraId, CatalogService service, CancellationToken ct)
+    {
+        await service.ExcluirValorPorProcOpAsync(procId, operadoraId, ct);
         return Results.NoContent();
     }
 
@@ -640,6 +693,8 @@ internal sealed record SalvarTabelaRequest(
     Guid OperadoraId,
     Guid ProcedimentoId,
     decimal Valor);
+
+internal sealed record UpsertValorRequest(decimal Valor);
 
 internal sealed record ListarPrestadoresRequest(
     string? Busca = null,
