@@ -3,10 +3,11 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { ActivatedRoute, Router } from '@angular/router';
 import { CatalogService } from '../../catalog.service';
 import type { SalvarProcedimentoPayload } from '../../catalog.types';
+import { ValoresOperadoraComponent } from './valores-operadora.component';
 
 @Component({
   selector: 'app-procedimento-form',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, ValoresOperadoraComponent],
   templateUrl: './procedimento-form.component.html',
   styleUrl: './procedimento-form.component.scss',
 })

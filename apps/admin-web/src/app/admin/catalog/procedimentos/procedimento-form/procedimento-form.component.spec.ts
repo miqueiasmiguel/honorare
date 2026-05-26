@@ -3,7 +3,11 @@ import { of } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProcedimentoFormComponent } from './procedimento-form.component';
 import { CatalogService } from '../../catalog.service';
-import type { ProcedimentoItem } from '../../catalog.types';
+import type {
+  ProcedimentoItem,
+  ProcedimentoValorOperadoraItem,
+  TabelaItem,
+} from '../../catalog.types';
 
 const mockProcedimento: ProcedimentoItem = {
   id: 'proc-1',
@@ -17,6 +21,34 @@ const mockProcedimento: ProcedimentoItem = {
   criadoEm: '2026-01-01T00:00:00Z',
 };
 
+const linhaSemValor: ProcedimentoValorOperadoraItem = {
+  operadoraId: 'op-1',
+  operadoraNome: 'Bradesco Saúde',
+  tipoRuleSet: 'Nulo',
+  tabelaId: null,
+  valor: null,
+  atualizadoEm: null,
+};
+
+const linhaComValor: ProcedimentoValorOperadoraItem = {
+  operadoraId: 'op-2',
+  operadoraNome: 'UNIMED João Pessoa',
+  tipoRuleSet: 'Unimed',
+  tabelaId: 'tab-1',
+  valor: 526.5,
+  atualizadoEm: '2026-01-01T00:00:00Z',
+};
+
+const mockTabelaUpsert: TabelaItem = {
+  id: 'tab-new',
+  operadoraId: 'op-1',
+  procedimentoId: 'proc-1',
+  codigoTuss: '30715013',
+  descricao: 'Herniorrafia inguinal',
+  valor: 600,
+  atualizadoEm: '2026-01-01T00:00:00Z',
+};
+
 function setup(
   procedimentoId: string | null = null,
   procedimento: ProcedimentoItem = mockProcedimento,
@@ -25,6 +57,9 @@ function setup(
     obterProcedimento: vi.fn().mockReturnValue(of(procedimento)),
     criarProcedimento: vi.fn().mockReturnValue(of(mockProcedimento)),
     atualizarProcedimento: vi.fn().mockReturnValue(of(mockProcedimento)),
+    listarValoresPorProcedimento: vi.fn().mockReturnValue(of([linhaSemValor, linhaComValor])),
+    upsertValorPorProcedimento: vi.fn().mockReturnValue(of(mockTabelaUpsert)),
+    excluirValorPorProcedimento: vi.fn().mockReturnValue(of(undefined)),
   };
 
   const routerSpy = {
@@ -157,6 +192,26 @@ describe('ProcedimentoFormComponent', () => {
         expect.objectContaining({ descricao: 'Descrição atualizada' }),
       );
       expect(router.navigate).toHaveBeenCalledWith(['/admin/catalog/procedimentos']);
+    });
+  });
+
+  describe('seção Valores por Operadora', () => {
+    it('em modo criação NÃO renderiza a seção', () => {
+      const { el, catalogService } = setup(null);
+      expect(el.querySelector('app-valores-operadora')).toBeNull();
+      expect(catalogService.listarValoresPorProcedimento).not.toHaveBeenCalled();
+    });
+
+    it('em modo edição renderiza a seção e carrega valores', () => {
+      const { el, catalogService } = setup('proc-1');
+      expect(el.querySelector('app-valores-operadora')).not.toBeNull();
+      expect(catalogService.listarValoresPorProcedimento).toHaveBeenCalledWith('proc-1');
+    });
+
+    it('em modo edição lista uma linha por operadora ativa', () => {
+      const { el } = setup('proc-1');
+      const linhas = el.querySelectorAll('.valores-operadora__linha');
+      expect(linhas).toHaveLength(2);
     });
   });
 });

@@ -1,0 +1,80 @@
+<section class="valores-operadora">
+  <h2 class="valores-operadora__title">Valores por Operadora</h2>
+
+  @if (loading()) {
+    <p class="valores-operadora__loading">Carregando…</p>
+  } @else {
+    <ul class="valores-operadora__lista">
+      @for (linha of valores(); track linha.operadoraId) {
+        <li class="valores-operadora__linha">
+          <span class="valores-operadora__operadora">{{ linha.operadoraNome }}</span>
+
+          @if (editandoOperadoraId() === linha.operadoraId) {
+            <span class="valores-operadora__valor valores-operadora__valor--editando">
+              <input
+                type="number"
+                class="valores-operadora__input"
+                step="0.01"
+                min="0.01"
+                [value]="valorEditando() ?? ''"
+                (input)="onValorInput($event)"
+                aria-label="Valor em reais"
+              />
+            </span>
+            <span class="valores-operadora__acoes">
+              <button
+                type="button"
+                class="valores-operadora__btn-ok"
+                [disabled]="salvando()"
+                (click)="confirmarEdicao(linha.operadoraId)"
+              >
+                OK
+              </button>
+              <button
+                type="button"
+                class="valores-operadora__btn-cancelar"
+                (click)="cancelarEdicao()"
+              >
+                Cancelar
+              </button>
+            </span>
+          } @else {
+            <span class="valores-operadora__valor">{{ formatarBrl(linha.valor) }}</span>
+            <span class="valores-operadora__acoes">
+              @if (linha.tabelaId === null) {
+                <button
+                  type="button"
+                  class="valores-operadora__btn-definir"
+                  (click)="iniciarEdicao(linha.operadoraId)"
+                >
+                  Definir
+                </button>
+              } @else {
+                <button
+                  type="button"
+                  class="valores-operadora__btn-editar"
+                  (click)="iniciarEdicao(linha.operadoraId)"
+                >
+                  Editar
+                </button>
+                <button
+                  type="button"
+                  class="valores-operadora__btn-excluir"
+                  (click)="excluir(linha.operadoraId)"
+                >
+                  Excluir
+                </button>
+              }
+            </span>
+          }
+
+          @if (erro(linha.operadoraId)) {
+            <span class="valores-operadora__erro">{{ erro(linha.operadoraId) }}</span>
+          }
+        </li>
+      } @empty {
+        <li class="valores-operadora__empty">Nenhuma operadora ativa cadastrada.</li>
+      }
+    </ul>
+  }
+</section>

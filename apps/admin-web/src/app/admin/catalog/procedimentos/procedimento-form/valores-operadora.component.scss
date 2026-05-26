@@ -1,0 +1,176 @@
+@use 'styles/tokens' as *;
+
+.valores-operadora {
+  margin-top: space(8);
+  padding: space(6);
+  background-color: var(--color-pergaminho-claro);
+  border: 1px solid var(--color-borda-discreta);
+  border-radius: space(2);
+}
+
+.valores-operadora__title {
+  @include text-h3;
+
+  margin: 0 0 space(4);
+  color: var(--color-tinta);
+}
+
+.valores-operadora__loading {
+  @include text-body;
+
+  color: var(--color-tinta-secundaria);
+}
+
+.valores-operadora__lista {
+  display: flex;
+  flex-direction: column;
+  gap: space(2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.valores-operadora__linha {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: space(4);
+  padding: space(3) space(4);
+  border-bottom: 1px solid var(--color-borda-discreta);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.valores-operadora__operadora {
+  @include text-body;
+
+  color: var(--color-tinta);
+}
+
+.valores-operadora__valor {
+  @include text-mono-value;
+
+  color: var(--color-tinta);
+  text-align: right;
+  min-width: 120px;
+
+  &--editando {
+    min-width: 160px;
+  }
+}
+
+.valores-operadora__input {
+  height: 32px;
+  width: 140px;
+  padding: 0 space(2);
+  border: 1px solid var(--color-borda-media);
+  border-radius: space(1);
+  background-color: var(--color-pergaminho-claro);
+  color: var(--color-tinta);
+  text-align: right;
+
+  @include text-mono-value;
+  @include transition(border-color);
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-terracota);
+  }
+}
+
+.valores-operadora__acoes {
+  display: flex;
+  gap: space(2);
+}
+
+.valores-operadora__btn-definir,
+.valores-operadora__btn-editar {
+  height: 32px;
+  padding: 0 space(3);
+  border: 1px solid var(--color-borda-media);
+  border-radius: space(1);
+  background-color: transparent;
+  color: var(--color-tinta);
+  cursor: pointer;
+
+  @include text-label;
+  @include transition(background-color, border-color);
+
+  &:hover {
+    background-color: var(--color-pergaminho);
+    border-color: var(--color-tinta-terciaria);
+  }
+}
+
+.valores-operadora__btn-excluir {
+  height: 32px;
+  padding: 0 space(3);
+  border: 1px solid var(--color-borda-media);
+  border-radius: space(1);
+  background-color: transparent;
+  color: var(--color-ferrugem);
+  cursor: pointer;
+
+  @include text-label;
+  @include transition(background-color, border-color);
+
+  &:hover {
+    background-color: var(--color-ferrugem-claro);
+    border-color: var(--color-ferrugem);
+  }
+}
+
+.valores-operadora__btn-ok {
+  height: 32px;
+  padding: 0 space(3);
+  border: none;
+  border-radius: space(1);
+  background-color: var(--color-terracota);
+  color: var(--color-pergaminho-claro);
+  cursor: pointer;
+
+  @include text-label;
+  @include transition(background-color);
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  &:hover:not(:disabled) {
+    background-color: var(--color-terracota-escuro);
+  }
+}
+
+.valores-operadora__btn-cancelar {
+  height: 32px;
+  padding: 0 space(3);
+  border: 1px solid var(--color-borda-media);
+  border-radius: space(1);
+  background-color: transparent;
+  color: var(--color-tinta-secundaria);
+  cursor: pointer;
+
+  @include text-label;
+  @include transition(background-color);
+
+  &:hover {
+    background-color: var(--color-pergaminho);
+  }
+}
+
+.valores-operadora__erro {
+  @include text-label;
+
+  grid-column: 1 / -1;
+  color: var(--color-ferrugem);
+}
+
+.valores-operadora__empty {
+  @include text-body;
+
+  color: var(--color-tinta-secundaria);
+  padding: space(3) space(4);
+}

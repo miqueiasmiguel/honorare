@@ -119,5 +119,9 @@
         </button>
       </div>
     </form>
+
+    @if (procedimentoId() !== null) {
+      <app-valores-operadora [procedimentoId]="procedimentoId()!" />
+    }
   }
 </section>

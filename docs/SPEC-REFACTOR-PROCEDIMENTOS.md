@@ -242,7 +242,7 @@ const FORMATOS = {
 
 ---
 
-## RP-04 · Frontend — Detalhe do procedimento ganha seção "Valores por Operadora"
+## RP-04 · Frontend — Detalhe do procedimento ganha seção "Valores por Operadora" [x]
 
 ### Arquivos a modificar
 
