@@ -1,0 +1,48 @@
+<section class="portes-anestesicos">
+  <h2 class="portes-anestesicos__title">Porte Anestésico (UNIMED)</h2>
+
+  @if (loading()) {
+    <p class="portes-anestesicos__loading">Carregando…</p>
+  } @else if (portes().length === 0) {
+    <p class="portes-anestesicos__vazio">Nenhum porte anestésico cadastrado.</p>
+  } @else {
+    <table class="portes-anestesicos__tabela">
+      <thead>
+        <tr>
+          <th class="portes-anestesicos__th">Letra</th>
+          <th class="portes-anestesicos__th">Enfermaria</th>
+          <th class="portes-anestesicos__th">Apartamento</th>
+          <th class="portes-anestesicos__th">Ambulatorial</th>
+          <th class="portes-anestesicos__th"></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (porte of portes(); track porte.id) {
+          <tr class="portes-anestesicos__linha">
+            <td class="portes-anestesicos__td portes-anestesicos__td--letra">
+              {{ porte.porteletra }}
+            </td>
+            <td class="portes-anestesicos__td">{{ formatarBrl(porte.valorEnfermaria) }}</td>
+            <td class="portes-anestesicos__td">{{ formatarBrl(porte.valorApartamento) }}</td>
+            <td class="portes-anestesicos__td">{{ formatarBrl(porte.valorAmbulatorial) }}</td>
+            <td class="portes-anestesicos__td portes-anestesicos__td--acoes">
+              <button
+                class="portes-anestesicos__btn-excluir"
+                type="button"
+                (click)="excluir(porte.id)"
+                [attr.aria-label]="'Remover porte ' + porte.porteletra"
+              >
+                ✕
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+
+  <p class="portes-anestesicos__info">
+    Para importar a tabela, use "Importar dados" na lista de procedimentos e selecione "Tabela de
+    Porte Anestésico".
+  </p>
+</section>

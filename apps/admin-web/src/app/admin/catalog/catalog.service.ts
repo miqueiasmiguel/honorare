@@ -312,6 +312,14 @@ export class CatalogService {
     });
   }
 
+  excluirPorteAnestesico(id: string): Observable<void> {
+    return this._http.delete(`/api/v1/admin/tabelas-porte-anestesico/${id}`).pipe(
+      map(() => {
+        return;
+      }),
+    );
+  }
+
   importarTabelaPorteAnestesico(
     operadoraId: string,
     file: File,

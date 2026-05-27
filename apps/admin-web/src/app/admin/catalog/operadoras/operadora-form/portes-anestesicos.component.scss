@@ -1,0 +1,90 @@
+@use 'styles/tokens' as *;
+
+.portes-anestesicos {
+  margin-top: space(10);
+  padding-top: space(8);
+  border-top: 1px solid var(--color-borda-discreta);
+  max-width: 640px;
+}
+
+.portes-anestesicos__title {
+  @include text-h3;
+
+  margin: 0 0 space(6);
+  color: var(--color-tinta);
+}
+
+.portes-anestesicos__loading,
+.portes-anestesicos__vazio {
+  @include text-body;
+
+  color: var(--color-tinta-secundaria);
+}
+
+.portes-anestesicos__tabela {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: space(4);
+}
+
+.portes-anestesicos__th {
+  @include text-label;
+
+  padding: space(2) space(3);
+  border-bottom: 2px solid var(--color-borda-media);
+  color: var(--color-tinta-secundaria);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.portes-anestesicos__linha {
+  &:hover {
+    background-color: var(--color-pergaminho-claro);
+  }
+}
+
+.portes-anestesicos__td {
+  @include text-body;
+  @include text-mono-value;
+
+  padding: space(2) space(3);
+  border-bottom: 1px solid var(--color-borda-discreta);
+  color: var(--color-tinta);
+
+  &--letra {
+    font-weight: 600;
+    width: 60px;
+  }
+
+  &--acoes {
+    width: 48px;
+    text-align: right;
+  }
+}
+
+.portes-anestesicos__btn-excluir {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--color-borda-media);
+  border-radius: space(1);
+  background-color: transparent;
+  color: var(--color-tinta-secundaria);
+  cursor: pointer;
+
+  @include text-label;
+  @include transition-fast(background-color, border-color, color);
+
+  &:hover {
+    background-color: var(--color-ferrugem);
+    border-color: var(--color-ferrugem);
+    color: var(--color-pergaminho-claro);
+  }
+}
+
+.portes-anestesicos__info {
+  @include text-label;
+
+  color: var(--color-tinta-terciaria);
+  margin-top: space(4);
+}

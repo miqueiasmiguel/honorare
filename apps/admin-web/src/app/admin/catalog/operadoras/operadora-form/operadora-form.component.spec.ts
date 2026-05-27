@@ -20,6 +20,7 @@ function setup(operadoraId: string | null = null, operadora: OperadoraItem = moc
     obterOperadora: vi.fn().mockReturnValue(of(operadora)),
     criarOperadora: vi.fn().mockReturnValue(of(mockOperadora)),
     atualizarOperadora: vi.fn().mockReturnValue(of(mockOperadora)),
+    listarPortesAnestesico: vi.fn().mockReturnValue(of([])),
   };
 
   const routerSpy = {
@@ -128,6 +129,19 @@ describe('OperadoraFormComponent', () => {
         expect.objectContaining({ nome: 'Nome Atualizado' }),
       );
       expect(router.navigate).toHaveBeenCalledWith(['/admin/catalog/operadoras']);
+    });
+
+    it('operadora com tipoRuleSet Nulo não renderiza seção de portes anestésicos', () => {
+      const operadoraNulo: OperadoraItem = { ...mockOperadora, tipoRuleSet: 'Nulo' };
+      const { el } = setup('op-1', operadoraNulo);
+      const secao = el.querySelector('app-portes-anestesicos');
+      expect(secao).toBeNull();
+    });
+
+    it('operadora com tipoRuleSet Unimed renderiza seção de portes anestésicos', () => {
+      const { el } = setup('op-1');
+      const secao = el.querySelector('app-portes-anestesicos');
+      expect(secao).not.toBeNull();
     });
   });
 });

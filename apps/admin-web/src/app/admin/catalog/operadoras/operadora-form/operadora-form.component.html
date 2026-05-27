@@ -92,4 +92,7 @@
       </div>
     </form>
   }
+  @if (modoEdicao && form.controls.tipoRuleSet.value === 'Unimed') {
+    <app-portes-anestesicos [operadoraId]="operadoraId()!" />
+  }
 </section>
