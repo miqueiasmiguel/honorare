@@ -4,8 +4,8 @@ import { Router } from '@angular/router';
 import { ProcedimentoListComponent } from './procedimento-list.component';
 import { CatalogService } from '../../catalog.service';
 import type {
-  ImportarCsvResult,
   ListarProcedimentosResult,
+  OperadoraItem,
   ProcedimentoItem,
 } from '../../catalog.types';
 
@@ -38,18 +38,15 @@ function makeResult(itens: ProcedimentoItem[] = mockProcedimentos): ListarProced
   return { itens, total: itens.length, pagina: 1, itensPorPagina: 20 };
 }
 
-const defaultImportResult: ImportarCsvResult = {
-  inseridos: 0,
-  atualizados: 0,
-  ignorados: 0,
-  erros: [],
-};
-
 function setup(itens: ProcedimentoItem[] = mockProcedimentos) {
   const catalogServiceSpy = {
     listarProcedimentos: vi.fn().mockReturnValue(of(makeResult(itens))),
     excluirProcedimento: vi.fn().mockReturnValue(of(undefined)),
-    importarCsv: vi.fn().mockReturnValue(of(defaultImportResult)),
+    listarOperadoras: vi
+      .fn()
+      .mockReturnValue(
+        of({ itens: [] as OperadoraItem[], total: 0, pagina: 1, itensPorPagina: 200 }),
+      ),
   };
 
   const routerSpy = {
@@ -123,63 +120,43 @@ describe('ProcedimentoListComponent', () => {
     }
   });
 
-  it('botão "Importar CSV" está presente no DOM', () => {
+  it('botão "Importar dados" está presente no header', () => {
     const { el } = setup();
     const btns = Array.from(el.querySelectorAll('button'));
-    const btn = btns.find((b) => b.textContent.trim() === 'Importar CSV');
+    const btn = btns.find((b) => b.textContent.trim() === 'Importar dados');
     expect(btn).toBeDefined();
   });
 
-  it('exibe resumo de importação após upload bem-sucedido', () => {
-    const { component, catalogService, fixture, el } = setup();
-    const importResult: ImportarCsvResult = {
-      inseridos: 5,
-      atualizados: 2,
-      ignorados: 1,
-      erros: [],
-    };
-    catalogService.importarCsv.mockReturnValue(of(importResult));
-
-    const file = new File(['content'], 'test.csv', { type: 'text/csv' });
-    component.onArquivoSelecionado(file);
-    fixture.detectChanges();
-
-    const resumo = el.querySelector('.procedimento-list__import-resumo');
-    const text = resumo?.textContent ?? '';
-    expect(text).toContain('5');
-    expect(text).toContain('2');
-  });
-
-  it('exibe erros de linha quando importação retorna erros', () => {
-    const { component, catalogService, fixture, el } = setup();
-    const importResult: ImportarCsvResult = {
-      inseridos: 0,
-      atualizados: 0,
-      ignorados: 0,
-      erros: [{ linha: 2, mensagem: 'Código TUSS inválido' }],
-    };
-    catalogService.importarCsv.mockReturnValue(of(importResult));
-
-    const file = new File(['content'], 'test.csv', { type: 'text/csv' });
-    component.onArquivoSelecionado(file);
-    fixture.detectChanges();
-
-    const erros = Array.from(el.querySelectorAll('.procedimento-list__import-erro'));
-    expect(erros.length).toBeGreaterThan(0);
-    const text = erros[0]?.textContent ?? '';
-    expect(text).toContain('Código TUSS inválido');
-  });
-
-  it('botão "Download template" dispara download de arquivo .csv', () => {
-    const { component, el } = setup();
-    const spy = vi.spyOn(component, 'downloadTemplate').mockImplementation(() => {
-      return;
-    });
+  it('botão "Importar dados" abre o modal (mostrarImportarModal = true)', () => {
+    const { component, el, fixture } = setup();
+    expect(component.mostrarImportarModal()).toBe(false);
 
     const btns = Array.from(el.querySelectorAll('button'));
-    const btn = btns.find((b) => b.textContent.trim() === 'Download template');
+    const btn = btns.find((b) => b.textContent.trim() === 'Importar dados');
+    expect(btn).toBeDefined();
     btn?.click();
+    fixture.detectChanges();
 
-    expect(spy).toHaveBeenCalledOnce();
+    expect(component.mostrarImportarModal()).toBe(true);
+  });
+
+  it('onImportConcluido fecha o modal e recarrega procedimentos', () => {
+    const { component, catalogService, fixture } = setup();
+    component.mostrarImportarModal.set(true);
+    fixture.detectChanges();
+    catalogService.listarProcedimentos.mockClear();
+
+    component.onImportConcluido();
+    fixture.detectChanges();
+
+    expect(component.mostrarImportarModal()).toBe(false);
+    expect(catalogService.listarProcedimentos).toHaveBeenCalledOnce();
+  });
+
+  it('botão "Importar CSV" e "Download template" não estão mais presentes', () => {
+    const { el } = setup();
+    const btns = Array.from(el.querySelectorAll('button'));
+    expect(btns.find((b) => b.textContent.trim() === 'Importar CSV')).toBeUndefined();
+    expect(btns.find((b) => b.textContent.trim() === 'Download template')).toBeUndefined();
   });
 });

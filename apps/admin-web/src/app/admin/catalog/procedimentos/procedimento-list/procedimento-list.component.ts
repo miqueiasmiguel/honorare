@@ -2,13 +2,16 @@ import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { debounceTime, Subject } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 import { CatalogService } from '../../catalog.service';
-import type { ImportarCsvResult, ProcedimentoItem } from '../../catalog.types';
+import type { ProcedimentoItem } from '../../catalog.types';
+import { ImportarModalComponent } from '../importar-modal/importar-modal.component';
 
 @Component({
   selector: 'app-procedimento-list',
   templateUrl: './procedimento-list.component.html',
   styleUrl: './procedimento-list.component.scss',
+  imports: [ImportarModalComponent],
 })
 export class ProcedimentoListComponent implements OnInit {
   private readonly _catalogService = inject(CatalogService);
@@ -23,7 +26,7 @@ export class ProcedimentoListComponent implements OnInit {
   readonly itensPorPagina = signal(20);
   readonly filtroBusca = signal('');
   readonly exibirInativos = signal(false);
-  readonly importResult = signal<ImportarCsvResult | null>(null);
+  readonly mostrarImportarModal = signal(false);
 
   ngOnInit(): void {
     this._busca$
@@ -55,6 +58,15 @@ export class ProcedimentoListComponent implements OnInit {
     void this._router.navigate(['/admin/catalog/procedimentos/novo']);
   }
 
+  abrirImportarModal(): void {
+    this.mostrarImportarModal.set(true);
+  }
+
+  onImportConcluido(): void {
+    this.mostrarImportarModal.set(false);
+    this._carregarProcedimentos();
+  }
+
   excluir(proc: ProcedimentoItem, event: Event): void {
     event.stopPropagation();
     if (!window.confirm(`Excluir procedimento "${proc.codigoTuss} — ${proc.descricao}"?`)) {
@@ -64,7 +76,11 @@ export class ProcedimentoListComponent implements OnInit {
       next: () => {
         this._carregarProcedimentos();
       },
-      error: () => undefined,
+      error: (err: HttpErrorResponse) => {
+        const body = err.error as { detail?: string } | null;
+        const detalhe = body?.detail ?? 'Não foi possível excluir o procedimento.';
+        window.alert(detalhe);
+      },
     });
   }
 
@@ -85,41 +101,6 @@ export class ProcedimentoListComponent implements OnInit {
 
   truncar(texto: string): string {
     return texto.length > 60 ? texto.slice(0, 60) + '…' : texto;
-  }
-
-  onFileChange(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (!file) {
-      return;
-    }
-    this.onArquivoSelecionado(file);
-  }
-
-  onArquivoSelecionado(file: File): void {
-    this.importResult.set(null);
-    this._catalogService.importarCsv(file).subscribe({
-      next: (result) => {
-        this.importResult.set(result);
-      },
-      error: () => undefined,
-    });
-  }
-
-  downloadTemplate(): void {
-    const linhas = [
-      'CodigoTuss;Descricao;Porte;PorteAnestesico;EhSadt;TemPorteProprioVideo',
-      '30715013;Herniorrafia inguinal;6B;4;false;false',
-      '40314340;Eletroencefalograma;;;true;false',
-    ];
-    const conteudo = linhas.join('\n');
-    const blob = new Blob([conteudo], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'template-procedimentos.csv';
-    a.click();
-    URL.revokeObjectURL(url);
   }
 
   private _carregarProcedimentos(): void {

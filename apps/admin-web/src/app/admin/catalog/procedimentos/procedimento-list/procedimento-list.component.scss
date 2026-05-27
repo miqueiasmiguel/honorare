@@ -18,6 +18,12 @@
   color: var(--color-tinta);
 }
 
+.procedimento-list__header-actions {
+  display: flex;
+  align-items: center;
+  gap: space(3);
+}
+
 .procedimento-list__btn-novo {
   height: 40px;
   padding: 0 space(6);
@@ -32,6 +38,23 @@
 
   &:hover {
     background-color: var(--color-terracota-escuro);
+  }
+}
+
+.procedimento-list__btn-importar {
+  height: 40px;
+  padding: 0 space(5);
+  border: 1px solid var(--color-terracota);
+  border-radius: space(1);
+  background-color: transparent;
+  color: var(--color-terracota);
+  cursor: pointer;
+
+  @include text-label;
+  @include transition-fast(background-color, border-color);
+
+  &:hover {
+    background-color: var(--color-pergaminho-claro);
   }
 }
 
@@ -76,79 +99,6 @@
   color: var(--color-tinta-secundaria);
 }
 
-.procedimento-list__import-actions {
-  display: flex;
-  align-items: center;
-  gap: space(3);
-  margin-left: auto;
-}
-
-.procedimento-list__input-csv {
-  display: none;
-}
-
-.procedimento-list__btn-importar {
-  height: 36px;
-  padding: 0 space(4);
-  border: 1px solid var(--color-terracota);
-  border-radius: space(1);
-  background-color: transparent;
-  color: var(--color-terracota);
-  cursor: pointer;
-
-  @include text-label;
-  @include transition-fast(background-color, border-color);
-
-  &:hover {
-    background-color: var(--color-pergaminho-claro);
-  }
-}
-
-.procedimento-list__btn-template {
-  height: 36px;
-  padding: 0 space(4);
-  border: 1px solid var(--color-borda-media);
-  border-radius: space(1);
-  background-color: transparent;
-  color: var(--color-tinta-secundaria);
-  cursor: pointer;
-
-  @include text-label;
-  @include transition-fast(background-color);
-
-  &:hover {
-    background-color: var(--color-pergaminho-claro);
-  }
-}
-
-.procedimento-list__import-resumo {
-  display: flex;
-  align-items: flex-start;
-  flex-wrap: wrap;
-  gap: space(4);
-  padding: space(4) space(6);
-  margin-bottom: space(4);
-  border: 1px solid var(--color-borda-media);
-  border-radius: space(1);
-  background-color: var(--color-pergaminho-claro);
-
-  @include text-body;
-
-  color: var(--color-tinta-secundaria);
-}
-
-.procedimento-list__import-erros {
-  width: 100%;
-  margin: 0;
-  padding: 0 0 0 space(4);
-}
-
-.procedimento-list__import-erro {
-  @include text-label;
-
-  color: var(--color-ferrugem);
-}
-
 .procedimento-list__table {
   width: 100%;
   border-collapse: collapse;
@@ -184,11 +134,10 @@
   @include text-body;
 }
 
-.procedimento-list__cell--flags {
+.procedimento-list__flags-inner {
   display: flex;
   flex-wrap: wrap;
   gap: space(1);
-  min-height: 44px;
   align-items: center;
 }
 

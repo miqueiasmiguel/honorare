@@ -1,9 +1,14 @@
 <section class="procedimento-list">
   <header class="procedimento-list__header">
     <h1 class="procedimento-list__title">Procedimentos</h1>
-    <button type="button" class="procedimento-list__btn-novo" (click)="novoProcedimento()">
-      Novo procedimento
-    </button>
+    <div class="procedimento-list__header-actions">
+      <button type="button" class="procedimento-list__btn-importar" (click)="abrirImportarModal()">
+        Importar dados
+      </button>
+      <button type="button" class="procedimento-list__btn-novo" (click)="novoProcedimento()">
+        Novo procedimento
+      </button>
+    </div>
   </header>
 
   <div class="procedimento-list__toolbar">
@@ -22,39 +27,7 @@
       />
       Exibir inativos
     </label>
-    <div class="procedimento-list__import-actions">
-      <input
-        #csvInput
-        type="file"
-        accept=".csv"
-        class="procedimento-list__input-csv"
-        (change)="onFileChange($event)"
-      />
-      <button type="button" class="procedimento-list__btn-importar" (click)="csvInput.click()">
-        Importar CSV
-      </button>
-      <button type="button" class="procedimento-list__btn-template" (click)="downloadTemplate()">
-        Download template
-      </button>
-    </div>
   </div>
-
-  @if (importResult(); as resultado) {
-    <div class="procedimento-list__import-resumo">
-      <span>Inseridos: {{ resultado.inseridos }}</span>
-      <span>Atualizados: {{ resultado.atualizados }}</span>
-      <span>Ignorados: {{ resultado.ignorados }}</span>
-      @if (resultado.erros.length > 0) {
-        <ul class="procedimento-list__import-erros">
-          @for (erro of resultado.erros; track erro.linha) {
-            <li class="procedimento-list__import-erro">
-              Linha {{ erro.linha }}: {{ erro.mensagem }}
-            </li>
-          }
-        </ul>
-      }
-    </div>
-  }
 
   <table class="procedimento-list__table">
     <thead>
@@ -76,12 +49,14 @@
           <td class="procedimento-list__cell">{{ proc.porte ?? '—' }}</td>
           <td class="procedimento-list__cell">{{ proc.porteAnestesico ?? '—' }}</td>
           <td class="procedimento-list__cell procedimento-list__cell--flags">
-            @if (proc.ehSadt) {
-              <span class="chip chip--sadt">SADT</span>
-            }
-            @if (proc.temPorteProprioVideo) {
-              <span class="chip chip--video">Vídeo próprio</span>
-            }
+            <div class="procedimento-list__flags-inner">
+              @if (proc.ehSadt) {
+                <span class="chip chip--sadt">SADT</span>
+              }
+              @if (proc.temPorteProprioVideo) {
+                <span class="chip chip--video">Vídeo próprio</span>
+              }
+            </div>
           </td>
           <td class="procedimento-list__cell">
             <span [class]="proc.ativo ? 'badge badge--ativo' : 'badge badge--inativo'">
@@ -126,5 +101,13 @@
         Próxima
       </button>
     </div>
+  }
+
+  @if (mostrarImportarModal()) {
+    <app-importar-modal
+      [open]="mostrarImportarModal()"
+      (concluido)="onImportConcluido()"
+      (cancelado)="mostrarImportarModal.set(false)"
+    />
   }
 </section>

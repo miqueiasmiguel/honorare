@@ -301,7 +301,7 @@ Sub-componente novo `valores-operadora.component.ts` para isolar a tabela editá
 
 ---
 
-## RP-05 · Frontend — Porte Anestésico migra para o detalhe da Operadora
+## RP-05 · Frontend — Porte Anestésico migra para o detalhe da Operadora [x]
 
 ### Arquivo a modificar
 
@@ -345,7 +345,7 @@ Sub-componente novo `portes-anestesicos.component.ts`:
 
 ---
 
-## RP-06 · Frontend — Lista de procedimentos usa o novo modal
+## RP-06 · Frontend — Lista de procedimentos usa o novo modal [x]
 
 ### Arquivo a modificar
 
