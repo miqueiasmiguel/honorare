@@ -551,8 +551,8 @@ Adicionar botão "Importar demonstrativo CSV" no header da lista. Ao clicar, abr
 - [x] `ItemGuia.PercentualOrdem decimal` persistido corretamente, migration aplicada
 - [x] `OrdemProcedimentoModifier` usa o percentual diretamente, sem switch/case
 - [x] Todos os testes existentes de `UnimedPipelineTests` passando com a nova assinatura
-- [ ] `TabelaOrdemOperadora` com CRUD completo e testes xUnit cobrindo ≥ 80%
-- [ ] `ResolverPercentualOrdemAsync` retorna padrão correto quando sem tabela configurada
+- [x] `TabelaOrdemOperadora` com CRUD completo e testes xUnit cobrindo ≥ 80%
+- [x] `ResolverPercentualOrdemAsync` retorna padrão correto quando sem tabela configurada
 - [ ] Seção "Tabela de Atos Múltiplos" funcional no detalhe da Operadora
 - [ ] Dropdown de ordem no formulário de guia exibe opções da tabela configurada
 - [ ] `Guia.NumeroGuia` persistido, migration aplicada

@@ -65,6 +65,14 @@ internal static class CatalogEndpoints
         gporte.MapGet("", ListarPortesAnestesicoAsync);
         gporte.MapDelete("{id:guid}", ExcluirPorteAnestesicoAsync);
         gporte.MapPost("importar-unimed-csv", ImportarPorteAnestesicoCsvAsync).DisableAntiforgery();
+
+        var gordem = app
+            .MapGroup("/api/v1/admin/operadoras/{operadoraId:guid}/tabela-ordem")
+            .RequireAuthorization("TenantAccess");
+
+        gordem.MapGet("", ListarTabelaOrdemAsync);
+        gordem.MapPut("", SalvarTabelaOrdemAsync);
+        gordem.MapDelete("", ExcluirTabelaOrdemAsync);
     }
 
     // ── Operadora handlers ────────────────────────────────────────────────────
@@ -655,6 +663,42 @@ internal static class CatalogEndpoints
         var result = await service.ImportarTabelaUnimedAnestesistaAsync(stream, operadoraId, ct);
         return Results.Ok(result);
     }
+
+    // ── TabelaOrdemOperadora handlers ─────────────────────────────────────────
+
+    private static async Task<IResult> ListarTabelaOrdemAsync(
+        Guid operadoraId, CatalogService service, CancellationToken ct)
+    {
+        var result = await service.ListarTabelaOrdemAsync(operadoraId, ct);
+        return Results.Ok(result);
+    }
+
+    private static async Task<IResult> SalvarTabelaOrdemAsync(
+        Guid operadoraId,
+        SalvarTabelaOrdemRequest[] body,
+        CatalogService service,
+        CancellationToken ct)
+    {
+        if (body.Any(i => i.Percentual < 0.01m || i.Percentual > 1.00m))
+        {
+            return Results.UnprocessableEntity(
+                new { error = "Percentual deve estar entre 0.01 e 1.00." });
+        }
+
+        var itens = body
+            .Select(i => new SalvarOrdemItem(i.NumeroProcedimento, i.TipoVia, i.Percentual))
+            .ToList();
+
+        await service.SalvarTabelaOrdemAsync(operadoraId, itens, ct);
+        return Results.NoContent();
+    }
+
+    private static async Task<IResult> ExcluirTabelaOrdemAsync(
+        Guid operadoraId, CatalogService service, CancellationToken ct)
+    {
+        await service.ExcluirTabelaOrdemAsync(operadoraId, ct);
+        return Results.NoContent();
+    }
 }
 
 internal sealed record ListarOperadorasRequest(
@@ -734,3 +778,8 @@ internal sealed record ListarBeneficiariosRequest(
 internal sealed record LookupOrCreateBeneficiarioRequest(string Carteira, string Nome);
 
 internal sealed record AtualizarBeneficiarioRequest(string Nome);
+
+internal sealed record SalvarTabelaOrdemRequest(
+    int NumeroProcedimento,
+    TipoViaOrdem TipoVia,
+    decimal Percentual);
