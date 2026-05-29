@@ -57,3 +57,29 @@ export interface ListarDemonstrativosResult {
   pagina: number;
   itensPorPagina: number;
 }
+
+export interface ErroImportacaoDto {
+  linha: number;
+  mensagem: string;
+}
+
+export interface AlertaImportacaoDto {
+  linha: number;
+  mensagem: string;
+}
+
+export interface ResultadoImportacaoDto {
+  identificadorPagamento: string;
+  somenteValidar: boolean;
+  demonstrativoId: string | null;
+  guiasCriadas: number;
+  guiasAtualizadas: number;
+  itensCriados: number;
+  itensAtualizados: number;
+  itensIgnorados: number;
+  beneficiariosCriados: number;
+  guiasPrevistas: number;
+  itensPrevistas: number;
+  erros: ErroImportacaoDto[];
+  alertas: AlertaImportacaoDto[];
+}

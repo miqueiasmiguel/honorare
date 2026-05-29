@@ -562,5 +562,5 @@ Adicionar botão "Importar demonstrativo CSV" no header da lista. Ao clicar, abr
 - [x] Itens de equipamento (FUNCAO vazia) ignorados silenciosamente
 - [x] Erros por linha não abortam o batch; alertas de SemTabela/SemDeflator informados
 - [x] Upsert correto: guia pré-existente não é duplicada
-- [ ] Frontend exibe preview antes de confirmar; erros bloqueiam confirmação
-- [ ] Cobertura ≥ 80% em todos os novos arquivos de teste
+- [x] Frontend exibe preview antes de confirmar; erros bloqueiam confirmação
+- [x] Cobertura ≥ 80% em todos os novos arquivos de teste

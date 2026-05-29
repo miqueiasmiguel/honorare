@@ -17,6 +17,23 @@
   color: var(--color-tinta);
 }
 
+.demonstrativo-list__header-acoes {
+  display: flex;
+  gap: space(3);
+  align-items: center;
+}
+
+.demonstrativo-list__btn-importar {
+  @include text-label;
+
+  background-color: var(--color-verde-musgo);
+  color: var(--color-pergaminho-claro);
+  border: none;
+  border-radius: 4px;
+  padding: space(2) space(4);
+  cursor: pointer;
+}
+
 .demonstrativo-list__btn-novo {
   @include text-label;
 

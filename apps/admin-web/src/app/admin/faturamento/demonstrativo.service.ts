@@ -8,6 +8,7 @@ import type {
   ItemDemonstrativoForm,
   ListarDemonstrativosParams,
   ListarDemonstrativosResult,
+  ResultadoImportacaoDto,
 } from './demonstrativo.types';
 
 @Injectable({ providedIn: 'root' })
@@ -74,5 +75,22 @@ export class DemonstrativoService {
     return this._http
       .delete(`/api/v1/admin/demonstrativos/${id}/itens/${itemId}/conciliar`)
       .pipe(map(() => undefined));
+  }
+
+  importarCsv(
+    arquivo: File,
+    prestadorId: string,
+    operadoraId: string,
+    somenteValidar: boolean,
+  ): Observable<ResultadoImportacaoDto> {
+    const formData = new FormData();
+    formData.append('arquivo', arquivo);
+    formData.append('prestadorId', prestadorId);
+    formData.append('operadoraId', operadoraId);
+    formData.append('somenteValidar', String(somenteValidar));
+    return this._http.post<ResultadoImportacaoDto>(
+      '/api/v1/admin/demonstrativos/importar-csv',
+      formData,
+    );
   }
 }

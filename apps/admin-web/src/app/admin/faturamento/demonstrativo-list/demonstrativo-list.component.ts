@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { DemonstrativoService } from '../demonstrativo.service';
 import type { DemonstrativoDto } from '../demonstrativo.types';
+import { ImportarDemonstrativoModalComponent } from '../demonstrativos/importar-demonstrativo-modal/importar-demonstrativo-modal.component';
 
 @Component({
   selector: 'app-demonstrativo-list',
@@ -10,9 +11,18 @@ import type { DemonstrativoDto } from '../demonstrativo.types';
     <div class="demonstrativo-list">
       <div class="demonstrativo-list__header">
         <h2 class="demonstrativo-list__title">Demonstrativos</h2>
-        <button class="demonstrativo-list__btn-novo" type="button" (click)="novoDemonstrativo()">
-          Novo Demonstrativo
-        </button>
+        <div class="demonstrativo-list__header-acoes">
+          <button
+            class="demonstrativo-list__btn-importar"
+            type="button"
+            (click)="mostrarModalImportar.set(true)"
+          >
+            Importar demonstrativo CSV
+          </button>
+          <button class="demonstrativo-list__btn-novo" type="button" (click)="novoDemonstrativo()">
+            Novo Demonstrativo
+          </button>
+        </div>
       </div>
 
       <div class="demonstrativo-list__filters">
@@ -88,9 +98,15 @@ import type { DemonstrativoDto } from '../demonstrativo.types';
         <p class="demonstrativo-list__erro">{{ erroExclusao() }}</p>
       }
     </div>
+
+    <app-importar-demonstrativo-modal
+      [open]="mostrarModalImportar()"
+      (importacaoConcluida)="onImportacaoConcluida()"
+      (cancelado)="mostrarModalImportar.set(false)"
+    />
   `,
   styleUrl: './demonstrativo-list.component.scss',
-  imports: [DatePipe],
+  imports: [DatePipe, ImportarDemonstrativoModalComponent],
 })
 export class DemonstrativoListComponent implements OnInit {
   private readonly _service = inject(DemonstrativoService);
@@ -105,6 +121,7 @@ export class DemonstrativoListComponent implements OnInit {
   readonly filtroCompetencia = signal('');
   readonly filtroOperadoraId = signal('');
   readonly erroExclusao = signal('');
+  readonly mostrarModalImportar = signal(false);
 
   ngOnInit(): void {
     this._carregar();
@@ -138,6 +155,11 @@ export class DemonstrativoListComponent implements OnInit {
         this.erroExclusao.set('Erro ao excluir. Tente novamente.');
       },
     });
+  }
+
+  onImportacaoConcluida(): void {
+    this.mostrarModalImportar.set(false);
+    this._carregar();
   }
 
   onFiltroCompetenciaChange(value: string): void {

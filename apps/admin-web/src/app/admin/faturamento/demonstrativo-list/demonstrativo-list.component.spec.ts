@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
 import { DemonstrativoService } from '../demonstrativo.service';
+import { CatalogService } from '../../catalog/catalog.service';
 import type { DemonstrativoDto, ListarDemonstrativosResult } from '../demonstrativo.types';
 import { DemonstrativoListComponent } from './demonstrativo-list.component';
 
@@ -28,6 +29,15 @@ function setup(demos: DemonstrativoDto[] = [makeDemo()]) {
   const demonstrativoService = {
     listar: vi.fn().mockReturnValue(of(makeResult(demos))),
     excluir: vi.fn().mockReturnValue(of(undefined)),
+    importarCsv: vi.fn().mockReturnValue(of({})),
+  };
+  const catalogService = {
+    listarPrestadores: vi
+      .fn()
+      .mockReturnValue(of({ itens: [], total: 0, pagina: 1, itensPorPagina: 200 })),
+    listarOperadoras: vi
+      .fn()
+      .mockReturnValue(of({ itens: [], total: 0, pagina: 1, itensPorPagina: 200 })),
   };
   const router = { navigate: vi.fn().mockReturnValue(Promise.resolve(true)) };
 
@@ -35,6 +45,7 @@ function setup(demos: DemonstrativoDto[] = [makeDemo()]) {
     imports: [DemonstrativoListComponent],
     providers: [
       { provide: DemonstrativoService, useValue: demonstrativoService },
+      { provide: CatalogService, useValue: catalogService },
       { provide: Router, useValue: router },
     ],
   });

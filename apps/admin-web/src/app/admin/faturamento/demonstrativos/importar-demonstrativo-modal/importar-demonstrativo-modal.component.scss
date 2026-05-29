@@ -1,0 +1,162 @@
+@use 'styles/tokens' as *;
+
+.importar-demonstrativo-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.importar-demonstrativo-modal__overlay {
+  position: absolute;
+  inset: 0;
+  background-color: rgb(0 0 0 / 40%);
+}
+
+.importar-demonstrativo-modal__dialog {
+  position: relative;
+  background-color: var(--color-pergaminho-claro);
+  border-radius: 8px;
+  padding: space(6);
+  width: 560px;
+  max-width: 90vw;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 20%);
+}
+
+.importar-demonstrativo-modal__titulo {
+  @include text-h2;
+
+  color: var(--color-tinta);
+  margin-bottom: space(5);
+}
+
+.importar-demonstrativo-modal__campo {
+  display: flex;
+  flex-direction: column;
+  gap: space(1);
+  margin-bottom: space(4);
+}
+
+.importar-demonstrativo-modal__label {
+  @include text-label;
+
+  color: var(--color-tinta-secundaria);
+}
+
+.importar-demonstrativo-modal__input-arquivo,
+.importar-demonstrativo-modal__select-prestador,
+.importar-demonstrativo-modal__select-operadora {
+  @include text-body;
+
+  border: 1px solid var(--color-borda-media);
+  border-radius: 4px;
+  padding: space(2) space(3);
+  color: var(--color-tinta);
+  background-color: var(--color-pergaminho-claro);
+}
+
+.importar-demonstrativo-modal__acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: space(3);
+  margin-top: space(5);
+}
+
+.importar-demonstrativo-modal__btn-cancelar,
+.importar-demonstrativo-modal__btn-voltar,
+.importar-demonstrativo-modal__btn-fechar {
+  @include text-label;
+
+  background-color: var(--color-borda-media);
+  color: var(--color-tinta);
+  border: none;
+  border-radius: 4px;
+  padding: space(2) space(4);
+  cursor: pointer;
+}
+
+.importar-demonstrativo-modal__btn-validar,
+.importar-demonstrativo-modal__btn-confirmar {
+  @include text-label;
+
+  background-color: var(--color-terracota);
+  color: var(--color-pergaminho-claro);
+  border: none;
+  border-radius: 4px;
+  padding: space(2) space(4);
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+.importar-demonstrativo-modal__resumo-preview {
+  margin-bottom: space(4);
+}
+
+.importar-demonstrativo-modal__resumo-linha {
+  @include text-body;
+
+  color: var(--color-tinta);
+  margin-bottom: space(1);
+}
+
+.importar-demonstrativo-modal__resumo-label {
+  @include text-label;
+
+  color: var(--color-tinta-secundaria);
+  margin-right: space(2);
+}
+
+.importar-demonstrativo-modal__erros {
+  list-style: none;
+  padding: 0;
+  margin-bottom: space(3);
+}
+
+.importar-demonstrativo-modal__erro-item {
+  @include text-body;
+
+  color: var(--color-ferrugem);
+  padding: space(1) space(2);
+  background-color: var(--color-pergaminho);
+  border-left: 3px solid var(--color-ferrugem);
+  margin-bottom: space(1);
+  border-radius: 2px;
+}
+
+.importar-demonstrativo-modal__alertas {
+  list-style: none;
+  padding: 0;
+  margin-bottom: space(3);
+}
+
+.importar-demonstrativo-modal__alerta-item {
+  @include text-body;
+
+  color: var(--color-tinta);
+  padding: space(1) space(2);
+  background-color: var(--color-ambar-claro);
+  border-left: 3px solid var(--color-ambar);
+  margin-bottom: space(1);
+  border-radius: 2px;
+}
+
+.importar-demonstrativo-modal__msg-erro {
+  @include text-label;
+
+  color: var(--color-ferrugem);
+  margin-bottom: space(3);
+}
+
+.importar-demonstrativo-modal__resumo-final {
+  padding: space(4);
+  background-color: var(--color-pergaminho);
+  border-radius: 4px;
+}
