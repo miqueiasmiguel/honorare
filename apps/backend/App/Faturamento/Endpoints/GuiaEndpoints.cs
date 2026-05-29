@@ -60,7 +60,7 @@ internal static class GuiaEndpoints
     {
         var cmd = new CriarGuiaCommand(
             body.PrestadorId, body.OperadoraId, body.BeneficiarioId,
-            body.Senha, body.DataAtendimento, body.EhPacote, body.Observacao,
+            body.NumeroGuia, body.Senha, body.DataAtendimento, body.EhPacote, body.Observacao,
             body.Itens.Select(i => new CriarItemGuiaCommand(
                 i.ProcedimentoId, i.PosicaoExecutor, i.PercentualOrdem,
                 i.ViaAcesso, i.Acomodacao, i.EhUrgencia, i.ValorApurado, i.TempoAnestesicoMin)).ToList());
@@ -84,7 +84,7 @@ internal static class GuiaEndpoints
     {
         var cmd = new AtualizarGuiaCommand(
             body.OperadoraId, body.BeneficiarioId,
-            body.Senha, body.DataAtendimento, body.EhPacote, body.Observacao,
+            body.NumeroGuia, body.Senha, body.DataAtendimento, body.EhPacote, body.Observacao,
             body.Itens.Select(i => new CriarItemGuiaCommand(
                 i.ProcedimentoId, i.PosicaoExecutor, i.PercentualOrdem,
                 i.ViaAcesso, i.Acomodacao, i.EhUrgencia, i.ValorApurado, i.TempoAnestesicoMin)).ToList());
@@ -140,6 +140,7 @@ internal sealed record CriarGuiaRequest(
     Guid PrestadorId,
     Guid OperadoraId,
     Guid? BeneficiarioId,
+    string? NumeroGuia,
     string Senha,
     DateOnly DataAtendimento,
     bool EhPacote,
@@ -149,6 +150,7 @@ internal sealed record CriarGuiaRequest(
 internal sealed record AtualizarGuiaRequest(
     Guid OperadoraId,
     Guid? BeneficiarioId,
+    string? NumeroGuia,
     string Senha,
     DateOnly DataAtendimento,
     bool EhPacote,

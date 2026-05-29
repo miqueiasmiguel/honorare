@@ -555,7 +555,7 @@ Adicionar botão "Importar demonstrativo CSV" no header da lista. Ao clicar, abr
 - [x] `ResolverPercentualOrdemAsync` retorna padrão correto quando sem tabela configurada
 - [ ] Seção "Tabela de Atos Múltiplos" funcional no detalhe da Operadora
 - [ ] Dropdown de ordem no formulário de guia exibe opções da tabela configurada
-- [ ] `Guia.NumeroGuia` persistido, migration aplicada
+- [x] `Guia.NumeroGuia` persistido, migration aplicada
 - [ ] Endpoint `POST /api/v1/admin/demonstrativos/importar-csv` aceita `somenteValidar=true` e `false`
 - [ ] Importação cria `Guia` + `ItemGuia` + `ItemDemonstrativo` corretamente para anestesista e cirurgião
 - [ ] Motor roda após importação; `ValorApurado` e `ValorLiquidado` preenchidos

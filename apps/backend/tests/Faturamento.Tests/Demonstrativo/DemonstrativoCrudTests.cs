@@ -169,7 +169,7 @@ public sealed class DemonstrativoCrudTests(PostgresContainerFixture db)
         var demId = criado.Value!.Header.Id;
 
         var guia = Guia.Create(tenantId, prestadorId, operadoraId, null,
-            "DM02EXC" + tenantId.ToString("N")[..5], new DateOnly(2025, 8, 1), false, string.Empty);
+            null, "DM02EXC" + tenantId.ToString("N")[..5], new DateOnly(2025, 8, 1), false, string.Empty);
         ctx.Add(guia);
         await ctx.SaveChangesAsync();
 
@@ -254,7 +254,7 @@ public sealed class DemonstrativoCrudTests(PostgresContainerFixture db)
         var demId = criado.Value!.Header.Id;
 
         var guia = Guia.Create(tenantId, prestadorId, operadoraId, null,
-            "DM02RM" + tenantId.ToString("N")[..6], new DateOnly(2025, 5, 1), false, string.Empty);
+            null, "DM02RM" + tenantId.ToString("N")[..6], new DateOnly(2025, 5, 1), false, string.Empty);
         ctx.Add(guia);
         await ctx.SaveChangesAsync();
 

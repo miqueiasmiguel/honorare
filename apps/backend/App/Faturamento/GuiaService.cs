@@ -8,7 +8,7 @@ namespace App.Faturamento;
 
 internal sealed record CriarGuiaCommand(
     Guid PrestadorId, Guid OperadoraId, Guid? BeneficiarioId,
-    string Senha, DateOnly DataAtendimento, bool EhPacote, string Observacao,
+    string? NumeroGuia, string Senha, DateOnly DataAtendimento, bool EhPacote, string Observacao,
     IReadOnlyList<CriarItemGuiaCommand> Itens);
 
 internal sealed record CriarItemGuiaCommand(
@@ -17,7 +17,7 @@ internal sealed record CriarItemGuiaCommand(
     bool EhUrgencia, decimal? ValorApurado, int? TempoAnestesicoMin = null);
 
 internal sealed record AtualizarGuiaCommand(
-    Guid OperadoraId, Guid? BeneficiarioId, string Senha,
+    Guid OperadoraId, Guid? BeneficiarioId, string? NumeroGuia, string Senha,
     DateOnly DataAtendimento, bool EhPacote, string Observacao,
     IReadOnlyList<CriarItemGuiaCommand> Itens);
 
@@ -28,7 +28,7 @@ internal sealed record ListarGuiasQuery(
 internal sealed record GuiaDto(
     Guid Id, Guid PrestadorId, string PrestadorNome,
     Guid OperadoraId, string OperadoraNome, Guid? BeneficiarioId,
-    string? BeneficiarioNome, string? BeneficiarioCarteira, string Senha,
+    string? BeneficiarioNome, string? BeneficiarioCarteira, string? NumeroGuia, string Senha,
     DateOnly DataAtendimento, SituacaoGuia Situacao, bool EhPacote,
     string Observacao, int TotalItens, DateTimeOffset CriadoEm, DateTimeOffset AtualizadoEm);
 
@@ -41,7 +41,7 @@ internal sealed record ItemGuiaDto(
 internal sealed record GuiaDetalheDto(
     Guid Id, Guid PrestadorId, string PrestadorNome,
     Guid OperadoraId, string OperadoraNome, Guid? BeneficiarioId,
-    string? BeneficiarioNome, string? BeneficiarioCarteira, string Senha,
+    string? BeneficiarioNome, string? BeneficiarioCarteira, string? NumeroGuia, string Senha,
     DateOnly DataAtendimento, SituacaoGuia Situacao, bool EhPacote,
     string Observacao, int TotalItens, DateTimeOffset CriadoEm, DateTimeOffset AtualizadoEm,
     IReadOnlyList<ItemGuiaDto> Itens);
@@ -117,7 +117,7 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
 
         var guia = Guia.Create(
             tenantId, cmd.PrestadorId, cmd.OperadoraId, cmd.BeneficiarioId,
-            cmd.Senha, cmd.DataAtendimento, cmd.EhPacote, cmd.Observacao);
+            cmd.NumeroGuia, cmd.Senha, cmd.DataAtendimento, cmd.EhPacote, cmd.Observacao);
 
         _db.Guias.Add(guia);
 
@@ -160,6 +160,7 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
                     g.BeneficiarioId,
                     BeneficiarioNome = (string?)b.Nome,
                     BeneficiarioCarteira = (string?)b.Carteira,
+                    g.NumeroGuia,
                     g.Senha,
                     g.DataAtendimento,
                     g.Situacao,
@@ -210,7 +211,7 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
             x.Id, x.PrestadorId, x.PrestadorNome,
             x.OperadoraId, x.OperadoraNome,
             x.BeneficiarioId, x.BeneficiarioNome, x.BeneficiarioCarteira,
-            x.Senha, x.DataAtendimento, x.Situacao, x.EhPacote,
+            x.NumeroGuia, x.Senha, x.DataAtendimento, x.Situacao, x.EhPacote,
             x.Observacao,
             counts.GetValueOrDefault(x.Id, 0),
             x.CriadoEm, x.AtualizadoEm)).ToList();
@@ -263,7 +264,7 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
 
         guia.Atualizar(
             cmd.OperadoraId, cmd.BeneficiarioId,
-            cmd.Senha.Trim(), cmd.DataAtendimento, cmd.EhPacote, cmd.Observacao.Trim());
+            cmd.NumeroGuia, cmd.Senha.Trim(), cmd.DataAtendimento, cmd.EhPacote, cmd.Observacao.Trim());
 
         var itens = new List<ItemGuia>(cmd.Itens.Count);
         foreach (var itemCmd in cmd.Itens)
@@ -422,6 +423,7 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
                                 g.BeneficiarioId,
                                 BeneficiarioNome = (string?)b.Nome,
                                 BeneficiarioCarteira = (string?)b.Carteira,
+                                g.NumeroGuia,
                                 g.Senha,
                                 g.DataAtendimento,
                                 g.Situacao,
@@ -451,7 +453,7 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
             header.Id, header.PrestadorId, header.PrestadorNome,
             header.OperadoraId, header.OperadoraNome,
             header.BeneficiarioId, header.BeneficiarioNome, header.BeneficiarioCarteira,
-            header.Senha, header.DataAtendimento, header.Situacao, header.EhPacote,
+            header.NumeroGuia, header.Senha, header.DataAtendimento, header.Situacao, header.EhPacote,
             header.Observacao, itens.Count, header.CriadoEm, header.AtualizadoEm,
             itens));
     }

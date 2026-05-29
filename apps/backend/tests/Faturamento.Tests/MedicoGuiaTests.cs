@@ -71,7 +71,7 @@ public sealed class MedicoGuiaTests : IAsyncLifetime
         Guid? beneficiarioId, Guid procedimentoId, string senha, DateOnly data)
     {
         var guia = Guia.Create(tenantId, prestadorId, operadoraId, beneficiarioId,
-            senha, data, false, string.Empty);
+            null, senha, data, false, string.Empty);
         ctx.Guias.Add(guia);
         var item = ItemGuia.Create(guia.Id, procedimentoId, PosicaoExecutor.Cirurgiao,
             1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);
@@ -296,7 +296,7 @@ public sealed class MedicoGuiaTests : IAsyncLifetime
 
         await using var ctx = _db.CreateTenantContext(tenantId);
         var guia = Guia.Create(tenantId, medicoId, operadoraId, beneficiarioId,
-            "DET-CALC-01", new DateOnly(2025, 7, 1), false, string.Empty);
+            null, "DET-CALC-01", new DateOnly(2025, 7, 1), false, string.Empty);
         ctx.Guias.Add(guia);
         var item = ItemGuia.Create(guia.Id, procedimentoId, PosicaoExecutor.Cirurgiao,
             1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, 100m);
@@ -328,7 +328,7 @@ public sealed class MedicoGuiaTests : IAsyncLifetime
 
         await using var ctx = _db.CreateTenantContext(tenantId);
         var guia = Guia.Create(tenantId, medicoId, operadoraId, beneficiarioId,
-            "DET-NCALC-01", new DateOnly(2025, 8, 1), false, string.Empty);
+            null, "DET-NCALC-01", new DateOnly(2025, 8, 1), false, string.Empty);
         ctx.Guias.Add(guia);
         var item = ItemGuia.Create(guia.Id, procedimentoId, PosicaoExecutor.Cirurgiao,
             1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);

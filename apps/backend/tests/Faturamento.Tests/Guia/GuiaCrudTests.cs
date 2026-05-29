@@ -54,7 +54,7 @@ public sealed class GuiaCrudTests(PostgresContainerFixture db)
 
         var cmd = new CriarGuiaCommand(
             prestadorId, operadoraId, beneficiarioId,
-            "SEN001", new DateOnly(2025, 6, 1), false, "Obs",
+            null, "SEN001", new DateOnly(2025, 6, 1), false, "Obs",
             [ItemPadrao(procedimentoId)]);
 
         var result = await service.CriarAsync(cmd);
@@ -79,7 +79,7 @@ public sealed class GuiaCrudTests(PostgresContainerFixture db)
 
         var cmd = new CriarGuiaCommand(
             prestadorId, operadoraId, beneficiarioId,
-            "SEN002", new DateOnly(2025, 6, 1), false, "Obs",
+            null, "SEN002", new DateOnly(2025, 6, 1), false, "Obs",
             []);
 
         var result = await service.CriarAsync(cmd);
@@ -99,7 +99,7 @@ public sealed class GuiaCrudTests(PostgresContainerFixture db)
 
         var cmd = new CriarGuiaCommand(
             prestadorId, operadoraId, beneficiarioId,
-            "SEN003", new DateOnly(2025, 6, 1), true, "Obs",
+            null, "SEN003", new DateOnly(2025, 6, 1), true, "Obs",
             [ItemPadrao(procedimentoId, null)]);
 
         var result = await service.CriarAsync(cmd);
@@ -119,7 +119,7 @@ public sealed class GuiaCrudTests(PostgresContainerFixture db)
 
         var cmd = new CriarGuiaCommand(
             Guid.NewGuid(), operadoraId, beneficiarioId,
-            "SEN004", new DateOnly(2025, 6, 1), false, "Obs",
+            null, "SEN004", new DateOnly(2025, 6, 1), false, "Obs",
             [ItemPadrao(procedimentoId)]);
 
         var result = await service.CriarAsync(cmd);
@@ -139,7 +139,7 @@ public sealed class GuiaCrudTests(PostgresContainerFixture db)
 
         var cmd = new CriarGuiaCommand(
             prestadorId, Guid.NewGuid(), beneficiarioId,
-            "SEN005", new DateOnly(2025, 6, 1), false, "Obs",
+            null, "SEN005", new DateOnly(2025, 6, 1), false, "Obs",
             [ItemPadrao(procedimentoId)]);
 
         var result = await service.CriarAsync(cmd);
@@ -159,7 +159,7 @@ public sealed class GuiaCrudTests(PostgresContainerFixture db)
 
         var cmd = new CriarGuiaCommand(
             prestadorId, operadoraId, Guid.NewGuid(),
-            "SEN006", new DateOnly(2025, 6, 1), false, "Obs",
+            null, "SEN006", new DateOnly(2025, 6, 1), false, "Obs",
             [ItemPadrao(procedimentoId)]);
 
         var result = await service.CriarAsync(cmd);
@@ -178,7 +178,7 @@ public sealed class GuiaCrudTests(PostgresContainerFixture db)
         var service = new GuiaService(ctx, user, factory);
 
         var cmd = new AtualizarGuiaCommand(
-            operadoraId, beneficiarioId, "SEN-UPD",
+            operadoraId, beneficiarioId, null, "SEN-UPD",
             new DateOnly(2025, 7, 1), false, "Obs atualizada",
             [ItemPadrao(procedimentoId)]);
 
@@ -199,13 +199,13 @@ public sealed class GuiaCrudTests(PostgresContainerFixture db)
 
         var criar = new CriarGuiaCommand(
             prestadorId, operadoraId, beneficiarioId,
-            "SEN-SUBST", new DateOnly(2025, 6, 1), false, "Original",
+            null, "SEN-SUBST", new DateOnly(2025, 6, 1), false, "Original",
             [ItemPadrao(procedimentoId)]);
         var criado = await service.CriarAsync(criar);
         Assert.True(criado.IsSuccess);
 
         var atualizar = new AtualizarGuiaCommand(
-            operadoraId, beneficiarioId, "SEN-SUBST2",
+            operadoraId, beneficiarioId, null, "SEN-SUBST2",
             new DateOnly(2025, 6, 15), false, "Atualizado",
             [ItemPadrao(procedimentoId), ItemPadrao(procedimentoId)]);
 
@@ -241,7 +241,7 @@ public sealed class GuiaCrudTests(PostgresContainerFixture db)
 
         var cmd = new CriarGuiaCommand(
             prestadorId, operadoraId, beneficiarioId,
-            "SEN-DEL", new DateOnly(2025, 6, 1), false, "Obs",
+            null, "SEN-DEL", new DateOnly(2025, 6, 1), false, "Obs",
             [ItemPadrao(procedimentoId)]);
         var criado = await service.CriarAsync(cmd);
         Assert.True(criado.IsSuccess);
@@ -269,7 +269,7 @@ public sealed class GuiaCrudTests(PostgresContainerFixture db)
 
         var cmd = new CriarGuiaCommand(
             prestadorId, operadoraId, beneficiarioId,
-            "SEN-ISO", new DateOnly(2025, 6, 1), false, "Obs",
+            null, "SEN-ISO", new DateOnly(2025, 6, 1), false, "Obs",
             [ItemPadrao(procedimentoId)]);
         var criado = await serviceA.CriarAsync(cmd);
         Assert.True(criado.IsSuccess);

@@ -149,7 +149,7 @@ public sealed class DemonstrativoSchemaTests(PostgresContainerFixture db)
             await ctx.SaveChangesAsync();
 
             var guia = Guia.Create(tenantId, prestadorId, operadoraId, null,
-                "DM01" + tenantId.ToString("N")[..6], new DateOnly(2025, 6, 1), false, string.Empty);
+                null, "DM01" + tenantId.ToString("N")[..6], new DateOnly(2025, 6, 1), false, string.Empty);
             ctx.Add(guia);
             await ctx.SaveChangesAsync();
 

@@ -42,7 +42,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         var factory = new PricingRuleSetFactory(ctx);
         var svc = new GuiaService(ctx, user, factory);
         var cmd = new CriarGuiaCommand(
-            prestadorId, operadoraId, null, senha,
+            prestadorId, operadoraId, null, null, senha,
             new DateOnly(2026, 1, 10), false, string.Empty,
             [new CriarItemGuiaCommand(
                 procedimentoId, PosicaoExecutor.Cirurgiao, 1.0m,

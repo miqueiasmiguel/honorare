@@ -36,7 +36,7 @@ public sealed class ConciliacaoTests(PostgresContainerFixture db)
         AppDbContext ctx, Guid tenantId, Guid prestadorId, Guid operadoraId, Guid procedimentoId, string senha)
     {
         var guia = Guia.Create(tenantId, prestadorId, operadoraId, null,
-            senha, new DateOnly(2025, 1, 1), false, string.Empty);
+            null, senha, new DateOnly(2025, 1, 1), false, string.Empty);
         ctx.Add(guia);
         var item = ItemGuia.Create(guia.Id, procedimentoId, PosicaoExecutor.Cirurgiao,
             1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);
@@ -85,7 +85,7 @@ public sealed class ConciliacaoTests(PostgresContainerFixture db)
         var (operadoraId, prestadorId, procedimentoId) = await SeedCatalogAsync(ctx, tenantId);
 
         var guia = Guia.Create(tenantId, prestadorId, operadoraId, null,
-            "CNC02" + tenantId.ToString("N")[..4], new DateOnly(2025, 1, 1), false, string.Empty);
+            null, "CNC02" + tenantId.ToString("N")[..4], new DateOnly(2025, 1, 1), false, string.Empty);
         ctx.Add(guia);
         var item1 = ItemGuia.Create(guia.Id, procedimentoId, PosicaoExecutor.Cirurgiao,
             1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);
@@ -120,7 +120,7 @@ public sealed class ConciliacaoTests(PostgresContainerFixture db)
         var (operadoraId, prestadorId, procedimentoId) = await SeedCatalogAsync(ctx, tenantId);
 
         var guia = Guia.Create(tenantId, prestadorId, operadoraId, null,
-            "CNC03" + tenantId.ToString("N")[..4], new DateOnly(2025, 1, 1), false, string.Empty);
+            null, "CNC03" + tenantId.ToString("N")[..4], new DateOnly(2025, 1, 1), false, string.Empty);
         ctx.Add(guia);
         var item1 = ItemGuia.Create(guia.Id, procedimentoId, PosicaoExecutor.Cirurgiao,
             1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);
@@ -169,7 +169,7 @@ public sealed class ConciliacaoTests(PostgresContainerFixture db)
         var (operadoraId, prestadorId, procedimentoId) = await SeedCatalogAsync(ctx, tenantId);
 
         var guia = Guia.Create(tenantId, prestadorId, operadoraId, null,
-            "CNC05" + tenantId.ToString("N")[..4], new DateOnly(2025, 1, 1), false, string.Empty);
+            null, "CNC05" + tenantId.ToString("N")[..4], new DateOnly(2025, 1, 1), false, string.Empty);
         ctx.Add(guia);
         var item1 = ItemGuia.Create(guia.Id, procedimentoId, PosicaoExecutor.Cirurgiao,
             1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);

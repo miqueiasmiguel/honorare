@@ -9,6 +9,7 @@ internal sealed class Guia : ITenantEntity
     public Guid PrestadorId { get; private set; }
     public Guid OperadoraId { get; private set; }
     public Guid? BeneficiarioId { get; private set; }
+    public string? NumeroGuia { get; private set; }
     public string Senha { get; private set; } = string.Empty;
     public DateOnly DataAtendimento { get; private set; }
     public SituacaoGuia Situacao { get; private set; }
@@ -25,6 +26,7 @@ internal sealed class Guia : ITenantEntity
         Guid prestadorId,
         Guid operadoraId,
         Guid? beneficiarioId,
+        string? numeroGuia,
         string senha,
         DateOnly dataAtendimento,
         bool ehPacote,
@@ -38,6 +40,7 @@ internal sealed class Guia : ITenantEntity
             PrestadorId = prestadorId,
             OperadoraId = operadoraId,
             BeneficiarioId = beneficiarioId,
+            NumeroGuia = string.IsNullOrWhiteSpace(numeroGuia) ? null : numeroGuia.Trim(),
             Senha = senha.Trim(),
             DataAtendimento = dataAtendimento,
             Situacao = SituacaoGuia.Apresentada,
@@ -67,6 +70,7 @@ internal sealed class Guia : ITenantEntity
     internal void Atualizar(
         Guid operadoraId,
         Guid? beneficiarioId,
+        string? numeroGuia,
         string senha,
         DateOnly dataAtendimento,
         bool ehPacote,
@@ -74,6 +78,7 @@ internal sealed class Guia : ITenantEntity
     {
         OperadoraId = operadoraId;
         BeneficiarioId = beneficiarioId;
+        NumeroGuia = string.IsNullOrWhiteSpace(numeroGuia) ? null : numeroGuia.Trim();
         Senha = senha;
         DataAtendimento = dataAtendimento;
         EhPacote = ehPacote;

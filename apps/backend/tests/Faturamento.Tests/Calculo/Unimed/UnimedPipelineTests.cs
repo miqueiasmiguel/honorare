@@ -47,7 +47,7 @@ public sealed class UnimedPipelineTests(PostgresContainerFixture db)
         Guid prestadorId, Guid operadoraId, Guid procedimentoId, string senha,
         PosicaoExecutor posicao, decimal percentualOrdem,
         ViaAcesso via, Acomodacao acomodacao, bool ehUrgencia)
-        => new(prestadorId, operadoraId, null, senha,
+        => new(prestadorId, operadoraId, null, null, senha,
             new DateOnly(2025, 1, 1), false, string.Empty,
             [new CriarItemGuiaCommand(procedimentoId, posicao, percentualOrdem, via, acomodacao, ehUrgencia, null)]);
 

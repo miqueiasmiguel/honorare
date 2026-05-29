@@ -19,7 +19,7 @@ public sealed class AnestesiaSchemaTests(PostgresContainerFixture db)
         ctx.Add(procedimento);
         await ctx.SaveChangesAsync();
 
-        var guia = Guia.Create(tenantId, prestador.Id, operadora.Id, null, "AN01-" + tenantId.ToString("N")[..4], new DateOnly(2025, 6, 1), false, string.Empty);
+        var guia = Guia.Create(tenantId, prestador.Id, operadora.Id, null, null, "AN01-" + tenantId.ToString("N")[..4], new DateOnly(2025, 6, 1), false, string.Empty);
         ctx.Add(guia);
         await ctx.SaveChangesAsync();
 

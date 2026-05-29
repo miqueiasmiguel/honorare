@@ -280,7 +280,7 @@ public sealed class OperadoraCrudTests(PostgresContainerFixture db)
         ctx.Add(beneficiario);
         await ctx.SaveChangesAsync();
 
-        var guia = Guia.Create(tenantId, prestador.Id, operadoraId, beneficiario.Id, "SEN001", new DateOnly(2025, 1, 1), false, "");
+        var guia = Guia.Create(tenantId, prestador.Id, operadoraId, beneficiario.Id, null, "SEN001", new DateOnly(2025, 1, 1), false, "");
         ctx.Add(guia);
         await ctx.SaveChangesAsync();
 

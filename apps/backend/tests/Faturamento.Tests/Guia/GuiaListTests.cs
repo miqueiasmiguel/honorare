@@ -50,7 +50,7 @@ public sealed class GuiaListTests(PostgresContainerFixture db)
     {
         var cmd = new CriarGuiaCommand(
             prestadorId, operadoraId, beneficiarioId,
-            senha, data, false, string.Empty,
+            null, senha, data, false, string.Empty,
             [ItemPadrao(procedimentoId)]);
         var result = await service.CriarAsync(cmd);
         Assert.True(result.IsSuccess);
