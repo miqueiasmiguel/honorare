@@ -23,7 +23,7 @@ public sealed class CalculoSchemaTests(PostgresContainerFixture db)
         ctx.Add(guia);
         await ctx.SaveChangesAsync();
 
-        var item = ItemGuia.Create(guia.Id, procedimento.Id, PosicaoExecutor.Cirurgiao, OrdemProcedimento.Unico, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);
+        var item = ItemGuia.Create(guia.Id, procedimento.Id, PosicaoExecutor.Cirurgiao, 1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);
         ctx.Add(item);
         await ctx.SaveChangesAsync();
 

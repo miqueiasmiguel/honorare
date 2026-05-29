@@ -45,11 +45,11 @@ public sealed class UnimedPipelineTests(PostgresContainerFixture db)
 
     private static CriarGuiaCommand Cmd(
         Guid prestadorId, Guid operadoraId, Guid procedimentoId, string senha,
-        PosicaoExecutor posicao, OrdemProcedimento ordem,
+        PosicaoExecutor posicao, decimal percentualOrdem,
         ViaAcesso via, Acomodacao acomodacao, bool ehUrgencia)
         => new(prestadorId, operadoraId, null, senha,
             new DateOnly(2025, 1, 1), false, string.Empty,
-            [new CriarItemGuiaCommand(procedimentoId, posicao, ordem, via, acomodacao, ehUrgencia, null)]);
+            [new CriarItemGuiaCommand(procedimentoId, posicao, percentualOrdem, via, acomodacao, ehUrgencia, null)]);
 
     [Fact]
     public async Task Cirurgiao_Unico_Enfermaria_SemUrgenciaAsync()
@@ -61,7 +61,7 @@ public sealed class UnimedPipelineTests(PostgresContainerFixture db)
 
         var result = await service.CriarAsync(
             Cmd(pId, oId, procId, "SEN-P01", PosicaoExecutor.Cirurgiao,
-                OrdemProcedimento.Unico, ViaAcesso.Convencional, Acomodacao.Enfermaria, false));
+                1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false));
 
         Assert.True(result.IsSuccess);
         Assert.Equal(1000m, result.Value!.Itens[0].ValorApurado);
@@ -77,7 +77,7 @@ public sealed class UnimedPipelineTests(PostgresContainerFixture db)
 
         var result = await service.CriarAsync(
             Cmd(pId, oId, procId, "SEN-P02", PosicaoExecutor.Cirurgiao,
-                OrdemProcedimento.Unico, ViaAcesso.Convencional, Acomodacao.Apartamento, false));
+                1.0m, ViaAcesso.Convencional, Acomodacao.Apartamento, false));
 
         Assert.True(result.IsSuccess);
         Assert.Equal(2000m, result.Value!.Itens[0].ValorApurado);
@@ -93,7 +93,7 @@ public sealed class UnimedPipelineTests(PostgresContainerFixture db)
 
         var result = await service.CriarAsync(
             Cmd(pId, oId, procId, "SEN-P03", PosicaoExecutor.Cirurgiao,
-                OrdemProcedimento.Unico, ViaAcesso.Convencional, Acomodacao.Enfermaria, true));
+                1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, true));
 
         Assert.True(result.IsSuccess);
         Assert.Equal(1300m, result.Value!.Itens[0].ValorApurado);
@@ -109,7 +109,7 @@ public sealed class UnimedPipelineTests(PostgresContainerFixture db)
 
         var result = await service.CriarAsync(
             Cmd(pId, oId, procId, "SEN-P04", PosicaoExecutor.Cirurgiao,
-                OrdemProcedimento.SecundarioMesmaVia, ViaAcesso.Convencional, Acomodacao.Enfermaria, false));
+                0.5m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false));
 
         Assert.True(result.IsSuccess);
         Assert.Equal(500m, result.Value!.Itens[0].ValorApurado);
@@ -125,7 +125,7 @@ public sealed class UnimedPipelineTests(PostgresContainerFixture db)
 
         var result = await service.CriarAsync(
             Cmd(pId, oId, procId, "SEN-P05", PosicaoExecutor.Cirurgiao,
-                OrdemProcedimento.Unico, ViaAcesso.Videolaparoscopia, Acomodacao.Enfermaria, false));
+                1.0m, ViaAcesso.Videolaparoscopia, Acomodacao.Enfermaria, false));
 
         Assert.True(result.IsSuccess);
         Assert.Equal(1500m, result.Value!.Itens[0].ValorApurado);
@@ -141,7 +141,7 @@ public sealed class UnimedPipelineTests(PostgresContainerFixture db)
 
         var result = await service.CriarAsync(
             Cmd(pId, oId, procId, "SEN-P06", PosicaoExecutor.PrimeiroAuxiliar,
-                OrdemProcedimento.Unico, ViaAcesso.Convencional, Acomodacao.Enfermaria, false));
+                1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false));
 
         Assert.True(result.IsSuccess);
         Assert.Equal(600m, result.Value!.Itens[0].ValorApurado);
@@ -157,7 +157,7 @@ public sealed class UnimedPipelineTests(PostgresContainerFixture db)
 
         var result = await service.CriarAsync(
             Cmd(pId, oId, procId, "SEN-P07", PosicaoExecutor.SegundoAuxiliar,
-                OrdemProcedimento.Unico, ViaAcesso.Convencional, Acomodacao.Enfermaria, false));
+                1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false));
 
         Assert.True(result.IsSuccess);
         Assert.Equal(400m, result.Value!.Itens[0].ValorApurado);
@@ -173,7 +173,7 @@ public sealed class UnimedPipelineTests(PostgresContainerFixture db)
 
         var result = await service.CriarAsync(
             Cmd(pId, oId, procId, "SEN-P08", PosicaoExecutor.Anestesista,
-                OrdemProcedimento.Unico, ViaAcesso.Convencional, Acomodacao.Enfermaria, false));
+                1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false));
 
         Assert.True(result.IsSuccess);
         Assert.Null(result.Value!.Itens[0].ValorApurado);
@@ -189,7 +189,7 @@ public sealed class UnimedPipelineTests(PostgresContainerFixture db)
 
         var result = await service.CriarAsync(
             Cmd(pId, oId, procId, "SEN-P09", PosicaoExecutor.Cirurgiao,
-                OrdemProcedimento.SecundarioMesmaVia, ViaAcesso.Convencional, Acomodacao.Apartamento, true));
+                0.5m, ViaAcesso.Convencional, Acomodacao.Apartamento, true));
 
         Assert.True(result.IsSuccess);
         Assert.Equal(1300m, result.Value!.Itens[0].ValorApurado);
@@ -205,7 +205,7 @@ public sealed class UnimedPipelineTests(PostgresContainerFixture db)
 
         var result = await service.CriarAsync(
             Cmd(pId, oId, procId, "SEN-P10", PosicaoExecutor.Cirurgiao,
-                OrdemProcedimento.Unico, ViaAcesso.Videolaparoscopia, Acomodacao.Apartamento, false));
+                1.0m, ViaAcesso.Videolaparoscopia, Acomodacao.Apartamento, false));
 
         Assert.True(result.IsSuccess);
         Assert.Equal(3000m, result.Value!.Itens[0].ValorApurado);
@@ -221,7 +221,7 @@ public sealed class UnimedPipelineTests(PostgresContainerFixture db)
 
         var result = await service.CriarAsync(
             Cmd(pId, oId, procId, "SEN-P11", PosicaoExecutor.PrimeiroAuxiliar,
-                OrdemProcedimento.Unico, ViaAcesso.Convencional, Acomodacao.Apartamento, false));
+                1.0m, ViaAcesso.Convencional, Acomodacao.Apartamento, false));
 
         Assert.True(result.IsSuccess);
         Assert.Equal(600m, result.Value!.Itens[0].ValorApurado); // 1000 × 1.0 × 0.6
@@ -237,7 +237,7 @@ public sealed class UnimedPipelineTests(PostgresContainerFixture db)
 
         var result = await service.CriarAsync(
             Cmd(pId, oId, procId, "SEN-P12", PosicaoExecutor.SegundoAuxiliar,
-                OrdemProcedimento.Unico, ViaAcesso.Convencional, Acomodacao.Apartamento, false));
+                1.0m, ViaAcesso.Convencional, Acomodacao.Apartamento, false));
 
         Assert.True(result.IsSuccess);
         Assert.Equal(400m, result.Value!.Itens[0].ValorApurado); // 1000 × 1.0 × 0.4

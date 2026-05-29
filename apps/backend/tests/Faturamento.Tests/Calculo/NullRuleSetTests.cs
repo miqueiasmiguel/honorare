@@ -11,7 +11,7 @@ public sealed class NullRuleSetTests
             Guid.NewGuid(),
             Guid.NewGuid(),
             PosicaoExecutor.Cirurgiao,
-            OrdemProcedimento.Unico,
+            1.0m,
             ViaAcesso.Convencional,
             Acomodacao.Enfermaria,
             false);

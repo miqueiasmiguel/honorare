@@ -45,7 +45,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
             prestadorId, operadoraId, null, senha,
             new DateOnly(2026, 1, 10), false, string.Empty,
             [new CriarItemGuiaCommand(
-                procedimentoId, PosicaoExecutor.Cirurgiao, OrdemProcedimento.Unico,
+                procedimentoId, PosicaoExecutor.Cirurgiao, 1.0m,
                 ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null)]);
         var result = await svc.CriarAsync(cmd);
         return result.Value!.Id;

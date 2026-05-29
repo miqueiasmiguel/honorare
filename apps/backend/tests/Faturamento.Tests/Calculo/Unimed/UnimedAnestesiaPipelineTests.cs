@@ -82,7 +82,7 @@ public sealed class UnimedAnestesiaPipelineTests(PostgresContainerFixture db)
             new DateOnly(2025, 1, 1), false, string.Empty,
             [new CriarItemGuiaCommand(
                 procedimentoId, PosicaoExecutor.Anestesista,
-                OrdemProcedimento.Unico, ViaAcesso.Convencional,
+                1.0m, ViaAcesso.Convencional,
                 acomodacao, ehUrgencia, null, tempoAnestesicoMin)]);
 
     [Fact]

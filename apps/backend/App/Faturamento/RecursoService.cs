@@ -329,7 +329,7 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser)
             from i in _db.ItensGuia
             where guiaIds.Contains(i.GuiaId)
             join p in _db.Procedimentos on i.ProcedimentoId equals p.Id
-            orderby i.OrdemProcedimento
+            orderby i.PercentualOrdem descending
             select new
             {
                 i.Id,

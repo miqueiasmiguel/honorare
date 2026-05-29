@@ -65,7 +65,7 @@ public sealed class GuiaCalculoEndpointTests(PostgresContainerFixture db)
         var cmd = new CriarGuiaCommand(prestadorId, operadoraId, null, "SEN-VIS01",
             new DateOnly(2025, 1, 1), false, string.Empty,
             [new CriarItemGuiaCommand(procedimentoId, PosicaoExecutor.Cirurgiao,
-                OrdemProcedimento.Unico, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null)]);
+                1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null)]);
 
         var criado = await service.CriarAsync(cmd);
         Assert.True(criado.IsSuccess);
@@ -96,7 +96,7 @@ public sealed class GuiaCalculoEndpointTests(PostgresContainerFixture db)
         var cmd = new CriarGuiaCommand(prestadorId, operadoraId, null, "SEN-VIS02",
             new DateOnly(2025, 1, 1), false, string.Empty,
             [new CriarItemGuiaCommand(procedimentoId, PosicaoExecutor.Cirurgiao,
-                OrdemProcedimento.Unico, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null)]);
+                1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null)]);
 
         var criado = await service.CriarAsync(cmd);
         Assert.True(criado.IsSuccess);
@@ -124,7 +124,7 @@ public sealed class GuiaCalculoEndpointTests(PostgresContainerFixture db)
         var cmd = new CriarGuiaCommand(prestadorId, operadoraId, null, "SEN-VIS03",
             new DateOnly(2025, 1, 1), true, string.Empty,
             [new CriarItemGuiaCommand(procedimentoId, PosicaoExecutor.Cirurgiao,
-                OrdemProcedimento.Unico, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, 350m)]);
+                1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, 350m)]);
 
         var criado = await service.CriarAsync(cmd);
         Assert.True(criado.IsSuccess);

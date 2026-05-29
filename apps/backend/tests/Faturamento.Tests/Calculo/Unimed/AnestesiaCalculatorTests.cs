@@ -1,4 +1,3 @@
-using App.Faturamento;
 using App.Faturamento.Motor.Unimed;
 
 namespace Faturamento.Tests.Motor.Unimed;
@@ -11,7 +10,7 @@ public sealed class AnestesiaCalculatorTests
         var (valor, passos) = AnestesiaCalculator.Calcular(
             valorReferencia: 526.50m,
             deflatorPercentual: 100m,
-            ordem: OrdemProcedimento.Unico,
+            percentualOrdem: 1.0m,
             ehUrgencia: false,
             ehSadt: false);
 
@@ -27,7 +26,7 @@ public sealed class AnestesiaCalculatorTests
         var (valor, _) = AnestesiaCalculator.Calcular(
             valorReferencia: 526.50m,
             deflatorPercentual: 80m,
-            ordem: OrdemProcedimento.Unico,
+            percentualOrdem: 1.0m,
             ehUrgencia: false,
             ehSadt: false);
 
@@ -40,7 +39,7 @@ public sealed class AnestesiaCalculatorTests
         var (valor, _) = AnestesiaCalculator.Calcular(
             valorReferencia: 526.50m,
             deflatorPercentual: 100m,
-            ordem: OrdemProcedimento.Unico,
+            percentualOrdem: 1.0m,
             ehUrgencia: true,
             ehSadt: false);
 
@@ -53,7 +52,7 @@ public sealed class AnestesiaCalculatorTests
         var (valor, _) = AnestesiaCalculator.Calcular(
             valorReferencia: 526.50m,
             deflatorPercentual: 100m,
-            ordem: OrdemProcedimento.Unico,
+            percentualOrdem: 1.0m,
             ehUrgencia: true,
             ehSadt: true);
 
@@ -66,7 +65,7 @@ public sealed class AnestesiaCalculatorTests
         var (valor, _) = AnestesiaCalculator.Calcular(
             valorReferencia: 526.50m,
             deflatorPercentual: 100m,
-            ordem: OrdemProcedimento.SecundarioMesmaVia,
+            percentualOrdem: 0.5m,
             ehUrgencia: false,
             ehSadt: false);
 
@@ -79,7 +78,7 @@ public sealed class AnestesiaCalculatorTests
         var (valor, _) = AnestesiaCalculator.Calcular(
             valorReferencia: 526.50m,
             deflatorPercentual: 100m,
-            ordem: OrdemProcedimento.SecundarioViaDiferente,
+            percentualOrdem: 0.7m,
             ehUrgencia: false,
             ehSadt: false);
 
@@ -92,7 +91,7 @@ public sealed class AnestesiaCalculatorTests
         var (_, passos) = AnestesiaCalculator.Calcular(
             valorReferencia: 526.50m,
             deflatorPercentual: 80m,
-            ordem: OrdemProcedimento.SecundarioMesmaVia,
+            percentualOrdem: 0.5m,
             ehUrgencia: true,
             ehSadt: false);
 

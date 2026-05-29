@@ -36,7 +36,7 @@ public sealed class AnestesiaSchemaTests(PostgresContainerFixture db)
         {
             var (guiaId, procedimentoId) = await SeedAsync(ctx, tenantId);
             var item = ItemGuia.Create(guiaId, procedimentoId, PosicaoExecutor.Cirurgiao,
-                OrdemProcedimento.Unico, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);
+                1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);
             ctx.Add(item);
             await ctx.SaveChangesAsync();
             itemId = item.Id;
@@ -59,7 +59,7 @@ public sealed class AnestesiaSchemaTests(PostgresContainerFixture db)
         {
             var (guiaId, procedimentoId) = await SeedAsync(ctx, tenantId);
             var item = ItemGuia.Create(guiaId, procedimentoId, PosicaoExecutor.Anestesista,
-                OrdemProcedimento.Unico, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null,
+                1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null,
                 tempoAnestesicoMin: 180);
             ctx.Add(item);
             await ctx.SaveChangesAsync();
@@ -83,7 +83,7 @@ public sealed class AnestesiaSchemaTests(PostgresContainerFixture db)
         {
             var (guiaId, procedimentoId) = await SeedAsync(ctx, tenantId);
             var item = ItemGuia.Create(guiaId, procedimentoId, PosicaoExecutor.Cirurgiao,
-                OrdemProcedimento.Unico, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);
+                1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);
             ctx.Add(item);
             await ctx.SaveChangesAsync();
             itemId = item.Id;

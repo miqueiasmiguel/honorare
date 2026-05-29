@@ -40,7 +40,7 @@ public sealed class GuiaListTests(PostgresContainerFixture db)
     }
 
     private static CriarItemGuiaCommand ItemPadrao(Guid procedimentoId) =>
-        new(procedimentoId, PosicaoExecutor.Cirurgiao, OrdemProcedimento.Unico,
+        new(procedimentoId, PosicaoExecutor.Cirurgiao, 1.0m,
             ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);
 
     private static async Task<Guid> CriarGuiaAsync(

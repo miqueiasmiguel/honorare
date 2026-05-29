@@ -40,7 +40,7 @@ public sealed class GuiaCrudTests(PostgresContainerFixture db)
     }
 
     private static CriarItemGuiaCommand ItemPadrao(Guid procedimentoId, decimal? valorApurado = null) =>
-        new(procedimentoId, PosicaoExecutor.Cirurgiao, OrdemProcedimento.Unico,
+        new(procedimentoId, PosicaoExecutor.Cirurgiao, 1.0m,
             ViaAcesso.Convencional, Acomodacao.Enfermaria, false, valorApurado);
 
     [Fact]

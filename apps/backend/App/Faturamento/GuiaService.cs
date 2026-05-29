@@ -13,7 +13,7 @@ internal sealed record CriarGuiaCommand(
 
 internal sealed record CriarItemGuiaCommand(
     Guid ProcedimentoId, PosicaoExecutor PosicaoExecutor,
-    OrdemProcedimento OrdemProcedimento, ViaAcesso ViaAcesso, Acomodacao Acomodacao,
+    decimal PercentualOrdem, ViaAcesso ViaAcesso, Acomodacao Acomodacao,
     bool EhUrgencia, decimal? ValorApurado, int? TempoAnestesicoMin = null);
 
 internal sealed record AtualizarGuiaCommand(
@@ -34,7 +34,7 @@ internal sealed record GuiaDto(
 
 internal sealed record ItemGuiaDto(
     Guid Id, Guid ProcedimentoId, string CodigoTuss, string DescricaoProcedimento,
-    PosicaoExecutor PosicaoExecutor, OrdemProcedimento OrdemProcedimento,
+    PosicaoExecutor PosicaoExecutor, decimal PercentualOrdem,
     ViaAcesso ViaAcesso, Acomodacao Acomodacao, bool EhUrgencia,
     decimal? ValorApurado, decimal? ValorLiquidado);
 
@@ -86,6 +86,12 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
                 new ValidationError("Itens de guia pacote devem ter ValorApurado preenchido."));
         }
 
+        if (cmd.Itens.Any(i => i.PercentualOrdem < 0.01m || i.PercentualOrdem > 1.00m))
+        {
+            return Result<GuiaDetalheDto>.Fail(
+                new ValidationError("PercentualOrdem deve estar entre 0.01 e 1.00."));
+        }
+
         var tenantId = _currentUser.TenantId!.Value;
 
         var prestador = await _db.Prestadores.FirstOrDefaultAsync(p => p.Id == cmd.PrestadorId, ct);
@@ -120,7 +126,7 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
         {
             var item = ItemGuia.Create(
                 guia.Id, itemCmd.ProcedimentoId, itemCmd.PosicaoExecutor,
-                itemCmd.OrdemProcedimento, itemCmd.ViaAcesso, itemCmd.Acomodacao,
+                itemCmd.PercentualOrdem, itemCmd.ViaAcesso, itemCmd.Acomodacao,
                 itemCmd.EhUrgencia, itemCmd.ValorApurado, itemCmd.TempoAnestesicoMin);
             _db.ItensGuia.Add(item);
             itens.Add(item);
@@ -233,6 +239,12 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
                 new ValidationError("Itens de guia pacote devem ter ValorApurado preenchido."));
         }
 
+        if (cmd.Itens.Any(i => i.PercentualOrdem < 0.01m || i.PercentualOrdem > 1.00m))
+        {
+            return Result<GuiaDetalheDto>.Fail(
+                new ValidationError("PercentualOrdem deve estar entre 0.01 e 1.00."));
+        }
+
         var guia = await _db.Guias.FirstOrDefaultAsync(g => g.Id == id, ct);
         if (guia is null)
         {
@@ -258,7 +270,7 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
         {
             var item = ItemGuia.Create(
                 id, itemCmd.ProcedimentoId, itemCmd.PosicaoExecutor,
-                itemCmd.OrdemProcedimento, itemCmd.ViaAcesso, itemCmd.Acomodacao,
+                itemCmd.PercentualOrdem, itemCmd.ViaAcesso, itemCmd.Acomodacao,
                 itemCmd.EhUrgencia, itemCmd.ValorApurado, itemCmd.TempoAnestesicoMin);
             _db.ItensGuia.Add(item);
             itens.Add(item);
@@ -360,7 +372,7 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
         var ctx = new ApurarGuiaContext(tenantId, guia.PrestadorId, guia.OperadoraId,
             itens.Select(i => new ApurarItemInput(
                 i.Id, i.ProcedimentoId, i.PosicaoExecutor,
-                i.OrdemProcedimento, i.ViaAcesso, i.Acomodacao, i.EhUrgencia,
+                i.PercentualOrdem, i.ViaAcesso, i.Acomodacao, i.EhUrgencia,
                 i.TempoAnestesicoMin))
             .ToList());
 
@@ -430,7 +442,7 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
                            where i.GuiaId == guiaId
                            select new ItemGuiaDto(
                                i.Id, i.ProcedimentoId, p.CodigoTuss, p.Descricao,
-                               i.PosicaoExecutor, i.OrdemProcedimento,
+                               i.PosicaoExecutor, i.PercentualOrdem,
                                i.ViaAcesso, i.Acomodacao,
                                i.EhUrgencia, i.ValorApurado, i.ValorLiquidado))
                           .ToListAsync(ct);

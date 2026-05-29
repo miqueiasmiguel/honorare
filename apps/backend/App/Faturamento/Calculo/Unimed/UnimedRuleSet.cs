@@ -55,7 +55,7 @@ internal sealed class UnimedRuleSet(AppDbContext db) : IPricingRuleSet
         var passos = new List<PassoApuracao> { new("ValorBase", fatorBase, valorBase) };
 
         var valorAtual = valorBase;
-        valorAtual = AplicarModifier(OrdemProcedimentoModifier.Aplicar(item.Ordem, valorAtual), passos);
+        valorAtual = AplicarModifier(OrdemProcedimentoModifier.Aplicar(item.PercentualOrdem, valorAtual), passos);
         valorAtual = AplicarModifier(VideolaparoscopiaModifier.Aplicar(item.Via, procedimento?.TemPorteProprioVideo ?? false, valorAtual), passos);
         valorAtual = AplicarModifier(AcomodacaoModifier.Aplicar(item.Acomodacao, item.Posicao, valorAtual), passos);
         valorAtual = AplicarModifier(UrgenciaModifier.Aplicar(item.EhUrgencia, procedimento?.EhSadt ?? false, valorAtual), passos);
@@ -105,7 +105,7 @@ internal sealed class UnimedRuleSet(AppDbContext db) : IPricingRuleSet
 
         var (valorFinal, passos) = AnestesiaCalculator.Calcular(
             valorReferencia, deflator.Percentual,
-            item.Ordem, item.EhUrgencia, procedimento.EhSadt);
+            item.PercentualOrdem, item.EhUrgencia, procedimento.EhSadt);
 
         return new ApuracaoItemResult(item.ItemGuiaId, SituacaoApuracao.Calculado, valorFinal, passos);
     }

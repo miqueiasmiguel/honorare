@@ -13,7 +13,7 @@ internal sealed class ItemGuiaConfiguration : IEntityTypeConfiguration<ItemGuia>
         builder.Property(i => i.GuiaId).IsRequired();
         builder.Property(i => i.ProcedimentoId).IsRequired();
         builder.Property(i => i.PosicaoExecutor).HasConversion<string>().IsRequired();
-        builder.Property(i => i.OrdemProcedimento).HasConversion<string>().IsRequired();
+        builder.Property(i => i.PercentualOrdem).HasColumnType("numeric(5,4)").IsRequired();
         builder.Property(i => i.ViaAcesso).HasConversion<string>().IsRequired();
         builder.Property(i => i.Acomodacao).HasConversion<string>().IsRequired();
         builder.Property(i => i.EhUrgencia).IsRequired();

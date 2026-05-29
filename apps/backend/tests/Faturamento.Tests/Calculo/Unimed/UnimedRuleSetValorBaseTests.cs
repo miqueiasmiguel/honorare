@@ -44,7 +44,7 @@ public sealed class UnimedRuleSetValorBaseTests(PostgresContainerFixture db)
         var input = new ApurarGuiaContext(tenantId, prestadorId, operadoraId,
         [
             new ApurarItemInput(itemId, procedimentoId, PosicaoExecutor.Cirurgiao,
-                OrdemProcedimento.Unico, ViaAcesso.Convencional, Acomodacao.Enfermaria, false)
+                1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false)
         ]);
 
         var resultados = await sut.ApurarAsync(input);
@@ -74,7 +74,7 @@ public sealed class UnimedRuleSetValorBaseTests(PostgresContainerFixture db)
         var input = new ApurarGuiaContext(tenantId, prestadorId, operadoraId,
         [
             new ApurarItemInput(itemId, procedimentoId, PosicaoExecutor.Cirurgiao,
-                OrdemProcedimento.Unico, ViaAcesso.Convencional, Acomodacao.Enfermaria, false)
+                1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false)
         ]);
 
         var resultados = await sut.ApurarAsync(input);
@@ -99,7 +99,7 @@ public sealed class UnimedRuleSetValorBaseTests(PostgresContainerFixture db)
         var input = new ApurarGuiaContext(tenantId, prestadorId, operadoraId,
         [
             new ApurarItemInput(itemId, procedimentoId, PosicaoExecutor.Cirurgiao,
-                OrdemProcedimento.Unico, ViaAcesso.Convencional, Acomodacao.Enfermaria, false)
+                1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false)
         ]);
 
         var resultados = await sut.ApurarAsync(input);
@@ -125,7 +125,7 @@ public sealed class UnimedRuleSetValorBaseTests(PostgresContainerFixture db)
         var input = new ApurarGuiaContext(tenantId, prestadorId, operadoraId,
         [
             new ApurarItemInput(itemId, procedimentoId, PosicaoExecutor.Anestesista,
-                OrdemProcedimento.Unico, ViaAcesso.Convencional, Acomodacao.Enfermaria, false)
+                1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false)
         ]);
 
         var resultados = await sut.ApurarAsync(input);
@@ -154,9 +154,9 @@ public sealed class UnimedRuleSetValorBaseTests(PostgresContainerFixture db)
         var input = new ApurarGuiaContext(tenantId, prestadorId, operadoraId,
         [
             new ApurarItemInput(Guid.NewGuid(), procedimentoId, PosicaoExecutor.Cirurgiao,
-                OrdemProcedimento.Principal, ViaAcesso.Convencional, Acomodacao.Enfermaria, false),
+                1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false),
             new ApurarItemInput(Guid.NewGuid(), procedimento2.Id, PosicaoExecutor.Cirurgiao,
-                OrdemProcedimento.SecundarioMesmaVia, ViaAcesso.Convencional, Acomodacao.Enfermaria, false)
+                0.5m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false)
         ]);
 
         var resultados = await sut.ApurarAsync(input);

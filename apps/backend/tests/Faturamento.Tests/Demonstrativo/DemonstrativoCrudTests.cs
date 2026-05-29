@@ -174,7 +174,7 @@ public sealed class DemonstrativoCrudTests(PostgresContainerFixture db)
         await ctx.SaveChangesAsync();
 
         var itemGuia = ItemGuia.Create(guia.Id, procedimentoId, PosicaoExecutor.Cirurgiao,
-            OrdemProcedimento.Unico, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);
+            1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);
         ctx.Add(itemGuia);
         await ctx.SaveChangesAsync();
 
@@ -259,7 +259,7 @@ public sealed class DemonstrativoCrudTests(PostgresContainerFixture db)
         await ctx.SaveChangesAsync();
 
         var itemGuia = ItemGuia.Create(guia.Id, procedimentoId, PosicaoExecutor.Cirurgiao,
-            OrdemProcedimento.Unico, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);
+            1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);
         ctx.Add(itemGuia);
         await ctx.SaveChangesAsync();
 

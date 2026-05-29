@@ -76,7 +76,7 @@ public sealed class GuiaSchemaTests(PostgresContainerFixture db)
             await ctx.SaveChangesAsync();
             guiaId = guia.Id;
 
-            var item = ItemGuia.Create(guia.Id, procedimentoId, PosicaoExecutor.Cirurgiao, OrdemProcedimento.Unico, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, 150m);
+            var item = ItemGuia.Create(guia.Id, procedimentoId, PosicaoExecutor.Cirurgiao, 1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, 150m);
             ctx.Add(item);
             await ctx.SaveChangesAsync();
             itemId = item.Id;
@@ -89,7 +89,7 @@ public sealed class GuiaSchemaTests(PostgresContainerFixture db)
         Assert.Equal(guiaId, salvo.GuiaId);
         Assert.Equal(procedimentoId, salvo.ProcedimentoId);
         Assert.Equal(PosicaoExecutor.Cirurgiao, salvo.PosicaoExecutor);
-        Assert.Equal(OrdemProcedimento.Unico, salvo.OrdemProcedimento);
+        Assert.Equal(1.0m, salvo.PercentualOrdem);
         Assert.Equal(ViaAcesso.Convencional, salvo.ViaAcesso);
         Assert.Equal(Acomodacao.Enfermaria, salvo.Acomodacao);
         Assert.False(salvo.EhUrgencia);
@@ -114,7 +114,7 @@ public sealed class GuiaSchemaTests(PostgresContainerFixture db)
             await ctx.SaveChangesAsync();
             guiaId = guia.Id;
 
-            var item = ItemGuia.Create(guia.Id, procedimentoId, PosicaoExecutor.Anestesista, OrdemProcedimento.Principal, ViaAcesso.Videolaparoscopia, Acomodacao.Apartamento, true, null);
+            var item = ItemGuia.Create(guia.Id, procedimentoId, PosicaoExecutor.Anestesista, 1.0m, ViaAcesso.Videolaparoscopia, Acomodacao.Apartamento, true, null);
             ctx.Add(item);
             await ctx.SaveChangesAsync();
             itemId = item.Id;

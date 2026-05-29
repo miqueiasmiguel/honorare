@@ -62,7 +62,7 @@ internal static class GuiaEndpoints
             body.PrestadorId, body.OperadoraId, body.BeneficiarioId,
             body.Senha, body.DataAtendimento, body.EhPacote, body.Observacao,
             body.Itens.Select(i => new CriarItemGuiaCommand(
-                i.ProcedimentoId, i.PosicaoExecutor, i.OrdemProcedimento,
+                i.ProcedimentoId, i.PosicaoExecutor, i.PercentualOrdem,
                 i.ViaAcesso, i.Acomodacao, i.EhUrgencia, i.ValorApurado, i.TempoAnestesicoMin)).ToList());
 
         var result = await service.CriarAsync(cmd, ct);
@@ -86,7 +86,7 @@ internal static class GuiaEndpoints
             body.OperadoraId, body.BeneficiarioId,
             body.Senha, body.DataAtendimento, body.EhPacote, body.Observacao,
             body.Itens.Select(i => new CriarItemGuiaCommand(
-                i.ProcedimentoId, i.PosicaoExecutor, i.OrdemProcedimento,
+                i.ProcedimentoId, i.PosicaoExecutor, i.PercentualOrdem,
                 i.ViaAcesso, i.Acomodacao, i.EhUrgencia, i.ValorApurado, i.TempoAnestesicoMin)).ToList());
 
         var result = await service.AtualizarAsync(id, cmd, ct);
@@ -129,7 +129,7 @@ internal sealed record ListarGuiasRequest(
 internal sealed record CriarItemGuiaRequest(
     Guid ProcedimentoId,
     PosicaoExecutor PosicaoExecutor,
-    OrdemProcedimento OrdemProcedimento,
+    decimal PercentualOrdem,
     ViaAcesso ViaAcesso,
     Acomodacao Acomodacao,
     bool EhUrgencia,

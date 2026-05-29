@@ -22,7 +22,7 @@ internal sealed record ApurarItemInput(
     Guid ItemGuiaId,
     Guid ProcedimentoId,
     PosicaoExecutor Posicao,
-    OrdemProcedimento Ordem,
+    decimal PercentualOrdem,
     ViaAcesso Via,
     Acomodacao Acomodacao,
     bool EhUrgencia,

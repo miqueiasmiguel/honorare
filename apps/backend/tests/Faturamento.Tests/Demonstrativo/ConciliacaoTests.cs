@@ -39,7 +39,7 @@ public sealed class ConciliacaoTests(PostgresContainerFixture db)
             senha, new DateOnly(2025, 1, 1), false, string.Empty);
         ctx.Add(guia);
         var item = ItemGuia.Create(guia.Id, procedimentoId, PosicaoExecutor.Cirurgiao,
-            OrdemProcedimento.Unico, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);
+            1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);
         ctx.Add(item);
         await ctx.SaveChangesAsync();
         return (guia, item);
@@ -88,9 +88,9 @@ public sealed class ConciliacaoTests(PostgresContainerFixture db)
             "CNC02" + tenantId.ToString("N")[..4], new DateOnly(2025, 1, 1), false, string.Empty);
         ctx.Add(guia);
         var item1 = ItemGuia.Create(guia.Id, procedimentoId, PosicaoExecutor.Cirurgiao,
-            OrdemProcedimento.Unico, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);
+            1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);
         var item2 = ItemGuia.Create(guia.Id, procedimentoId, PosicaoExecutor.PrimeiroAuxiliar,
-            OrdemProcedimento.Unico, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);
+            1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);
         ctx.Add(item1);
         ctx.Add(item2);
         await ctx.SaveChangesAsync();
@@ -123,9 +123,9 @@ public sealed class ConciliacaoTests(PostgresContainerFixture db)
             "CNC03" + tenantId.ToString("N")[..4], new DateOnly(2025, 1, 1), false, string.Empty);
         ctx.Add(guia);
         var item1 = ItemGuia.Create(guia.Id, procedimentoId, PosicaoExecutor.Cirurgiao,
-            OrdemProcedimento.Unico, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);
+            1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);
         var item2 = ItemGuia.Create(guia.Id, procedimentoId, PosicaoExecutor.PrimeiroAuxiliar,
-            OrdemProcedimento.Unico, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);
+            1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);
         ctx.Add(item1);
         ctx.Add(item2);
         await ctx.SaveChangesAsync();
@@ -172,9 +172,9 @@ public sealed class ConciliacaoTests(PostgresContainerFixture db)
             "CNC05" + tenantId.ToString("N")[..4], new DateOnly(2025, 1, 1), false, string.Empty);
         ctx.Add(guia);
         var item1 = ItemGuia.Create(guia.Id, procedimentoId, PosicaoExecutor.Cirurgiao,
-            OrdemProcedimento.Unico, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);
+            1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);
         var item2 = ItemGuia.Create(guia.Id, procedimentoId, PosicaoExecutor.PrimeiroAuxiliar,
-            OrdemProcedimento.Unico, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);
+            1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);
         ctx.Add(item1);
         ctx.Add(item2);
         await ctx.SaveChangesAsync();

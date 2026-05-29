@@ -154,7 +154,7 @@ public sealed class DemonstrativoSchemaTests(PostgresContainerFixture db)
             await ctx.SaveChangesAsync();
 
             var itemGuia = ItemGuia.Create(guia.Id, procedimento.Id, PosicaoExecutor.Cirurgiao,
-                OrdemProcedimento.Unico, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);
+                1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);
             ctx.Add(itemGuia);
             await ctx.SaveChangesAsync();
             itemGuiaId = itemGuia.Id;

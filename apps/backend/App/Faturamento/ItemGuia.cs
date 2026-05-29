@@ -8,7 +8,7 @@ internal sealed class ItemGuia
     public Guid GuiaId { get; private set; }
     public Guid ProcedimentoId { get; private set; }
     public PosicaoExecutor PosicaoExecutor { get; private set; }
-    public OrdemProcedimento OrdemProcedimento { get; private set; }
+    public decimal PercentualOrdem { get; private set; }
     public ViaAcesso ViaAcesso { get; private set; }
     public Acomodacao Acomodacao { get; private set; }
     public bool EhUrgencia { get; private set; }
@@ -29,7 +29,7 @@ internal sealed class ItemGuia
         Guid guiaId,
         Guid procedimentoId,
         PosicaoExecutor posicao,
-        OrdemProcedimento ordem,
+        decimal percentualOrdem,
         ViaAcesso via,
         Acomodacao acomodacao,
         bool ehUrgencia,
@@ -42,7 +42,7 @@ internal sealed class ItemGuia
             GuiaId = guiaId,
             ProcedimentoId = procedimentoId,
             PosicaoExecutor = posicao,
-            OrdemProcedimento = ordem,
+            PercentualOrdem = percentualOrdem,
             ViaAcesso = via,
             Acomodacao = acomodacao,
             EhUrgencia = ehUrgencia,
