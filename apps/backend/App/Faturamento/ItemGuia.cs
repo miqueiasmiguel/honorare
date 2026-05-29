@@ -25,6 +25,13 @@ internal sealed class ItemGuia
 
     internal void SetTempoAnestesicoMin(int? valor) => TempoAnestesicoMin = valor;
 
+    internal void Atualizar(decimal percentualOrdem, Acomodacao acomodacao, bool ehUrgencia)
+    {
+        PercentualOrdem = percentualOrdem;
+        Acomodacao = acomodacao;
+        EhUrgencia = ehUrgencia;
+    }
+
     internal static ItemGuia Create(
         Guid guiaId,
         Guid procedimentoId,

@@ -12,6 +12,7 @@ internal sealed class DemonstrativoConfiguration : IEntityTypeConfiguration<Demo
         builder.HasKey(d => d.Id);
         builder.Property(d => d.TenantId).IsRequired();
         builder.Property(d => d.OperadoraId).IsRequired();
+        builder.Property(d => d.IdentificadorPagamento).HasMaxLength(50);
         builder.Property(d => d.Competencia).HasMaxLength(7).IsRequired();
         builder.Property(d => d.DataRecebimento).IsRequired();
         builder.Property(d => d.Observacao).HasMaxLength(2000);

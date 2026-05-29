@@ -7,6 +7,7 @@ internal sealed class Demonstrativo : ITenantEntity
     public Guid Id { get; private set; }
     public Guid TenantId { get; private set; }
     public Guid OperadoraId { get; private set; }
+    public string? IdentificadorPagamento { get; private set; }
     public string Competencia { get; private set; } = string.Empty;
     public DateOnly DataRecebimento { get; private set; }
     public string? Observacao { get; private set; }
@@ -19,13 +20,15 @@ internal sealed class Demonstrativo : ITenantEntity
         Guid operadoraId,
         string competencia,
         DateOnly dataRecebimento,
-        string? observacao)
+        string? observacao,
+        string? identificadorPagamento = null)
     {
         return new Demonstrativo
         {
             Id = Guid.NewGuid(),
             TenantId = tenantId,
             OperadoraId = operadoraId,
+            IdentificadorPagamento = identificadorPagamento?.Trim(),
             Competencia = competencia.Trim(),
             DataRecebimento = dataRecebimento,
             Observacao = observacao?.Trim(),

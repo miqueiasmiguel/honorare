@@ -45,6 +45,7 @@ builder.Services.AddScoped<NullRuleSet>();
 builder.Services.AddScoped<PricingRuleSetFactory>();
 builder.Services.AddScoped<GuiaService>();
 builder.Services.AddScoped<DemonstrativoService>();
+builder.Services.AddScoped<ImportacaoDemonstrativoService>();
 builder.Services.AddScoped<RecursoService>();
 
 builder.Services.AddDbContext<AppDbContext>(options =>

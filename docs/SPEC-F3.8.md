@@ -556,11 +556,11 @@ Adicionar botão "Importar demonstrativo CSV" no header da lista. Ao clicar, abr
 - [ ] Seção "Tabela de Atos Múltiplos" funcional no detalhe da Operadora
 - [ ] Dropdown de ordem no formulário de guia exibe opções da tabela configurada
 - [x] `Guia.NumeroGuia` persistido, migration aplicada
-- [ ] Endpoint `POST /api/v1/admin/demonstrativos/importar-csv` aceita `somenteValidar=true` e `false`
-- [ ] Importação cria `Guia` + `ItemGuia` + `ItemDemonstrativo` corretamente para anestesista e cirurgião
-- [ ] Motor roda após importação; `ValorApurado` e `ValorLiquidado` preenchidos
-- [ ] Itens de equipamento (FUNCAO vazia) ignorados silenciosamente
-- [ ] Erros por linha não abortam o batch; alertas de SemTabela/SemDeflator informados
-- [ ] Upsert correto: guia pré-existente não é duplicada
+- [x] Endpoint `POST /api/v1/admin/demonstrativos/importar-csv` aceita `somenteValidar=true` e `false`
+- [x] Importação cria `Guia` + `ItemGuia` + `ItemDemonstrativo` corretamente para anestesista e cirurgião
+- [x] Motor roda após importação; `ValorApurado` e `ValorLiquidado` preenchidos
+- [x] Itens de equipamento (FUNCAO vazia) ignorados silenciosamente
+- [x] Erros por linha não abortam o batch; alertas de SemTabela/SemDeflator informados
+- [x] Upsert correto: guia pré-existente não é duplicada
 - [ ] Frontend exibe preview antes de confirmar; erros bloqueiam confirmação
 - [ ] Cobertura ≥ 80% em todos os novos arquivos de teste

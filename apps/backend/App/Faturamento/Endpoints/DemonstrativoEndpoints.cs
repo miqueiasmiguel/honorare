@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Mvc;
+
 namespace App.Faturamento.Endpoints;
 
 internal static class DemonstrativoEndpoints
@@ -17,6 +19,8 @@ internal static class DemonstrativoEndpoints
 
         g.MapPost("{id:guid}/itens/{itemId:guid}/conciliar", ConciliarItemAsync);
         g.MapDelete("{id:guid}/itens/{itemId:guid}/conciliar", DesconciliarItemAsync);
+
+        g.MapPost("importar-csv", ImportarCsvAsync).DisableAntiforgery();
     }
 
     private static async Task<IResult> ListarAsync(
@@ -153,6 +157,31 @@ internal static class DemonstrativoEndpoints
         }
 
         return Results.NoContent();
+    }
+
+    private static async Task<IResult> ImportarCsvAsync(
+        [FromForm] IFormFile arquivo,
+        [FromForm] Guid prestadorId,
+        [FromForm] Guid operadoraId,
+        [FromForm] bool somenteValidar,
+        ImportacaoDemonstrativoService service,
+        CancellationToken ct)
+    {
+        await using var stream = arquivo.OpenReadStream();
+        var result = await service.ImportarAsync(stream, prestadorId, operadoraId, somenteValidar, ct);
+
+        if (result.IsFailure)
+        {
+            var statusCode = result.Error switch
+            {
+                ValidationError => StatusCodes.Status400BadRequest,
+                NotFoundError => StatusCodes.Status404NotFound,
+                _ => StatusCodes.Status400BadRequest,
+            };
+            return Results.Problem(statusCode: statusCode, detail: result.Error!.Message);
+        }
+
+        return Results.Ok(result.Value);
     }
 }
 
