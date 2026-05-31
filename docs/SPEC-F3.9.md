@@ -275,9 +275,9 @@ internal sealed record AdicionarGuiasEmLoteRequest(
 
 ### Critérios de pronto (RC-02)
 
-- [ ] 4 novos casos passando em `RecursoCrudTests`
-- [ ] `dotnet build` sem warnings
-- [ ] `GET /api/v1/admin/recursos/{id}/pdf` e outros endpoints existentes não quebrados
+- [x] 4 novos casos passando em `RecursoCrudTests`
+- [x] `dotnet build` sem warnings
+- [x] `GET /api/v1/admin/recursos/{id}/pdf` e outros endpoints existentes não quebrados
 
 ---
 
@@ -576,7 +576,7 @@ formatarData(iso: string): string {
 ## Critérios de pronto globais
 
 - [x] RC-01: 6 novos casos em `GuiaListTests`; filtros `OperadoraId`, `Senha`, `Beneficiario`, `SemRecurso`, `SomenteComGlosa` funcionais
-- [ ] RC-02: 4 novos casos em `RecursoCrudTests`; endpoint `POST /recursos/{id}/guias/lote` funcional
+- [x] RC-02: 4 novos casos em `RecursoCrudTests`; endpoint `POST /recursos/{id}/guias/lote` funcional
 - [ ] RC-03: 3 casos em `recurso.service.spec`; bug `adicionarGuia` corrigido (URL com `guiaId` na path)
 - [ ] RC-04: 9 casos em `recurso-guias.component.spec`; painel de filtros funcional; "Adicionar todas" usa lote server-side
 - [ ] `dotnet test` cobertura ≥ 80% em `Faturamento.Tests`

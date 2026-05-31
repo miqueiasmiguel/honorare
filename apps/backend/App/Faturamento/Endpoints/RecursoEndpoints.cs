@@ -13,6 +13,7 @@ internal static class RecursoEndpoints
         g.MapPost("", CriarRecursoAsync);
         g.MapPut("{id:guid}", AtualizarRecursoAsync);
         g.MapDelete("{id:guid}", ExcluirRecursoAsync);
+        g.MapPost("{id:guid}/guias/lote", AdicionarGuiasEmLoteAsync);
         g.MapPost("{id:guid}/guias/{guiaId:guid}", AdicionarGuiaAsync);
         g.MapDelete("{id:guid}/guias/{guiaId:guid}", RemoverGuiaAsync);
         g.MapGet("{id:guid}/pdf", GerarPdfAsync);
@@ -77,6 +78,22 @@ internal static class RecursoEndpoints
         return Results.NoContent();
     }
 
+    private static async Task<IResult> AdicionarGuiasEmLoteAsync(
+        Guid id, AdicionarGuiasEmLoteRequest body, RecursoService service, CancellationToken ct)
+    {
+        var cmd = new AdicionarGuiasEmLoteCommand(
+            body.PrestadorId, body.OperadoraId,
+            body.DataInicio, body.DataFim,
+            body.Situacao, body.Senha, body.Beneficiario, body.SomenteComGlosa);
+        var result = await service.AdicionarGuiasEmLoteAsync(id, cmd, ct);
+        if (result.IsFailure)
+        {
+            return Results.Problem(statusCode: StatusCodes.Status404NotFound, detail: result.Error!.Message);
+        }
+
+        return Results.Ok(new { adicionadas = result.Value });
+    }
+
     private static async Task<IResult> AdicionarGuiaAsync(
         Guid id, Guid guiaId, RecursoService service, CancellationToken ct)
     {
@@ -118,3 +135,9 @@ internal sealed record CriarRecursoRequest(
 
 internal sealed record AtualizarRecursoRequest(
     Guid OperadoraId, Guid PrestadorId, DateOnly DataEmissao, string? Observacao);
+
+internal sealed record AdicionarGuiasEmLoteRequest(
+    Guid PrestadorId, Guid OperadoraId,
+    DateOnly? DataInicio = null, DateOnly? DataFim = null,
+    SituacaoGuia? Situacao = null, string? Senha = null,
+    string? Beneficiario = null, bool? SomenteComGlosa = null);

@@ -27,6 +27,12 @@ internal sealed record RecursoDetalheDto(RecursoDto Header, IReadOnlyList<GuiaNo
 internal sealed record ListarRecursosQuery(
     Guid? OperadoraId, Guid? PrestadorId, int Pagina, int ItensPorPagina);
 
+internal sealed record AdicionarGuiasEmLoteCommand(
+    Guid PrestadorId, Guid OperadoraId,
+    DateOnly? DataInicio, DateOnly? DataFim,
+    SituacaoGuia? Situacao, string? Senha, string? Beneficiario,
+    bool? SomenteComGlosa);
+
 internal sealed record RecursoPdfData(
     string TenantName,
     string OperadoraNome,
@@ -292,6 +298,65 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser)
 
         guia.RemoverDoRecurso(todosLiquidados);
         await _db.SaveChangesAsync(ct);
+    }
+
+    internal async Task<Result<int>> AdicionarGuiasEmLoteAsync(
+        Guid recursoId, AdicionarGuiasEmLoteCommand cmd, CancellationToken ct = default)
+    {
+        if (!await _db.Recursos.AnyAsync(r => r.Id == recursoId, ct))
+        {
+            return Result<int>.Fail(new NotFoundError("Recurso não encontrado."));
+        }
+
+        var q = _db.Guias.Where(g =>
+            g.PrestadorId == cmd.PrestadorId &&
+            g.OperadoraId == cmd.OperadoraId &&
+            g.RecursoId == null);
+
+        if (cmd.DataInicio.HasValue)
+        {
+            q = q.Where(g => g.DataAtendimento >= cmd.DataInicio.Value);
+        }
+
+        if (cmd.DataFim.HasValue)
+        {
+            q = q.Where(g => g.DataAtendimento <= cmd.DataFim.Value);
+        }
+
+        if (cmd.Situacao.HasValue)
+        {
+            q = q.Where(g => g.Situacao == cmd.Situacao.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(cmd.Senha))
+        {
+            q = q.Where(g => g.Senha.Contains(cmd.Senha));
+        }
+
+        if (cmd.SomenteComGlosa == true)
+        {
+            q = q.Where(g => _db.ItensGuia.Any(i =>
+                i.GuiaId == g.Id &&
+                i.ValorApurado.HasValue && i.ValorLiquidado.HasValue &&
+                i.ValorApurado > i.ValorLiquidado));
+        }
+
+        if (!string.IsNullOrWhiteSpace(cmd.Beneficiario))
+        {
+            q = q.Where(g => g.BeneficiarioId.HasValue &&
+                _db.Beneficiarios.Any(b =>
+                    b.Id == g.BeneficiarioId.Value &&
+                    b.Nome.Contains(cmd.Beneficiario)));
+        }
+
+        var guias = await q.ToListAsync(ct);
+        foreach (var guia in guias)
+        {
+            guia.MarcarEmRecurso(recursoId);
+        }
+
+        await _db.SaveChangesAsync(ct);
+        return Result<int>.Ok(guias.Count);
     }
 
     internal async Task<Result<RecursoPdfData>> ObterDadosPdfAsync(

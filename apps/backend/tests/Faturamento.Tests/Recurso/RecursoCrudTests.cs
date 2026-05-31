@@ -1,3 +1,4 @@
+using App;
 using App.Catalog;
 using App.Data;
 using App.Faturamento;
@@ -39,11 +40,20 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         Guid prestadorId, Guid operadoraId, Guid procedimentoId,
         string senha)
     {
+        return await CriarGuiaAsync(ctx, user, prestadorId, operadoraId, procedimentoId, senha,
+            new DateOnly(2026, 1, 10));
+    }
+
+    private static async Task<Guid> CriarGuiaAsync(
+        AppDbContext ctx, ICurrentUser user,
+        Guid prestadorId, Guid operadoraId, Guid procedimentoId,
+        string senha, DateOnly dataAtendimento)
+    {
         var factory = new PricingRuleSetFactory(ctx);
         var svc = new GuiaService(ctx, user, factory);
         var cmd = new CriarGuiaCommand(
             prestadorId, operadoraId, null, null, senha,
-            new DateOnly(2026, 1, 10), false, string.Empty,
+            dataAtendimento, false, string.Empty,
             [new CriarItemGuiaCommand(
                 procedimentoId, PosicaoExecutor.Cirurgiao, 1.0m,
                 ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null)]);
@@ -301,6 +311,122 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         Assert.NotNull(guia);
         Assert.Equal(SituacaoGuia.Liquidada, guia.Situacao);
         Assert.Null(guia.RecursoId);
+    }
+
+    [Fact]
+    public async Task AdicionarEmLote_FiltroPorPeriodo_AdicionaTodasDoPeriodoAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (opId, prestId, procId) = await SeedCatalogAsync(ctx, tenantId);
+        var service = new RecursoService(ctx, user);
+        var pfx = tenantId.ToString("N")[..4];
+
+        var recursoId = (await service.CriarAsync(
+            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 3, 1), null))).Value!.Id;
+
+        await CriarGuiaAsync(ctx, user, prestId, opId, procId, $"LA-{pfx}", new DateOnly(2026, 3, 1));
+        await CriarGuiaAsync(ctx, user, prestId, opId, procId, $"LB-{pfx}", new DateOnly(2026, 3, 15));
+        await CriarGuiaAsync(ctx, user, prestId, opId, procId, $"LC-{pfx}", new DateOnly(2026, 3, 31));
+        await CriarGuiaAsync(ctx, user, prestId, opId, procId, $"LD-{pfx}", new DateOnly(2026, 2, 28));
+
+        var rec2Id = (await service.CriarAsync(
+            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 4, 1), null))).Value!.Id;
+        var guia5Id = await CriarGuiaAsync(ctx, user, prestId, opId, procId, $"LE-{pfx}", new DateOnly(2026, 3, 10));
+        await service.AdicionarGuiaAsync(rec2Id, guia5Id);
+
+        var cmd = new AdicionarGuiasEmLoteCommand(
+            prestId, opId, new DateOnly(2026, 3, 1), new DateOnly(2026, 3, 31),
+            null, null, null, null);
+        var result = await service.AdicionarGuiasEmLoteAsync(recursoId, cmd);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(3, result.Value);
+        await using var adminCtx = db.CreateContext();
+        Assert.Equal(3, await adminCtx.Guias.CountAsync(g => g.RecursoId == recursoId));
+    }
+
+    [Fact]
+    public async Task AdicionarEmLote_GuiaJaVinculadaAoMesmoRecurso_IgnoraSilenciosamenteAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (opId, prestId, procId) = await SeedCatalogAsync(ctx, tenantId);
+        var service = new RecursoService(ctx, user);
+        var pfx = tenantId.ToString("N")[..4];
+
+        var recursoId = (await service.CriarAsync(
+            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 2, 1), null))).Value!.Id;
+
+        var guia1Id = await CriarGuiaAsync(ctx, user, prestId, opId, procId, $"LM-A-{pfx}", new DateOnly(2026, 2, 5));
+        await service.AdicionarGuiaAsync(recursoId, guia1Id);
+        await CriarGuiaAsync(ctx, user, prestId, opId, procId, $"LM-B-{pfx}", new DateOnly(2026, 2, 10));
+
+        var cmd = new AdicionarGuiasEmLoteCommand(prestId, opId, null, null, null, null, null, null);
+        var result = await service.AdicionarGuiasEmLoteAsync(recursoId, cmd);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(1, result.Value);
+        await using var adminCtx = db.CreateContext();
+        Assert.Equal(2, await adminCtx.Guias.CountAsync(g => g.RecursoId == recursoId));
+    }
+
+    [Fact]
+    public async Task AdicionarEmLote_RecursoNaoEncontrado_FalhaAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (opId, prestId, _) = await SeedCatalogAsync(ctx, tenantId);
+        var service = new RecursoService(ctx, user);
+
+        var cmd = new AdicionarGuiasEmLoteCommand(prestId, opId, null, null, null, null, null, null);
+        var result = await service.AdicionarGuiasEmLoteAsync(Guid.NewGuid(), cmd);
+
+        Assert.True(result.IsFailure);
+        Assert.IsType<NotFoundError>(result.Error);
+    }
+
+    [Fact]
+    public async Task AdicionarEmLote_SomenteComGlosa_AdicionaApenasDivergentesAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (opId, prestId, procId) = await SeedCatalogAsync(ctx, tenantId);
+        var service = new RecursoService(ctx, user);
+        var pfx = tenantId.ToString("N")[..4];
+
+        var recursoId = (await service.CriarAsync(
+            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 5, 1), null))).Value!.Id;
+
+        var guiaAId = await CriarGuiaAsync(ctx, user, prestId, opId, procId, $"LG-A-{pfx}", new DateOnly(2026, 5, 5));
+        var itemA = await ctx.ItensGuia.FirstAsync(i => i.GuiaId == guiaAId);
+        itemA.SetValorApurado(100m);
+        itemA.SetValorLiquidado(80m);
+
+        var guiaBId = await CriarGuiaAsync(ctx, user, prestId, opId, procId, $"LG-B-{pfx}", new DateOnly(2026, 5, 6));
+        var itemB = await ctx.ItensGuia.FirstAsync(i => i.GuiaId == guiaBId);
+        itemB.SetValorApurado(100m);
+        itemB.SetValorLiquidado(100m);
+
+        var guiaCId = await CriarGuiaAsync(ctx, user, prestId, opId, procId, $"LG-C-{pfx}", new DateOnly(2026, 5, 7));
+        var itemC = await ctx.ItensGuia.FirstAsync(i => i.GuiaId == guiaCId);
+        itemC.SetValorApurado(100m);
+
+        await ctx.SaveChangesAsync();
+
+        var cmd = new AdicionarGuiasEmLoteCommand(prestId, opId, null, null, null, null, null, true);
+        var result = await service.AdicionarGuiasEmLoteAsync(recursoId, cmd);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(1, result.Value);
+        await using var adminCtx = db.CreateContext();
+        var guiaVinculada = await adminCtx.Guias.FirstOrDefaultAsync(g => g.RecursoId == recursoId);
+        Assert.NotNull(guiaVinculada);
+        Assert.Equal(guiaAId, guiaVinculada.Id);
     }
 }
 
