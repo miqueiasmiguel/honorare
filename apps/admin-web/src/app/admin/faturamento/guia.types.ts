@@ -9,11 +9,6 @@ export type ViaAcesso =
   | 'Endoscopica'
   | 'Percutanea'
   | 'NaoAplicavel';
-export type OrdemProcedimento =
-  | 'Unico'
-  | 'Principal'
-  | 'SecundarioMesmaVia'
-  | 'SecundarioViaDiferente';
 export type Acomodacao = 'Enfermaria' | 'Apartamento' | 'Ambulatorial';
 
 export interface ItemGuiaItem {
@@ -22,7 +17,7 @@ export interface ItemGuiaItem {
   codigoTuss: string;
   descricaoProcedimento: string;
   posicaoExecutor: PosicaoExecutor;
-  ordemProcedimento: OrdemProcedimento;
+  percentualOrdem: number;
   viaAcesso: ViaAcesso;
   acomodacao: Acomodacao;
   ehUrgencia: boolean;
@@ -56,10 +51,14 @@ export interface GuiaDetalheItem extends GuiaItem {
 
 export interface ListarGuiasParams {
   prestadorId?: string;
+  operadoraId?: string;
   dataInicio?: string;
   dataFim?: string;
   situacao?: SituacaoGuia;
   senha?: string;
+  beneficiario?: string;
+  semRecurso?: boolean;
+  somenteComGlosa?: boolean;
   pagina: number;
   itensPorPagina: number;
 }
@@ -74,12 +73,18 @@ export interface ListarGuiasResult {
 export interface CriarItemGuiaPayload {
   procedimentoId: string;
   posicaoExecutor: PosicaoExecutor;
-  ordemProcedimento: OrdemProcedimento;
+  percentualOrdem: number;
   viaAcesso: ViaAcesso;
   acomodacao: Acomodacao;
   ehUrgencia: boolean;
   valorApurado: number | null;
   tempoAnestesicoMin?: number | null;
+}
+
+export interface ItemGuiaDisplay extends CriarItemGuiaPayload {
+  codigoTuss?: string;
+  descricaoProcedimento?: string;
+  valorLiquidado?: number | null;
 }
 
 export interface CriarGuiaPayload {

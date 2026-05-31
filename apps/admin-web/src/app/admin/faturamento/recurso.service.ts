@@ -2,6 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { map, Observable } from 'rxjs';
 import type {
+  AdicionarGuiasLoteParams,
   ListarRecursosParams,
   ListarRecursosResult,
   RecursoDetalheDto,
@@ -46,8 +47,18 @@ export class RecursoService {
 
   adicionarGuia(recursoId: string, guiaId: string): Observable<void> {
     return this._http
-      .post(`/api/v1/admin/recursos/${recursoId}/guias`, { guiaId })
+      .post(`/api/v1/admin/recursos/${recursoId}/guias/${guiaId}`, {})
       .pipe(map(() => undefined));
+  }
+
+  adicionarGuiasLote(
+    recursoId: string,
+    filtros: AdicionarGuiasLoteParams,
+  ): Observable<{ adicionadas: number }> {
+    return this._http.post<{ adicionadas: number }>(
+      `/api/v1/admin/recursos/${recursoId}/guias/lote`,
+      filtros,
+    );
   }
 
   removerGuia(recursoId: string, guiaId: string): Observable<void> {

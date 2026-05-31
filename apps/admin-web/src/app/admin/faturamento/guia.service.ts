@@ -22,6 +22,9 @@ export class GuiaService {
     if (params.prestadorId) {
       httpParams = httpParams.set('prestadorId', params.prestadorId);
     }
+    if (params.operadoraId) {
+      httpParams = httpParams.set('operadoraId', params.operadoraId);
+    }
     if (params.dataInicio) {
       httpParams = httpParams.set('dataInicio', params.dataInicio);
     }
@@ -33,6 +36,15 @@ export class GuiaService {
     }
     if (params.senha) {
       httpParams = httpParams.set('senha', params.senha);
+    }
+    if (params.beneficiario) {
+      httpParams = httpParams.set('beneficiario', params.beneficiario);
+    }
+    if (params.semRecurso !== undefined) {
+      httpParams = httpParams.set('semRecurso', params.semRecurso.toString());
+    }
+    if (params.somenteComGlosa !== undefined) {
+      httpParams = httpParams.set('somenteComGlosa', params.somenteComGlosa.toString());
     }
 
     return this._http.get<ListarGuiasResult>('/api/v1/admin/guias', { params: httpParams });

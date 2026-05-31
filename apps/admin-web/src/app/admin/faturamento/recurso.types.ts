@@ -1,3 +1,5 @@
+import type { SituacaoGuia } from './guia.types';
+
 export interface RecursoForm {
   operadoraId: string;
   prestadorId: string;
@@ -46,4 +48,15 @@ export interface ListarRecursosResult {
   total: number;
   pagina: number;
   itensPorPagina: number;
+}
+
+export interface AdicionarGuiasLoteParams {
+  prestadorId: string;
+  operadoraId: string;
+  dataInicio?: string;
+  dataFim?: string;
+  situacao?: SituacaoGuia;
+  senha?: string;
+  beneficiario?: string;
+  somenteComGlosa?: boolean;
 }

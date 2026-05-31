@@ -3,6 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { RecursoService } from './recurso.service';
 import type {
+  AdicionarGuiasLoteParams,
   ListarRecursosResult,
   RecursoDetalheDto,
   RecursoDto,
@@ -115,16 +116,44 @@ describe('RecursoService', () => {
     expect(called).toBe(true);
   });
 
-  it('adicionarGuia_chamaPOST', () => {
+  it('adicionarGuia_enviaUrlComGuiaIdNaPath', () => {
     let called = false;
-    service.adicionarGuia('rec-1', 'guia-1').subscribe(() => (called = true));
+    service.adicionarGuia('rec-1', 'guia-99').subscribe(() => (called = true));
 
-    const req = httpMock.expectOne('/api/v1/admin/recursos/rec-1/guias');
+    const req = httpMock.expectOne('/api/v1/admin/recursos/rec-1/guias/guia-99');
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual({ guiaId: 'guia-1' });
     req.flush(null, { status: 204, statusText: 'No Content' });
 
     expect(called).toBe(true);
+  });
+
+  it('adicionarGuiasLote_enviaFiltrosNoBody', () => {
+    const filtros: AdicionarGuiasLoteParams = {
+      prestadorId: 'p1',
+      operadoraId: 'op1',
+      dataInicio: '2026-03-01',
+      dataFim: '2026-03-31',
+      somenteComGlosa: true,
+    };
+    service.adicionarGuiasLote('rec-1', filtros).subscribe();
+
+    const req = httpMock.expectOne('/api/v1/admin/recursos/rec-1/guias/lote');
+    expect(req.request.method).toBe('POST');
+    const body = req.request.body as AdicionarGuiasLoteParams;
+    expect(body.prestadorId).toBe('p1');
+    expect(body.somenteComGlosa).toBe(true);
+    req.flush({ adicionadas: 5 });
+  });
+
+  it('adicionarGuiasLote_retornaAdicionadas', () => {
+    let result: { adicionadas: number } | undefined;
+    const filtros: AdicionarGuiasLoteParams = { prestadorId: 'p1', operadoraId: 'op1' };
+    service.adicionarGuiasLote('rec-1', filtros).subscribe((v) => (result = v));
+
+    const req = httpMock.expectOne('/api/v1/admin/recursos/rec-1/guias/lote');
+    req.flush({ adicionadas: 5 });
+
+    expect(result?.adicionadas).toBe(5);
   });
 
   it('removerGuia_chamaDELETE', () => {
