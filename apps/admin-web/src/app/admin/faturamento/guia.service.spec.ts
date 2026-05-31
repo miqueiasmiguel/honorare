@@ -6,6 +6,8 @@ import type {
   CriarGuiaPayload,
   AtualizarGuiaPayload,
   GuiaDetalheItem,
+  GuiaItem,
+  ItemGuiaItem,
   GuiaCalculoResult,
   ListarGuiasResult,
 } from './guia.types';
@@ -183,5 +185,29 @@ describe('GuiaService', () => {
     req.flush(GUIA_CALCULO_RESULT);
 
     expect(result).toEqual(GUIA_CALCULO_RESULT);
+  });
+
+  it('atualizarObservacao_chamaPATCH', () => {
+    let result: GuiaItem | undefined;
+    service.atualizarObservacao('guia-1', 'nova obs').subscribe((v) => (result = v));
+
+    const req = httpMock.expectOne('/api/v1/admin/guias/guia-1/observacao');
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({ observacao: 'nova obs' });
+    req.flush(GUIA_DETALHE);
+
+    expect(result?.id).toBe('guia-1');
+  });
+
+  it('atualizarValorApuradoItem_chamaPATCH', () => {
+    let result: ItemGuiaItem | undefined;
+    service.atualizarValorApuradoItem('guia-1', 'item-1', 250.5).subscribe((v) => (result = v));
+
+    const req = httpMock.expectOne('/api/v1/admin/guias/guia-1/itens/item-1/valor-apurado');
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({ valorApurado: 250.5 });
+    req.flush(GUIA_DETALHE.itens[0]);
+
+    expect(result?.id).toBe('item-1');
   });
 });

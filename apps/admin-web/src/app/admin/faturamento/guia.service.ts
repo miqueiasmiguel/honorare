@@ -6,6 +6,8 @@ import type {
   CriarGuiaPayload,
   GuiaCalculoResult,
   GuiaDetalheItem,
+  GuiaItem,
+  ItemGuiaItem,
   ListarGuiasParams,
   ListarGuiasResult,
 } from './guia.types';
@@ -64,6 +66,21 @@ export class GuiaService {
 
   obterCalculo(id: string): Observable<GuiaCalculoResult> {
     return this._http.get<GuiaCalculoResult>(`/api/v1/admin/guias/${id}/calculo`);
+  }
+
+  atualizarObservacao(guiaId: string, observacao: string): Observable<GuiaItem> {
+    return this._http.patch<GuiaItem>(`/api/v1/admin/guias/${guiaId}/observacao`, { observacao });
+  }
+
+  atualizarValorApuradoItem(
+    guiaId: string,
+    itemId: string,
+    valorApurado: number | null,
+  ): Observable<ItemGuiaItem> {
+    return this._http.patch<ItemGuiaItem>(
+      `/api/v1/admin/guias/${guiaId}/itens/${itemId}/valor-apurado`,
+      { valorApurado },
+    );
   }
 
   excluir(id: string): Observable<void> {

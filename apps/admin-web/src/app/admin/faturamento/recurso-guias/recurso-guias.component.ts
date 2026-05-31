@@ -22,44 +22,112 @@ import type { GuiaNoRecursoDto, RecursoDto } from '../recurso.types';
 
       <section class="recurso-guias__secao">
         <h3 class="recurso-guias__secao-titulo">Guias vinculadas</h3>
-        <table class="recurso-guias__tabela">
-          <thead>
-            <tr>
-              <th>Senha</th>
-              <th>Data</th>
-              <th>Beneficiário</th>
-              <th>Situação</th>
-              <th>Itens</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (guia of guias(); track guia.id) {
-              <tr class="recurso-guias__linha-guia">
-                <td>{{ guia.senha }}</td>
-                <td>{{ formatarData(guia.dataAtendimento) }}</td>
-                <td>{{ guia.beneficiarioNome }}</td>
-                <td>{{ guia.situacao }}</td>
-                <td>{{ guia.itens.length }}</td>
-                <td>
+        @for (guia of guias(); track guia.id) {
+          <div class="guia-card">
+            <div
+              class="guia-card__header"
+              role="button"
+              tabindex="0"
+              (click)="alternarExpansao(guia.id)"
+              (keydown.enter)="alternarExpansao(guia.id)"
+            >
+              <span class="guia-card__senha">{{ guia.senha }}</span>
+              <span class="guia-card__data">{{ formatarData(guia.dataAtendimento) }}</span>
+              <span class="guia-card__beneficiario">{{ guia.beneficiarioNome ?? '—' }}</span>
+              <span class="guia-card__itens">{{ guia.itens.length }} iten(s)</span>
+              @if (guia.observacao) {
+                <span class="guia-card__obs-badge">Obs.</span>
+              }
+              <button
+                class="guia-card__remover"
+                type="button"
+                (click)="$event.stopPropagation(); removerGuia(guia.id)"
+              >
+                Remover
+              </button>
+              <span class="guia-card__expand-icon">
+                {{ guiaExpandida() === guia.id ? '▲' : '▼' }}
+              </span>
+            </div>
+
+            @if (guiaExpandida() === guia.id) {
+              <div class="guia-card__detalhe">
+                <div class="guia-card__observacao">
+                  <label class="guia-card__obs-label" [for]="'obs-' + guia.id">Observação</label>
+                  <textarea
+                    class="guia-card__obs-input"
+                    [id]="'obs-' + guia.id"
+                    [value]="observacoesEmEdicao()[guia.id] ?? ''"
+                    (input)="onObservacaoInput(guia.id, $any($event.target).value)"
+                    rows="2"
+                    maxlength="2000"
+                    placeholder="Descreva a divergência (aparece no PDF e no portal do médico)"
+                  ></textarea>
                   <button
-                    class="recurso-guias__btn-remover"
+                    class="guia-card__obs-salvar"
                     type="button"
-                    (click)="removerGuia(guia.id)"
+                    [disabled]="salvandoObservacao()[guia.id]"
+                    (click)="salvarObservacao(guia.id)"
                   >
-                    Remover
+                    {{ salvandoObservacao()[guia.id] ? 'Salvando…' : 'Salvar observação' }}
                   </button>
-                </td>
-              </tr>
-            } @empty {
-              <tr>
-                <td colspan="6">
-                  <p class="recurso-guias__vazio">Nenhuma guia vinculada.</p>
-                </td>
-              </tr>
+                </div>
+
+                <table class="guia-card__itens-table">
+                  <thead>
+                    <tr>
+                      <th>Código</th>
+                      <th>Procedimento</th>
+                      <th>Posição</th>
+                      <th>VL CORRETO</th>
+                      <th>PG OPERADORA</th>
+                      <th>GLOSA</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (item of guia.itens; track item.id) {
+                      <tr>
+                        <td>{{ item.codigoTuss }}</td>
+                        <td>{{ item.descricaoProcedimento }}</td>
+                        <td>{{ item.posicaoExecutor }}</td>
+                        <td class="guia-card__valor-apurado-cell">
+                          <input
+                            class="guia-card__valor-input"
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            [value]="valoresEmEdicao()[item.id] ?? ''"
+                            (input)="onValorApuradoInput(item.id, $any($event.target).value)"
+                            (blur)="salvarValorApurado(guia.id, item.id)"
+                            (keydown.enter)="salvarValorApurado(guia.id, item.id)"
+                            [disabled]="salvandoValorApurado()[item.id]"
+                            placeholder="0,00"
+                          />
+                        </td>
+                        <td>{{ formatarMoeda(item.valorLiquidado) }}</td>
+                        <td
+                          [class.guia-card__glosa]="
+                            item.valorApurado !== null &&
+                            item.valorLiquidado !== null &&
+                            item.valorApurado > item.valorLiquidado
+                          "
+                        >
+                          {{
+                            item.valorApurado !== null && item.valorLiquidado !== null
+                              ? formatarMoeda(item.valorApurado - item.valorLiquidado)
+                              : '—'
+                          }}
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
             }
-          </tbody>
-        </table>
+          </div>
+        } @empty {
+          <p class="recurso-guias__vazio">Nenhuma guia vinculada.</p>
+        }
       </section>
 
       <section class="recurso-guias__secao">
@@ -174,8 +242,8 @@ import type { GuiaNoRecursoDto, RecursoDto } from '../recurso.types';
         }
       </section>
 
-      @if (erro()) {
-        <p class="recurso-guias__erro">{{ erro() }}</p>
+      @if (erroValidacao()) {
+        <p class="recurso-guias__erro">{{ erroValidacao() }}</p>
       }
     </div>
   `,
@@ -204,7 +272,13 @@ export class RecursoGuiasComponent implements OnInit {
   readonly totalCandidatas = signal(0);
   readonly carregandoCandidatas = signal(false);
   readonly filtroAplicado = signal(false);
-  readonly erro = signal('');
+  readonly erroValidacao = signal('');
+
+  readonly guiaExpandida = signal<string | null>(null);
+  readonly observacoesEmEdicao = signal<Record<string, string>>({});
+  readonly valoresEmEdicao = signal<Record<string, string>>({});
+  readonly salvandoObservacao = signal<Record<string, boolean>>({});
+  readonly salvandoValorApurado = signal<Record<string, boolean>>({});
 
   ngOnInit(): void {
     const id = this._route.snapshot.paramMap.get('id');
@@ -214,13 +288,94 @@ export class RecursoGuiasComponent implements OnInit {
     }
   }
 
+  onObservacaoInput(guiaId: string, value: string): void {
+    this.observacoesEmEdicao.update((m) => ({ ...m, [guiaId]: value }));
+  }
+
+  onValorApuradoInput(itemId: string, value: string): void {
+    this.valoresEmEdicao.update((m) => ({ ...m, [itemId]: value }));
+  }
+
+  alternarExpansao(guiaId: string): void {
+    if (this.guiaExpandida() === guiaId) {
+      this.guiaExpandida.set(null);
+      return;
+    }
+    const guia = this.guias().find((g) => g.id === guiaId);
+    if (!guia) {
+      return;
+    }
+    this.guiaExpandida.set(guiaId);
+    this.observacoesEmEdicao.update((m) => ({ ...m, [guiaId]: guia.observacao ?? '' }));
+    guia.itens.forEach((item) => {
+      this.valoresEmEdicao.update((m) => ({
+        ...m,
+        [item.id]: item.valorApurado != null ? String(item.valorApurado) : '',
+      }));
+    });
+  }
+
+  salvarObservacao(guiaId: string): void {
+    const texto = this.observacoesEmEdicao()[guiaId] ?? '';
+    this.salvandoObservacao.update((m) => ({ ...m, [guiaId]: true }));
+    this._guiaService.atualizarObservacao(guiaId, texto).subscribe({
+      next: () => {
+        this.guias.update((gs) =>
+          gs.map((g) => (g.id === guiaId ? { ...g, observacao: texto } : g)),
+        );
+        this.salvandoObservacao.update((m) => ({ ...m, [guiaId]: false }));
+      },
+      error: () => {
+        this.erroValidacao.set('Erro ao salvar observação.');
+        this.salvandoObservacao.update((m) => ({ ...m, [guiaId]: false }));
+      },
+    });
+  }
+
+  salvarValorApurado(guiaId: string, itemId: string): void {
+    const raw = this.valoresEmEdicao()[itemId] ?? '';
+    const valor = raw === '' ? null : parseFloat(raw.replace(',', '.'));
+    this.salvandoValorApurado.update((m) => ({ ...m, [itemId]: true }));
+    this._guiaService.atualizarValorApuradoItem(guiaId, itemId, valor).subscribe({
+      next: () => {
+        this.guias.update((gs) =>
+          gs.map((g) =>
+            g.id === guiaId
+              ? {
+                  ...g,
+                  itens: g.itens.map((i) => (i.id === itemId ? { ...i, valorApurado: valor } : i)),
+                }
+              : g,
+          ),
+        );
+        this.salvandoValorApurado.update((m) => ({ ...m, [itemId]: false }));
+      },
+      error: () => {
+        this.erroValidacao.set('Erro ao salvar valor apurado.');
+        this.salvandoValorApurado.update((m) => ({ ...m, [itemId]: false }));
+      },
+    });
+  }
+
+  formatarMoeda(value: number | null): string {
+    if (value === null) {
+      return '—';
+    }
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value);
+  }
+
   filtrar(): void {
     const id = this.recursoId();
     if (!id) {
       return;
     }
     this.carregandoCandidatas.set(true);
-    this.erro.set('');
+    this.erroValidacao.set('');
     const situacao = this.filtroSituacao();
     this._guiaService
       .listar({
@@ -244,7 +399,7 @@ export class RecursoGuiasComponent implements OnInit {
           this.carregandoCandidatas.set(false);
         },
         error: () => {
-          this.erro.set('Erro ao buscar guias.');
+          this.erroValidacao.set('Erro ao buscar guias.');
           this.carregandoCandidatas.set(false);
         },
       });
@@ -255,7 +410,7 @@ export class RecursoGuiasComponent implements OnInit {
     if (!id) {
       return;
     }
-    this.erro.set('');
+    this.erroValidacao.set('');
     const situacao = this.filtroSituacao();
     this._recursoService
       .adicionarGuiasLote(id, {
@@ -274,7 +429,7 @@ export class RecursoGuiasComponent implements OnInit {
           this.filtrar();
         },
         error: () => {
-          this.erro.set('Erro ao adicionar guias em lote.');
+          this.erroValidacao.set('Erro ao adicionar guias em lote.');
         },
       });
   }
@@ -284,14 +439,14 @@ export class RecursoGuiasComponent implements OnInit {
     if (!id) {
       return;
     }
-    this.erro.set('');
+    this.erroValidacao.set('');
     this._recursoService.adicionarGuia(id, guia.id).subscribe({
       next: () => {
         this.candidatas.update((prev) => prev.filter((g) => g.id !== guia.id));
         this._carregar(id);
       },
       error: () => {
-        this.erro.set('Erro ao adicionar guia. Tente novamente.');
+        this.erroValidacao.set('Erro ao adicionar guia. Tente novamente.');
       },
     });
   }
@@ -301,13 +456,13 @@ export class RecursoGuiasComponent implements OnInit {
     if (!id) {
       return;
     }
-    this.erro.set('');
+    this.erroValidacao.set('');
     this._recursoService.removerGuia(id, guiaId).subscribe({
       next: () => {
         this.guias.update((prev) => prev.filter((g) => g.id !== guiaId));
       },
       error: () => {
-        this.erro.set('Erro ao remover guia. Tente novamente.');
+        this.erroValidacao.set('Erro ao remover guia. Tente novamente.');
       },
     });
   }
@@ -332,7 +487,7 @@ export class RecursoGuiasComponent implements OnInit {
         this.operadoraId.set(detalhe.header.operadoraId);
       },
       error: () => {
-        this.erro.set('Erro ao carregar recurso.');
+        this.erroValidacao.set('Erro ao carregar recurso.');
       },
     });
   }
