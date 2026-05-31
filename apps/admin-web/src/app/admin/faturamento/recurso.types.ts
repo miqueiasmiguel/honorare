@@ -21,6 +21,19 @@ export interface RecursoDto {
   criadoEm: string;
 }
 
+export interface ItemGuiaNoRecursoDto {
+  id: string;
+  codigoTuss: string;
+  descricaoProcedimento: string;
+  posicaoExecutor: string;
+  percentualOrdem: number;
+  viaAcesso: string;
+  acomodacao: string;
+  ehUrgencia: boolean;
+  valorApurado: number | null;
+  valorLiquidado: number | null;
+}
+
 export interface GuiaNoRecursoDto {
   id: string;
   senha: string;
@@ -28,7 +41,8 @@ export interface GuiaNoRecursoDto {
   beneficiarioNome: string | null;
   beneficiarioCarteira: string | null;
   situacao: string;
-  totalItens: number;
+  observacao: string | null;
+  itens: ItemGuiaNoRecursoDto[];
 }
 
 export interface RecursoDetalheDto {

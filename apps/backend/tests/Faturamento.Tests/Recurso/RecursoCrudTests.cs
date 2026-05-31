@@ -32,6 +32,11 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         ctx.Add(operadora);
         ctx.Add(procedimento);
         await ctx.SaveChangesAsync();
+
+        ctx.Add(TabelaProcedimento.Create(tenantId, operadora.Id, procedimento.Id, 200m));
+        ctx.Add(DeflatorPrestador.Create(tenantId, prestador.Id, operadora.Id, PosicaoExecutor.Cirurgiao, 100m));
+        await ctx.SaveChangesAsync();
+
         return (operadora.Id, prestador.Id, procedimento.Id);
     }
 
@@ -427,6 +432,79 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         var guiaVinculada = await adminCtx.Guias.FirstOrDefaultAsync(g => g.RecursoId == recursoId);
         Assert.NotNull(guiaVinculada);
         Assert.Equal(guiaAId, guiaVinculada.Id);
+    }
+
+    [Fact]
+    public async Task ObterPorId_RetornaGuiasComItensAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (opId, prestId, procId) = await SeedCatalogAsync(ctx, tenantId);
+
+        ctx.Add(DeflatorPrestador.Create(tenantId, prestId, opId, PosicaoExecutor.PrimeiroAuxiliar, 70m));
+        await ctx.SaveChangesAsync();
+
+        var service = new RecursoService(ctx, user);
+        var pfx = tenantId.ToString("N")[..4];
+
+        var recursoId = (await service.CriarAsync(
+            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 3, 1), null))).Value!.Id;
+
+        var factory = new PricingRuleSetFactory(ctx);
+        var guiaSvc = new GuiaService(ctx, user, factory);
+        var guiaResult = await guiaSvc.CriarAsync(new CriarGuiaCommand(
+            prestId, opId, null, null, $"RC05-A-{pfx}", new DateOnly(2026, 3, 10), false, string.Empty,
+            [
+                new CriarItemGuiaCommand(procId, PosicaoExecutor.Cirurgiao, 1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null),
+                new CriarItemGuiaCommand(procId, PosicaoExecutor.PrimeiroAuxiliar, 0.3m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null),
+            ]));
+        var guiaId = guiaResult.Value!.Id;
+        await service.AdicionarGuiaAsync(recursoId, guiaId);
+
+        var itens = await ctx.ItensGuia.Where(i => i.GuiaId == guiaId).ToListAsync();
+        itens[0].SetValorApurado(100m);
+        itens[0].SetValorLiquidado(80m);
+        itens[1].SetValorApurado(null);
+        await ctx.SaveChangesAsync();
+
+        var result = await service.ObterPorIdAsync(recursoId);
+
+        Assert.True(result.IsSuccess);
+        var guia = Assert.Single(result.Value!.Guias);
+        Assert.Equal(2, guia.Itens.Count);
+
+        var itemComValor = guia.Itens.First(i => i.ValorApurado == 100m);
+        Assert.Equal(80m, itemComValor.ValorLiquidado);
+        Assert.Contains(guia.Itens, i => i.ValorApurado == null);
+    }
+
+    [Fact]
+    public async Task ObterPorId_RetornaGuiasComObservacaoAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (opId, prestId, procId) = await SeedCatalogAsync(ctx, tenantId);
+        var service = new RecursoService(ctx, user);
+        var pfx = tenantId.ToString("N")[..4];
+
+        var recursoId = (await service.CriarAsync(
+            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 4, 1), null))).Value!.Id;
+
+        var factory = new PricingRuleSetFactory(ctx);
+        var guiaSvc = new GuiaService(ctx, user, factory);
+        var guiaResult = await guiaSvc.CriarAsync(new CriarGuiaCommand(
+            prestId, opId, null, null, $"RC05-OBS-{pfx}", new DateOnly(2026, 4, 5), false,
+            "Guia glosada indevidamente",
+            [new CriarItemGuiaCommand(procId, PosicaoExecutor.Cirurgiao, 1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null)]));
+        var guiaId = guiaResult.Value!.Id;
+        await service.AdicionarGuiaAsync(recursoId, guiaId);
+
+        var result = await service.ObterPorIdAsync(recursoId);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("Guia glosada indevidamente", result.Value!.Guias[0].Observacao);
     }
 }
 

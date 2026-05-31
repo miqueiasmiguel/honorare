@@ -29,7 +29,8 @@ function makeGuiaNoRecurso(overrides: Partial<GuiaNoRecursoDto> = {}): GuiaNoRec
     beneficiarioNome: 'Paciente A',
     beneficiarioCarteira: '123',
     situacao: 'EmRecurso',
-    totalItens: 2,
+    observacao: null,
+    itens: [],
     ...overrides,
   };
 }

@@ -17,10 +17,24 @@ internal sealed record RecursoDto(
     string Numero, DateOnly DataEmissao, string? Observacao,
     int TotalGuias, DateTimeOffset CriadoEm);
 
+internal sealed record ItemGuiaNoRecursoDto(
+    Guid Id,
+    string CodigoTuss,
+    string DescricaoProcedimento,
+    PosicaoExecutor PosicaoExecutor,
+    decimal PercentualOrdem,
+    ViaAcesso ViaAcesso,
+    Acomodacao Acomodacao,
+    bool EhUrgencia,
+    decimal? ValorApurado,
+    decimal? ValorLiquidado);
+
 internal sealed record GuiaNoRecursoDto(
     Guid Id, string Senha, DateOnly DataAtendimento,
     string? BeneficiarioNome, string? BeneficiarioCarteira,
-    SituacaoGuia Situacao, int TotalItens);
+    SituacaoGuia Situacao,
+    string? Observacao,
+    IReadOnlyList<ItemGuiaNoRecursoDto> Itens);
 
 internal sealed record RecursoDetalheDto(RecursoDto Header, IReadOnlyList<GuiaNoRecursoDto> Guias);
 
@@ -177,7 +191,7 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser)
             return Result<RecursoDetalheDto>.Fail(new NotFoundError("Recurso não encontrado."));
         }
 
-        var guias = await (
+        var guiasRaw = await (
             from g in _db.Guias
             join b in _db.Beneficiarios on g.BeneficiarioId equals (Guid?)b.Id into bs
             from b in bs.DefaultIfEmpty()
@@ -188,27 +202,51 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser)
                 g.Senha,
                 g.DataAtendimento,
                 g.Situacao,
+                g.Observacao,
                 BeneficiarioNome = (string?)b.Nome,
                 BeneficiarioCarteira = (string?)b.Carteira,
             }).ToListAsync(ct);
 
-        var guiaIds = guias.Select(g => g.Id).ToList();
-        var itemCounts = await _db.ItensGuia
-            .Where(i => guiaIds.Contains(i.GuiaId))
-            .GroupBy(i => i.GuiaId)
-            .ToDictionaryAsync(g => g.Key, g => g.Count(), ct);
+        var guiaIds = guiasRaw.Select(g => g.Id).ToList();
+        var itens = await (
+            from i in _db.ItensGuia
+            join p in _db.Procedimentos on i.ProcedimentoId equals p.Id
+            where guiaIds.Contains(i.GuiaId)
+            select new
+            {
+                i.Id,
+                i.GuiaId,
+                CodigoTuss = p.CodigoTuss,
+                DescricaoProcedimento = p.Descricao,
+                i.PosicaoExecutor,
+                i.PercentualOrdem,
+                i.ViaAcesso,
+                i.Acomodacao,
+                i.EhUrgencia,
+                i.ValorApurado,
+                i.ValorLiquidado,
+            }).ToListAsync(ct);
+
+        var itensPorGuia = itens.GroupBy(i => i.GuiaId)
+            .ToDictionary(g => g.Key, g => g
+                .Select(i => new ItemGuiaNoRecursoDto(
+                    i.Id, i.CodigoTuss, i.DescricaoProcedimento,
+                    i.PosicaoExecutor, i.PercentualOrdem,
+                    i.ViaAcesso, i.Acomodacao, i.EhUrgencia,
+                    i.ValorApurado, i.ValorLiquidado))
+                .ToList());
 
         var headerDto = new RecursoDto(
             header.Id, header.OperadoraId, header.OperadoraNome,
             header.PrestadorId, header.PrestadorNome, header.PrestadorRegistroProfissional,
             header.Numero, header.DataEmissao, header.Observacao,
-            guias.Count, header.CriadoEm);
+            guiasRaw.Count, header.CriadoEm);
 
-        var guiaDtos = guias.Select(g => new GuiaNoRecursoDto(
+        var guiaDtos = guiasRaw.Select(g => new GuiaNoRecursoDto(
             g.Id, g.Senha, g.DataAtendimento,
             g.BeneficiarioNome, g.BeneficiarioCarteira,
-            g.Situacao,
-            itemCounts.GetValueOrDefault(g.Id, 0))).ToList();
+            g.Situacao, g.Observacao,
+            itensPorGuia.GetValueOrDefault(g.Id, []))).ToList();
 
         return Result<RecursoDetalheDto>.Ok(new RecursoDetalheDto(headerDto, guiaDtos));
     }

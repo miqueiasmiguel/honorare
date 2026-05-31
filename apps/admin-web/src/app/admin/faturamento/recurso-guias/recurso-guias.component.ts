@@ -40,7 +40,7 @@ import type { GuiaNoRecursoDto, RecursoDto } from '../recurso.types';
                 <td>{{ formatarData(guia.dataAtendimento) }}</td>
                 <td>{{ guia.beneficiarioNome }}</td>
                 <td>{{ guia.situacao }}</td>
-                <td>{{ guia.totalItens }}</td>
+                <td>{{ guia.itens.length }}</td>
                 <td>
                   <button
                     class="recurso-guias__btn-remover"
