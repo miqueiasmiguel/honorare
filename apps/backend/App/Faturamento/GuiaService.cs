@@ -22,8 +22,11 @@ internal sealed record AtualizarGuiaCommand(
     IReadOnlyList<CriarItemGuiaCommand> Itens);
 
 internal sealed record ListarGuiasQuery(
-    Guid? PrestadorId, DateOnly? DataInicio, DateOnly? DataFim,
-    SituacaoGuia? Situacao, int Pagina, int ItensPorPagina);
+    Guid? PrestadorId, Guid? OperadoraId,
+    DateOnly? DataInicio, DateOnly? DataFim,
+    SituacaoGuia? Situacao, string? Senha, string? Beneficiario,
+    bool? SemRecurso, bool? SomenteComGlosa,
+    int Pagina, int ItensPorPagina);
 
 internal sealed record GuiaDto(
     Guid Id, Guid PrestadorId, string PrestadorNome,
@@ -145,7 +148,47 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
     internal async Task<ListarGuiasResult> ListarAsync(
         ListarGuiasQuery query, CancellationToken ct = default)
     {
-        var q = from g in _db.Guias
+        var baseQuery = _db.Guias.AsQueryable();
+
+        if (query.PrestadorId.HasValue)
+        {
+            baseQuery = baseQuery.Where(g => g.PrestadorId == query.PrestadorId.Value);
+        }
+
+        if (query.OperadoraId.HasValue)
+        {
+            baseQuery = baseQuery.Where(g => g.OperadoraId == query.OperadoraId.Value);
+        }
+
+        if (query.DataInicio.HasValue)
+        {
+            baseQuery = baseQuery.Where(g => g.DataAtendimento >= query.DataInicio.Value);
+        }
+
+        if (query.DataFim.HasValue)
+        {
+            baseQuery = baseQuery.Where(g => g.DataAtendimento <= query.DataFim.Value);
+        }
+
+        if (query.Situacao.HasValue)
+        {
+            baseQuery = baseQuery.Where(g => g.Situacao == query.Situacao.Value);
+        }
+
+        if (query.SemRecurso == true)
+        {
+            baseQuery = baseQuery.Where(g => g.RecursoId == null);
+        }
+
+        if (query.SomenteComGlosa == true)
+        {
+            baseQuery = baseQuery.Where(g => _db.ItensGuia.Any(i =>
+                i.GuiaId == g.Id &&
+                i.ValorApurado.HasValue && i.ValorLiquidado.HasValue &&
+                i.ValorApurado > i.ValorLiquidado));
+        }
+
+        var q = from g in baseQuery
                 join pr in _db.Prestadores on g.PrestadorId equals pr.Id
                 join op in _db.Operadoras on g.OperadoraId equals op.Id
                 join b in _db.Beneficiarios on g.BeneficiarioId equals (Guid?)b.Id into bs
@@ -170,24 +213,15 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
                     g.AtualizadoEm,
                 };
 
-        if (query.PrestadorId.HasValue)
+        if (!string.IsNullOrWhiteSpace(query.Senha))
         {
-            q = q.Where(x => x.PrestadorId == query.PrestadorId.Value);
+            q = q.Where(x => x.Senha.Contains(query.Senha));
         }
 
-        if (query.DataInicio.HasValue)
+        if (!string.IsNullOrWhiteSpace(query.Beneficiario))
         {
-            q = q.Where(x => x.DataAtendimento >= query.DataInicio.Value);
-        }
-
-        if (query.DataFim.HasValue)
-        {
-            q = q.Where(x => x.DataAtendimento <= query.DataFim.Value);
-        }
-
-        if (query.Situacao.HasValue)
-        {
-            q = q.Where(x => x.Situacao == query.Situacao.Value);
+            q = q.Where(x => x.BeneficiarioNome != null &&
+                              x.BeneficiarioNome.Contains(query.Beneficiario));
         }
 
         var total = await q.CountAsync(ct);

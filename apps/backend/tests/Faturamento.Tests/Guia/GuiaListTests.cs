@@ -74,7 +74,7 @@ public sealed class GuiaListTests(PostgresContainerFixture db)
         await CriarGuiaAsync(service, prestadorA, operadoraId, beneficiarioId, procedimentoId, "SFA002", new DateOnly(2025, 1, 11));
         await CriarGuiaAsync(service, prestadorB.Id, operadoraId, beneficiarioId, procedimentoId, "SFB001", new DateOnly(2025, 1, 12));
 
-        var result = await service.ListarAsync(new ListarGuiasQuery(prestadorA, null, null, null, 1, 20));
+        var result = await service.ListarAsync(new ListarGuiasQuery(prestadorA, null, null, null, null, null, null, null, null, 1, 20));
 
         Assert.Equal(2, result.Total);
         Assert.All(result.Itens, g => Assert.Equal(prestadorA, g.PrestadorId));
@@ -93,7 +93,7 @@ public sealed class GuiaListTests(PostgresContainerFixture db)
         await CriarGuiaAsync(service, prestadorId, operadoraId, beneficiarioId, procedimentoId, "SFP002", new DateOnly(2025, 3, 15));
 
         var result = await service.ListarAsync(new ListarGuiasQuery(
-            null, new DateOnly(2025, 2, 1), new DateOnly(2025, 4, 1), null, 1, 20));
+            null, null, new DateOnly(2025, 2, 1), new DateOnly(2025, 4, 1), null, null, null, null, null, 1, 20));
 
         Assert.Equal(1, result.Total);
         Assert.Equal(new DateOnly(2025, 3, 15), result.Itens[0].DataAtendimento);
@@ -111,9 +111,9 @@ public sealed class GuiaListTests(PostgresContainerFixture db)
         await CriarGuiaAsync(service, prestadorId, operadoraId, beneficiarioId, procedimentoId, "SFS001", new DateOnly(2025, 6, 1));
 
         var comApresentada = await service.ListarAsync(new ListarGuiasQuery(
-            null, null, null, SituacaoGuia.Apresentada, 1, 20));
+            null, null, null, null, SituacaoGuia.Apresentada, null, null, null, null, 1, 20));
         var comLiquidada = await service.ListarAsync(new ListarGuiasQuery(
-            null, null, null, SituacaoGuia.Liquidada, 1, 20));
+            null, null, null, null, SituacaoGuia.Liquidada, null, null, null, null, 1, 20));
 
         Assert.Equal(1, comApresentada.Total);
         Assert.Equal(0, comLiquidada.Total);
@@ -134,9 +134,9 @@ public sealed class GuiaListTests(PostgresContainerFixture db)
                 $"SFPAG{i:D2}", new DateOnly(2025, 1, i + 1));
         }
 
-        var pagina1 = await service.ListarAsync(new ListarGuiasQuery(null, null, null, null, 1, 2));
-        var pagina2 = await service.ListarAsync(new ListarGuiasQuery(null, null, null, null, 2, 2));
-        var pagina3 = await service.ListarAsync(new ListarGuiasQuery(null, null, null, null, 3, 2));
+        var pagina1 = await service.ListarAsync(new ListarGuiasQuery(null, null, null, null, null, null, null, null, null, 1, 2));
+        var pagina2 = await service.ListarAsync(new ListarGuiasQuery(null, null, null, null, null, null, null, null, null, 2, 2));
+        var pagina3 = await service.ListarAsync(new ListarGuiasQuery(null, null, null, null, null, null, null, null, null, 3, 2));
 
         Assert.Equal(5, pagina1.Total);
         Assert.Equal(2, pagina1.Itens.Count);
@@ -162,10 +162,164 @@ public sealed class GuiaListTests(PostgresContainerFixture db)
         var serviceB = new GuiaService(ctxB, userB, factoryB);
         await CriarGuiaAsync(serviceB, prestadorB, operadoraB, beneficiarioB, procedimentoB, "SFISO-B", new DateOnly(2025, 6, 2));
 
-        var resultA = await serviceA.ListarAsync(new ListarGuiasQuery(null, null, null, null, 1, 100));
+        var resultA = await serviceA.ListarAsync(new ListarGuiasQuery(null, null, null, null, null, null, null, null, null, 1, 100));
 
         Assert.Contains(resultA.Itens, g => g.Senha == "SFISO-A");
         Assert.DoesNotContain(resultA.Itens, g => g.Senha == "SFISO-B");
+    }
+
+    [Fact]
+    public async Task Listar_FiltraPorOperadoraIdAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user, factory) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (prestadorId, operadoraA, beneficiarioId, procedimentoId) = await SeedCatalogAsync(ctx, tenantId);
+
+        var uid = tenantId.ToString("N")[..8].ToUpperInvariant();
+        var opB = Operadora.Create(tenantId, "UNIMED OpB " + uid, null, null, TipoRuleSet.Unimed);
+        ctx.Add(opB);
+        await ctx.SaveChangesAsync();
+
+        var service = new GuiaService(ctx, user, factory);
+        await CriarGuiaAsync(service, prestadorId, operadoraA, beneficiarioId, procedimentoId, "SFOPA001", new DateOnly(2025, 6, 1));
+        await CriarGuiaAsync(service, prestadorId, opB.Id, beneficiarioId, procedimentoId, "SFOPB001", new DateOnly(2025, 6, 2));
+
+        var result = await service.ListarAsync(new ListarGuiasQuery(null, operadoraA, null, null, null, null, null, null, null, 1, 20));
+
+        Assert.Equal(1, result.Total);
+        Assert.Equal(operadoraA, result.Itens[0].OperadoraId);
+    }
+
+    [Fact]
+    public async Task Listar_FiltraPorSenhaAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user, factory) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (prestadorId, operadoraId, beneficiarioId, procedimentoId) = await SeedCatalogAsync(ctx, tenantId);
+        var service = new GuiaService(ctx, user, factory);
+
+        await CriarGuiaAsync(service, prestadorId, operadoraId, beneficiarioId, procedimentoId, "ABC123", new DateOnly(2025, 6, 1));
+        await CriarGuiaAsync(service, prestadorId, operadoraId, beneficiarioId, procedimentoId, "XYZ789", new DateOnly(2025, 6, 2));
+        await CriarGuiaAsync(service, prestadorId, operadoraId, beneficiarioId, procedimentoId, "ABCxxx", new DateOnly(2025, 6, 3));
+
+        var result = await service.ListarAsync(new ListarGuiasQuery(null, null, null, null, null, "ABC", null, null, null, 1, 20));
+
+        Assert.Equal(2, result.Total);
+    }
+
+    [Fact]
+    public async Task Listar_FiltraPorBeneficiarioAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user, factory) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (prestadorId, operadoraId, _, procedimentoId) = await SeedCatalogAsync(ctx, tenantId);
+
+        var uid = tenantId.ToString("N")[..8].ToUpperInvariant();
+        var maria = Beneficiario.Create(tenantId, uid + "M", "Maria Silva");
+        var joao = Beneficiario.Create(tenantId, uid + "J", "João Costa");
+        ctx.Add(maria);
+        ctx.Add(joao);
+        await ctx.SaveChangesAsync();
+
+        var service = new GuiaService(ctx, user, factory);
+        await CriarGuiaAsync(service, prestadorId, operadoraId, maria.Id, procedimentoId, "SFBEM001", new DateOnly(2025, 6, 1));
+        await CriarGuiaAsync(service, prestadorId, operadoraId, joao.Id, procedimentoId, "SFBEM002", new DateOnly(2025, 6, 2));
+
+        var result = await service.ListarAsync(new ListarGuiasQuery(null, null, null, null, null, null, "Maria", null, null, 1, 20));
+
+        Assert.Equal(1, result.Total);
+        Assert.Equal("Maria Silva", result.Itens[0].BeneficiarioNome);
+    }
+
+    [Fact]
+    public async Task Listar_FiltraSemRecursoAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user, factory) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (prestadorId, operadoraId, beneficiarioId, procedimentoId) = await SeedCatalogAsync(ctx, tenantId);
+        var service = new GuiaService(ctx, user, factory);
+
+        var g1Id = await CriarGuiaAsync(service, prestadorId, operadoraId, beneficiarioId, procedimentoId, "SFREC001", new DateOnly(2025, 6, 1));
+        await CriarGuiaAsync(service, prestadorId, operadoraId, beneficiarioId, procedimentoId, "SFREC002", new DateOnly(2025, 6, 2));
+        await CriarGuiaAsync(service, prestadorId, operadoraId, beneficiarioId, procedimentoId, "SFREC003", new DateOnly(2025, 6, 3));
+
+        var recurso = Recurso.Create(tenantId, operadoraId, prestadorId, new DateOnly(2025, 6, 1), null);
+        ctx.Add(recurso);
+        var g1 = await ctx.Guias.FirstAsync(g => g.Id == g1Id);
+        g1.MarcarEmRecurso(recurso.Id);
+        await ctx.SaveChangesAsync();
+
+        var result = await service.ListarAsync(new ListarGuiasQuery(null, null, null, null, null, null, null, true, null, 1, 20));
+
+        Assert.Equal(2, result.Total);
+        Assert.DoesNotContain(result.Itens, g => g.Id == g1Id);
+    }
+
+    [Fact]
+    public async Task Listar_FiltraSomenteComGlosaAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user, factory) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (prestadorId, operadoraId, beneficiarioId, procedimentoId) = await SeedCatalogAsync(ctx, tenantId);
+        var service = new GuiaService(ctx, user, factory);
+
+        var guiaAId = await CriarGuiaAsync(service, prestadorId, operadoraId, beneficiarioId, procedimentoId, "SFGLO001", new DateOnly(2025, 6, 1));
+        var guiaBId = await CriarGuiaAsync(service, prestadorId, operadoraId, beneficiarioId, procedimentoId, "SFGLO002", new DateOnly(2025, 6, 2));
+        var guiaCId = await CriarGuiaAsync(service, prestadorId, operadoraId, beneficiarioId, procedimentoId, "SFGLO003", new DateOnly(2025, 6, 3));
+
+        var itemA = await ctx.ItensGuia.FirstAsync(i => i.GuiaId == guiaAId);
+        itemA.SetValorApurado(100m);
+        itemA.SetValorLiquidado(80m);
+
+        var itemB = await ctx.ItensGuia.FirstAsync(i => i.GuiaId == guiaBId);
+        itemB.SetValorApurado(100m);
+        itemB.SetValorLiquidado(100m);
+
+        var itemC = await ctx.ItensGuia.FirstAsync(i => i.GuiaId == guiaCId);
+        itemC.SetValorApurado(100m);
+
+        await ctx.SaveChangesAsync();
+
+        var result = await service.ListarAsync(new ListarGuiasQuery(null, null, null, null, null, null, null, null, true, 1, 20));
+
+        Assert.Equal(1, result.Total);
+        Assert.Equal(guiaAId, result.Itens[0].Id);
+    }
+
+    [Fact]
+    public async Task Listar_CombinarOperadoraESemRecursoAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user, factory) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (prestadorId, operadoraA, beneficiarioId, procedimentoId) = await SeedCatalogAsync(ctx, tenantId);
+
+        var uid = tenantId.ToString("N")[..8].ToUpperInvariant();
+        var opB = Operadora.Create(tenantId, "UNIMED OpB2 " + uid, null, null, TipoRuleSet.Unimed);
+        ctx.Add(opB);
+        await ctx.SaveChangesAsync();
+
+        var service = new GuiaService(ctx, user, factory);
+        var g1Id = await CriarGuiaAsync(service, prestadorId, operadoraA, beneficiarioId, procedimentoId, "SFCOMB01", new DateOnly(2025, 6, 1));
+        var g2Id = await CriarGuiaAsync(service, prestadorId, operadoraA, beneficiarioId, procedimentoId, "SFCOMB02", new DateOnly(2025, 6, 2));
+        await CriarGuiaAsync(service, prestadorId, opB.Id, beneficiarioId, procedimentoId, "SFCOMB03", new DateOnly(2025, 6, 3));
+        await CriarGuiaAsync(service, prestadorId, opB.Id, beneficiarioId, procedimentoId, "SFCOMB04", new DateOnly(2025, 6, 4));
+
+        var recurso = Recurso.Create(tenantId, operadoraA, prestadorId, new DateOnly(2025, 6, 1), null);
+        ctx.Add(recurso);
+        var g2 = await ctx.Guias.FirstAsync(g => g.Id == g2Id);
+        g2.MarcarEmRecurso(recurso.Id);
+        await ctx.SaveChangesAsync();
+
+        var result = await service.ListarAsync(new ListarGuiasQuery(null, operadoraA, null, null, null, null, null, true, null, 1, 20));
+
+        Assert.Equal(1, result.Total);
+        Assert.Equal(g1Id, result.Itens[0].Id);
     }
 }
 

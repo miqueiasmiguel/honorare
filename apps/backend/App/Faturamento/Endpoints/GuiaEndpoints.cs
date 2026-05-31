@@ -21,8 +21,11 @@ internal static class GuiaEndpoints
         GuiaService service, CancellationToken ct)
     {
         var query = new ListarGuiasQuery(
-            req.PrestadorId, req.DataInicio, req.DataFim,
-            req.Situacao, req.Pagina, req.ItensPorPagina);
+            req.PrestadorId, req.OperadoraId,
+            req.DataInicio, req.DataFim,
+            req.Situacao, req.Senha, req.Beneficiario,
+            req.SemRecurso, req.SomenteComGlosa,
+            req.Pagina, req.ItensPorPagina);
         var result = await service.ListarAsync(query, ct);
         return Results.Ok(result);
     }
@@ -119,12 +122,11 @@ internal static class GuiaEndpoints
 }
 
 internal sealed record ListarGuiasRequest(
-    Guid? PrestadorId = null,
-    DateOnly? DataInicio = null,
-    DateOnly? DataFim = null,
-    SituacaoGuia? Situacao = null,
-    int Pagina = 1,
-    int ItensPorPagina = 20);
+    Guid? PrestadorId = null, Guid? OperadoraId = null,
+    DateOnly? DataInicio = null, DateOnly? DataFim = null,
+    SituacaoGuia? Situacao = null, string? Senha = null, string? Beneficiario = null,
+    bool? SemRecurso = null, bool? SomenteComGlosa = null,
+    int Pagina = 1, int ItensPorPagina = 20);
 
 internal sealed record CriarItemGuiaRequest(
     Guid ProcedimentoId,
