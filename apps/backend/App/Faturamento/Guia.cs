@@ -67,6 +67,12 @@ internal sealed class Guia : ITenantEntity
         Situacao = todosItensLiquidados ? SituacaoGuia.Liquidada : SituacaoGuia.Apresentada;
     }
 
+    internal void AtualizarObservacao(string observacao)
+    {
+        Observacao = observacao.Trim();
+        AtualizadoEm = DateTimeOffset.UtcNow;
+    }
+
     internal void Atualizar(
         Guid operadoraId,
         Guid? beneficiarioId,

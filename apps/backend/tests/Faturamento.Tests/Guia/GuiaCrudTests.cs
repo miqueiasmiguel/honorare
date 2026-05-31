@@ -36,6 +36,10 @@ public sealed class GuiaCrudTests(PostgresContainerFixture db)
         ctx.Add(procedimento);
         await ctx.SaveChangesAsync();
 
+        ctx.Add(TabelaProcedimento.Create(tenantId, operadora.Id, procedimento.Id, 200m));
+        ctx.Add(DeflatorPrestador.Create(tenantId, prestador.Id, operadora.Id, PosicaoExecutor.Cirurgiao, 100m));
+        await ctx.SaveChangesAsync();
+
         return (prestador.Id, operadora.Id, beneficiario.Id, procedimento.Id);
     }
 
@@ -254,6 +258,46 @@ public sealed class GuiaCrudTests(PostgresContainerFixture db)
         await using var adminCtx = db.CreateContext();
         Assert.Null(await adminCtx.Guias.FirstOrDefaultAsync(g => g.Id == guiaId));
         Assert.Equal(0, await adminCtx.ItensGuia.CountAsync(i => i.GuiaId == guiaId));
+    }
+
+    [Fact]
+    public async Task AtualizarObservacao_SalvaTextoAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user, factory) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (prestadorId, operadoraId, beneficiarioId, procedimentoId) = await SeedCatalogAsync(ctx, tenantId);
+        var service = new GuiaService(ctx, user, factory);
+
+        var criar = new CriarGuiaCommand(
+            prestadorId, operadoraId, beneficiarioId,
+            null, "SEN-OBS", new DateOnly(2025, 6, 1), false, "",
+            [ItemPadrao(procedimentoId)]);
+        var criado = await service.CriarAsync(criar);
+        Assert.True(criado.IsSuccess);
+
+        var result = await service.AtualizarObservacaoAsync(
+            criado.Value!.Id, new("Procedimento não coberto pela tabela"));
+
+        Assert.True(result.IsSuccess);
+
+        await using var adminCtx = db.CreateContext();
+        var guia = await adminCtx.Guias.FirstOrDefaultAsync(g => g.Id == criado.Value.Id);
+        Assert.Equal("Procedimento não coberto pela tabela", guia!.Observacao);
+    }
+
+    [Fact]
+    public async Task AtualizarObservacao_RetornaNotFoundParaGuiaInexistenteAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user, factory) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var service = new GuiaService(ctx, user, factory);
+
+        var result = await service.AtualizarObservacaoAsync(Guid.NewGuid(), new("Texto"));
+
+        Assert.False(result.IsSuccess);
+        Assert.IsType<NotFoundError>(result.Error);
     }
 
     [Fact]

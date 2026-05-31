@@ -12,7 +12,9 @@ internal static class GuiaEndpoints
         g.MapGet("{id:guid}", ObterGuiaPorIdAsync);
         g.MapGet("{id:guid}/calculo", ObterCalculoAsync);
         g.MapPost("", CriarGuiaAsync);
+        g.MapPost("{id:guid}/recalcular", RecalcularGuiaAsync);
         g.MapPut("{id:guid}", AtualizarGuiaAsync);
+        g.MapPatch("{id:guid}/observacao", AtualizarObservacaoAsync);
         g.MapDelete("{id:guid}", ExcluirGuiaAsync);
     }
 
@@ -53,6 +55,23 @@ internal static class GuiaEndpoints
             return Results.Problem(
                 statusCode: StatusCodes.Status404NotFound,
                 detail: result.Error!.Message);
+        }
+
+        return Results.Ok(result.Value);
+    }
+
+    private static async Task<IResult> RecalcularGuiaAsync(
+        Guid id, GuiaService service, CancellationToken ct)
+    {
+        var result = await service.RecalcularAsync(id, ct);
+        if (result.IsFailure)
+        {
+            var statusCode = result.Error switch
+            {
+                NotFoundError => StatusCodes.Status404NotFound,
+                _ => StatusCodes.Status400BadRequest,
+            };
+            return Results.Problem(statusCode: statusCode, detail: result.Error!.Message);
         }
 
         return Results.Ok(result.Value);
@@ -106,6 +125,24 @@ internal static class GuiaEndpoints
         return Results.Ok(result.Value);
     }
 
+    private static async Task<IResult> AtualizarObservacaoAsync(
+        Guid id, AtualizarObservacaoRequest req, GuiaService service, CancellationToken ct)
+    {
+        var result = await service.AtualizarObservacaoAsync(id, new(req.Observacao), ct);
+        if (result.IsFailure)
+        {
+            var statusCode = result.Error switch
+            {
+                ValidationError => StatusCodes.Status422UnprocessableEntity,
+                NotFoundError => StatusCodes.Status404NotFound,
+                _ => StatusCodes.Status400BadRequest,
+            };
+            return Results.Problem(statusCode: statusCode, detail: result.Error!.Message);
+        }
+
+        return Results.Ok(result.Value);
+    }
+
     private static async Task<IResult> ExcluirGuiaAsync(
         Guid id, GuiaService service, CancellationToken ct)
     {
@@ -148,6 +185,8 @@ internal sealed record CriarGuiaRequest(
     bool EhPacote,
     string Observacao,
     IReadOnlyList<CriarItemGuiaRequest> Itens);
+
+internal sealed record AtualizarObservacaoRequest(string Observacao);
 
 internal sealed record AtualizarGuiaRequest(
     Guid OperadoraId,

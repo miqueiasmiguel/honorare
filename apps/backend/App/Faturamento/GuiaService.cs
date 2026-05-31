@@ -21,6 +21,8 @@ internal sealed record AtualizarGuiaCommand(
     DateOnly DataAtendimento, bool EhPacote, string Observacao,
     IReadOnlyList<CriarItemGuiaCommand> Itens);
 
+internal sealed record AtualizarObservacaoCommand(string Observacao);
+
 internal sealed record ListarGuiasQuery(
     Guid? PrestadorId, Guid? OperadoraId,
     DateOnly? DataInicio, DateOnly? DataFim,
@@ -115,6 +117,16 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
             if (beneficiario is null)
             {
                 return Result<GuiaDetalheDto>.Fail(new NotFoundError("Beneficiário não encontrado."));
+            }
+        }
+
+        if (!cmd.EhPacote)
+        {
+            var erroCalculo = await ValidarCalculoViavelAsync(
+                cmd.PrestadorId, cmd.OperadoraId, operadora, cmd.Itens, tenantId, ct);
+            if (erroCalculo is not null)
+            {
+                return Result<GuiaDetalheDto>.Fail(new ValidationError(erroCalculo));
             }
         }
 
@@ -292,6 +304,17 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
             return Result<GuiaDetalheDto>.Fail(new NotFoundError("Operadora não encontrada."));
         }
 
+        if (!cmd.EhPacote)
+        {
+            var erroCalculo = await ValidarCalculoViavelAsync(
+                guia.PrestadorId, cmd.OperadoraId, operadora, cmd.Itens,
+                _currentUser.TenantId!.Value, ct);
+            if (erroCalculo is not null)
+            {
+                return Result<GuiaDetalheDto>.Fail(new ValidationError(erroCalculo));
+            }
+        }
+
         // Excluir Calculo anterior (cascade apaga PassoCalculo) antes de deletar ItensGuia
         await _db.Calculos.Where(c => c.GuiaId == id).ExecuteDeleteAsync(ct);
         await _db.ItensGuia.Where(i => i.GuiaId == id).ExecuteDeleteAsync(ct);
@@ -334,7 +357,20 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
             from i in _db.ItensGuia
             join p in _db.Procedimentos on i.ProcedimentoId equals p.Id
             where i.GuiaId == guiaId
-            select new { i.Id, i.ValorApurado, p.CodigoTuss, p.Descricao }
+            select new
+            {
+                i.Id,
+                i.ValorApurado,
+                p.CodigoTuss,
+                p.Descricao,
+                i.ProcedimentoId,
+                i.PosicaoExecutor,
+                i.PercentualOrdem,
+                i.ViaAcesso,
+                i.Acomodacao,
+                i.EhUrgencia,
+                i.TempoAnestesicoMin,
+            }
         ).ToListAsync(ct);
 
         if (guia.EhPacote)
@@ -367,17 +403,98 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
                     g => g.Select(p => new PassoCalculoDto(p.Regra, p.Fator, p.ValorResultante)).ToList());
         }
 
+        // Re-run the rule set for non-Calculado items to surface the real situação
+        var situacaoViva = new Dictionary<Guid, string>();
+        var itemsSemCalculo = itensComProc.Where(i => !i.ValorApurado.HasValue).ToList();
+        if (itemsSemCalculo.Count > 0)
+        {
+            var operadora = await _db.Operadoras.FirstOrDefaultAsync(o => o.Id == guia.OperadoraId, ct);
+            if (operadora is not null)
+            {
+                var ruleSet = _factory.Criar(operadora.TipoRuleSet);
+                var diagnosticCtx = new ApurarGuiaContext(
+                    _currentUser.TenantId!.Value, guia.PrestadorId, guia.OperadoraId,
+                    itemsSemCalculo.Select(i => new ApurarItemInput(
+                        i.Id, i.ProcedimentoId, i.PosicaoExecutor,
+                        i.PercentualOrdem, i.ViaAcesso, i.Acomodacao,
+                        i.EhUrgencia, i.TempoAnestesicoMin)).ToList());
+                var resultados = await ruleSet.ApurarAsync(diagnosticCtx, ct);
+                foreach (var r in resultados)
+                {
+                    situacaoViva[r.ItemGuiaId] = r.Situacao.ToString();
+                }
+            }
+        }
+
         var itensDtos = itensComProc.Select(i =>
         {
             var passos = passosPorItem.TryGetValue(i.Id, out var p)
                 ? (IReadOnlyList<PassoCalculoDto>)p
                 : [];
-            var situacao = i.ValorApurado.HasValue ? "Calculado" : "SemTabela";
+            var situacao = i.ValorApurado.HasValue
+                ? "Calculado"
+                : situacaoViva.TryGetValue(i.Id, out var s) ? s : "NaoCalculado";
             return new ItemCalculoDto(i.Id, i.CodigoTuss, i.Descricao, situacao, i.ValorApurado, passos);
         }).ToList();
 
         return Result<GuiaCalculoDto>.Ok(
             new GuiaCalculoDto(guiaId, false, calculo?.RealizadoEm, itensDtos));
+    }
+
+    internal async Task<Result<GuiaDetalheDto>> RecalcularAsync(
+        Guid guiaId, CancellationToken ct = default)
+    {
+        var guia = await _db.Guias.FirstOrDefaultAsync(g => g.Id == guiaId, ct);
+        if (guia is null)
+        {
+            return Result<GuiaDetalheDto>.Fail(new NotFoundError("Guia não encontrada."));
+        }
+
+        if (guia.EhPacote)
+        {
+            return Result<GuiaDetalheDto>.Fail(
+                new ValidationError("Guias pacote não possuem cálculo automático."));
+        }
+
+        var operadora = await _db.Operadoras.FirstOrDefaultAsync(o => o.Id == guia.OperadoraId, ct);
+        if (operadora is null)
+        {
+            return Result<GuiaDetalheDto>.Fail(new NotFoundError("Operadora não encontrada."));
+        }
+
+        await _db.Calculos.Where(c => c.GuiaId == guiaId).ExecuteDeleteAsync(ct);
+
+        var itens = await _db.ItensGuia.Where(i => i.GuiaId == guiaId).ToListAsync(ct);
+        foreach (var item in itens)
+        {
+            item.SetValorApurado(null);
+        }
+
+        await _db.SaveChangesAsync(ct);
+        await ExecutarCalculoAsync(guia, operadora, itens, ct);
+
+        return await ObterDetalheDtoInternalAsync(guiaId, ct);
+    }
+
+    internal async Task<Result<GuiaDetalheDto>> AtualizarObservacaoAsync(
+        Guid id, AtualizarObservacaoCommand cmd, CancellationToken ct = default)
+    {
+        if (cmd.Observacao.Length > 2000)
+        {
+            return Result<GuiaDetalheDto>.Fail(
+                new ValidationError("Observação não pode exceder 2000 caracteres."));
+        }
+
+        var guia = await _db.Guias.FirstOrDefaultAsync(g => g.Id == id, ct);
+        if (guia is null)
+        {
+            return Result<GuiaDetalheDto>.Fail(new NotFoundError("Guia não encontrada."));
+        }
+
+        guia.AtualizarObservacao(cmd.Observacao);
+        await _db.SaveChangesAsync(ct);
+
+        return await ObterDetalheDtoInternalAsync(guia.Id, ct);
     }
 
     internal async Task<Result> ExcluirAsync(Guid id, CancellationToken ct = default)
@@ -436,6 +553,40 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
         }
 
         await _db.SaveChangesAsync(ct);
+    }
+
+    private async Task<string?> ValidarCalculoViavelAsync(
+        Guid prestadorId, Guid operadoraId, Operadora operadora,
+        IReadOnlyList<CriarItemGuiaCommand> itens, Guid tenantId, CancellationToken ct)
+    {
+        if (operadora.TipoRuleSet == TipoRuleSet.Nulo)
+        {
+            return null;
+        }
+
+        var ruleSet = _factory.Criar(operadora.TipoRuleSet);
+        var tempItens = itens
+            .Select(i => new ApurarItemInput(
+                Guid.NewGuid(), i.ProcedimentoId, i.PosicaoExecutor,
+                i.PercentualOrdem, i.ViaAcesso, i.Acomodacao,
+                i.EhUrgencia, i.TempoAnestesicoMin))
+            .ToList();
+
+        var ctx = new ApurarGuiaContext(tenantId, prestadorId, operadoraId, tempItens);
+        var resultados = await ruleSet.ApurarAsync(ctx, ct);
+
+        var falhas = resultados.Where(r => r.Situacao != SituacaoApuracao.Calculado).ToList();
+        if (falhas.Count == 0)
+        {
+            return null;
+        }
+
+        var situacoes = falhas
+            .GroupBy(r => r.Situacao)
+            .Select(g => $"{g.Count()} item(ns) com situação '{g.Key}'")
+            .ToList();
+        return $"Não é possível criar a guia: {string.Join("; ", situacoes)}. " +
+               "Verifique deflators, tabelas de procedimento e portes anestésicos.";
     }
 
     private async Task<Result<GuiaDetalheDto>> ObterDetalheDtoInternalAsync(
