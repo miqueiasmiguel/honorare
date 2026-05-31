@@ -9,9 +9,9 @@ import { RecursoGuiasComponent } from './recurso-guias.component';
 
 const RECURSO: RecursoDto = {
   id: 'rec-1',
-  operadoraId: 'op-1',
+  operadoraId: 'op1',
   operadoraNome: 'UNIMED',
-  prestadorId: 'prest-1',
+  prestadorId: 'p1',
   prestadorNome: 'Dr. João',
   prestadorRegistroProfissional: null,
   numero: '202601',
@@ -37,9 +37,9 @@ function makeGuiaNoRecurso(overrides: Partial<GuiaNoRecursoDto> = {}): GuiaNoRec
 function makeGuiaItem(overrides: Partial<GuiaItem> = {}): GuiaItem {
   return {
     id: 'guia-2',
-    prestadorId: 'prest-1',
+    prestadorId: 'p1',
     prestadorNome: 'Dr. João',
-    operadoraId: 'op-1',
+    operadoraId: 'op1',
     operadoraNome: 'UNIMED',
     beneficiarioId: null,
     beneficiarioNome: 'Paciente B',
@@ -64,15 +64,16 @@ function makeListResult(itens: GuiaItem[] = []): ListarGuiasResult {
   return { itens, total: itens.length, pagina: 1, itensPorPagina: 20 };
 }
 
-function setup(options: { guias?: GuiaNoRecursoDto[]; searchResults?: GuiaItem[] } = {}) {
+function setup(options: { guias?: GuiaNoRecursoDto[]; candidatas?: GuiaItem[] } = {}) {
   const recursoService = {
     obterPorId: vi.fn().mockReturnValue(of(makeDetalhe(options.guias))),
     adicionarGuia: vi.fn().mockReturnValue(of(undefined)),
+    adicionarGuiasLote: vi.fn().mockReturnValue(of({ adicionadas: 0 })),
     removerGuia: vi.fn().mockReturnValue(of(undefined)),
     baixarPdf: vi.fn(),
   };
   const guiaService = {
-    listar: vi.fn().mockReturnValue(of(makeListResult(options.searchResults ?? []))),
+    listar: vi.fn().mockReturnValue(of(makeListResult(options.candidatas ?? []))),
   };
   const activatedRoute = {
     snapshot: {
@@ -102,92 +103,101 @@ function setup(options: { guias?: GuiaNoRecursoDto[]; searchResults?: GuiaItem[]
 }
 
 describe('RecursoGuiasComponent', () => {
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  it('exibe guias vinculadas ao recurso', () => {
+  it('exibeGuiasVinculadas', () => {
     const guias = [
       makeGuiaNoRecurso({ id: 'g-1', senha: 'S001' }),
       makeGuiaNoRecurso({ id: 'g-2', senha: 'S002' }),
     ];
     const { el } = setup({ guias });
-
-    const rows = el.querySelectorAll('.recurso-guias__guia-row');
-    expect(rows).toHaveLength(2);
-    expect(rows[0].textContent).toContain('S001');
-    expect(rows[1].textContent).toContain('S002');
+    expect(el.querySelectorAll('.recurso-guias__linha-guia')).toHaveLength(2);
   });
 
-  it('botão remover chama service e atualiza lista', () => {
+  it('botaoRemoverChamaServiceEAtualizaLista', () => {
     const { el, component, recursoService } = setup({
       guias: [makeGuiaNoRecurso({ id: 'guia-1' })],
     });
-
     el.querySelector<HTMLButtonElement>('.recurso-guias__btn-remover')?.click();
-
     expect(recursoService.removerGuia).toHaveBeenCalledWith('rec-1', 'guia-1');
     expect(component.guias()).toHaveLength(0);
   });
 
-  it('busca por senha retorna guias disponíveis', () => {
-    vi.useFakeTimers();
-    const searchResults = [makeGuiaItem({ id: 'guia-2', senha: 'S002' })];
-    const { component, fixture, guiaService, el } = setup({ searchResults });
-
-    component.onBuscaChange('S002');
-    vi.advanceTimersByTime(400);
-    fixture.detectChanges();
-
-    expect(guiaService.listar).toHaveBeenCalledWith(expect.objectContaining({ senha: 'S002' }));
-    const resultados = el.querySelectorAll('.recurso-guias__resultado');
-    expect(resultados).toHaveLength(1);
+  it('filtrarChamaListarComPrestadorEOperadoraDoRecurso', () => {
+    const { el, guiaService } = setup();
+    el.querySelector<HTMLButtonElement>('.recurso-guias__btn-filtrar')?.click();
+    expect(guiaService.listar).toHaveBeenCalledWith(
+      expect.objectContaining({ prestadorId: 'p1', operadoraId: 'op1', semRecurso: true }),
+    );
   });
 
-  it('botão adicionar chama service e adiciona à lista', () => {
+  it('filtrosSaoPassadosParaListar', () => {
+    const { el, component, guiaService } = setup();
+    component.filtroSenha.set('ABC');
+    component.filtroSomenteGlosa.set(true);
+    el.querySelector<HTMLButtonElement>('.recurso-guias__btn-filtrar')?.click();
+    expect(guiaService.listar).toHaveBeenCalledWith(
+      expect.objectContaining({ senha: 'ABC', somenteComGlosa: true }),
+    );
+  });
+
+  it('tabelaCandidataExibeResultados', () => {
+    const candidatas = [
+      makeGuiaItem({ id: 'g-1' }),
+      makeGuiaItem({ id: 'g-2' }),
+      makeGuiaItem({ id: 'g-3' }),
+    ];
+    const { el, fixture } = setup({ candidatas });
+    el.querySelector<HTMLButtonElement>('.recurso-guias__btn-filtrar')?.click();
+    fixture.detectChanges();
+    expect(el.querySelectorAll('.recurso-guias__linha-candidata')).toHaveLength(3);
+  });
+
+  it('estadoInicialNaoCarregaCandidatas', () => {
+    const { guiaService, el } = setup();
+    expect(guiaService.listar).not.toHaveBeenCalled();
+    expect(el.querySelector('.recurso-guias__hint')).not.toBeNull();
+  });
+
+  it('adicionarUmaGuiaChamaServiceCorretamente', () => {
     const { component, fixture, recursoService, el } = setup();
-
-    component.guiasBusca.set([makeGuiaItem({ id: 'guia-2' })]);
+    component.filtroAplicado.set(true);
+    component.candidatas.set([makeGuiaItem({ id: 'guia-x' })]);
     fixture.detectChanges();
-
     el.querySelector<HTMLButtonElement>('.recurso-guias__btn-adicionar')?.click();
-
-    expect(recursoService.adicionarGuia).toHaveBeenCalledWith('rec-1', 'guia-2');
+    expect(recursoService.adicionarGuia).toHaveBeenCalledWith('rec-1', 'guia-x');
   });
 
-  it('botão PDF chama baixarPdf do service', () => {
+  it('adicionarTodasChamaLoteComFiltrosAtuais', () => {
+    const candidatas = Array.from({ length: 5 }, (_, i) => makeGuiaItem({ id: `g-${String(i)}` }));
+    const { el, component, fixture, recursoService } = setup({ candidatas });
+    component.filtroDataInicio.set('2026-03-01');
+    component.filtroDataFim.set('2026-03-31');
+    el.querySelector<HTMLButtonElement>('.recurso-guias__btn-filtrar')?.click();
+    fixture.detectChanges();
+    el.querySelector<HTMLButtonElement>('.recurso-guias__btn-adicionar-todas')?.click();
+    expect(recursoService.adicionarGuiasLote).toHaveBeenCalledWith(
+      'rec-1',
+      expect.objectContaining({
+        prestadorId: 'p1',
+        operadoraId: 'op1',
+        dataInicio: '2026-03-01',
+        dataFim: '2026-03-31',
+      }),
+    );
+  });
+
+  it('erroRemoverExibeMensagem', () => {
+    const { el, fixture, recursoService } = setup({
+      guias: [makeGuiaNoRecurso({ id: 'guia-1' })],
+    });
+    recursoService.removerGuia.mockReturnValue(throwError(() => new Error('err')));
+    el.querySelector<HTMLButtonElement>('.recurso-guias__btn-remover')?.click();
+    fixture.detectChanges();
+    expect(el.querySelector('.recurso-guias__erro')).not.toBeNull();
+  });
+
+  it('botaoPdfChamaBaixarPdf', () => {
     const { el, recursoService } = setup();
-
     el.querySelector<HTMLButtonElement>('.recurso-guias__btn-pdf')?.click();
-
     expect(recursoService.baixarPdf).toHaveBeenCalledWith('rec-1');
-  });
-
-  it('erro ao adicionar exibe mensagem inline', () => {
-    const { component, fixture, recursoService, el } = setup();
-
-    recursoService.adicionarGuia.mockReturnValue(throwError(() => new Error('err')));
-    component.guiasBusca.set([makeGuiaItem({ id: 'guia-2' })]);
-    fixture.detectChanges();
-
-    el.querySelector<HTMLButtonElement>('.recurso-guias__btn-adicionar')?.click();
-    fixture.detectChanges();
-
-    const erro = el.querySelector('.recurso-guias__erro');
-    expect(erro).not.toBeNull();
-    expect(erro?.textContent).toContain('Erro ao adicionar');
-  });
-
-  it('guia já EmRecurso não aparece nos resultados de busca', () => {
-    vi.useFakeTimers();
-    const searchResults = [makeGuiaItem({ id: 'guia-em-recurso', situacao: 'EmRecurso' })];
-    const { component, fixture, el } = setup({ searchResults });
-
-    component.onBuscaChange('S001');
-    vi.advanceTimersByTime(400);
-    fixture.detectChanges();
-
-    const resultados = el.querySelectorAll('.recurso-guias__resultado');
-    expect(resultados).toHaveLength(0);
   });
 });

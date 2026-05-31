@@ -1,9 +1,8 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { DatePipe } from '@angular/common';
 import { RecursoService } from '../recurso.service';
 import { GuiaService } from '../guia.service';
-import type { GuiaItem } from '../guia.types';
+import type { GuiaItem, SituacaoGuia } from '../guia.types';
 import type { GuiaNoRecursoDto, RecursoDto } from '../recurso.types';
 
 @Component({
@@ -21,54 +20,159 @@ import type { GuiaNoRecursoDto, RecursoDto } from '../recurso.types';
         </button>
       </div>
 
-      <div class="recurso-guias__vinculadas">
+      <section class="recurso-guias__secao">
         <h3 class="recurso-guias__secao-titulo">Guias vinculadas</h3>
-        @for (guia of guias(); track guia.id) {
-          <div class="recurso-guias__guia-row">
-            <span class="recurso-guias__guia-senha">{{ guia.senha }}</span>
-            <span class="recurso-guias__guia-data">{{
-              guia.dataAtendimento | date: 'dd/MM/yyyy'
-            }}</span>
-            <span class="recurso-guias__guia-beneficiario">{{ guia.beneficiarioNome }}</span>
-            <span class="recurso-guias__badge--situacao">{{ guia.situacao }}</span>
-            <span class="recurso-guias__guia-itens">{{ guia.totalItens }} itens</span>
-            <button class="recurso-guias__btn-remover" type="button" (click)="removerGuia(guia.id)">
-              Remover
-            </button>
-          </div>
-        } @empty {
-          <p class="recurso-guias__vazio">Nenhuma guia vinculada.</p>
-        }
-      </div>
+        <table class="recurso-guias__tabela">
+          <thead>
+            <tr>
+              <th>Senha</th>
+              <th>Data</th>
+              <th>Beneficiário</th>
+              <th>Situação</th>
+              <th>Itens</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (guia of guias(); track guia.id) {
+              <tr class="recurso-guias__linha-guia">
+                <td>{{ guia.senha }}</td>
+                <td>{{ formatarData(guia.dataAtendimento) }}</td>
+                <td>{{ guia.beneficiarioNome }}</td>
+                <td>{{ guia.situacao }}</td>
+                <td>{{ guia.totalItens }}</td>
+                <td>
+                  <button
+                    class="recurso-guias__btn-remover"
+                    type="button"
+                    (click)="removerGuia(guia.id)"
+                  >
+                    Remover
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="6">
+                  <p class="recurso-guias__vazio">Nenhuma guia vinculada.</p>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </section>
 
-      <div class="recurso-guias__busca">
+      <section class="recurso-guias__secao">
         <h3 class="recurso-guias__secao-titulo">Adicionar guias</h3>
-        <input
-          class="recurso-guias__busca-input"
-          type="text"
-          placeholder="Buscar por senha"
-          [value]="buscaSenha()"
-          (input)="onBuscaChange($any($event.target).value)"
-        />
+        <div class="recurso-guias__filtros">
+          <input
+            class="recurso-guias__filtro-input"
+            type="text"
+            placeholder="Senha"
+            [value]="filtroSenha()"
+            (input)="filtroSenha.set($any($event.target).value)"
+          />
+          <input
+            class="recurso-guias__filtro-input"
+            type="text"
+            placeholder="Beneficiário"
+            [value]="filtroBeneficiario()"
+            (input)="filtroBeneficiario.set($any($event.target).value)"
+          />
+          <input
+            class="recurso-guias__filtro-input"
+            type="date"
+            [value]="filtroDataInicio()"
+            (input)="filtroDataInicio.set($any($event.target).value)"
+          />
+          <input
+            class="recurso-guias__filtro-input"
+            type="date"
+            [value]="filtroDataFim()"
+            (input)="filtroDataFim.set($any($event.target).value)"
+          />
+          <select
+            class="recurso-guias__filtro-select"
+            (change)="filtroSituacao.set($any($event.target).value)"
+          >
+            <option value="" [selected]="!filtroSituacao()">Todas</option>
+            <option value="Apresentada" [selected]="filtroSituacao() === 'Apresentada'">
+              Apresentada
+            </option>
+            <option value="Liquidada" [selected]="filtroSituacao() === 'Liquidada'">
+              Liquidada
+            </option>
+          </select>
+          <label class="recurso-guias__filtro-toggle">
+            <input
+              type="checkbox"
+              [checked]="filtroSomenteGlosa()"
+              (change)="filtroSomenteGlosa.set($any($event.target).checked)"
+            />
+            Só com glosa
+          </label>
+          <button class="recurso-guias__btn-filtrar" type="button" (click)="filtrar()">
+            Filtrar
+          </button>
+        </div>
 
-        @for (guia of guiasBusca(); track guia.id) {
-          <div class="recurso-guias__resultado">
-            <span class="recurso-guias__resultado-senha">{{ guia.senha }}</span>
-            <span class="recurso-guias__resultado-data">{{
-              guia.dataAtendimento | date: 'dd/MM/yyyy'
-            }}</span>
-            <span class="recurso-guias__resultado-beneficiario">{{ guia.beneficiarioNome }}</span>
-            <span class="recurso-guias__resultado-itens">{{ guia.totalItens }} itens</span>
+        @if (!filtroAplicado()) {
+          <p class="recurso-guias__hint">Aplique filtros para buscar guias disponíveis.</p>
+        }
+
+        @if (filtroAplicado() && candidatas().length > 0) {
+          <div class="recurso-guias__acoes-candidatas">
             <button
-              class="recurso-guias__btn-adicionar"
+              class="recurso-guias__btn-adicionar-todas"
               type="button"
-              (click)="adicionarGuia(guia)"
+              (click)="adicionarTodas()"
             >
-              Adicionar
+              Adicionar todas ({{ totalCandidatas() }})
             </button>
           </div>
         }
-      </div>
+
+        @if (filtroAplicado()) {
+          <table class="recurso-guias__tabela-candidatas">
+            <thead>
+              <tr>
+                <th>Senha</th>
+                <th>Data</th>
+                <th>Beneficiário</th>
+                <th>Situação</th>
+                <th>Itens</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (candidata of candidatas(); track candidata.id) {
+                <tr class="recurso-guias__linha-candidata">
+                  <td>{{ candidata.senha }}</td>
+                  <td>{{ formatarData(candidata.dataAtendimento) }}</td>
+                  <td>{{ candidata.beneficiarioNome }}</td>
+                  <td>{{ candidata.situacao }}</td>
+                  <td>{{ candidata.totalItens }}</td>
+                  <td>
+                    <button
+                      class="recurso-guias__btn-adicionar"
+                      type="button"
+                      (click)="adicionarGuia(candidata)"
+                    >
+                      Adicionar
+                    </button>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="6">
+                    <p class="recurso-guias__vazio">Nenhuma guia encontrada.</p>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </section>
 
       @if (erro()) {
         <p class="recurso-guias__erro">{{ erro() }}</p>
@@ -76,19 +180,30 @@ import type { GuiaNoRecursoDto, RecursoDto } from '../recurso.types';
     </div>
   `,
   styleUrl: './recurso-guias.component.scss',
-  imports: [DatePipe],
 })
 export class RecursoGuiasComponent implements OnInit {
   private readonly _recursoService = inject(RecursoService);
   private readonly _guiaService = inject(GuiaService);
   private readonly _route = inject(ActivatedRoute);
-  private _debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly recursoId = signal<string | null>(null);
   readonly recurso = signal<RecursoDto | null>(null);
   readonly guias = signal<GuiaNoRecursoDto[]>([]);
-  readonly buscaSenha = signal('');
-  readonly guiasBusca = signal<GuiaItem[]>([]);
+
+  readonly prestadorId = signal('');
+  readonly operadoraId = signal('');
+
+  readonly filtroSenha = signal('');
+  readonly filtroBeneficiario = signal('');
+  readonly filtroDataInicio = signal('');
+  readonly filtroDataFim = signal('');
+  readonly filtroSituacao = signal<SituacaoGuia | ''>('');
+  readonly filtroSomenteGlosa = signal(false);
+
+  readonly candidatas = signal<GuiaItem[]>([]);
+  readonly totalCandidatas = signal(0);
+  readonly carregandoCandidatas = signal(false);
+  readonly filtroAplicado = signal(false);
   readonly erro = signal('');
 
   ngOnInit(): void {
@@ -99,25 +214,69 @@ export class RecursoGuiasComponent implements OnInit {
     }
   }
 
-  baixarPdf(): void {
+  filtrar(): void {
     const id = this.recursoId();
-    if (id) {
-      this._recursoService.baixarPdf(id);
-    }
-  }
-
-  onBuscaChange(valor: string): void {
-    this.buscaSenha.set(valor);
-    if (this._debounceTimer !== null) {
-      clearTimeout(this._debounceTimer);
-    }
-    if (!valor.trim()) {
-      this.guiasBusca.set([]);
+    if (!id) {
       return;
     }
-    this._debounceTimer = setTimeout(() => {
-      this._buscarGuias(valor);
-    }, 400);
+    this.carregandoCandidatas.set(true);
+    this.erro.set('');
+    const situacao = this.filtroSituacao();
+    this._guiaService
+      .listar({
+        prestadorId: this.prestadorId(),
+        operadoraId: this.operadoraId(),
+        semRecurso: true,
+        senha: this.filtroSenha() || undefined,
+        beneficiario: this.filtroBeneficiario() || undefined,
+        dataInicio: this.filtroDataInicio() || undefined,
+        dataFim: this.filtroDataFim() || undefined,
+        situacao: situacao !== '' ? situacao : undefined,
+        somenteComGlosa: this.filtroSomenteGlosa() || undefined,
+        pagina: 1,
+        itensPorPagina: 50,
+      })
+      .subscribe({
+        next: (result) => {
+          this.candidatas.set(result.itens);
+          this.totalCandidatas.set(result.total);
+          this.filtroAplicado.set(true);
+          this.carregandoCandidatas.set(false);
+        },
+        error: () => {
+          this.erro.set('Erro ao buscar guias.');
+          this.carregandoCandidatas.set(false);
+        },
+      });
+  }
+
+  adicionarTodas(): void {
+    const id = this.recursoId();
+    if (!id) {
+      return;
+    }
+    this.erro.set('');
+    const situacao = this.filtroSituacao();
+    this._recursoService
+      .adicionarGuiasLote(id, {
+        prestadorId: this.prestadorId(),
+        operadoraId: this.operadoraId(),
+        dataInicio: this.filtroDataInicio() || undefined,
+        dataFim: this.filtroDataFim() || undefined,
+        situacao: situacao !== '' ? situacao : undefined,
+        senha: this.filtroSenha() || undefined,
+        beneficiario: this.filtroBeneficiario() || undefined,
+        somenteComGlosa: this.filtroSomenteGlosa() || undefined,
+      })
+      .subscribe({
+        next: () => {
+          this._carregar(id);
+          this.filtrar();
+        },
+        error: () => {
+          this.erro.set('Erro ao adicionar guias em lote.');
+        },
+      });
   }
 
   adicionarGuia(guia: GuiaItem): void {
@@ -128,7 +287,7 @@ export class RecursoGuiasComponent implements OnInit {
     this.erro.set('');
     this._recursoService.adicionarGuia(id, guia.id).subscribe({
       next: () => {
-        this.guiasBusca.update((prev) => prev.filter((g) => g.id !== guia.id));
+        this.candidatas.update((prev) => prev.filter((g) => g.id !== guia.id));
         this._carregar(id);
       },
       error: () => {
@@ -153,25 +312,27 @@ export class RecursoGuiasComponent implements OnInit {
     });
   }
 
+  baixarPdf(): void {
+    const id = this.recursoId();
+    if (id) {
+      this._recursoService.baixarPdf(id);
+    }
+  }
+
+  formatarData(iso: string): string {
+    return new Intl.DateTimeFormat('pt-BR').format(new Date(`${iso}T00:00:00`));
+  }
+
   private _carregar(id: string): void {
     this._recursoService.obterPorId(id).subscribe({
       next: (detalhe) => {
         this.recurso.set(detalhe.header);
         this.guias.set(detalhe.guias);
+        this.prestadorId.set(detalhe.header.prestadorId);
+        this.operadoraId.set(detalhe.header.operadoraId);
       },
       error: () => {
         this.erro.set('Erro ao carregar recurso.');
-      },
-    });
-  }
-
-  private _buscarGuias(senha: string): void {
-    this._guiaService.listar({ senha, pagina: 1, itensPorPagina: 20 }).subscribe({
-      next: (result) => {
-        this.guiasBusca.set(result.itens.filter((g) => g.situacao !== 'EmRecurso'));
-      },
-      error: () => {
-        this.guiasBusca.set([]);
       },
     });
   }

@@ -36,6 +36,27 @@
     color: var(--color-tinta-terciaria);
   }
 
+  &__btn-pdf {
+    height: 40px;
+    padding: 0 space(4);
+    border: 1px solid var(--color-terracota);
+    border-radius: space(1);
+    background-color: transparent;
+    color: var(--color-terracota);
+    cursor: pointer;
+
+    @include text-label;
+    @include transition-fast(background-color);
+
+    &:hover {
+      background-color: var(--color-pergaminho-claro);
+    }
+  }
+
+  &__secao {
+    margin-bottom: space(8);
+  }
+
   &__secao-titulo {
     @include text-h3;
 
@@ -43,34 +64,49 @@
     margin-bottom: space(3);
   }
 
-  &__vinculadas {
-    margin-bottom: space(6);
+  &__tabela,
+  &__tabela-candidatas {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: space(4);
   }
 
-  &__guia-row {
-    display: flex;
-    align-items: center;
-    gap: space(4);
-    padding: space(3) space(2);
+  &__linha-guia,
+  &__linha-candidata {
     border-bottom: 1px solid var(--color-borda-discreta);
   }
 
-  &__guia-senha,
-  &__guia-data,
-  &__guia-beneficiario,
-  &__guia-itens {
-    @include text-body;
+  &__btn-remover {
+    padding: space(1) space(3);
+    border: 1px solid var(--color-borda-media);
+    border-radius: 4px;
+    background-color: transparent;
+    color: var(--color-ferrugem);
+    cursor: pointer;
 
-    color: var(--color-tinta);
+    @include text-label;
+    @include transition-fast(background-color, border-color);
+
+    &:hover {
+      background-color: var(--color-ferrugem-claro);
+      border-color: var(--color-ferrugem);
+    }
   }
 
-  &__badge--situacao {
-    @include text-label;
-
-    padding: space(1) space(2);
-    background-color: var(--color-ambar-claro);
-    color: var(--color-ambar);
+  &__btn-adicionar {
+    padding: space(1) space(3);
+    border: 1px solid var(--color-terracota);
     border-radius: 4px;
+    background-color: transparent;
+    color: var(--color-terracota);
+    cursor: pointer;
+
+    @include text-label;
+    @include transition-fast(background-color);
+
+    &:hover {
+      background-color: var(--color-pergaminho-claro);
+    }
   }
 
   &__vazio {
@@ -80,38 +116,82 @@
     padding: space(3);
   }
 
-  &__busca {
-    margin-top: space(4);
+  &__filtros {
+    display: flex;
+    flex-wrap: wrap;
+    gap: space(3);
+    align-items: center;
+    margin-bottom: space(4);
   }
 
-  &__busca-input {
+  &__filtro-input,
+  &__filtro-select {
     @include text-body;
 
-    width: 100%;
-    max-width: 320px;
-    padding: space(2) space(3);
+    height: 36px;
+    padding: 0 space(3);
     border: 1px solid var(--color-borda-media);
     border-radius: 4px;
     color: var(--color-tinta);
     background-color: var(--color-pergaminho-claro);
+  }
+
+  &__filtro-toggle {
+    @include text-body;
+
+    display: flex;
+    align-items: center;
+    gap: space(2);
+    color: var(--color-tinta);
+    cursor: pointer;
+  }
+
+  &__btn-filtrar {
+    height: 36px;
+    padding: 0 space(4);
+    border: 1px solid var(--color-borda-media);
+    border-radius: 4px;
+    background-color: var(--color-tinta);
+    color: var(--color-pergaminho-claro);
+    cursor: pointer;
+
+    @include text-label;
+    @include transition-fast(background-color);
+
+    &:hover {
+      background-color: var(--color-tinta-secundaria);
+    }
+  }
+
+  &__hint {
+    @include text-body;
+
+    color: var(--color-tinta-secundaria);
+    padding: space(4);
+    font-style: italic;
+  }
+
+  &__acoes-candidatas {
+    display: flex;
+    justify-content: flex-end;
     margin-bottom: space(3);
   }
 
-  &__resultado {
-    display: flex;
-    align-items: center;
-    gap: space(4);
-    padding: space(3) space(2);
-    border-bottom: 1px solid var(--color-borda-discreta);
-  }
+  &__btn-adicionar-todas {
+    height: 36px;
+    padding: 0 space(4);
+    border: 1px solid var(--color-terracota);
+    border-radius: 4px;
+    background-color: var(--color-terracota);
+    color: var(--color-pergaminho-claro);
+    cursor: pointer;
 
-  &__resultado-senha,
-  &__resultado-data,
-  &__resultado-beneficiario,
-  &__resultado-itens {
-    @include text-body;
+    @include text-label;
+    @include transition-fast(background-color);
 
-    color: var(--color-tinta);
+    &:hover {
+      background-color: var(--color-ferrugem);
+    }
   }
 
   &__erro {

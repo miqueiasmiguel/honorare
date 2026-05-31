@@ -1,0 +1,125 @@
+@use 'styles/tokens' as *;
+
+.tabela-atos {
+  margin-top: space(12);
+  padding-top: space(8);
+  border-top: 1px solid var(--color-borda-discreta);
+  max-width: 640px;
+}
+
+.tabela-atos__title {
+  @include text-h3;
+
+  margin: 0 0 space(6);
+  color: var(--color-tinta);
+}
+
+.tabela-atos__loading {
+  @include text-body;
+
+  color: var(--color-tinta-secundaria);
+}
+
+.tabela-atos__tabela {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: space(4);
+}
+
+.tabela-atos__th {
+  @include text-label;
+
+  padding: space(2) space(3);
+  border-bottom: 2px solid var(--color-borda-media);
+  color: var(--color-tinta-secundaria);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.tabela-atos__linha {
+  &:hover {
+    background-color: var(--color-pergaminho-claro);
+  }
+}
+
+.tabela-atos__td {
+  @include text-body;
+
+  padding: space(2) space(3);
+  border-bottom: 1px solid var(--color-borda-discreta);
+  color: var(--color-tinta);
+
+  &--label {
+    width: 180px;
+  }
+}
+
+.tabela-atos__input {
+  @include text-mono-value;
+
+  width: 72px;
+  padding: space(1) space(2);
+  border: 1px solid var(--color-borda-media);
+  border-radius: space(1);
+  background-color: var(--color-pergaminho-claro);
+  color: var(--color-tinta);
+  text-align: right;
+
+  &:focus {
+    outline: 2px solid var(--color-ferrugem);
+    outline-offset: 1px;
+  }
+}
+
+.tabela-atos__erro {
+  @include text-label;
+
+  color: var(--color-ferrugem);
+  margin-bottom: space(4);
+}
+
+.tabela-atos__actions {
+  display: flex;
+  gap: space(4);
+}
+
+.tabela-atos__btn-salvar {
+  @include text-label;
+
+  padding: space(2) space(6);
+  background-color: var(--color-ferrugem);
+  color: var(--color-pergaminho-claro);
+  border: none;
+  border-radius: space(1);
+  cursor: pointer;
+
+  @include transition-fast(opacity);
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.tabela-atos__btn-restaurar {
+  @include text-label;
+
+  padding: space(2) space(6);
+  background-color: transparent;
+  color: var(--color-tinta-secundaria);
+  border: 1px solid var(--color-borda-media);
+  border-radius: space(1);
+  cursor: pointer;
+
+  @include transition-fast(background-color, border-color, color);
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &:hover:not(:disabled) {
+    background-color: var(--color-pergaminho-claro);
+    border-color: var(--color-borda-media);
+  }
+}
