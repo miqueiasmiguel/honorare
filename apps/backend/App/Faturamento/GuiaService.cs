@@ -23,6 +23,8 @@ internal sealed record AtualizarGuiaCommand(
 
 internal sealed record AtualizarObservacaoCommand(string Observacao);
 
+internal sealed record AtualizarValorApuradoItemCommand(decimal? ValorApurado);
+
 internal sealed record ListarGuiasQuery(
     Guid? PrestadorId, Guid? OperadoraId,
     DateOnly? DataInicio, DateOnly? DataFim,
@@ -497,6 +499,30 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
         return await ObterDetalheDtoInternalAsync(guia.Id, ct);
     }
 
+    internal async Task<Result<ItemGuiaDto>> AtualizarValorApuradoItemAsync(
+        Guid guiaId, Guid itemId, AtualizarValorApuradoItemCommand cmd,
+        CancellationToken ct = default)
+    {
+        if (cmd.ValorApurado is { } valor && valor <= 0)
+        {
+            return Result<ItemGuiaDto>.Fail(new ValidationError("ValorApurado deve ser maior que zero."));
+        }
+
+        var item = await _db.ItensGuia
+            .Where(i => i.Id == itemId && i.GuiaId == guiaId)
+            .FirstOrDefaultAsync(ct);
+
+        if (item is null)
+        {
+            return Result<ItemGuiaDto>.Fail(new NotFoundError("Item não encontrado."));
+        }
+
+        item.SetValorApurado(cmd.ValorApurado);
+        await _db.SaveChangesAsync(ct);
+
+        return Result<ItemGuiaDto>.Ok(await MapItemToDtoAsync(itemId, ct));
+    }
+
     internal async Task<Result> ExcluirAsync(Guid id, CancellationToken ct = default)
     {
         var guia = await _db.Guias.FirstOrDefaultAsync(g => g.Id == id, ct);
@@ -641,5 +667,18 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
             header.NumeroGuia, header.Senha, header.DataAtendimento, header.Situacao, header.EhPacote,
             header.Observacao, itens.Count, header.CriadoEm, header.AtualizadoEm,
             itens));
+    }
+
+    private async Task<ItemGuiaDto> MapItemToDtoAsync(Guid itemId, CancellationToken ct)
+    {
+        return await (from i in _db.ItensGuia
+                      join p in _db.Procedimentos on i.ProcedimentoId equals p.Id
+                      where i.Id == itemId
+                      select new ItemGuiaDto(
+                          i.Id, i.ProcedimentoId, p.CodigoTuss, p.Descricao,
+                          i.PosicaoExecutor, i.PercentualOrdem,
+                          i.ViaAcesso, i.Acomodacao,
+                          i.EhUrgencia, i.ValorApurado, i.ValorLiquidado))
+                     .FirstAsync(ct);
     }
 }

@@ -576,9 +576,9 @@ deve_exibir_traco_em_glosa_quando_faltam_valores
 
 - [x] `GET /api/v1/admin/recursos/{id}` retorna `guias[].itens` com `valorApurado`, `valorLiquidado`, `codigoTuss`, `posicaoExecutor`.
 - [x] `GET /api/v1/admin/recursos/{id}` retorna `guias[].observacao`.
-- [ ] `PATCH /api/v1/admin/guias/{id}/observacao` persiste o texto e retorna a guia atualizada.
-- [ ] `PATCH /api/v1/admin/guias/{id}/itens/{itemId}/valor-apurado` persiste o valor e retorna o item atualizado.
-- [ ] `PATCH .../valor-apurado` com `itemId` de outra guia retorna 404.
+- [x] `PATCH /api/v1/admin/guias/{id}/observacao` persiste o texto e retorna a guia atualizada.
+- [x] `PATCH /api/v1/admin/guias/{id}/itens/{itemId}/valor-apurado` persiste o valor e retorna o item atualizado.
+- [x] `PATCH .../valor-apurado` com `itemId` de outra guia retorna 404.
 - [ ] No frontend, clicar no cabeçalho de uma guia expande a linha e exibe a tabela de itens.
 - [ ] Observação é salva ao clicar "Salvar observação"; a lista local é atualizada sem recarregar a página.
 - [ ] ValorApurado é salvo ao sair do campo (`blur`) ou ao pressionar Enter; a lista local é atualizada.

@@ -301,6 +301,86 @@ public sealed class GuiaCrudTests(PostgresContainerFixture db)
     }
 
     [Fact]
+    public async Task AtualizarValorApurado_SalvaValorAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user, factory) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (prestadorId, operadoraId, beneficiarioId, procedimentoId) = await SeedCatalogAsync(ctx, tenantId);
+        var service = new GuiaService(ctx, user, factory);
+
+        var cmd = new CriarGuiaCommand(
+            prestadorId, operadoraId, beneficiarioId,
+            null, "SEN-VA1", new DateOnly(2025, 6, 1), false, "",
+            [ItemPadrao(procedimentoId)]);
+        var criado = await service.CriarAsync(cmd);
+        Assert.True(criado.IsSuccess);
+        var guiaId = criado.Value!.Id;
+        var itemId = criado.Value.Itens[0].Id;
+
+        var result = await service.AtualizarValorApuradoItemAsync(guiaId, itemId, new(150.75m));
+
+        Assert.True(result.IsSuccess);
+        await using var adminCtx = db.CreateContext();
+        var item = await adminCtx.ItensGuia.FirstOrDefaultAsync(i => i.Id == itemId);
+        Assert.Equal(150.75m, item!.ValorApurado);
+    }
+
+    [Fact]
+    public async Task AtualizarValorApurado_LimpaValorAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user, factory) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (prestadorId, operadoraId, beneficiarioId, procedimentoId) = await SeedCatalogAsync(ctx, tenantId);
+        var service = new GuiaService(ctx, user, factory);
+
+        var cmd = new CriarGuiaCommand(
+            prestadorId, operadoraId, beneficiarioId,
+            null, "SEN-VA2", new DateOnly(2025, 6, 1), false, "",
+            [ItemPadrao(procedimentoId)]);
+        var criado = await service.CriarAsync(cmd);
+        Assert.True(criado.IsSuccess);
+        var guiaId = criado.Value!.Id;
+        var itemId = criado.Value.Itens[0].Id;
+
+        var result = await service.AtualizarValorApuradoItemAsync(guiaId, itemId, new(null));
+
+        Assert.True(result.IsSuccess);
+        await using var adminCtx = db.CreateContext();
+        var item = await adminCtx.ItensGuia.FirstOrDefaultAsync(i => i.Id == itemId);
+        Assert.Null(item!.ValorApurado);
+    }
+
+    [Fact]
+    public async Task AtualizarValorApurado_RetornaNotFoundSeItemNaoPertenceAGuiaAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user, factory) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (prestadorId, operadoraId, beneficiarioId, procedimentoId) = await SeedCatalogAsync(ctx, tenantId);
+        var service = new GuiaService(ctx, user, factory);
+
+        var g1 = await service.CriarAsync(new CriarGuiaCommand(
+            prestadorId, operadoraId, beneficiarioId,
+            null, "SEN-VA3", new DateOnly(2025, 6, 1), false, "",
+            [ItemPadrao(procedimentoId)]));
+        Assert.True(g1.IsSuccess);
+
+        var g2 = await service.CriarAsync(new CriarGuiaCommand(
+            prestadorId, operadoraId, beneficiarioId,
+            null, "SEN-VA4", new DateOnly(2025, 6, 1), false, "",
+            [ItemPadrao(procedimentoId)]));
+        Assert.True(g2.IsSuccess);
+
+        var result = await service.AtualizarValorApuradoItemAsync(
+            g1.Value!.Id, g2.Value!.Itens[0].Id, new(100m));
+
+        Assert.False(result.IsSuccess);
+        Assert.IsType<NotFoundError>(result.Error);
+    }
+
+    [Fact]
     public async Task ObterPorId_TenantDiferente_RetornaNotFoundAsync()
     {
         var tenantA = Guid.NewGuid();

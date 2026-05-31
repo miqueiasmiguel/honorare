@@ -15,6 +15,7 @@ internal static class GuiaEndpoints
         g.MapPost("{id:guid}/recalcular", RecalcularGuiaAsync);
         g.MapPut("{id:guid}", AtualizarGuiaAsync);
         g.MapPatch("{id:guid}/observacao", AtualizarObservacaoAsync);
+        g.MapPatch("{id:guid}/itens/{itemId:guid}/valor-apurado", AtualizarValorApuradoItemAsync);
         g.MapDelete("{id:guid}", ExcluirGuiaAsync);
     }
 
@@ -143,6 +144,25 @@ internal static class GuiaEndpoints
         return Results.Ok(result.Value);
     }
 
+    private static async Task<IResult> AtualizarValorApuradoItemAsync(
+        Guid id, Guid itemId, AtualizarValorApuradoItemRequest req,
+        GuiaService service, CancellationToken ct)
+    {
+        var result = await service.AtualizarValorApuradoItemAsync(id, itemId, new(req.ValorApurado), ct);
+        if (result.IsFailure)
+        {
+            var statusCode = result.Error switch
+            {
+                ValidationError => StatusCodes.Status422UnprocessableEntity,
+                NotFoundError => StatusCodes.Status404NotFound,
+                _ => StatusCodes.Status400BadRequest,
+            };
+            return Results.Problem(statusCode: statusCode, detail: result.Error!.Message);
+        }
+
+        return Results.Ok(result.Value);
+    }
+
     private static async Task<IResult> ExcluirGuiaAsync(
         Guid id, GuiaService service, CancellationToken ct)
     {
@@ -187,6 +207,8 @@ internal sealed record CriarGuiaRequest(
     IReadOnlyList<CriarItemGuiaRequest> Itens);
 
 internal sealed record AtualizarObservacaoRequest(string Observacao);
+
+internal sealed record AtualizarValorApuradoItemRequest(decimal? ValorApurado);
 
 internal sealed record AtualizarGuiaRequest(
     Guid OperadoraId,
