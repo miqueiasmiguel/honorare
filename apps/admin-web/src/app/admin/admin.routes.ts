@@ -26,11 +26,6 @@ export const adminRoutes: Routes = [
           import('./faturamento/faturamento.routes').then((m) => m.faturamentoRoutes),
       },
       {
-        path: 'demonstrativos',
-        loadChildren: () =>
-          import('./faturamento/faturamento.routes').then((m) => m.demonstrativoRoutes),
-      },
-      {
         path: 'recursos',
         loadChildren: () => import('./faturamento/faturamento.routes').then((m) => m.recursoRoutes),
       },

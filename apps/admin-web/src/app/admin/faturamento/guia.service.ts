@@ -10,6 +10,7 @@ import type {
   ItemGuiaItem,
   ListarGuiasParams,
   ListarGuiasResult,
+  ResultadoImportacaoGuiaDto,
 } from './guia.types';
 
 @Injectable({ providedIn: 'root' })
@@ -80,6 +81,32 @@ export class GuiaService {
     return this._http.patch<ItemGuiaItem>(
       `/api/v1/admin/guias/${guiaId}/itens/${itemId}/valor-apurado`,
       { valorApurado },
+    );
+  }
+
+  importarCsv(
+    arquivo: File,
+    prestadorId: string,
+    operadoraId: string,
+    somenteValidar: boolean,
+  ): Observable<ResultadoImportacaoGuiaDto> {
+    const form = new FormData();
+    form.append('arquivo', arquivo);
+    form.append('prestadorId', prestadorId);
+    form.append('operadoraId', operadoraId);
+    form.append('somenteValidar', String(somenteValidar));
+    return this._http.post<ResultadoImportacaoGuiaDto>('/api/v1/admin/guias/importar-csv', form);
+  }
+
+  atualizarPagamentoItem(
+    guiaId: string,
+    itemId: string,
+    valorLiquidado: number | null,
+    motivoGlosa: string | null,
+  ): Observable<ItemGuiaItem> {
+    return this._http.patch<ItemGuiaItem>(
+      `/api/v1/admin/guias/${guiaId}/itens/${itemId}/pagamento`,
+      { valorLiquidado, motivoGlosa },
     );
   }
 

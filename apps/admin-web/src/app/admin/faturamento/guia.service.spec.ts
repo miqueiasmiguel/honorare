@@ -10,6 +10,7 @@ import type {
   ItemGuiaItem,
   GuiaCalculoResult,
   ListarGuiasResult,
+  ResultadoImportacaoGuiaDto,
 } from './guia.types';
 
 const GUIA_DETALHE: GuiaDetalheItem = {
@@ -42,6 +43,7 @@ const GUIA_DETALHE: GuiaDetalheItem = {
       ehUrgencia: false,
       valorApurado: null,
       valorLiquidado: null,
+      motivoGlosa: null,
     },
   ],
 };
@@ -120,6 +122,50 @@ describe('GuiaService', () => {
     req.flush(makeListResult());
 
     expect(result?.total).toBe(0);
+  });
+
+  it('listar_comTodosOsFiltros_configuraTodosOsParams', () => {
+    service
+      .listar({
+        pagina: 2,
+        itensPorPagina: 10,
+        prestadorId: 'p1',
+        operadoraId: 'op1',
+        dataInicio: '2026-01-01',
+        dataFim: '2026-01-31',
+        situacao: 'Liquidada',
+        senha: 'ABC123',
+        beneficiario: 'João',
+        semRecurso: true,
+        somenteComGlosa: false,
+      })
+      .subscribe();
+
+    const req = httpMock.expectOne(
+      (r) =>
+        r.url === '/api/v1/admin/guias' &&
+        r.params.get('operadoraId') === 'op1' &&
+        r.params.get('dataInicio') === '2026-01-01' &&
+        r.params.get('dataFim') === '2026-01-31' &&
+        r.params.get('situacao') === 'Liquidada' &&
+        r.params.get('senha') === 'ABC123' &&
+        r.params.get('beneficiario') === 'João' &&
+        r.params.get('semRecurso') === 'true' &&
+        r.params.get('somenteComGlosa') === 'false',
+    );
+    expect(req.request.method).toBe('GET');
+    req.flush(makeListResult());
+  });
+
+  it('obterPorId_chamaCaminhoCorreto', () => {
+    let result: GuiaDetalheItem | undefined;
+    service.obterPorId('guia-1').subscribe((v) => (result = v));
+
+    const req = httpMock.expectOne('/api/v1/admin/guias/guia-1');
+    expect(req.request.method).toBe('GET');
+    req.flush(GUIA_DETALHE);
+
+    expect(result?.id).toBe('guia-1');
   });
 
   it('criar_chamaPOST', () => {
@@ -206,6 +252,59 @@ describe('GuiaService', () => {
     const req = httpMock.expectOne('/api/v1/admin/guias/guia-1/itens/item-1/valor-apurado');
     expect(req.request.method).toBe('PATCH');
     expect(req.request.body).toEqual({ valorApurado: 250.5 });
+    req.flush(GUIA_DETALHE.itens[0]);
+
+    expect(result?.id).toBe('item-1');
+  });
+
+  it('importarCsv_chamaPOSTComFormDataNaRotaCorreta', () => {
+    const RESULTADO: ResultadoImportacaoGuiaDto = {
+      identificadorPagamento: 'PAG-001',
+      somenteValidar: false,
+      guiasCriadas: 1,
+      guiasAtualizadas: 0,
+      itensCriados: 2,
+      itensAtualizados: 0,
+      itensIgnorados: 0,
+      beneficiariosCriados: 1,
+      guiasPrevistas: 1,
+      itensPrevistas: 2,
+      erros: [],
+      alertas: [],
+    };
+
+    const arquivo = new File(['csv'], 'test.csv', { type: 'text/csv' });
+    let result: ResultadoImportacaoGuiaDto | undefined;
+    service.importarCsv(arquivo, 'prest-1', 'op-1', false).subscribe((v) => (result = v));
+
+    const req = httpMock.expectOne('/api/v1/admin/guias/importar-csv');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toBeInstanceOf(FormData);
+    req.flush(RESULTADO);
+
+    expect(result?.guiasCriadas).toBe(1);
+    expect(result?.identificadorPagamento).toBe('PAG-001');
+  });
+
+  it('atualizarPagamentoItem_chamaPATCHNaRotaCorreta', () => {
+    let result: ItemGuiaItem | undefined;
+    service.atualizarPagamentoItem('guia-1', 'item-1', 100.5, 'CB').subscribe((v) => (result = v));
+
+    const req = httpMock.expectOne('/api/v1/admin/guias/guia-1/itens/item-1/pagamento');
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({ valorLiquidado: 100.5, motivoGlosa: 'CB' });
+    req.flush(GUIA_DETALHE.itens[0]);
+
+    expect(result?.id).toBe('item-1');
+  });
+
+  it('atualizarPagamentoItem_aceitaValoresNulos', () => {
+    let result: ItemGuiaItem | undefined;
+    service.atualizarPagamentoItem('guia-1', 'item-1', null, null).subscribe((v) => (result = v));
+
+    const req = httpMock.expectOne('/api/v1/admin/guias/guia-1/itens/item-1/pagamento');
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({ valorLiquidado: null, motivoGlosa: null });
     req.flush(GUIA_DETALHE.itens[0]);
 
     expect(result?.id).toBe('item-1');

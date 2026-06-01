@@ -37,32 +37,3 @@ export const faturamentoRoutes: Routes = [
     loadComponent: () => import('./guia-form/guia-form.component').then((m) => m.GuiaFormComponent),
   },
 ];
-
-export const demonstrativoRoutes: Routes = [
-  {
-    path: '',
-    loadComponent: () =>
-      import('./demonstrativo-list/demonstrativo-list.component').then(
-        (m) => m.DemonstrativoListComponent,
-      ),
-  },
-  {
-    path: 'novo',
-    loadComponent: () =>
-      import('./demonstrativo-form/demonstrativo-form.component').then(
-        (m) => m.DemonstrativoFormComponent,
-      ),
-  },
-  {
-    path: ':id/conciliar',
-    loadComponent: () =>
-      import('./conciliacao/conciliacao.component').then((m) => m.ConciliacaoComponent),
-  },
-  {
-    path: ':id',
-    loadComponent: () =>
-      import('./demonstrativo-form/demonstrativo-form.component').then(
-        (m) => m.DemonstrativoFormComponent,
-      ),
-  },
-];

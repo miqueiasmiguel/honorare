@@ -71,6 +71,38 @@ describe('RecursoService', () => {
     expect(result?.total).toBe(0);
   });
 
+  it('listar_comPrestadorId_configuraPrestadorIdParam', () => {
+    service.listar({ pagina: 1, itensPorPagina: 20, prestadorId: 'p1' }).subscribe();
+
+    const req = httpMock.expectOne(
+      (r) => r.url === '/api/v1/admin/recursos' && r.params.get('prestadorId') === 'p1',
+    );
+    expect(req.request.method).toBe('GET');
+    req.flush(makeListResult());
+  });
+
+  it('baixarPdf_iniciaBlobDownload', () => {
+    const createObjectURLMock = vi.fn().mockReturnValue('blob:mock');
+    const revokeObjectURLMock = vi.fn();
+    Object.defineProperty(URL, 'createObjectURL', { writable: true, value: createObjectURLMock });
+    Object.defineProperty(URL, 'revokeObjectURL', { writable: true, value: revokeObjectURLMock });
+    const appendSpy = vi.spyOn(document.body, 'appendChild').mockImplementation((node) => node);
+    const removeSpy = vi.spyOn(document.body, 'removeChild').mockImplementation((node) => node);
+
+    service.baixarPdf('rec-1');
+
+    const req = httpMock.expectOne('/api/v1/admin/recursos/rec-1/pdf');
+    expect(req.request.method).toBe('GET');
+    expect(req.request.responseType).toBe('blob');
+    req.flush(new Blob(['pdf'], { type: 'application/pdf' }));
+
+    expect(createObjectURLMock).toHaveBeenCalled();
+    expect(revokeObjectURLMock).toHaveBeenCalled();
+
+    appendSpy.mockRestore();
+    removeSpy.mockRestore();
+  });
+
   it('obterPorId_chamaCaminhoCorreto', () => {
     let result: RecursoDetalheDto | undefined;
     service.obterPorId('rec-1').subscribe((v) => (result = v));

@@ -23,6 +23,7 @@ export interface ItemGuiaItem {
   ehUrgencia: boolean;
   valorApurado: number | null;
   valorLiquidado: number | null;
+  motivoGlosa: string | null;
   tempoAnestesicoMin?: number | null;
 }
 
@@ -84,7 +85,6 @@ export interface CriarItemGuiaPayload {
 export interface ItemGuiaDisplay extends CriarItemGuiaPayload {
   codigoTuss?: string;
   descricaoProcedimento?: string;
-  valorLiquidado?: number | null;
 }
 
 export interface CriarGuiaPayload {
@@ -120,4 +120,29 @@ export interface GuiaCalculoResult {
   ehPacote: boolean;
   realizadoEm: string | null;
   itens: ItemCalculoItem[];
+}
+
+export interface ErroImportacaoDto {
+  linha: number;
+  mensagem: string;
+}
+
+export interface AlertaImportacaoDto {
+  linha: number;
+  mensagem: string;
+}
+
+export interface ResultadoImportacaoGuiaDto {
+  identificadorPagamento: string;
+  somenteValidar: boolean;
+  guiasCriadas: number;
+  guiasAtualizadas: number;
+  itensCriados: number;
+  itensAtualizados: number;
+  itensIgnorados: number;
+  beneficiariosCriados: number;
+  guiasPrevistas: number;
+  itensPrevistas: number;
+  erros: ErroImportacaoDto[];
+  alertas: AlertaImportacaoDto[];
 }
