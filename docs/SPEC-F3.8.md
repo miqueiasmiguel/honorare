@@ -547,14 +547,14 @@ Adicionar botão "Importar demonstrativo CSV" no header da lista. Ao clicar, abr
 
 ## Critérios de pronto
 
-- [ ] `OrdemProcedimento` enum removido de todo o codebase (backend + frontend)
+- [x] `OrdemProcedimento` enum removido de todo o codebase (backend + frontend)
 - [x] `ItemGuia.PercentualOrdem decimal` persistido corretamente, migration aplicada
 - [x] `OrdemProcedimentoModifier` usa o percentual diretamente, sem switch/case
 - [x] Todos os testes existentes de `UnimedPipelineTests` passando com a nova assinatura
 - [x] `TabelaOrdemOperadora` com CRUD completo e testes xUnit cobrindo ≥ 80%
 - [x] `ResolverPercentualOrdemAsync` retorna padrão correto quando sem tabela configurada
-- [ ] Seção "Tabela de Atos Múltiplos" funcional no detalhe da Operadora
-- [ ] Dropdown de ordem no formulário de guia exibe opções da tabela configurada
+- [x] Seção "Tabela de Atos Múltiplos" funcional no detalhe da Operadora
+- [x] Dropdown de ordem no formulário de guia exibe opções da tabela configurada
 - [x] `Guia.NumeroGuia` persistido, migration aplicada
 - [x] Endpoint `POST /api/v1/admin/demonstrativos/importar-csv` aceita `somenteValidar=true` e `false`
 - [x] Importação cria `Guia` + `ItemGuia` + `ItemDemonstrativo` corretamente para anestesista e cirurgião

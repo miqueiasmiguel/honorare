@@ -37,10 +37,10 @@ export interface ListarGuiasParams {
 export interface MedicoItemGuiaDto {
   id: string;
   codigoTuss: string;
-  descricao: string;
-  posicao: number;
-  valorApurado: number;
-  valorPago: number;
+  descricaoProcedimento: string;
+  posicaoExecutor: string;
+  valorApurado: number | null;
+  valorLiquidado: number | null;
   situacaoCalculo: SituacaoCalculo;
 }
 

@@ -7,7 +7,7 @@ import type { TabelaPorteAnestesicoItem } from '../../catalog.types';
 const mockPortes: TabelaPorteAnestesicoItem[] = [
   {
     id: 'p-2',
-    porteletra: 'B',
+    porteLetra: 'B',
     valorEnfermaria: 180,
     valorApartamento: 288,
     valorAmbulatorial: null,
@@ -15,7 +15,7 @@ const mockPortes: TabelaPorteAnestesicoItem[] = [
   },
   {
     id: 'p-1',
-    porteletra: 'A',
+    porteLetra: 'A',
     valorEnfermaria: 150,
     valorApartamento: 240,
     valorAmbulatorial: null,

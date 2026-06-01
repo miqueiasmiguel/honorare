@@ -131,7 +131,7 @@ internal sealed class CatalogService(AppDbContext db, ICurrentUser currentUser)
         }
 
         var total = await q.CountAsync(ct);
-        var itensPorPagina = Math.Min(query.ItensPorPagina, 100);
+        var itensPorPagina = Math.Min(query.ItensPorPagina, 500);
         var skip = (query.Pagina - 1) * itensPorPagina;
 
         var itens = await q
@@ -864,7 +864,7 @@ internal sealed class CatalogService(AppDbContext db, ICurrentUser currentUser)
         }
 
         var total = await q.CountAsync(ct);
-        var itensPorPagina = Math.Min(query.ItensPorPagina, 100);
+        var itensPorPagina = Math.Min(query.ItensPorPagina, 500);
         var skip = (query.Pagina - 1) * itensPorPagina;
 
         var itens = await q
@@ -938,6 +938,43 @@ internal sealed class CatalogService(AppDbContext db, ICurrentUser currentUser)
 
         await _db.SaveChangesAsync(ct);
         return Result<PrestadorDto>.Ok(ToDto(prestador, cmd.EmailAcesso is not null));
+    }
+
+    internal async Task<Result<PrestadorDto>> DefinirEmailAcessoAsync(
+        Guid id, string email, CancellationToken ct = default)
+    {
+#pragma warning disable CA1308 // e-mail deve ser normalizado em minúsculas por convenção
+        var emailNormalizado = email.Trim().ToLowerInvariant();
+#pragma warning restore CA1308
+
+        if (!ApplicationUser.IsValidEmail(emailNormalizado))
+        {
+            return Result<PrestadorDto>.Fail(new ValidationError("E-mail de acesso inválido."));
+        }
+
+        var prestador = await _db.Prestadores.FirstOrDefaultAsync(p => p.Id == id, ct);
+        if (prestador is null)
+        {
+            return Result<PrestadorDto>.Fail(new NotFoundError("Prestador não encontrado."));
+        }
+
+        if (await _db.Users.AnyAsync(u => u.Email == emailNormalizado, ct))
+        {
+            return Result<PrestadorDto>.Fail(new ConflictError("E-mail já está em uso."));
+        }
+
+        var setResult = prestador.SetEmailAcesso(email);
+        if (setResult.IsFailure)
+        {
+            return Result<PrestadorDto>.Fail(setResult.Error!);
+        }
+
+        var tenantId = _currentUser.TenantId!.Value;
+        var user = ApplicationUser.Create(prestador.EmailAcesso!, tenantId, prestador.Id);
+        _db.Users.Add(user);
+
+        await _db.SaveChangesAsync(ct);
+        return Result<PrestadorDto>.Ok(ToDto(prestador, true));
     }
 
     internal async Task<Result<PrestadorDto>> AtualizarPrestadorAsync(

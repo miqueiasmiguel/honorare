@@ -9,6 +9,7 @@ import {
   signal,
 } from '@angular/core';
 import { forkJoin } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 import { DemonstrativoService } from '../../demonstrativo.service';
 import { CatalogService } from '../../../catalog/catalog.service';
 import type { ResultadoImportacaoDto } from '../../demonstrativo.types';
@@ -38,6 +39,8 @@ export class ImportarDemonstrativoModalComponent implements OnInit {
   readonly arquivo = signal<File | null>(null);
   readonly carregando = signal(false);
   readonly resultado = signal<ResultadoImportacaoDto | null>(null);
+
+  readonly erroServidor = signal<string | null>(null);
 
   readonly podeValidar = computed(
     () => this.arquivo() !== null && this.prestadorId() !== '' && this.operadoraId() !== '',
@@ -84,14 +87,19 @@ export class ImportarDemonstrativoModalComponent implements OnInit {
       return;
     }
     this.carregando.set(true);
+    this.erroServidor.set(null);
     this._demoService.importarCsv(file, this.prestadorId(), this.operadoraId(), true).subscribe({
       next: (r) => {
         this.carregando.set(false);
         this.resultado.set(r);
         this.passo.set('preview');
       },
-      error: () => {
+      error: (err: HttpErrorResponse) => {
         this.carregando.set(false);
+        this.erroServidor.set(
+          (err.error as { detail?: string } | null)?.detail ??
+            'Erro ao validar o arquivo. Tente novamente.',
+        );
       },
     });
   }
@@ -102,6 +110,7 @@ export class ImportarDemonstrativoModalComponent implements OnInit {
       return;
     }
     this.carregando.set(true);
+    this.erroServidor.set(null);
     this._demoService.importarCsv(file, this.prestadorId(), this.operadoraId(), false).subscribe({
       next: (r) => {
         this.carregando.set(false);
@@ -109,8 +118,12 @@ export class ImportarDemonstrativoModalComponent implements OnInit {
         this.passo.set('concluido');
         this.importacaoConcluida.emit();
       },
-      error: () => {
+      error: (err: HttpErrorResponse) => {
         this.carregando.set(false);
+        this.erroServidor.set(
+          (err.error as { detail?: string } | null)?.detail ??
+            'Erro ao importar o demonstrativo. Tente novamente.',
+        );
       },
     });
   }
@@ -118,6 +131,7 @@ export class ImportarDemonstrativoModalComponent implements OnInit {
   voltar(): void {
     this.passo.set('selecao');
     this.resultado.set(null);
+    this.erroServidor.set(null);
   }
 
   cancelar(): void {

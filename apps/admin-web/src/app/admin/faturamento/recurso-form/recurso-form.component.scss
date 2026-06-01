@@ -17,6 +17,67 @@
     color: var(--color-tinta-secundaria);
   }
 
+  &__select--operadora,
+  &__select--prestador {
+    height: 40px;
+    width: 100%;
+    padding: 0 space(3);
+    border: 1px solid var(--color-borda-media);
+    border-radius: space(1);
+    background-color: var(--color-pergaminho-claro);
+    color: var(--color-tinta);
+    cursor: pointer;
+
+    @include text-body;
+    @include transition(border-color);
+
+    &:focus {
+      outline: none;
+      border-color: var(--color-terracota);
+    }
+  }
+
+  &__input--data-emissao {
+    height: 40px;
+    width: 100%;
+    padding: 0 space(3);
+    border: 1px solid var(--color-borda-media);
+    border-radius: space(1);
+    background-color: var(--color-pergaminho-claro);
+    color: var(--color-tinta);
+
+    @include text-body;
+    @include transition(border-color);
+
+    &:focus {
+      outline: none;
+      border-color: var(--color-terracota);
+    }
+  }
+
+  &__textarea--observacao {
+    width: 100%;
+    min-height: 96px;
+    padding: space(2) space(3);
+    border: 1px solid var(--color-borda-media);
+    border-radius: space(1);
+    background-color: var(--color-pergaminho-claro);
+    color: var(--color-tinta);
+    resize: vertical;
+
+    @include text-body;
+    @include transition(border-color);
+
+    &::placeholder {
+      color: var(--color-tinta-terciaria);
+    }
+
+    &:focus {
+      outline: none;
+      border-color: var(--color-terracota);
+    }
+  }
+
   &__numero {
     @include text-mono-value;
 
@@ -40,5 +101,40 @@
     gap: space(3);
     justify-content: flex-end;
     margin-top: space(4);
+  }
+
+  &__btn-salvar {
+    height: 40px;
+    padding: 0 space(6);
+    border: none;
+    border-radius: space(1);
+    background-color: var(--color-terracota);
+    color: var(--color-pergaminho-claro);
+    cursor: pointer;
+
+    @include text-label;
+    @include transition(background-color);
+
+    &:hover {
+      background-color: var(--color-terracota-escuro);
+    }
+  }
+
+  &__btn-cancelar {
+    height: 40px;
+    padding: 0 space(4);
+    border: 1px solid var(--color-borda-media);
+    border-radius: space(1);
+    background-color: transparent;
+    color: var(--color-tinta-secundaria);
+    cursor: pointer;
+
+    @include text-label;
+    @include transition-fast(background-color, border-color);
+
+    &:hover {
+      background-color: var(--color-pergaminho-claro);
+      border-color: var(--color-tinta-terciaria);
+    }
   }
 }

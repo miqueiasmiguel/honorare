@@ -65,11 +65,6 @@ export const catalogRoutes: Routes = [
       ),
   },
   {
-    path: 'tabelas',
-    loadComponent: () =>
-      import('./tabelas/tabela-list/tabela-list.component').then((m) => m.TabelaListComponent),
-  },
-  {
     path: 'beneficiarios',
     loadComponent: () =>
       import('./beneficiarios/beneficiario-list/beneficiario-list.component').then(

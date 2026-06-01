@@ -73,7 +73,7 @@ Dentro de cada bounded context, evitar subpastas `Domain/`, `Application/`, `Inf
 
 **Google OAuth 2.0** é o único método de autenticação no MVP. Não há senha, magic link, MFA ou convite por email.
 
-- Usuários são pré-cadastrados pelo SaaS admin (email + role). O `GoogleId` é associado automaticamente no primeiro login.
+- `SaasAdmin` pré-cadastra `TenantAdmin`s por e-mail. `TenantAdmin` provisiona médicos (`role = Medico`) diretamente no formulário de prestador — ao cadastrar um `Prestador` com e-mail, um `ApplicationUser` com `MedicoId = Prestador.Id` é criado automaticamente na mesma transação. O `GoogleId` é associado no primeiro login Google.
 - `PasswordHash` do `IdentityUser` é sempre nulo — nenhuma senha é armazenada.
 - O JWT emitido após o OAuth tem TTL de 15 minutos; refresh token de 7 dias persistido como hash SHA-256.
 

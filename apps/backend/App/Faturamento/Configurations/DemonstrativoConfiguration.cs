@@ -19,6 +19,9 @@ internal sealed class DemonstrativoConfiguration : IEntityTypeConfiguration<Demo
         builder.Property(d => d.CriadoEm).IsRequired();
 
         builder.HasIndex(d => d.TenantId);
+        builder.HasIndex(d => new { d.TenantId, d.OperadoraId, d.IdentificadorPagamento })
+            .IsUnique()
+            .HasFilter("\"IdentificadorPagamento\" IS NOT NULL");
 
         builder.HasOne<Operadora>().WithMany()
             .HasForeignKey(d => d.OperadoraId).OnDelete(DeleteBehavior.Restrict);

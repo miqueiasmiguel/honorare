@@ -20,28 +20,118 @@
 .guia-list__btn-nova {
   @include text-label;
 
+  height: 40px;
+  padding: 0 space(4);
   background-color: var(--color-terracota);
   color: var(--color-pergaminho-claro);
   border: none;
-  border-radius: 4px;
-  padding: space(2) space(4);
+  border-radius: 6px;
   cursor: pointer;
+
+  @include transition(background-color);
+
+  &:hover {
+    background-color: var(--color-terracota-escuro);
+  }
 }
 
 .guia-list__filters {
   display: flex;
+  flex-direction: column;
   gap: space(3);
   margin-bottom: space(4);
+  padding: space(4) space(6);
+  background-color: var(--color-pergaminho-claro);
+  border: 1px solid var(--color-borda-discreta);
+  border-radius: space(2);
 }
 
-.guia-list__select--situacao,
-.guia-list__input--data-inicio,
-.guia-list__input--data-fim {
+.guia-list__filter-row {
+  display: flex;
+  gap: space(3);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.guia-list__filter-row--checkboxes {
+  flex-wrap: nowrap;
+}
+
+.guia-list__select {
   @include text-body;
 
+  height: 40px;
+  flex: 1;
+  min-width: 0;
   border: 1px solid var(--color-borda-media);
-  border-radius: 4px;
-  padding: space(2) space(3);
+  border-radius: 6px;
+  padding: 0 space(3);
+  background-color: var(--color-pergaminho-claro);
+  color: var(--color-tinta);
+
+  @include transition(border-color);
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-terracota);
+  }
+}
+
+.guia-list__input {
+  @include text-body;
+
+  height: 40px;
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--color-borda-media);
+  border-radius: 6px;
+  padding: 0 space(3);
+
+  @include transition(border-color, box-shadow);
+
+  &::placeholder {
+    color: var(--color-tinta-terciaria);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-terracota);
+  }
+}
+
+.guia-list__input--date {
+  flex: 0 0 auto;
+}
+
+.guia-list__checkbox-label {
+  @include text-body;
+
+  display: flex;
+  align-items: center;
+  gap: space(2);
+  cursor: pointer;
+  color: var(--color-tinta);
+  white-space: nowrap;
+}
+
+.guia-list__btn-limpar {
+  @include text-label;
+
+  height: 40px;
+  padding: 0 space(4);
+  background: none;
+  border: 1px solid var(--color-borda-media);
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--color-tinta-secundaria);
+  margin-left: auto;
+
+  @include transition(border-color, color);
+
+  &:hover {
+    border-color: var(--color-terracota);
+    color: var(--color-terracota);
+  }
 }
 
 .guia-list__table {
@@ -113,6 +203,45 @@
 
 .guia-list__btn-excluir {
   color: var(--color-ferrugem);
+}
+
+.guia-list__pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: space(4);
+  margin-top: space(4);
+  padding: space(3);
+}
+
+.guia-list__pagination-btn {
+  @include text-label;
+
+  height: 36px;
+  padding: 0 space(4);
+  background: none;
+  border: 1px solid var(--color-borda-media);
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--color-terracota);
+
+  @include transition(border-color, color);
+
+  &:disabled {
+    color: var(--color-tinta-terciaria);
+    border-color: var(--color-borda-discreta);
+    cursor: not-allowed;
+  }
+
+  &:hover:not(:disabled) {
+    border-color: var(--color-terracota);
+  }
+}
+
+.guia-list__pagination-info {
+  @include text-body-small;
+
+  color: var(--color-tinta-secundaria);
 }
 
 .guia-list__erro {

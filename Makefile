@@ -3,13 +3,16 @@
 COMPOSE      := docker compose -f infra/docker-compose.yml
 BACKEND_SLN  := apps/backend/Honorare.slnx
 BACKEND_APP  := apps/backend/App
-PG_CONTAINER := honorare-postgres-1
 PG_USER      := honorare
 PG_DB        := honorare
 
 .PHONY: help
 help: ## Mostra esta mensagem de ajuda
-	@powershell -NoProfile -ExecutionPolicy Bypass -File tools/make-help.ps1
+	@echo ''
+	@echo 'Honorare -- comandos disponíveis'
+	@echo ''
+	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z_-]+:.*##/ { printf "  %-22s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
+	@echo ''
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Setup
@@ -24,7 +27,26 @@ install: ## Instala dependências JS/TS e ativa hooks Husky
 # ══════════════════════════════════════════════════════════════════════════════
 
 .PHONY: up
-up: ## Sobe toda a stack Docker (backend + frontend + observabilidade)
+up: ## Sobe toda a stack Docker e aplica migrations pendentes
+	$(COMPOSE) up -d postgres
+	@echo "Aguardando Postgres ficar pronto..."
+	@until $(COMPOSE) exec -T postgres pg_isready -U $(PG_USER) > /dev/null 2>&1; do sleep 2; done
+	@echo "Aplicando migrations..."
+	dotnet ef database update --project $(BACKEND_APP) -- --environment Development
+	@echo "Garantindo usuário SaasAdmin..."
+	@$(COMPOSE) exec -T postgres psql -U $(PG_USER) -d $(PG_DB) -c \
+		"INSERT INTO \"AspNetUsers\" \
+		  (\"Id\", \"Email\", \"NormalizedEmail\", \"UserName\", \"NormalizedUserName\", \
+		   \"EmailConfirmed\", \"IsActive\", \"CreatedAt\", \
+		   \"SecurityStamp\", \"ConcurrencyStamp\", \
+		   \"PhoneNumberConfirmed\", \"TwoFactorEnabled\", \"LockoutEnabled\", \"AccessFailedCount\") \
+		VALUES \
+		  (gen_random_uuid(), 'miqueias.s.filho@gmail.com', 'MIQUEIAS.S.FILHO@GMAIL.COM', \
+		   'miqueias.s.filho@gmail.com', 'MIQUEIAS.S.FILHO@GMAIL.COM', \
+		   true, true, now(), \
+		   gen_random_uuid()::text, gen_random_uuid()::text, \
+		   false, false, false, 0) \
+		ON CONFLICT (\"NormalizedUserName\") DO NOTHING;" > /dev/null
 	$(COMPOSE) up --build
 
 .PHONY: up-bg
@@ -64,17 +86,20 @@ ps: ## Lista status dos containers
 # ══════════════════════════════════════════════════════════════════════════════
 
 .PHONY: db-reset
-db-reset: ## Para containers, apaga volumes do Postgres e reinicia a infra
-	@echo Resetando banco de dados...
-	$(COMPOSE) down -v --remove-orphans
+db-reset: ## Para containers, apaga dados do Postgres (bind mount) e reinicia
+	@echo "Parando containers..."
+	$(COMPOSE) down --remove-orphans
+	@echo "Apagando dados do Postgres (requer sudo)..."
+	sudo rm -rf infra/postgres/data
+	@echo "Subindo Postgres..."
 	$(COMPOSE) up -d postgres
-	@echo Aguardando Postgres ficar pronto...
-	@powershell -NoProfile -Command "do { Start-Sleep 1 } until ((docker exec $(PG_CONTAINER) pg_isready -U $(PG_USER)) -match 'accepting')"
-	@echo Postgres pronto.
+	@echo "Aguardando Postgres ficar pronto..."
+	@until $(COMPOSE) exec -T postgres pg_isready -U $(PG_USER) > /dev/null 2>&1; do sleep 2; done
+	@echo "Postgres pronto."
 
 .PHONY: db-shell
 db-shell: ## Abre psql no container do Postgres
-	docker exec -it $(PG_CONTAINER) psql -U $(PG_USER) -d $(PG_DB)
+	$(COMPOSE) exec postgres psql -U $(PG_USER) -d $(PG_DB)
 
 .PHONY: db-migrate
 db-migrate: ## Aplica migrations EF Core pendentes (requer infra-up)
@@ -223,12 +248,12 @@ generate-api-client: ## Regenera o cliente TypeScript a partir do OpenAPI spec
 
 .PHONY: grafana
 grafana: ## Abre Grafana no navegador padrão
-	start http://localhost:3000
+	xdg-open http://localhost:3000
 
 .PHONY: jaeger
 jaeger: ## Abre Jaeger UI no navegador padrão
-	start http://localhost:16686
+	xdg-open http://localhost:16686
 
 .PHONY: prometheus
 prometheus: ## Abre Prometheus no navegador padrão
-	start http://localhost:9090
+	xdg-open http://localhost:9090

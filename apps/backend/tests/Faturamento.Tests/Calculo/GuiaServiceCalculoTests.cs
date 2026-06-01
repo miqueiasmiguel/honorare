@@ -1,3 +1,4 @@
+using App;
 using App.Catalog;
 using App.Data;
 using App.Faturamento;
@@ -65,7 +66,7 @@ public sealed class GuiaServiceCalculoTests(PostgresContainerFixture db)
     }
 
     [Fact]
-    public async Task CriarGuia_Unimed_SemTabela_ValorApuradoNuloAsync()
+    public async Task CriarGuia_Unimed_SemTabela_RejeicaoAsync()
     {
         var tenantId = Guid.NewGuid();
         var (ctx, user) = BuildTenant(tenantId);
@@ -82,11 +83,8 @@ public sealed class GuiaServiceCalculoTests(PostgresContainerFixture db)
 
         var result = await service.CriarAsync(cmd);
 
-        Assert.True(result.IsSuccess);
-        Assert.Null(result.Value!.Itens[0].ValorApurado);
-
-        await using var adminCtx = db.CreateContext();
-        Assert.True(await adminCtx.Calculos.AnyAsync(c => c.GuiaId == result.Value.Id));
+        Assert.False(result.IsSuccess);
+        Assert.IsType<ValidationError>(result.Error);
     }
 
     [Fact]
@@ -148,6 +146,69 @@ public sealed class GuiaServiceCalculoTests(PostgresContainerFixture db)
         await using var adminCtx = db.CreateContext();
         var count = await adminCtx.Calculos.CountAsync(c => c.GuiaId == criado.Value.Id);
         Assert.Equal(1, count);
+    }
+
+    [Fact]
+    public async Task Recalcular_AposAdicionarDeflator_ItemPassaACalculadoAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (prestadorId, operadoraId, procedimentoId) = await SeedBaseAsync(ctx, tenantId);
+
+        ctx.Add(TabelaProcedimento.Create(tenantId, operadoraId, procedimentoId, 200m));
+        await ctx.SaveChangesAsync();
+
+        // Create guia directly (bypasses service validation) to simulate a legacy uncalculated guia
+        var guia = Guia.Create(tenantId, prestadorId, operadoraId, null,
+            "SEN-REC01", "SEN-REC01", new DateOnly(2025, 1, 1), false, string.Empty);
+        ctx.Add(guia);
+        var item = ItemGuia.Create(guia.Id, procedimentoId, PosicaoExecutor.Cirurgiao,
+            1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);
+        ctx.Add(item);
+        var calculo = Calculo.Create(tenantId, guia.Id);
+        ctx.Add(calculo);
+        await ctx.SaveChangesAsync();
+
+        // Add deflator and recalculate
+        ctx.Add(DeflatorPrestador.Create(tenantId, prestadorId, operadoraId, PosicaoExecutor.Cirurgiao, 100m));
+        await ctx.SaveChangesAsync();
+
+        var factory = new PricingRuleSetFactory(ctx);
+        var service = new GuiaService(ctx, user, factory);
+        var recalculado = await service.RecalcularAsync(guia.Id);
+
+        Assert.True(recalculado.IsSuccess);
+        Assert.Equal(200m, recalculado.Value!.Itens[0].ValorApurado);
+
+        await using var adminCtx = db.CreateContext();
+        var novoCalculo = await adminCtx.Calculos.FirstOrDefaultAsync(c => c.GuiaId == guia.Id);
+        Assert.NotNull(novoCalculo);
+        Assert.True(await adminCtx.PassosCalculo.AnyAsync(p => p.CalculoId == novoCalculo.Id && p.Regra == "ValorBase"));
+    }
+
+    [Fact]
+    public async Task Recalcular_GuiaPacote_RetornaErroAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (prestadorId, operadoraId, procedimentoId) = await SeedBaseAsync(ctx, tenantId);
+
+        var factory = new PricingRuleSetFactory(ctx);
+        var service = new GuiaService(ctx, user, factory);
+
+        var cmd = new CriarGuiaCommand(prestadorId, operadoraId, null, null, "SEN-REC02",
+            new DateOnly(2025, 1, 1), true, string.Empty,
+            [new CriarItemGuiaCommand(procedimentoId, PosicaoExecutor.Cirurgiao,
+                1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, 300m)]);
+        var criado = await service.CriarAsync(cmd);
+        Assert.True(criado.IsSuccess);
+
+        var result = await service.RecalcularAsync(criado.Value!.Id);
+
+        Assert.False(result.IsSuccess);
+        Assert.IsType<ValidationError>(result.Error);
     }
 
     [Fact]

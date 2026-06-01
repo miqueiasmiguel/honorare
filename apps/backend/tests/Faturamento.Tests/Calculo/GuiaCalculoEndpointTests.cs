@@ -83,31 +83,62 @@ public sealed class GuiaCalculoEndpointTests(PostgresContainerFixture db)
     }
 
     [Fact]
-    public async Task ObterCalculo_GuiaSemTabela_RetornaItemSemTabelaSemPassosAsync()
+    public async Task ObterCalculo_GuiaLegadaSemTabela_RetornaItemSemTabelaSemPassosAsync()
     {
         var tenantId = Guid.NewGuid();
         var (ctx, user) = BuildTenant(tenantId);
         await using var _ = ctx;
         var (prestadorId, operadoraId, procedimentoId) = await SeedBaseAsync(ctx, tenantId);
 
+        // Create guia directly (bypasses service validation) to simulate a legacy uncalculated guia
+        var guia = Guia.Create(tenantId, prestadorId, operadoraId, null,
+            "SEN-VIS02", "SEN-VIS02", new DateOnly(2025, 1, 1), false, string.Empty);
+        ctx.Add(guia);
+        ctx.Add(ItemGuia.Create(guia.Id, procedimentoId, PosicaoExecutor.Cirurgiao,
+            1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null));
+        ctx.Add(Calculo.Create(tenantId, guia.Id));
+        await ctx.SaveChangesAsync();
+
         var factory = new PricingRuleSetFactory(ctx);
         var service = new GuiaService(ctx, user, factory);
-
-        var cmd = new CriarGuiaCommand(prestadorId, operadoraId, null, null, "SEN-VIS02",
-            new DateOnly(2025, 1, 1), false, string.Empty,
-            [new CriarItemGuiaCommand(procedimentoId, PosicaoExecutor.Cirurgiao,
-                1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null)]);
-
-        var criado = await service.CriarAsync(cmd);
-        Assert.True(criado.IsSuccess);
-
-        var result = await service.ObterCalculoAsync(criado.Value!.Id);
+        var result = await service.ObterCalculoAsync(guia.Id);
 
         Assert.True(result.IsSuccess);
         var item = result.Value!.Itens[0];
         Assert.Null(item.ValorApurado);
         Assert.Empty(item.Passos);
         Assert.Equal("SemTabela", item.Situacao);
+    }
+
+    [Fact]
+    public async Task ObterCalculo_GuiaLegadaSemDeflator_RetornaItemSemDeflatorSemPassosAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (prestadorId, operadoraId, procedimentoId) = await SeedBaseAsync(ctx, tenantId);
+
+        // Has tabela but no deflator
+        ctx.Add(TabelaProcedimento.Create(tenantId, operadoraId, procedimentoId, 200m));
+
+        // Create guia directly (bypasses service validation) to simulate a legacy uncalculated guia
+        var guia = Guia.Create(tenantId, prestadorId, operadoraId, null,
+            "SEN-VIS04", "SEN-VIS04", new DateOnly(2025, 1, 1), false, string.Empty);
+        ctx.Add(guia);
+        ctx.Add(ItemGuia.Create(guia.Id, procedimentoId, PosicaoExecutor.Cirurgiao,
+            1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null));
+        ctx.Add(Calculo.Create(tenantId, guia.Id));
+        await ctx.SaveChangesAsync();
+
+        var factory = new PricingRuleSetFactory(ctx);
+        var service = new GuiaService(ctx, user, factory);
+        var result = await service.ObterCalculoAsync(guia.Id);
+
+        Assert.True(result.IsSuccess);
+        var item = result.Value!.Itens[0];
+        Assert.Null(item.ValorApurado);
+        Assert.Empty(item.Passos);
+        Assert.Equal("SemDeflator", item.Situacao);
     }
 
     [Fact]
@@ -244,7 +275,7 @@ public sealed class GuiaCalculoHttpTests : IAsyncLifetime
                 {
                     procedimentoId,
                     posicaoExecutor = "Cirurgiao",
-                    ordemProcedimento = "Unico",
+                    percentualOrdem = 1.0m,
                     viaAcesso = "Convencional",
                     acomodacao = "Enfermaria",
                     ehUrgencia = false,

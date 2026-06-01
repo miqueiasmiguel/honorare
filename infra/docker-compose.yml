@@ -78,6 +78,7 @@ services:
     build:
       context: ../apps/backend
       dockerfile: Dockerfile
+      network: host
     env_file:
       - path: .env
         required: false
@@ -99,6 +100,7 @@ services:
     build:
       context: ..
       dockerfile: apps/admin-web/Dockerfile
+      network: host
       args:
         BASE_HREF: /admin/
 
@@ -106,6 +108,7 @@ services:
     build:
       context: ..
       dockerfile: apps/medico-pwa/Dockerfile
+      network: host
       args:
         BASE_HREF: /app/
 

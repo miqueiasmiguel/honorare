@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { CatalogService } from '../../catalog.service';
 import type { TipoRuleSet } from '../../catalog.types';
 import { PortesAnestesicosComponent } from './portes-anestesicos.component';
+import { TabelaAtosMultiplosComponent } from './tabela-atos-multiplos.component';
 
 const TIPO_RULESET_OPCOES: { value: TipoRuleSet; label: string }[] = [
   { value: 'Unimed', label: 'UNIMED' },
@@ -12,7 +13,7 @@ const TIPO_RULESET_OPCOES: { value: TipoRuleSet; label: string }[] = [
 
 @Component({
   selector: 'app-operadora-form',
-  imports: [ReactiveFormsModule, PortesAnestesicosComponent],
+  imports: [ReactiveFormsModule, PortesAnestesicosComponent, TabelaAtosMultiplosComponent],
   templateUrl: './operadora-form.component.html',
   styleUrl: './operadora-form.component.scss',
 })

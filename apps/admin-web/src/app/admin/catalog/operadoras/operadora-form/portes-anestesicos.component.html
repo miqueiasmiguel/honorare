@@ -20,7 +20,7 @@
         @for (porte of portes(); track porte.id) {
           <tr class="portes-anestesicos__linha">
             <td class="portes-anestesicos__td portes-anestesicos__td--letra">
-              {{ porte.porteletra }}
+              {{ porte.porteLetra }}
             </td>
             <td class="portes-anestesicos__td">{{ formatarBrl(porte.valorEnfermaria) }}</td>
             <td class="portes-anestesicos__td">{{ formatarBrl(porte.valorApartamento) }}</td>
@@ -30,7 +30,7 @@
                 class="portes-anestesicos__btn-excluir"
                 type="button"
                 (click)="excluir(porte.id)"
-                [attr.aria-label]="'Remover porte ' + porte.porteletra"
+                [attr.aria-label]="'Remover porte ' + porte.porteLetra"
               >
                 ✕
               </button>

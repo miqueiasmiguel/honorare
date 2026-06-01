@@ -86,15 +86,76 @@
 
 .guia-form__item {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: space(2) space(3);
+  flex-direction: column;
+  gap: space(2);
+  padding: space(3);
   background-color: var(--color-pergaminho);
   border-radius: 4px;
+  border: 1px solid var(--color-borda-discreta);
 }
 
-.guia-form__item-procedimento {
+.guia-form__item-header {
+  display: flex;
+  align-items: baseline;
+  gap: space(3);
+}
+
+.guia-form__item-codigo {
+  @include text-mono-value;
+
+  color: var(--color-tinta-secundaria);
+  flex-shrink: 0;
+}
+
+.guia-form__item-descricao {
   @include text-body;
+
+  color: var(--color-tinta);
+}
+
+.guia-form__item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: space(1);
+}
+
+.guia-form__item-badge {
+  @include text-label;
+
+  padding: space(1) space(2);
+  border-radius: 4px;
+  background-color: var(--color-pergaminho-claro);
+  border: 1px solid var(--color-borda-discreta);
+  color: var(--color-tinta-secundaria);
+}
+
+.guia-form__item-badge--urgencia {
+  background-color: var(--color-ferrugem-claro);
+  border-color: var(--color-ferrugem);
+  color: var(--color-ferrugem);
+}
+
+.guia-form__item-valores {
+  display: flex;
+  gap: space(4);
+  padding-top: space(1);
+  border-top: 1px solid var(--color-borda-discreta);
+}
+
+.guia-form__item-valor {
+  display: flex;
+  flex-direction: column;
+  gap: space(1);
+}
+
+.guia-form__item-valor-label {
+  @include text-label;
+
+  color: var(--color-tinta-terciaria);
+}
+
+.guia-form__item-valor-num {
+  @include text-mono-value;
 
   color: var(--color-tinta);
 }
@@ -103,6 +164,7 @@
   @include text-label;
   @include transition(color);
 
+  align-self: flex-end;
   background: none;
   border: none;
   cursor: pointer;

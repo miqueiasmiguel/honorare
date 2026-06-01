@@ -34,6 +34,15 @@ export class PrestadorFormComponent implements OnInit {
   readonly posicaoOpcoes = POSICAO_OPCOES;
   readonly prestadorEmailAcesso = signal<string | null>(null);
   readonly prestadorTemUsuario = signal(false);
+  readonly savingEmailAcesso = signal(false);
+  readonly erroEmailAcesso = signal<string | null>(null);
+
+  readonly emailAcessoForm = new FormGroup({
+    email: new FormControl('', {
+      nonNullable: true,
+      validators: [(c) => Validators.required(c), (c) => Validators.email(c)],
+    }),
+  });
 
   readonly form = new FormGroup({
     nome: new FormControl('', {
@@ -176,6 +185,36 @@ export class PrestadorFormComponent implements OnInit {
         },
         error: () => {
           this.savingDeflator.set(false);
+        },
+      });
+  }
+
+  definirEmailAcesso(): void {
+    this.emailAcessoForm.markAllAsTouched();
+    if (this.emailAcessoForm.invalid || this.savingEmailAcesso()) {
+      return;
+    }
+
+    const id = this.prestadorId();
+    if (!id) {
+      return;
+    }
+
+    this.savingEmailAcesso.set(true);
+    this.erroEmailAcesso.set(null);
+
+    this._catalogService
+      .definirEmailAcesso(id, { email: this.emailAcessoForm.getRawValue().email })
+      .subscribe({
+        next: (p) => {
+          this.savingEmailAcesso.set(false);
+          this.prestadorEmailAcesso.set(p.emailAcesso);
+          this.prestadorTemUsuario.set(p.temUsuario);
+          this.emailAcessoForm.reset();
+        },
+        error: () => {
+          this.savingEmailAcesso.set(false);
+          this.erroEmailAcesso.set('Erro ao definir e-mail. Verifique se já não está em uso.');
         },
       });
   }

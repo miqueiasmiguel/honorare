@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 import { CatalogService } from '../../catalog/catalog.service';
 import { GuiaService } from '../guia.service';
 import type { GuiaCalculoResult, GuiaDetalheItem } from '../guia.types';
@@ -218,5 +219,90 @@ describe('GuiaFormComponent', () => {
 
     expect(guiaService.criar).toHaveBeenCalled();
     expect(router.navigate).toHaveBeenCalledWith(['/admin/guias']);
+  });
+
+  it('criar_Erro400ComDeflator_ExibeMensagemDetalhe', () => {
+    const { component, fixture, el, guiaService } = setup();
+
+    guiaService.criar.mockReturnValueOnce(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            error: {
+              detail:
+                "Não é possível criar a guia: 1 item(ns) com situação 'SemDeflator'. Verifique deflators, tabelas de procedimento e portes anestésicos.",
+            },
+            status: 400,
+          }),
+      ),
+    );
+
+    component.prestadorId.set('p1');
+    component.operadoraId.set('o1');
+    component.dataAtendimento.set('2024-01-01');
+    component.itens.set([
+      {
+        procedimentoId: 'proc-1',
+        posicaoExecutor: 'Cirurgiao',
+        percentualOrdem: 1.0,
+        viaAcesso: 'Convencional',
+        acomodacao: 'Enfermaria',
+        ehUrgencia: false,
+        valorApurado: null,
+      },
+    ]);
+    fixture.detectChanges();
+
+    el.querySelector<HTMLButtonElement>('.guia-form__btn-salvar')?.click();
+    fixture.detectChanges();
+
+    const msgErro = el.querySelector('.guia-form__erro-validacao');
+    expect(msgErro?.textContent).toContain('SemDeflator');
+  });
+
+  it('atualizar_Erro400ComDetalhe_ExibeMensagemDetalhe', () => {
+    const guiaService = makeGuiaServiceSpy();
+    const catalogService = makeCatalogServiceSpy();
+    const router = { navigate: vi.fn() };
+
+    TestBed.configureTestingModule({
+      imports: [GuiaFormComponent],
+      providers: [
+        { provide: GuiaService, useValue: guiaService },
+        { provide: CatalogService, useValue: catalogService },
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { paramMap: { get: () => 'guia-1' } } },
+        },
+        { provide: Router, useValue: router },
+      ],
+    });
+
+    const fixture = TestBed.createComponent(GuiaFormComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    const el = fixture.nativeElement as HTMLElement;
+
+    guiaService.atualizar.mockReturnValueOnce(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            error: {
+              detail:
+                "Não é possível criar a guia: 1 item(ns) com situação 'SemDeflator'. Verifique deflators, tabelas de procedimento e portes anestésicos.",
+            },
+            status: 400,
+          }),
+      ),
+    );
+
+    component.dataAtendimento.set('2024-01-01');
+    fixture.detectChanges();
+
+    el.querySelector<HTMLButtonElement>('.guia-form__btn-salvar')?.click();
+    fixture.detectChanges();
+
+    const msgErro = el.querySelector('.guia-form__erro-validacao');
+    expect(msgErro?.textContent).toContain('SemDeflator');
   });
 });

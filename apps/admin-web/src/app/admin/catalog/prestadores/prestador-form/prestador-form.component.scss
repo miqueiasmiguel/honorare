@@ -36,6 +36,34 @@
     align-items: center;
     gap: space(3);
   }
+
+  &--acesso-readonly {
+    margin-top: space(6);
+  }
+}
+
+.prestador-form__email-acesso-valor {
+  @include text-body;
+
+  display: flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 space(3);
+  border: 1px solid var(--color-borda-discreta);
+  border-radius: space(1);
+  background-color: var(--color-pergaminho);
+  color: var(--color-tinta-secundaria);
+}
+
+.prestador-form__badge-acesso {
+  @include text-label;
+
+  display: inline-flex;
+  align-items: center;
+  border-radius: space(1);
+  padding: space(1) space(3);
+  color: var(--color-verde-musgo);
+  background-color: var(--color-verde-musgo-claro);
 }
 
 .prestador-form__label {

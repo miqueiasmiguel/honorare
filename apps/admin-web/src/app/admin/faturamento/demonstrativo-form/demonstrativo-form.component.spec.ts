@@ -112,12 +112,12 @@ describe('DemonstrativoFormComponent', () => {
   it('adicionar item inline exibe linha nova', () => {
     const { el, fixture } = setup();
 
-    expect(el.querySelectorAll('.demonstrativo-form__item-row')).toHaveLength(0);
+    expect(el.querySelectorAll('.demonstrativo-form__item-card')).toHaveLength(0);
 
     el.querySelector<HTMLButtonElement>('.demonstrativo-form__btn-adicionar-item')?.click();
     fixture.detectChanges();
 
-    expect(el.querySelectorAll('.demonstrativo-form__item-row')).toHaveLength(1);
+    expect(el.querySelectorAll('.demonstrativo-form__item-card')).toHaveLength(1);
   });
 
   it('remover item não-conciliado remove da lista', () => {
@@ -137,12 +137,12 @@ describe('DemonstrativoFormComponent', () => {
     ]);
     fixture.detectChanges();
 
-    expect(el.querySelectorAll('.demonstrativo-form__item-row')).toHaveLength(1);
+    expect(el.querySelectorAll('.demonstrativo-form__item-card')).toHaveLength(1);
 
     el.querySelector<HTMLButtonElement>('.demonstrativo-form__btn-remover-item')?.click();
     fixture.detectChanges();
 
-    expect(el.querySelectorAll('.demonstrativo-form__item-row')).toHaveLength(0);
+    expect(el.querySelectorAll('.demonstrativo-form__item-card')).toHaveLength(0);
   });
 
   it('remover item conciliado mantém na lista (desabilitado)', () => {
@@ -168,7 +168,7 @@ describe('DemonstrativoFormComponent', () => {
     btn?.click();
     fixture.detectChanges();
 
-    expect(el.querySelectorAll('.demonstrativo-form__item-row')).toHaveLength(1);
+    expect(el.querySelectorAll('.demonstrativo-form__item-card')).toHaveLength(1);
   });
 
   it('valorGlosado exibido = valorApresentado − valorPago', () => {

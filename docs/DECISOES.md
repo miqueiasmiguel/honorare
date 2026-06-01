@@ -246,6 +246,14 @@ Sem soft delete nas entidades `Operadora` e `Procedimento`. `ExcluirAsync` é DE
 
 **Revisitar:** ao implementar F3.1 — o TODO no service deve ser convertido em validação real.
 
+### D-037: `OrdemProcedimento` enum substituído por `PercentualOrdem decimal`
+
+O enum `OrdemProcedimento` (Único/Principal/SecundarioMesmaVia/SecundarioViaDiferente) foi abolido em F3.8. `ItemGuia.PercentualOrdem decimal` armazena o fator diretamente (ex: 1.0, 0.7, 0.5, 0.4). O `OrdemProcedimentoModifier` aplica o valor sem lógica condicional.
+
+**Justificativa:** o CSV analítico da UNIMED tem progressões além do 2º procedimento (100%/70%/50%/40%/30%/20%/10%) e cada Unimed Singular pode ter progressão própria. Enum fixo não representava essa realidade; decimal parametrizável via `TabelaOrdemOperadora` resolve.
+
+**Revisitar:** nunca — a enum não volta. Adicionar novas posições é só adicionar linhas na `TabelaOrdemOperadora`.
+
 ### D-035: Separador CSV é `;` (ponto-e-vírgula)
 
 Formato de importação usa `;` em vez de `,`.
@@ -261,6 +269,50 @@ Operadoras e procedimentos são dados de tenant, gerenciados pelo `TenantAdmin`.
 **Justificativa:** cada tenant tem sua própria configuração de operadoras e tabela de procedimentos; SaaS admin não precisa gerenciar isso.
 
 **Revisitar:** nunca — decisão de separação de responsabilidades clara.
+
+### D-038: Deflator é pré-requisito obrigatório para criação de guia
+
+Nenhuma guia pode ser criada ou atualizada a menos que **todos os itens sejam calculados com sucesso** pelo motor (`SituacaoApuracao.Calculado`). O motor executa em pré-voo com IDs temporários antes de qualquer persistência. Se qualquer item retornar `SemDeflator`, `SemTabela` ou `Indeterminado`, a operação é rejeitada com mensagem descritiva indicando quantos itens falharam e por qual motivo.
+
+O import de demonstrativo CSV (importação em lote) faz uma verificação antecipada mais leve: valida que existe `DeflatorPrestador` para cada `PosicaoExecutor` distinta presente no arquivo antes de começar o loop de criação. Se algum deflator estiver faltando, o import inteiro é rejeitado com indicação da posição.
+
+**Exceções intencionais:**
+
+- Guias **pacote** (`EhPacote = true`) têm `ValorApurado` preenchido manualmente — a apuração não é invocada.
+- Operadoras com `TipoRuleSet.Nulo` são isentas — não têm motor de cálculo.
+
+**Revisitar:** nunca — deflator negociado é dado primário sem o qual a apuração não pode ocorrer.
+
+### D-039: `ACRESCIMO = 0,00%` no CSV UNIMED não é urgência
+
+A coluna `ACRESCIMO` do CSV analítico UNIMED contém `0,00%` na maioria das linhas (sem urgência) e `30,00%` nas linhas com acréscimo de urgência. O campo não é booleano — é percentual. Somente valores **estritamente maiores que zero** ativam o flag `EhUrgencia` no `ItemGuia`.
+
+Detectar urgência pela presença de qualquer string não-vazia causava todas as guias serem marcadas incorretamente como urgência, inflando o `ValorApurado` em 30% indevidamente.
+
+**Revisitar:** se a UNIMED usar outros valores de acréscimo além de 0% e 30%.
+
+### D-040: `POST /recalcular` para sincronização após mudanças de catálogo
+
+O endpoint `POST /api/v1/admin/guias/{id}/recalcular` descarta o `Calculo` existente, zera `ValorApurado` em todos os itens e re-executa o motor. Necessário quando:
+
+- Um deflator ou tabela é adicionado depois que a guia já foi criada (guias legadas de antes do D-038).
+- Os valores do catálogo são corrigidos e o cálculo precisa ser atualizado.
+
+O recálculo não altera `ValorLiquidado` (vem do demonstrativo, não do motor) nem a situação da guia.
+
+**Guias pacote:** recálculo é rejeitado com erro — `ValorApurado` é manual.
+
+**Revisitar:** quando houver recálculo em lote (por prestador/operadora) — hoje é por guia individual.
+
+### D-041: `ValorApurado` pode ser sobrescrito manualmente pelo operador no contexto de recurso
+
+O endpoint `PATCH /api/v1/admin/guias/{id}/itens/{itemId}/valor-apurado` permite que o `TenantAdmin` corrija o `ValorApurado` de um item, sobrepondo o resultado do motor de cálculo.
+
+**Justificativa:** o motor cobre as regras gerais UNIMED, mas casos atípicos (acordos pontuais, codificações especiais, procedimentos sem correspondência exata na tabela) produzem valores que o operador reconhece como incorretos. A correção manual é a válvula de escape documentada — o PDF do recurso reflete o valor corrigido como "VL CORRETO". `ValorApurado = null` limpa o override e reverte o item para "não apurado". Valor negativo ou zero é rejeitado com 422.
+
+**Não usar em massa** — para recalcular por mudança de catálogo, usar `POST /api/v1/admin/guias/{id}/recalcular` (D-040).
+
+**Revisitar:** se houver demanda de audit trail por item (flag `FoiEditadoManualmente`) — hoje não rastreado.
 
 ### D-023: CLAUDE.md em três níveis
 

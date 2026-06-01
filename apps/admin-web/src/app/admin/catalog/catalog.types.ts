@@ -126,6 +126,10 @@ export interface AtualizarPrestadorPayload {
   ativo: boolean;
 }
 
+export interface DefinirEmailAcessoPayload {
+  email: string;
+}
+
 export interface DeflatorItem {
   id: string;
   prestadorId: string;
@@ -148,26 +152,6 @@ export interface TabelaItem {
   descricao: string;
   valor: number;
   atualizadoEm: string;
-}
-
-export interface ListarTabelasParams {
-  operadoraId?: string;
-  codigoTuss?: string;
-  pagina: number;
-  itensPorPagina: number;
-}
-
-export interface ListarTabelasResult {
-  itens: TabelaItem[];
-  total: number;
-  pagina: number;
-  itensPorPagina: number;
-}
-
-export interface SalvarTabelaPayload {
-  operadoraId: string;
-  procedimentoId: string;
-  valor: number;
 }
 
 export interface ProcedimentoValorOperadoraItem {
@@ -214,11 +198,21 @@ export interface AtualizarBeneficiarioPayload {
   nome: string;
 }
 
+// ── Tabela Ordem Operadora ───────────────────────────────────────────────────
+
+export type TipoViaOrdem = 'MesmaVia' | 'ViaDiferente';
+
+export interface TabelaOrdemOperadoraItem {
+  numeroProcedimento: number;
+  tipoVia: TipoViaOrdem;
+  percentual: number;
+}
+
 // ── Tabela Porte Anestésico ──────────────────────────────────────────────────
 
 export interface TabelaPorteAnestesicoItem {
   id: string;
-  porteletra: string;
+  porteLetra: string;
   valorEnfermaria: number;
   valorApartamento: number;
   valorAmbulatorial: number | null;

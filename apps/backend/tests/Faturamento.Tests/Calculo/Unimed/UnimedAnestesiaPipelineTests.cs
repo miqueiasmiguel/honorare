@@ -1,3 +1,4 @@
+using App;
 using App.Catalog;
 using App.Data;
 using App.Faturamento;
@@ -131,7 +132,7 @@ public sealed class UnimedAnestesiaPipelineTests(PostgresContainerFixture db)
     }
 
     [Fact]
-    public async Task Anestesista_SemTabelaPorte_RetornaSemTabelaAsync()
+    public async Task Anestesista_SemTabelaPorte_CriacaoRejeitadaAsync()
     {
         var tenantId = Guid.NewGuid();
         var (ctx, service) = Build(tenantId);
@@ -141,12 +142,12 @@ public sealed class UnimedAnestesiaPipelineTests(PostgresContainerFixture db)
         var result = await service.CriarAsync(
             Cmd(pId, oId, procId, "SEN-AN04", Acomodacao.Enfermaria, false));
 
-        Assert.True(result.IsSuccess);
-        Assert.Null(result.Value!.Itens[0].ValorApurado);
+        Assert.False(result.IsSuccess);
+        Assert.IsType<ValidationError>(result.Error);
     }
 
     [Fact]
-    public async Task Anestesista_PorteAnestesicoNulo_RetornaIndeterminadoAsync()
+    public async Task Anestesista_PorteAnestesicoNulo_CriacaoRejeitadaAsync()
     {
         var tenantId = Guid.NewGuid();
         var (ctx, service) = Build(tenantId);
@@ -156,12 +157,12 @@ public sealed class UnimedAnestesiaPipelineTests(PostgresContainerFixture db)
         var result = await service.CriarAsync(
             Cmd(pId, oId, procId, "SEN-AN05", Acomodacao.Enfermaria, false));
 
-        Assert.True(result.IsSuccess);
-        Assert.Null(result.Value!.Itens[0].ValorApurado);
+        Assert.False(result.IsSuccess);
+        Assert.IsType<ValidationError>(result.Error);
     }
 
     [Fact]
-    public async Task Anestesista_SemDeflator_RetornaSemDeflatorAsync()
+    public async Task Anestesista_SemDeflator_CriacaoRejeitadaAsync()
     {
         var tenantId = Guid.NewGuid();
         var (ctx, service) = Build(tenantId);
@@ -171,8 +172,8 @@ public sealed class UnimedAnestesiaPipelineTests(PostgresContainerFixture db)
         var result = await service.CriarAsync(
             Cmd(pId, oId, procId, "SEN-AN06", Acomodacao.Enfermaria, false));
 
-        Assert.True(result.IsSuccess);
-        Assert.Null(result.Value!.Itens[0].ValorApurado);
+        Assert.False(result.IsSuccess);
+        Assert.IsType<ValidationError>(result.Error);
     }
 
     [Fact]

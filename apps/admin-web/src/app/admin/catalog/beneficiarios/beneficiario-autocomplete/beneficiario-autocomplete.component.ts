@@ -1,4 +1,14 @@
-import { Component, DestroyRef, inject, input, OnInit, output, signal } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  inject,
+  input,
+  OnChanges,
+  OnInit,
+  output,
+  signal,
+  SimpleChanges,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { debounceTime, Subject } from 'rxjs';
 import { CatalogService } from '../../catalog.service';
@@ -11,13 +21,14 @@ type EstadoBusca = 'idle' | 'buscando' | 'encontrado' | 'novo' | 'erro';
   templateUrl: './beneficiario-autocomplete.component.html',
   styleUrl: './beneficiario-autocomplete.component.scss',
 })
-export class BeneficiarioAutocompleteComponent implements OnInit {
+export class BeneficiarioAutocompleteComponent implements OnInit, OnChanges {
   private readonly _catalogService = inject(CatalogService);
   private readonly _destroyRef = inject(DestroyRef);
   private readonly _carteira$ = new Subject<string>();
 
   readonly label = input<string>('Carteira do Beneficiário');
   readonly disabled = input<boolean>(false);
+  readonly initialBeneficiario = input<BeneficiarioItem | null>(null);
   readonly beneficiarioChange = output<BeneficiarioItem | null>();
 
   readonly carteira = signal('');
@@ -27,6 +38,18 @@ export class BeneficiarioAutocompleteComponent implements OnInit {
 
   readonly nomeInput = signal('');
   readonly erroNome = signal('');
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if ('initialBeneficiario' in changes) {
+      const b = changes['initialBeneficiario'].currentValue as BeneficiarioItem | null;
+      if (b !== null && this.estado() === 'idle') {
+        this.carteira.set(b.carteira);
+        this.nomeSelecionado.set(b.nome);
+        this.beneficiarioAtual.set(b);
+        this.estado.set('encontrado');
+      }
+    }
+  }
 
   ngOnInit(): void {
     this._carteira$

@@ -59,6 +59,33 @@ internal sealed class ImportacaoDemonstrativoService(
 
         var linhas = parseResult.Value!;
 
+        if (!string.IsNullOrWhiteSpace(identificadorPagamento))
+        {
+            var jaImportado = await db.Demonstrativos.AnyAsync(
+                d => d.TenantId == tenantId &&
+                     d.OperadoraId == operadoraId &&
+                     d.IdentificadorPagamento == identificadorPagamento, ct);
+            if (jaImportado)
+            {
+                return Result<ImportacaoResultado>.Fail(
+                    new ValidationError(
+                        $"Demonstrativo com identificador '{identificadorPagamento}' já foi importado para esta operadora."));
+            }
+        }
+
+        var linhasComFuncao = linhas.Where(l => !string.IsNullOrWhiteSpace(l.Funcao)).ToList();
+        if (linhasComFuncao.Count > 0 && linhasComFuncao.All(l => MapearFuncao(l.Funcao) is null))
+        {
+            var funcoesUnicas = linhasComFuncao
+                .Select(l => l.Funcao.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+            var lista = string.Join(", ", funcoesUnicas.Select(f => $"'{f}'"));
+            return Result<ImportacaoResultado>.Fail(
+                new ValidationError(
+                    $"Nenhum item pôde ser importado — funções não reconhecidas: {lista}."));
+        }
+
         if (somenteValidar)
         {
             var guiasPrevistas = linhas
@@ -73,6 +100,31 @@ internal sealed class ImportacaoDemonstrativoService(
                 0, 0, 0, 0, 0, 0,
                 guiasPrevistas, itensPrevistas,
                 [], []));
+        }
+
+        if (operadora.TipoRuleSet != TipoRuleSet.Nulo)
+        {
+            var posicoesNecessarias = linhas
+                .Select(l => MapearFuncao(l.Funcao))
+                .Where(p => p.HasValue)
+                .Select(p => p!.Value)
+                .Distinct()
+                .ToList();
+
+            foreach (var posicao in posicoesNecessarias)
+            {
+                var temDeflator = await db.DeflatoresPrestador.AnyAsync(
+                    d => d.PrestadorId == prestadorId &&
+                         d.OperadoraId == operadoraId &&
+                         d.Posicao == posicao, ct);
+                if (!temDeflator)
+                {
+                    return Result<ImportacaoResultado>.Fail(
+                        new ValidationError(
+                            $"Deflator não cadastrado para a posição '{posicao}' do prestador nesta operadora. " +
+                            "Cadastre o deflator antes de importar o demonstrativo."));
+                }
+            }
         }
 
         var datasServico = linhas.Select(l => l.DataServico).ToList();
@@ -93,6 +145,7 @@ internal sealed class ImportacaoDemonstrativoService(
 
         var erros = new List<ErroImportacao>();
         var alertas = new List<AlertaImportacao>();
+        var funcoesIgnoradas = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var guiasCriadas = 0;
         var guiasAtualizadas = 0;
         var itensCriados = 0;
@@ -119,19 +172,20 @@ internal sealed class ImportacaoDemonstrativoService(
                 beneficiariosCriados++;
             }
 
+            var senha = grupo.Key.Guia;
             var guia = await db.Guias
                 .FirstOrDefaultAsync(g =>
                     g.TenantId == tenantId &&
                     g.PrestadorId == prestadorId &&
-                    g.NumeroGuia == grupo.Key.Guia, ct);
+                    g.Senha == senha, ct);
 
             var guiaCriada = guia is null;
             if (guia is null)
             {
                 guia = Guia.Create(
                     tenantId, prestadorId, operadoraId,
-                    beneficiario.Id, grupo.Key.Guia,
-                    primeiraLinha.Codigo, grupo.Key.DataServico,
+                    beneficiario.Id, null,
+                    senha, grupo.Key.DataServico,
                     false, string.Empty);
                 db.Guias.Add(guia);
                 await db.SaveChangesAsync(ct);
@@ -156,6 +210,11 @@ internal sealed class ImportacaoDemonstrativoService(
                 if (posicao is null)
                 {
                     itensIgnorados++;
+                    if (!string.IsNullOrWhiteSpace(linha.Funcao))
+                    {
+                        funcoesIgnoradas.Add(linha.Funcao.Trim());
+                    }
+
                     continue;
                 }
 
@@ -202,7 +261,7 @@ internal sealed class ImportacaoDemonstrativoService(
                 var itemGuia = itensGrupo[^1];
                 var valorPago = linha.Total;
                 var itemDem = ItemDemonstrativo.Create(
-                    demonstrativo.Id, primeiraLinha.Codigo, linha.CodigoProcedimento,
+                    demonstrativo.Id, senha, linha.CodigoProcedimento,
                     linha.NomeProcedimento, linha.Honorario, valorPago, linha.CodGlosa);
                 itemDem.Conciliar(itemGuia.Id);
                 itemGuia.SetValorLiquidado(valorPago);
@@ -214,6 +273,11 @@ internal sealed class ImportacaoDemonstrativoService(
             {
                 todasGuias.Add((guia, operadora, itensGrupo));
             }
+        }
+
+        foreach (var funcao in funcoesIgnoradas)
+        {
+            alertas.Add(new AlertaImportacao(0, $"Função '{funcao}' não reconhecida — itens ignorados."));
         }
 
         foreach (var (guia, op, itens) in todasGuias)
@@ -247,7 +311,11 @@ internal sealed class ImportacaoDemonstrativoService(
 
     private static Result<IReadOnlyList<LinhaCSV>> ParsearCsv(StreamReader reader, out string identificadorPagamento)
     {
-        identificadorPagamento = reader.ReadLine()?.Trim() ?? string.Empty;
+        var primeiraLinha = reader.ReadLine()?.Trim() ?? string.Empty;
+        var colonIdx = primeiraLinha.LastIndexOf(':');
+        identificadorPagamento = colonIdx >= 0
+            ? primeiraLinha[(colonIdx + 1)..].Trim()
+            : primeiraLinha;
 
         var headerLine = reader.ReadLine();
         if (headerLine is null)
@@ -301,7 +369,9 @@ internal sealed class ImportacaoDemonstrativoService(
 
             var dataServicoStr = Col(cols, idx, "DATA SERVICO");
             if (!DateOnly.TryParseExact(dataServicoStr, "dd/MM/yyyy",
-                CultureInfo.InvariantCulture, DateTimeStyles.None, out var dataServico))
+                    CultureInfo.InvariantCulture, DateTimeStyles.None, out var dataServico) &&
+                !DateOnly.TryParseExact(dataServicoStr, "dd/MM/yy",
+                    CultureInfo.InvariantCulture, DateTimeStyles.None, out dataServico))
             {
                 dataServico = DateOnly.FromDateTime(DateTime.UtcNow);
             }
@@ -359,6 +429,8 @@ internal sealed class ImportacaoDemonstrativoService(
         funcao.Trim().ToUpperInvariant() switch
         {
             "CIRURGIAO" or "CIRURGIÃO" => PosicaoExecutor.Cirurgiao,
+            "HONORARIO PRINC." or "HONORÁRIO PRINC." or
+                "HONORARIO PRINCIPAL" or "HONORÁRIO PRINCIPAL" => PosicaoExecutor.Cirurgiao,
             "PRIMEIRO AUXILIAR" or "1 AUXILIAR" or "1º AUXILIAR" => PosicaoExecutor.PrimeiroAuxiliar,
             "SEGUNDO AUXILIAR" or "2 AUXILIAR" or "2º AUXILIAR" => PosicaoExecutor.SegundoAuxiliar,
             "TERCEIRO AUXILIAR" or "3 AUXILIAR" or "3º AUXILIAR" => PosicaoExecutor.TerceiroAuxiliar,
@@ -375,8 +447,19 @@ internal sealed class ImportacaoDemonstrativoService(
             _ => Acomodacao.Enfermaria,
         };
 
-    private static bool MapearUrgencia(string acrescimo) =>
-        !string.IsNullOrWhiteSpace(acrescimo);
+    private static bool MapearUrgencia(string acrescimo)
+    {
+        if (string.IsNullOrWhiteSpace(acrescimo))
+        {
+            return false;
+        }
+
+        var normalized = acrescimo.Trim().TrimEnd('%')
+            .Replace(".", string.Empty, StringComparison.Ordinal)
+            .Replace(",", ".", StringComparison.Ordinal);
+        return decimal.TryParse(normalized, NumberStyles.Any,
+            CultureInfo.InvariantCulture, out var v) && v > 0m;
+    }
 
     private static decimal MapearPercentualOrdem(decimal percentVia) =>
         percentVia / 100m;

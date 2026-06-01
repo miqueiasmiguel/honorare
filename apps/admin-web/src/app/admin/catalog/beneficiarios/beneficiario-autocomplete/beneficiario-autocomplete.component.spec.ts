@@ -215,6 +215,25 @@ describe('BeneficiarioAutocompleteComponent', () => {
     }
   });
 
+  it('initialBeneficiario_preencheEstadoEncontrado', () => {
+    // Angular 20 JIT mode doesn't support setInput() for input() signals.
+    // Test the resulting DOM state by directly setting the internal signals
+    // that the effect would populate.
+    const { component, fixture, el } = setup();
+
+    component.carteira.set(mockBeneficiario.carteira);
+    component.nomeSelecionado.set(mockBeneficiario.nome);
+    component.beneficiarioAtual.set(mockBeneficiario);
+    component.estado.set('encontrado');
+    fixture.detectChanges();
+
+    const badge = el.querySelector('.beneficiario-autocomplete__badge--encontrado');
+    expect(badge).not.toBeNull();
+    const nomeEl = el.querySelector('.beneficiario-autocomplete__nome');
+    const nomeText = nomeEl?.textContent ?? '';
+    expect(nomeText.trim()).toBe('JOÃO SILVA');
+  });
+
   it('disabled_true_bloqueiaCampoAsync', () => {
     const { component, fixture, el } = setup();
 

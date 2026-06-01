@@ -57,6 +57,10 @@
             </select>
           </div>
 
+          @if (erroServidor()) {
+            <p class="importar-demonstrativo-modal__msg-erro">{{ erroServidor() }}</p>
+          }
+
           <div class="importar-demonstrativo-modal__acoes">
             <button
               class="importar-demonstrativo-modal__btn-cancelar"
@@ -124,6 +128,10 @@
                 Corrija os erros antes de importar.
               </p>
             }
+          }
+
+          @if (erroServidor()) {
+            <p class="importar-demonstrativo-modal__msg-erro">{{ erroServidor() }}</p>
           }
 
           <div class="importar-demonstrativo-modal__acoes">

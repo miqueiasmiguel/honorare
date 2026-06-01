@@ -4,7 +4,7 @@
 
 ### Conceitos centrais
 
-- **Guia:** documento de cobrança apresentado pelo prestador (médico/clínica) à operadora. Tipos principais: Consulta, SP/SADT (serviços profissionais e SADT), Internação, Honorários. Uma guia tem múltiplos itens.
+- **Guia:** documento de cobrança apresentado pelo prestador (médico/clínica) à operadora. Tipos principais: Consulta, SP/SADT (serviços profissionais e SADT), Internação, Honorários. Uma guia tem múltiplos itens. `NumeroGuia string?` armazena o número TISS da guia (preenchido na importação via CSV; opcional em guias criadas manualmente).
 
 - **ItemGuia:** uma linha da guia. Representa **um procedimento executado por um profissional num papel**. Se o cirurgião teve 2 auxiliares e 1 anestesista, a mesma cirurgia gera 4 itens (cirurgião, 1º aux, 2º aux, anestesista).
 
@@ -45,7 +45,7 @@
 
 - **Porte:** classificação de complexidade do procedimento (1A, 1B, 2A, ..., 16A, etc.). Define o valor base.
 
-- **Porte anestésico:** classificação separada para anestesia (1 a 8). Não confundir com porte cirúrgico.
+- **Porte anestésico:** classificação separada para anestesia, expressa como **letra A–Z (exceto O)** no `Procedimento`. Cada operadora mantém o par `(ValorEnfermaria, ValorApartamento)` (e opcionalmente `ValorAmbulatorial`) por letra em `TabelaPorteAnestesico`. Não confundir com porte cirúrgico.
 
 - **Acomodação:** tipo de internação contratada no plano do paciente. Valores: Enfermaria, Apartamento, Ambulatorial. **Plano contratado é o que importa** para cálculo, não onde o paciente está fisicamente (com exceções abaixo).
 
@@ -57,7 +57,7 @@
 
 - **Urgência/emergência:** sim/não. Considera horário e dia da semana.
 
-- **Ordem do procedimento:** Único, Principal, Secundário Mesma Via, Secundário Via Diferente.
+- **PercentualOrdem:** decimal (0.01–1.00) armazenado em `ItemGuia` que representa o fator de progressão de atos múltiplos. Substituiu o enum `OrdemProcedimento` (abolido em F3.8). O modifier aplica o valor diretamente, sem switch/case. Fonte do valor: formulário de guia (via `TabelaOrdemOperadora` da operadora) ou importação CSV (coluna `% VIA` ÷ 100).
 
 ### CBHPM e UCO
 
@@ -69,7 +69,11 @@
 
 - **Prestador:** médico ou profissional de saúde cadastrado dentro de um tenant. É o executor dos procedimentos nas guias. Identificado por nome e registro profissional (CRM/CRO/RQE). Um tenant pode ter múltiplos prestadores.
 
-- **TabelaProcedimento:** valor negociado de um procedimento para uma operadora específica (tabela de honorários). A combinação `(OperadoraId, ProcedimentoId)` é única por tenant. Pode ser importada via CSV. É a fonte do `valor_base` no motor de cálculo.
+- **TabelaProcedimento:** valor negociado de um procedimento para uma operadora específica (tabela de honorários). A combinação `(OperadoraId, ProcedimentoId)` é única por tenant. Pode ser importada via CSV. É a fonte do `valor_base` no motor de cálculo cirúrgico.
+
+- **TabelaPorteAnestesico:** valor de referência da anestesia por operadora e letra de porte (A–Z, exceto O). Cada porte tem par fixo `(ValorEnfermaria, ValorApartamento)` e opcional `ValorAmbulatorial`. A combinação `(OperadoraId, PorteLetra)` é única por tenant. Importada via CSV no formato UNIMED JPA (separador vírgula, decimal com vírgula entre aspas, 8 linhas de cabeçalho a ignorar). É a fonte do valor de referência no `AnestesiaCalculator` — substituiu o uso da `TabelaProcedimento` para a posição Anestesista.
+
+- **TabelaOrdemOperadora:** tabela de progressão de atos múltiplos configurável por operadora. Define o `PercentualOrdem` para cada posição (`NumeroProcedimento` 1, 2, 3…) e tipo de via (`MesmaVia` / `ViaDiferente`). Chave única `(TenantId, OperadoraId, NumeroProcedimento, TipoVia)`. Quando não configurada, o sistema usa defaults embutidos: MesmaVia 100%/50%/40%/30%/20%/10%; ViaDiferente 100%/70%/50%/40%/30%/10% (6+→10% em ambas). Gerenciada via endpoints `GET/PUT/DELETE /api/v1/admin/operadoras/{id}/tabela-ordem`.
 
 - **DeflatorPrestador:** percentual negociado entre um prestador e uma operadora para uma posição de execução específica (`PosicaoExecutor`). Multiplicador aplicado sobre o valor de tabela para obter o `valor_base`.
 
@@ -95,9 +99,11 @@
 
 ### Multiplicador UNIMED sobre CBHPM 2015
 
-UNIMED aplica acréscimo de **17,19%** sobre o valor da CBHPM 2015 para o porte anestésico (e em vários outros componentes — verificar caso a caso). Isso é atualização da tabela base, **não** uma regra de acomodação.
+Historicamente UNIMED aplica acréscimo de **17,19%** sobre o valor da CBHPM 2015 (em vários componentes — verificar caso a caso). Isso é atualização da tabela base, **não** uma regra de acomodação.
 
 **Atenção:** o "1,17x" às vezes é confundido com regra de enfermaria/apartamento. **Não é.** É o multiplicador de atualização da tabela.
+
+Para **anestesia**, esse acréscimo **não é mais aplicado em runtime** — desde F3.6 o valor já vem pré-ajustado por operadora dentro da `TabelaPorteAnestesico`. Para procedimentos cirúrgicos a regra continua valendo na composição da `TabelaProcedimento` quando aplicável.
 
 ### Dobra por acomodação
 
@@ -115,11 +121,15 @@ A regra é: **plano contratado manda**, não o local físico.
 
 ### Procedimentos múltiplos
 
-- Procedimento principal: 100% do valor.
-- Secundário na mesma via de acesso: **50%** do valor calculado.
-- Secundário em via diferente: **70%** do valor calculado.
+O fator de progressão é armazenado diretamente em `ItemGuia.PercentualOrdem` (decimal 0.01–1.00) e aplicado pelo `OrdemProcedimentoModifier` sem lógica condicional. Defaults quando nenhuma `TabelaOrdemOperadora` está configurada:
 
-O mesmo código TUSS pode aparecer múltiplas vezes numa guia quando o procedimento é realizado em vias de acesso diferentes (ex: denervação percutânea de faceta 3×, cada uma em nível vertebral diferente). Cada ocorrência é um `ItemGuia` separado com seu próprio percentual. Aparece em guias reais do cliente.
+- 1º procedimento: 100%
+- 2º mesma via: **50%** · 2º via diferente: **70%**
+- 3º: 40% · 4º: 30% · 5º: 20% · 6º ou mais: 10%
+
+A progressão real pode variar por Unimed Singular — configure via seção "Tabela de Atos Múltiplos" na tela da operadora.
+
+O mesmo código TUSS pode aparecer múltiplas vezes numa guia quando o procedimento é realizado em vias de acesso diferentes (ex: denervação percutânea de faceta 3×, cada uma em nível vertebral diferente). Cada ocorrência é um `ItemGuia` separado com seu próprio `PercentualOrdem`. Aparece em guias reais do cliente.
 
 ### Videolaparoscopia
 
@@ -145,12 +155,14 @@ Percentuais **CBHPM 2018+** (atualização vs. regra antiga de 30%/20%):
 - Considera-se urgência: entre 19h e 7h, sábados, domingos e feriados.
 - **Não aplica em SADT** (exames, diagnósticos). A entidade `Procedimento` deve ter flag `EhSadt`.
 
+**Detecção via CSV analítico UNIMED:** a coluna `ACRESCIMO` contém o percentual de acréscimo aplicado pela operadora (ex: `0,00%` ou `30,00%`). O sistema detecta urgência **somente quando o valor for estritamente maior que zero** — `0,00%` significa sem urgência. Uma string vazia ou ausente também é sem urgência. Nunca tratar presença de qualquer valor não-vazio como urgência.
+
 ### Ordem dos modifiers no pipeline
 
 A ordem afeta o resultado. **Esta é a ordem implementada no `UnimedRuleSet`, validada por 10 cenários E2E (F3.2).**
 
 1. Valor base: `TabelaProcedimento.Valor × (DeflatorPrestador.Percentual / 100)`
-2. Ordem de procedimento: Único/Principal=1.0 · SecundarioMesmaVia=0.5 · SecundarioViaDiferente=0.7
+2. Ordem de procedimento: aplica `ItemGuia.PercentualOrdem` diretamente (ex: 1.0, 0.5, 0.4…) — sem enum, sem switch/case
 3. Videolaparoscopia: `Via=Videolaparoscopia` e `!TemPorteProprioVideo` → ×1.5; senão ×1.0
 4. Acomodação: `Apartamento && Posicao == Cirurgiao` → ×2.0; demais → ×1.0
 5. Urgência: `EhUrgencia` e `!EhSadt` → ×1.3; senão ×1.0
@@ -158,9 +170,15 @@ A ordem afeta o resultado. **Esta é a ordem implementada no `UnimedRuleSet`, va
 
 Confirmar com guias reais (P0.2) se há variação por Singular. Anestesista usa pipeline próprio — ver seção abaixo.
 
-## Anestesia — pipeline próprio (PA-03/PA-04)
+**Early-exits do pipeline cirúrgico:** `SemTabela` (sem TabelaProcedimento para a operadora), `SemDeflator` (sem DeflatorPrestador para a posição). Assim como na anestesia, estes early-exits bloqueiam a criação da guia. O motor roda em pré-voo — ver D-038.
 
-Anestesista tem mecânica separada dos honorários cirúrgicos, implementada em `UnimedRuleSet.ApurarAnestesistaAsync` + `AnestesiaCalculator`. **Não passa pelo `AcomodacaoModifier`** — a acomodação já determina o valor de referência na seleção da `TabelaPorteAnestesico`.
+**Diagnóstico em guias existentes:** `GET /api/v1/admin/guias/{id}/calculo` sempre re-executa o motor para itens sem `ValorApurado` e retorna a `SituacaoApuracao` real (`SemDeflator`, `SemTabela`, `Indeterminado`), em vez de mostrar um valor genérico. Permite ao admin diagnosticar o que falta no catálogo sem precisar inspecionar o banco.
+
+**Recálculo após correção de catálogo:** `POST /api/v1/admin/guias/{id}/recalcular` descarta o `Calculo` anterior, zera `ValorApurado` e re-apura todos os itens. Usar quando um deflator ou tabela for adicionado após a criação da guia (guias legadas importadas antes da validação obrigatória).
+
+## Anestesia — pipeline próprio
+
+Anestesista tem mecânica separada dos honorários cirúrgicos, implementada em `UnimedRuleSet.ApurarAnestesistaAsync` + `AnestesiaCalculator`. **Não passa pelo `AcomodacaoModifier`** — a acomodação já determina o valor de referência na seleção da `TabelaPorteAnestesico`. Também **não** aplica o multiplicador `UnimedAN×1,1719` nem `TempoExtra` (suspensos em F3.6).
 
 **Seleção do valor de referência pela acomodação:**
 
@@ -171,10 +189,12 @@ Anestesista tem mecânica separada dos honorários cirúrgicos, implementada em 
 **Pipeline (ordem obrigatória):**
 
 1. `ValorBase = valorReferencia × (DeflatorPrestador.Percentual / 100)`
-2. `OrdemProcedimento`: Único/Principal=1.0 · SecundarioMesmaVia=0.5 · SecundarioViaDiferente=0.7
+2. `PercentualOrdem`: aplica `ItemGuia.PercentualOrdem` diretamente (mesmo mecanismo do pipeline cirúrgico)
 3. `Urgencia`: `EhUrgencia && !EhSadt` → ×1.3; senão ×1.0
 
-**Early-exits:** `Indeterminado` (PorteAnestesico nulo no Procedimento), `SemTabela` (sem TabelaPorteAnestesico para o porte), `SemDeflator` (sem DeflatorPrestador para Anestesista).
+**Early-exits do motor:** `Indeterminado` (PorteAnestesico nulo no Procedimento), `SemTabela` (sem TabelaPorteAnestesico para o porte), `SemDeflator` (sem DeflatorPrestador para Anestesista).
+
+**Estes early-exits bloqueiam a criação da guia.** O motor roda em pré-voo antes de persistir qualquer dado. Se qualquer item retornar status diferente de `Calculado`, a operação é rejeitada com erro descritivo. Guias nunca são criadas sem ter `ValorApurado` em todos os itens. Ver D-038.
 
 ## Casos especiais não tratados no MVP
 
@@ -211,11 +231,12 @@ Para cada `ItemGuia` calculado, o sistema gera:
 
 ## Convênios sem apuração de honorários
 
-Para operadoras sem tabela de honorários negociada (convênios diversos, pequenos), o sistema opera em modo simplificado via `NullRuleSet`:
+Para operadoras sem tabela de honorários negociada (convênios diversos, pequenos), o sistema opera em modo simplificado via `NullRuleSet` (`TipoRuleSet.Nulo`):
 
 - Nenhum `ValorApurado` é gerado
 - A guia funciona como registro de status + observação
 - Quando liquidado a menor, o admin registra no campo `Observacao` o que falta receber
 - O recurso pode ser gerado sem VL CORRETO apurado — só com a observação textual
+- **A validação pré-criação de guia (D-038) não se aplica a operadoras com `TipoRuleSet.Nulo`** — elas são isentas por design
 
 Esse modo não substitui o recurso UNIMED, mas permite ao cliente usar o mesmo sistema para controle de todos os convênios.

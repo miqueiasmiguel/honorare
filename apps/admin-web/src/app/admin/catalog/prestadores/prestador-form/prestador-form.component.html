@@ -82,15 +82,51 @@
     </form>
 
     @if (modoEdicao) {
-      <div class="prestador-form__field">
-        <span class="prestador-form__label">E-mail de acesso</span>
-        @if (prestadorTemUsuario()) {
-          <span class="prestador-form__badge-acesso">Com acesso ao portal</span>
-        }
-        <span class="prestador-form__email-acesso-valor">{{
-          prestadorEmailAcesso() ?? 'Sem acesso ao portal'
-        }}</span>
-      </div>
+      @if (prestadorEmailAcesso()) {
+        <div class="prestador-form__field prestador-form__field--acesso-readonly">
+          <span class="prestador-form__label">E-mail de acesso</span>
+          @if (prestadorTemUsuario()) {
+            <span class="prestador-form__badge-acesso">Com acesso ao portal</span>
+          }
+          <span class="prestador-form__email-acesso-valor">{{ prestadorEmailAcesso() }}</span>
+        </div>
+      } @else {
+        <form
+          class="prestador-form__email-acesso-form"
+          (ngSubmit)="definirEmailAcesso()"
+          [formGroup]="emailAcessoForm"
+        >
+          <div class="prestador-form__field">
+            <label class="prestador-form__label" for="emailAcessoEdicao">E-mail de acesso</label>
+            <input
+              id="emailAcessoEdicao"
+              type="email"
+              class="prestador-form__input"
+              [class.prestador-form__input--invalid]="
+                emailAcessoForm.controls.email.touched && emailAcessoForm.controls.email.invalid
+              "
+              formControlName="email"
+              maxlength="150"
+              placeholder="email@exemplo.com"
+            />
+            @if (emailAcessoForm.controls.email.touched && emailAcessoForm.controls.email.invalid) {
+              <span class="prestador-form__error">E-mail obrigatório e deve ser válido.</span>
+            }
+            @if (erroEmailAcesso()) {
+              <span class="prestador-form__error">{{ erroEmailAcesso() }}</span>
+            }
+          </div>
+          <div class="prestador-form__actions">
+            <button
+              type="submit"
+              class="prestador-form__btn-salvar"
+              [disabled]="savingEmailAcesso()"
+            >
+              {{ savingEmailAcesso() ? 'Salvando…' : 'Definir e-mail de acesso' }}
+            </button>
+          </div>
+        </form>
+      }
 
       <section class="prestador-form__deflatores">
         <div class="prestador-form__deflatores-header">

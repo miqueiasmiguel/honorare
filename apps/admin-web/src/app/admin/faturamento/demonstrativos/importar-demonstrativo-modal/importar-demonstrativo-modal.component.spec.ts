@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 import { DemonstrativoService } from '../../demonstrativo.service';
 import { CatalogService } from '../../../catalog/catalog.service';
 import type { ResultadoImportacaoDto } from '../../demonstrativo.types';
@@ -196,5 +197,59 @@ describe('ImportarDemonstrativoModalComponent', () => {
     expect(alertas.length).toBeGreaterThan(0);
     expect(alertas[0].textContent).toContain('7');
     expect(alertas[0].textContent).toContain('SemTabela para procedimento');
+  });
+
+  it('Validar_Erro400_ExibeMensagemDetalhe', () => {
+    const { component, fixture, el, demoService } = setup();
+
+    demoService.importarCsv.mockReturnValueOnce(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            error: {
+              detail:
+                "Deflator não cadastrado para a posição 'C' do prestador nesta operadora. Cadastre o deflator antes de importar o demonstrativo.",
+            },
+            status: 400,
+          }),
+      ),
+    );
+
+    component.onArquivoSelecionado(makeFile());
+    component.prestadorId.set('prest-1');
+    component.operadoraId.set('op-1');
+    component.validar();
+    fixture.detectChanges();
+
+    const msgErro = el.querySelector('.importar-demonstrativo-modal__msg-erro');
+    expect(msgErro?.textContent).toContain('Deflator não cadastrado');
+    expect(el.querySelector('.importar-demonstrativo-modal__preview')).toBeNull();
+  });
+
+  it('Confirmar_Erro400_ExibeMensagemDetalhe', () => {
+    const { component, fixture, el, demoService } = setup();
+
+    component.onArquivoSelecionado(makeFile());
+    component.prestadorId.set('prest-1');
+    component.operadoraId.set('op-1');
+    component.validar();
+    fixture.detectChanges();
+
+    demoService.importarCsv.mockReturnValueOnce(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            error: { detail: 'Erro ao importar o demonstrativo. Tente novamente.' },
+            status: 400,
+          }),
+      ),
+    );
+
+    component.confirmar();
+    fixture.detectChanges();
+
+    const msgErro = el.querySelector('.importar-demonstrativo-modal__msg-erro');
+    expect(msgErro?.textContent).toContain('Erro ao importar o demonstrativo');
+    expect(el.querySelector('.importar-demonstrativo-modal__resumo-final')).toBeNull();
   });
 });

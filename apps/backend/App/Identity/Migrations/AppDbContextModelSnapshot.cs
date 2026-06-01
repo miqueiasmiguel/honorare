@@ -364,6 +364,10 @@ namespace App.Faturamento.Migrations
 
                     b.HasIndex("TenantId");
 
+                    b.HasIndex("TenantId", "OperadoraId", "IdentificadorPagamento")
+                        .IsUnique()
+                        .HasFilter("\"IdentificadorPagamento\" IS NOT NULL");
+
                     b.ToTable("demonstrativos", (string)null);
                 });
 

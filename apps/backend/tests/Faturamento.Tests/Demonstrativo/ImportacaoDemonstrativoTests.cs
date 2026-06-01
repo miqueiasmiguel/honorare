@@ -84,8 +84,9 @@ public sealed class ImportacaoDemonstrativoTests(PostgresContainerFixture db)
         Assert.Equal(1, resultado.Value.ItensCriados);
 
         await using var check = db.CreateTenantContext(tenantId);
-        var guia = await check.Guias.FirstOrDefaultAsync(g => g.NumeroGuia == "34280511" && g.PrestadorId == prestadorId);
+        var guia = await check.Guias.FirstOrDefaultAsync(g => g.Senha == "34280511" && g.PrestadorId == prestadorId);
         Assert.NotNull(guia);
+        Assert.Null(guia.NumeroGuia);
 
         var itemGuia = await check.ItensGuia.FirstOrDefaultAsync(i => i.GuiaId == guia.Id);
         Assert.NotNull(itemGuia);
@@ -95,6 +96,7 @@ public sealed class ImportacaoDemonstrativoTests(PostgresContainerFixture db)
 
         var itemDem = await check.ItensDemonstrativo.FirstOrDefaultAsync(i => i.ItemGuiaId == itemGuia.Id);
         Assert.NotNull(itemDem);
+        Assert.Equal("34280511", itemDem.Senha);
         Assert.Equal(itemDem.ValorPago, itemGuia.ValorLiquidado);
     }
 
@@ -136,7 +138,7 @@ public sealed class ImportacaoDemonstrativoTests(PostgresContainerFixture db)
         Assert.True(resultado.IsSuccess);
 
         await using var check = db.CreateTenantContext(tenantId);
-        var guia = await check.Guias.FirstOrDefaultAsync(g => g.NumeroGuia == "12345678" && g.PrestadorId == prestadorId);
+        var guia = await check.Guias.FirstOrDefaultAsync(g => g.Senha == "12345678" && g.PrestadorId == prestadorId);
         Assert.NotNull(guia);
 
         var itens = await check.ItensGuia
@@ -161,6 +163,10 @@ public sealed class ImportacaoDemonstrativoTests(PostgresContainerFixture db)
         ctx.Add(proc);
         await ctx.SaveChangesAsync();
 
+        ctx.Add(TabelaProcedimento.Create(tenantId, operadoraId, proc.Id, 200m));
+        ctx.Add(DeflatorPrestador.Create(tenantId, prestadorId, operadoraId, PosicaoExecutor.Cirurgiao, 100m));
+        await ctx.SaveChangesAsync();
+
         var csv = string.Join("\n",
             "780091938",
             CsvHeader,
@@ -175,7 +181,7 @@ public sealed class ImportacaoDemonstrativoTests(PostgresContainerFixture db)
         Assert.True(resultado.IsSuccess);
 
         await using var check = db.CreateTenantContext(tenantId);
-        var guia = await check.Guias.FirstOrDefaultAsync(g => g.NumeroGuia == "99887766" && g.PrestadorId == prestadorId);
+        var guia = await check.Guias.FirstOrDefaultAsync(g => g.Senha == "99887766" && g.PrestadorId == prestadorId);
         Assert.NotNull(guia);
 
         var itemGuia = await check.ItensGuia.FirstOrDefaultAsync(i => i.GuiaId == guia.Id);
@@ -198,6 +204,10 @@ public sealed class ImportacaoDemonstrativoTests(PostgresContainerFixture db)
 
         var proc = Procedimento.Create(tenantId, "50101010", "Proc Benef", "1", null, false, false);
         ctx.Add(proc);
+        await ctx.SaveChangesAsync();
+
+        ctx.Add(TabelaProcedimento.Create(tenantId, operadoraId, proc.Id, 200m));
+        ctx.Add(DeflatorPrestador.Create(tenantId, prestadorId, operadoraId, PosicaoExecutor.Cirurgiao, 100m));
         await ctx.SaveChangesAsync();
 
         var csv = string.Join("\n",
@@ -232,6 +242,10 @@ public sealed class ImportacaoDemonstrativoTests(PostgresContainerFixture db)
         ctx.Add(proc);
         await ctx.SaveChangesAsync();
 
+        ctx.Add(TabelaProcedimento.Create(tenantId, operadoraId, proc.Id, 200m));
+        ctx.Add(DeflatorPrestador.Create(tenantId, prestadorId, operadoraId, PosicaoExecutor.Cirurgiao, 100m));
+        await ctx.SaveChangesAsync();
+
         var csv = string.Join("\n",
             "780091940",
             CsvHeader,
@@ -264,8 +278,10 @@ public sealed class ImportacaoDemonstrativoTests(PostgresContainerFixture db)
         ctx.Add(proc);
         await ctx.SaveChangesAsync();
 
+        ctx.Add(TabelaProcedimento.Create(tenantId, operadoraId, proc.Id, 200m));
+        ctx.Add(DeflatorPrestador.Create(tenantId, prestadorId, operadoraId, PosicaoExecutor.Cirurgiao, 100m));
         var guiaExistente = Guia.Create(tenantId, prestadorId, operadoraId, null,
-            "34280511", "SENHAANTIGA", new DateOnly(2025, 1, 1), false, string.Empty);
+            null, "34280511", new DateOnly(2025, 1, 1), false, string.Empty);
         ctx.Add(guiaExistente);
         await ctx.SaveChangesAsync();
 
@@ -285,7 +301,7 @@ public sealed class ImportacaoDemonstrativoTests(PostgresContainerFixture db)
         Assert.Equal(1, resultado.Value.GuiasAtualizadas);
 
         await using var check = db.CreateTenantContext(tenantId);
-        var count = await check.Guias.CountAsync(g => g.NumeroGuia == "34280511" && g.PrestadorId == prestadorId);
+        var count = await check.Guias.CountAsync(g => g.Senha == "34280511" && g.PrestadorId == prestadorId);
         Assert.Equal(1, count);
 
         var itemAdicionado = await check.ItensGuia.FirstOrDefaultAsync(i => i.GuiaId == guiaExistente.Id);
@@ -315,7 +331,7 @@ public sealed class ImportacaoDemonstrativoTests(PostgresContainerFixture db)
         Assert.Equal(1, resultado.Value!.ItensIgnorados);
 
         await using var check = db.CreateTenantContext(tenantId);
-        var guia = await check.Guias.FirstOrDefaultAsync(g => g.NumeroGuia == "11223344" && g.PrestadorId == prestadorId);
+        var guia = await check.Guias.FirstOrDefaultAsync(g => g.Senha == "11223344" && g.PrestadorId == prestadorId);
         if (guia != null)
         {
             var itemGuiaCount = await check.ItensGuia.CountAsync(i => i.GuiaId == guia.Id);
@@ -334,6 +350,10 @@ public sealed class ImportacaoDemonstrativoTests(PostgresContainerFixture db)
         ctx.Add(proc);
         await ctx.SaveChangesAsync();
 
+        ctx.Add(TabelaProcedimento.Create(tenantId, operadoraId, proc.Id, 200m));
+        ctx.Add(DeflatorPrestador.Create(tenantId, prestadorId, operadoraId, PosicaoExecutor.Cirurgiao, 100m));
+        await ctx.SaveChangesAsync();
+
         var csv = string.Join("\n",
             "780091943",
             CsvHeader,
@@ -348,7 +368,7 @@ public sealed class ImportacaoDemonstrativoTests(PostgresContainerFixture db)
         Assert.True(resultado.IsSuccess);
 
         await using var check = db.CreateTenantContext(tenantId);
-        var guia = await check.Guias.FirstOrDefaultAsync(g => g.NumeroGuia == "22334455" && g.PrestadorId == prestadorId);
+        var guia = await check.Guias.FirstOrDefaultAsync(g => g.Senha == "22334455" && g.PrestadorId == prestadorId);
         Assert.NotNull(guia);
 
         var itemGuia = await check.ItensGuia.FirstOrDefaultAsync(i => i.GuiaId == guia.Id);
@@ -404,10 +424,242 @@ public sealed class ImportacaoDemonstrativoTests(PostgresContainerFixture db)
         Assert.True(resultado.Value.ItensPrevistas >= 1);
 
         await using var check = db.CreateTenantContext(tenantId);
-        var guiasCount = await check.Guias.CountAsync(g => g.PrestadorId == prestadorId && g.NumeroGuia == "33445566");
+        var guiasCount = await check.Guias.CountAsync(g => g.PrestadorId == prestadorId && g.Senha == "33445566");
         Assert.Equal(0, guiasCount);
         var demsCount = await check.Demonstrativos.CountAsync(d => d.OperadoraId == operadoraId);
         Assert.Equal(0, demsCount);
+    }
+
+    [Fact]
+    public async Task ImportarCsv_FuncaoHonorarioPrinc_MapeiaParaCirurgiaoAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        await using var ctx = db.CreateTenantContext(tenantId);
+        var (prestadorId, operadoraId) = await SeedBaseAsync(ctx, tenantId);
+
+        var proc = Procedimento.Create(tenantId, "31009336", "HERNIORRAFIA", "2", null, false, false);
+        ctx.Add(proc);
+        var deflator = DeflatorPrestador.Create(tenantId, prestadorId, operadoraId, PosicaoExecutor.Cirurgiao, 70m);
+        ctx.Add(deflator);
+        var tabProc = TabelaProcedimento.Create(tenantId, operadoraId, proc.Id, 1000m);
+        ctx.Add(tabProc);
+        await ctx.SaveChangesAsync();
+
+        var csv = string.Join("\n",
+            "IO06_001",
+            CsvHeader,
+            CsvRow("34113710", "0335400202005701", "PACIENTE CIRUG", "22/04/2025",
+                "31009336", "HERNIORRAFIA", "Honorario princ.", "DR IO06",
+                "100", "APARTAMENTO", "", "1", "702,00", "0,00", "", "702,00"));
+
+        var (svcCtx, service) = BuildService(tenantId);
+        await using var _ = svcCtx;
+        var resultado = await service.ImportarAsync(ToCsvStream(csv), prestadorId, operadoraId, false, CancellationToken.None);
+
+        Assert.True(resultado.IsSuccess);
+        Assert.Equal(1, resultado.Value!.ItensCriados);
+
+        await using var check = db.CreateTenantContext(tenantId);
+        var guia = await check.Guias.FirstOrDefaultAsync(g => g.Senha == "34113710" && g.PrestadorId == prestadorId);
+        Assert.NotNull(guia);
+        var itemGuia = await check.ItensGuia.FirstOrDefaultAsync(i => i.GuiaId == guia.Id);
+        Assert.NotNull(itemGuia);
+        Assert.Equal(PosicaoExecutor.Cirurgiao, itemGuia.PosicaoExecutor);
+    }
+
+    [Fact]
+    public async Task ImportarCsv_DataServicoAnoAbreviado_ParseCorretamenteAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        await using var ctx = db.CreateTenantContext(tenantId);
+        var (prestadorId, operadoraId) = await SeedBaseAsync(ctx, tenantId);
+
+        var proc = Procedimento.Create(tenantId, "31009001", "PROC DATA", "1", null, false, false);
+        ctx.Add(proc);
+        await ctx.SaveChangesAsync();
+
+        ctx.Add(TabelaProcedimento.Create(tenantId, operadoraId, proc.Id, 200m));
+        ctx.Add(DeflatorPrestador.Create(tenantId, prestadorId, operadoraId, PosicaoExecutor.Cirurgiao, 100m));
+        await ctx.SaveChangesAsync();
+
+        var csv = string.Join("\n",
+            "IO06_002",
+            CsvHeader,
+            CsvRow("11223301", "0000000000000001", "PACIENTE DATA", "22/04/26",
+                "31009001", "PROC DATA", "CIRURGIAO", "DR IO06",
+                "100", "ENFERMARIA", "", "1", "500,00", "0,00", "", "500,00"));
+
+        var (svcCtx, service) = BuildService(tenantId);
+        await using var _ = svcCtx;
+        var resultado = await service.ImportarAsync(ToCsvStream(csv), prestadorId, operadoraId, false, CancellationToken.None);
+
+        Assert.True(resultado.IsSuccess);
+        Assert.Equal(1, resultado.Value!.GuiasCriadas);
+
+        await using var check = db.CreateTenantContext(tenantId);
+        var guia = await check.Guias.FirstOrDefaultAsync(g => g.Senha == "11223301" && g.PrestadorId == prestadorId);
+        Assert.NotNull(guia);
+        Assert.Equal(new DateOnly(2026, 4, 22), guia.DataAtendimento);
+    }
+
+    [Fact]
+    public async Task ImportarCsv_IdentificadorComLabel_ExtraiNumeroAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        await using var ctx = db.CreateTenantContext(tenantId);
+        var (prestadorId, operadoraId) = await SeedBaseAsync(ctx, tenantId);
+
+        var proc = Procedimento.Create(tenantId, "31009002", "PROC ID", "1", null, false, false);
+        ctx.Add(proc);
+        await ctx.SaveChangesAsync();
+
+        ctx.Add(TabelaProcedimento.Create(tenantId, operadoraId, proc.Id, 200m));
+        ctx.Add(DeflatorPrestador.Create(tenantId, prestadorId, operadoraId, PosicaoExecutor.Cirurgiao, 100m));
+        await ctx.SaveChangesAsync();
+
+        var csv = string.Join("\n",
+            "IDENTIFICADOR PAGAMENTO: 741443463",
+            CsvHeader,
+            CsvRow("55667701", "0000000000000002", "PACIENTE ID", "01/01/2025",
+                "31009002", "PROC ID", "CIRURGIAO", "DR IO06",
+                "100", "ENFERMARIA", "", "1", "100,00", "0,00", "", "100,00"));
+
+        var (svcCtx, service) = BuildService(tenantId);
+        await using var _ = svcCtx;
+        var resultado = await service.ImportarAsync(ToCsvStream(csv), prestadorId, operadoraId, false, CancellationToken.None);
+
+        Assert.True(resultado.IsSuccess);
+        Assert.Equal("741443463", resultado.Value!.IdentificadorPagamento);
+
+        await using var check = db.CreateTenantContext(tenantId);
+        var dem = await check.Demonstrativos.FirstOrDefaultAsync(d => d.Id == resultado.Value.DemonstrativoId);
+        Assert.NotNull(dem);
+        Assert.Equal("741443463", dem.IdentificadorPagamento);
+    }
+
+    [Fact]
+    public async Task ImportarCsv_IdentificadorDuplicado_RejeicaoAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        await using var ctx = db.CreateTenantContext(tenantId);
+        var (prestadorId, operadoraId) = await SeedBaseAsync(ctx, tenantId);
+
+        var proc = Procedimento.Create(tenantId, "31009003", "PROC DEDUP", "1", null, false, false);
+        ctx.Add(proc);
+        await ctx.SaveChangesAsync();
+
+        ctx.Add(TabelaProcedimento.Create(tenantId, operadoraId, proc.Id, 200m));
+        ctx.Add(DeflatorPrestador.Create(tenantId, prestadorId, operadoraId, PosicaoExecutor.Cirurgiao, 100m));
+        await ctx.SaveChangesAsync();
+
+        var csv = string.Join("\n",
+            "741443464",
+            CsvHeader,
+            CsvRow("99001101", "0000000000000003", "PACIENTE DEDUP", "01/01/2025",
+                "31009003", "PROC DEDUP", "CIRURGIAO", "DR IO06",
+                "100", "ENFERMARIA", "", "1", "100,00", "0,00", "", "100,00"));
+
+        var (svcCtx, service) = BuildService(tenantId);
+        await using var _ = svcCtx;
+
+        var resultado1 = await service.ImportarAsync(ToCsvStream(csv), prestadorId, operadoraId, false, CancellationToken.None);
+        Assert.True(resultado1.IsSuccess);
+
+        var resultado2 = await service.ImportarAsync(ToCsvStream(csv), prestadorId, operadoraId, false, CancellationToken.None);
+        Assert.True(resultado2.IsFailure);
+        Assert.IsType<ValidationError>(resultado2.Error);
+    }
+
+    [Fact]
+    public async Task ImportarCsv_SemDeflator_RejeicaoAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        await using var ctx = db.CreateTenantContext(tenantId);
+        var (prestadorId, operadoraId) = await SeedBaseAsync(ctx, tenantId);
+
+        var proc = Procedimento.Create(tenantId, "31009007", "PROC SEM DEFLATOR", "1", null, false, false);
+        ctx.Add(proc);
+        await ctx.SaveChangesAsync();
+
+        var csv = string.Join("\n",
+            "IO06_NODEFL",
+            CsvHeader,
+            CsvRow("12340010", "0000000000000010", "PACIENTE DEFLAT", "01/01/2025",
+                "31009007", "PROC SEM DEFLATOR", "CIRURGIAO", "DR IO06",
+                "100", "ENFERMARIA", "", "1", "100,00", "0,00", "", "100,00"));
+
+        var (svcCtx, service) = BuildService(tenantId);
+        await using var _ = svcCtx;
+        var resultado = await service.ImportarAsync(ToCsvStream(csv), prestadorId, operadoraId, false, CancellationToken.None);
+
+        Assert.True(resultado.IsFailure);
+        Assert.IsType<ValidationError>(resultado.Error);
+        Assert.Contains("Cirurgiao", resultado.Error!.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task ImportarCsv_TodosFuncoesDesconhecidas_NaoCriaDemonstrativoAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        await using var ctx = db.CreateTenantContext(tenantId);
+        var (prestadorId, operadoraId) = await SeedBaseAsync(ctx, tenantId);
+        await ctx.SaveChangesAsync();
+
+        var csv = string.Join("\n",
+            "IO06_UNKF",
+            CsvHeader,
+            CsvRow("12340001", "0000000000000004", "PACIENTE UNKF", "01/01/2025",
+                "31009004", "PROC UNKF", "FUNCAO_INVALIDA", "DR IO06",
+                "100", "ENFERMARIA", "", "1", "100,00", "0,00", "", "100,00"),
+            CsvRow("12340001", "0000000000000004", "PACIENTE UNKF", "01/01/2025",
+                "31009005", "PROC UNKF2", "OUTRA_INVALIDA", "DR IO06",
+                "100", "ENFERMARIA", "", "1", "100,00", "0,00", "", "100,00"));
+
+        var (svcCtx, service) = BuildService(tenantId);
+        await using var _ = svcCtx;
+        var resultado = await service.ImportarAsync(ToCsvStream(csv), prestadorId, operadoraId, false, CancellationToken.None);
+
+        Assert.True(resultado.IsFailure);
+        Assert.IsType<ValidationError>(resultado.Error);
+
+        await using var check = db.CreateTenantContext(tenantId);
+        var count = await check.Demonstrativos.CountAsync(d => d.OperadoraId == operadoraId);
+        Assert.Equal(0, count);
+    }
+
+    [Fact]
+    public async Task ImportarCsv_AlgumaFuncaoDesconhecida_GeraAlertaAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        await using var ctx = db.CreateTenantContext(tenantId);
+        var (prestadorId, operadoraId) = await SeedBaseAsync(ctx, tenantId);
+
+        var proc = Procedimento.Create(tenantId, "31009006", "PROC ALERTA", "1", null, false, false);
+        ctx.Add(proc);
+        await ctx.SaveChangesAsync();
+
+        ctx.Add(TabelaProcedimento.Create(tenantId, operadoraId, proc.Id, 200m));
+        ctx.Add(DeflatorPrestador.Create(tenantId, prestadorId, operadoraId, PosicaoExecutor.Cirurgiao, 100m));
+        await ctx.SaveChangesAsync();
+
+        var csv = string.Join("\n",
+            "IO06_ALERTA",
+            CsvHeader,
+            CsvRow("12340002", "0000000000000005", "PACIENTE ALR", "01/01/2025",
+                "31009006", "PROC ALERTA", "CIRURGIAO", "DR IO06",
+                "100", "ENFERMARIA", "", "1", "100,00", "0,00", "", "100,00"),
+            CsvRow("12340002", "0000000000000005", "PACIENTE ALR", "01/01/2025",
+                "31009006", "PROC ALERTA", "FUNCAO_INVALIDA_X", "DR IO06",
+                "100", "ENFERMARIA", "", "1", "100,00", "0,00", "", "100,00"));
+
+        var (svcCtx, service) = BuildService(tenantId);
+        await using var _ = svcCtx;
+        var resultado = await service.ImportarAsync(ToCsvStream(csv), prestadorId, operadoraId, false, CancellationToken.None);
+
+        Assert.True(resultado.IsSuccess);
+        Assert.Equal(1, resultado.Value!.ItensCriados);
+        Assert.Contains(resultado.Value.Alertas, a =>
+            a.Mensagem.Contains("FUNCAO_INVALIDA_X", StringComparison.OrdinalIgnoreCase));
     }
 }
 

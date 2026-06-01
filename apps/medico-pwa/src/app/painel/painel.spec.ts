@@ -34,4 +34,11 @@ describe('Painel', () => {
     const el = fixture.nativeElement as HTMLElement;
     expect(el.querySelector('router-outlet')).not.toBeNull();
   });
+
+  it('renders bottom navigation', () => {
+    const fixture = TestBed.createComponent(Painel);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('app-bottom-nav')).not.toBeNull();
+  });
 });

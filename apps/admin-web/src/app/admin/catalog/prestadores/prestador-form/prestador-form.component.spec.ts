@@ -38,6 +38,7 @@ function setup(prestadorId: string | null = null, prestador: PrestadorItem = moc
     obterPrestador: vi.fn().mockReturnValue(of(prestador)),
     criarPrestador: vi.fn().mockReturnValue(of(prestador)),
     atualizarPrestador: vi.fn().mockReturnValue(of(prestador)),
+    definirEmailAcesso: vi.fn().mockReturnValue(of(prestador)),
     listarDeflatores: vi.fn().mockReturnValue(of([mockDeflator])),
     listarOperadoras: vi
       .fn()
@@ -198,7 +199,7 @@ describe('PrestadorFormComponent', () => {
       expect(text.trim()).toBe('Com acesso ao portal');
     });
 
-    it('modo edição exibe "Sem acesso ao portal" quando temUsuario = false', () => {
+    it('modo edição exibe formulário de e-mail de acesso quando emailAcesso é null', () => {
       const mockSemAcesso: PrestadorItem = {
         ...mockPrestador,
         emailAcesso: null,
@@ -208,8 +209,9 @@ describe('PrestadorFormComponent', () => {
       const badge = el.querySelector('.prestador-form__badge-acesso');
       expect(badge).toBeNull();
       const valor = el.querySelector('.prestador-form__email-acesso-valor');
-      const text = valor?.textContent ?? '';
-      expect(text.trim()).toBe('Sem acesso ao portal');
+      expect(valor).toBeNull();
+      const emailForm = el.querySelector('.prestador-form__email-acesso-form');
+      expect(emailForm).not.toBeNull();
     });
   });
 });

@@ -9,10 +9,10 @@ function makeItem(overrides: Partial<MedicoItemGuiaDto> = {}): MedicoItemGuiaDto
   return {
     id: 'item-1',
     codigoTuss: '10101012',
-    descricao: 'Consulta Médica',
-    posicao: 0,
+    descricaoProcedimento: 'Consulta Médica',
+    posicaoExecutor: 'Cirurgiao',
     valorApurado: 150.0,
-    valorPago: 120.0,
+    valorLiquidado: 120.0,
     situacaoCalculo: 'Calculado',
     ...overrides,
   };
@@ -84,22 +84,21 @@ describe('GuiaDetalheComponent', () => {
     expect(bloco?.textContent).toContain('Guia com divergência na tabela.');
   });
 
-  it('bloco observação exibe mensagem padrão quando vazio', () => {
+  it('bloco observação não é exibido quando observação é nula', () => {
     const { el } = setup(makeDetalhe({ observacao: null }));
     const bloco = el.querySelector('.guia-detalhe__observacao');
-    expect(bloco).not.toBeNull();
-    expect(bloco?.textContent).toContain('Nenhuma observação registrada.');
+    expect(bloco).toBeNull();
   });
 
-  it('tabela exibe todos os itens da guia', () => {
+  it('exibe todos os itens da guia como cards', () => {
     const itens = [
-      makeItem({ id: 'item-1', descricao: 'Consulta' }),
-      makeItem({ id: 'item-2', descricao: 'Exame' }),
-      makeItem({ id: 'item-3', descricao: 'Procedimento' }),
+      makeItem({ id: 'item-1', descricaoProcedimento: 'Consulta' }),
+      makeItem({ id: 'item-2', descricaoProcedimento: 'Exame' }),
+      makeItem({ id: 'item-3', descricaoProcedimento: 'Procedimento' }),
     ];
     const { el } = setup(makeDetalhe({ itens }));
-    const rows = el.querySelectorAll('.guia-detalhe__item-row');
-    expect(rows).toHaveLength(3);
+    const cards = el.querySelectorAll('.guia-item');
+    expect(cards).toHaveLength(3);
   });
 
   it('item Calculado exibe badge verde com valor apurado', () => {
@@ -125,7 +124,7 @@ describe('GuiaDetalheComponent', () => {
 
   it('botão voltar navega para /guias', () => {
     const { el, router } = setup();
-    const btn = el.querySelector<HTMLButtonElement>('.guia-detalhe__btn-voltar');
+    const btn = el.querySelector<HTMLButtonElement>('.guia-detalhe__voltar');
     btn?.click();
     expect(router.navigate).toHaveBeenCalledWith(['/guias']);
   });

@@ -565,11 +565,11 @@ formatarData(iso: string): string {
 
 ### Critérios de pronto (RC-04)
 
-- [ ] 9 casos passando em `recurso-guias.component.spec.ts`
-- [ ] `DatePipe` ausente no template (sem importação de `DatePipe`)
-- [ ] Nenhum `[value]` em `<select>` — apenas `[selected]` em `<option>`
-- [ ] `pnpm -F admin-web test:ci` verde (cobertura ≥ 80%)
-- [ ] `pnpm -F admin-web lint` e `pnpm -F admin-web stylelint` sem warnings
+- [x] 9 casos passando em `recurso-guias.component.spec.ts`
+- [x] `DatePipe` ausente no template (sem importação de `DatePipe`)
+- [x] Nenhum `[value]` em `<select>` — apenas `[selected]` em `<option>`
+- [x] `pnpm -F admin-web test:ci` verde (cobertura ≥ 80%)
+- [x] `pnpm -F admin-web lint` e `pnpm -F admin-web stylelint` sem warnings
 
 ---
 
@@ -578,7 +578,7 @@ formatarData(iso: string): string {
 - [x] RC-01: 6 novos casos em `GuiaListTests`; filtros `OperadoraId`, `Senha`, `Beneficiario`, `SemRecurso`, `SomenteComGlosa` funcionais
 - [x] RC-02: 4 novos casos em `RecursoCrudTests`; endpoint `POST /recursos/{id}/guias/lote` funcional
 - [x] RC-03: 3 casos em `recurso.service.spec`; bug `adicionarGuia` corrigido (URL com `guiaId` na path)
-- [ ] RC-04: 9 casos em `recurso-guias.component.spec`; painel de filtros funcional; "Adicionar todas" usa lote server-side
+- [x] RC-04: 9 casos em `recurso-guias.component.spec`; painel de filtros funcional; "Adicionar todas" usa lote server-side
 - [ ] `dotnet test` cobertura ≥ 80% em `Faturamento.Tests`
 - [ ] `pnpm -F admin-web test:ci` cobertura ≥ 80%
 - [ ] Nenhum `DatePipe`/`CurrencyPipe` no `RecursoGuiasComponent`

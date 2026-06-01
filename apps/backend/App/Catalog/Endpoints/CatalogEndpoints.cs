@@ -39,6 +39,7 @@ internal static class CatalogEndpoints
         gpr.MapGet("{id:guid}", ObterPrestadorAsync);
         gpr.MapPost("", CriarPrestadorAsync);
         gpr.MapPut("{id:guid}", AtualizarPrestadorAsync);
+        gpr.MapPatch("{id:guid}/email-acesso", DefinirEmailAcessoAsync);
         gpr.MapDelete("{id:guid}", ExcluirPrestadorAsync);
 
         var gdef = app
@@ -441,6 +442,24 @@ internal static class CatalogEndpoints
         return Results.Ok(result.Value);
     }
 
+    private static async Task<IResult> DefinirEmailAcessoAsync(
+        Guid id, DefinirEmailAcessoRequest body, CatalogService service, CancellationToken ct)
+    {
+        var result = await service.DefinirEmailAcessoAsync(id, body.Email, ct);
+        if (result.IsFailure)
+        {
+            var statusCode = result.Error switch
+            {
+                ConflictError => StatusCodes.Status409Conflict,
+                NotFoundError => StatusCodes.Status404NotFound,
+                _ => StatusCodes.Status400BadRequest,
+            };
+            return Results.Problem(statusCode: statusCode, detail: result.Error!.Message);
+        }
+
+        return Results.Ok(result.Value);
+    }
+
     private static async Task<IResult> ExcluirPrestadorAsync(
         Guid id, CatalogService service, CancellationToken ct)
     {
@@ -763,6 +782,8 @@ internal sealed record AtualizarPrestadorRequest(
     string Nome,
     string? RegistroProfissional,
     bool Ativo);
+
+internal sealed record DefinirEmailAcessoRequest(string Email);
 
 internal sealed record SalvarDeflatorRequest(
     Guid OperadoraId,

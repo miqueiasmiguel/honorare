@@ -494,6 +494,91 @@ When reading the field back from a response DTO, use `?? ''` to convert `null` b
 this.beneficiarioId.set(guia.beneficiarioId ?? "");
 ```
 
+### Native `<select>` binding — use `[selected]` on options
+
+**Never** use `[value]` on a `<select>` element to control the selected option. In Angular 20 with signals, the `[value]` binding is applied before child `<option>` elements are added to the DOM, so the value never matches and the select shows blank.
+
+Use `[selected]` on each `<option>` instead:
+
+```html
+<select (change)="idSignal.set($any($event.target).value)">
+  <option value="" [selected]="!idSignal()">Selecione</option>
+  @for (item of items(); track item.id) {
+  <option [value]="item.id" [selected]="item.id === idSignal()">{{ item.nome }}</option>
+  }
+</select>
+```
+
+### Locale pipes (CurrencyPipe, DecimalPipe) — use Intl APIs instead
+
+In Angular 20 (standalone + signals), locale-dependent pipes (`CurrencyPipe`, `DecimalPipe`, `DatePipe`) call `inject()` on their first `transform()` invocation to resolve `LOCALE_ID`. When that first call happens inside a reactive update triggered by an async context (e.g., `forkJoin` HTTP callback), the injection context is not available → **NG0701**.
+
+**Do not use** `| currency`, `| number`, or `| date` pipes in templates of components that load data asynchronously via signals. Use the native `Intl.*` APIs as class methods instead:
+
+```typescript
+formatarMoeda(value: number | null): string {
+  if (value === null) return '';
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
+formatarNumero(value: number | null, decimals = 2): string {
+  if (value === null) return '';
+  return new Intl.NumberFormat('pt-BR', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  }).format(value);
+}
+```
+
+### `ngOnChanges` vs `effect()` para reagir a mudanças de inputs
+
+**Nunca use `effect()`** para observar mudanças de `input()` signals e escrever outros signals em resposta. Em Angular 20, effects que escrevem signals durante o scheduler reativo (disparado por callbacks HTTP assíncronos) deixam o injection context em estado inválido, causando NG0701 em qualquer pipe que use `inject()`.
+
+Use `ngOnChanges` com a guarda `'inputName' in changes`:
+
+```typescript
+ngOnChanges(changes: SimpleChanges): void {
+  if ('myInput' in changes) {
+    const value = changes['myInput'].currentValue as T | null;
+    if (value !== null) {
+      // populate internal signals safely
+    }
+  }
+}
+```
+
+Nota: `changes['key']` é tipado como `SimpleChange` (sempre truthy por tipo) — use `'key' in changes` como guarda, não `if (changes['key'])`.
+
+### Formulários de edição com listas de seleção — padrão `forkJoin`
+
+Quando um formulário de edição precisa carregar uma entidade existente **e** listas de opções para dropdowns, use `forkJoin` para carregar tudo em paralelo e popular o formulário somente quando todas as fontes resolverem.
+
+Carregar a entidade antes das listas (ou em paralelo sem coordenação) causa selects em branco: os signals de `prestadorId`/`operadoraId` são setados antes das `<option>` existirem no DOM.
+
+```typescript
+forkJoin({
+  prestadores: this._catalogService.listarPrestadores({ ... }),
+  operadoras: this._catalogService.listarOperadoras({ ... }),
+  entidade: this._service.obterPorId(id),
+}).subscribe({
+  next: ({ prestadores, operadoras, entidade }) => {
+    // listas primeiro, depois valores — opções existem quando [selected] é avaliado
+    this.prestadores.set(prestadores.itens);
+    this.operadoras.set(operadoras.itens);
+    this.prestadorId.set(entidade.prestadorId);
+    this.operadoraId.set(entidade.operadoraId);
+  },
+  error: () => {
+    this.erroValidacao.set('Erro ao carregar dados.');
+  },
+});
+```
+
 ### Optional FK left join (EF Core)
 
 When a FK becomes `Guid?` on an entity, every LINQ query joining that table must become a **left join** or rows without the FK will be excluded:
@@ -545,6 +630,8 @@ These are firm decisions (see `docs/DECISOES.md` for full rationale):
 - **No speculative interfaces** — the only interfaces are `IPricingRuleSet` (multiple operators planned) and `IGatewayPagamento` (future payment gateway integration).
 - **Calculation engine must trace every step.** Every invoice calculation stores a complete audit trail — this is what enables physicians to dispute underpayments.
 - **UNIMED rules validated against real invoices.** The test suite in `Faturamento/Tests/` targets 15–20 real paid UNIMED invoices as ground truth. Do not modify calculation logic without a corresponding test case from a real document.
+- **Deflator is mandatory — guias cannot be created uncalculated.** `GuiaService.CriarAsync` and `AtualizarAsync` run a pre-flight motor execution before persisting anything. If any item returns `SemDeflator`, `SemTabela`, or `Indeterminado`, the operation is rejected with a descriptive error. `ImportacaoDemonstrativoService` validates that `DeflatorPrestador` rows exist for all required positions before starting the import loop. Exceptions: `EhPacote = true` (manual value) and `TipoRuleSet.Nulo` operadoras. See D-038.
+- **`ACRESCIMO` column in UNIMED CSV is a percentage, not a boolean.** Only values strictly greater than `0` activate `EhUrgencia`. The string `"0,00%"` means no urgency. See D-039.
 
 ## Domain Language
 

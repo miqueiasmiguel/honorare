@@ -44,7 +44,7 @@ export class PortesAnestesicosComponent implements OnInit {
     this.loading.set(true);
     this._catalogService.listarPortesAnestesico(this.operadoraId).subscribe({
       next: (items) => {
-        const ordenados = [...items].sort((a, b) => a.porteletra.localeCompare(b.porteletra));
+        const ordenados = [...items].sort((a, b) => a.porteLetra.localeCompare(b.porteLetra));
         this.portes.set(ordenados);
         this.loading.set(false);
       },

@@ -1,3 +1,4 @@
+using App;
 using App.Catalog;
 using App.Data;
 using App.Faturamento;
@@ -164,7 +165,7 @@ public sealed class UnimedPipelineTests(PostgresContainerFixture db)
     }
 
     [Fact]
-    public async Task Anestesista_RetornaIndeterminadoAsync()
+    public async Task Anestesista_SemPorteAnestesicoNoProcedimento_CriacaoRejeitadaAsync()
     {
         var tenantId = Guid.NewGuid();
         var (ctx, service) = Build(tenantId);
@@ -175,8 +176,8 @@ public sealed class UnimedPipelineTests(PostgresContainerFixture db)
             Cmd(pId, oId, procId, "SEN-P08", PosicaoExecutor.Anestesista,
                 1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false));
 
-        Assert.True(result.IsSuccess);
-        Assert.Null(result.Value!.Itens[0].ValorApurado);
+        Assert.False(result.IsSuccess);
+        Assert.IsType<ValidationError>(result.Error);
     }
 
     [Fact]

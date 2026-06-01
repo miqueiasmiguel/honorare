@@ -6,6 +6,7 @@ import type {
   AtualizarPrestadorPayload,
   BeneficiarioItem,
   CriarPrestadorPayload,
+  DefinirEmailAcessoPayload,
   DeflatorItem,
   ImportarCsvResult,
   ImportarTabelaPorteResult,
@@ -17,8 +18,6 @@ import type {
   ListarPrestadoresResult,
   ListarProcedimentosParams,
   ListarProcedimentosResult,
-  ListarTabelasParams,
-  ListarTabelasResult,
   LookupOrCreateResult,
   OperadoraItem,
   PrestadorItem,
@@ -27,8 +26,8 @@ import type {
   SalvarDeflatorPayload,
   SalvarOperadoraPayload,
   SalvarProcedimentoPayload,
-  SalvarTabelaPayload,
   TabelaItem,
+  TabelaOrdemOperadoraItem,
   TabelaPorteAnestesicoItem,
   UpsertValorPayload,
 } from './catalog.types';
@@ -149,6 +148,10 @@ export class CatalogService {
     return this._http.put<PrestadorItem>(`/api/v1/admin/prestadores/${id}`, payload);
   }
 
+  definirEmailAcesso(id: string, payload: DefinirEmailAcessoPayload): Observable<PrestadorItem> {
+    return this._http.patch<PrestadorItem>(`/api/v1/admin/prestadores/${id}/email-acesso`, payload);
+  }
+
   excluirPrestador(id: string): Observable<void> {
     return this._http.delete(`/api/v1/admin/prestadores/${id}`).pipe(
       map(() => {
@@ -181,41 +184,6 @@ export class CatalogService {
 
   excluirDeflator(prestadorId: string, id: string): Observable<void> {
     return this._http.delete(`/api/v1/admin/prestadores/${prestadorId}/deflatores/${id}`).pipe(
-      map(() => {
-        return;
-      }),
-    );
-  }
-
-  listarTabelas(params: ListarTabelasParams): Observable<ListarTabelasResult> {
-    let httpParams = new HttpParams()
-      .set('pagina', params.pagina.toString())
-      .set('itensPorPagina', params.itensPorPagina.toString());
-
-    if (params.operadoraId) {
-      httpParams = httpParams.set('operadoraId', params.operadoraId);
-    }
-    if (params.codigoTuss) {
-      httpParams = httpParams.set('codigoTuss', params.codigoTuss);
-    }
-
-    return this._http.get<ListarTabelasResult>('/api/v1/admin/tabelas', { params: httpParams });
-  }
-
-  obterTabela(id: string): Observable<TabelaItem> {
-    return this._http.get<TabelaItem>(`/api/v1/admin/tabelas/${id}`);
-  }
-
-  criarTabela(payload: SalvarTabelaPayload): Observable<TabelaItem> {
-    return this._http.post<TabelaItem>('/api/v1/admin/tabelas', payload);
-  }
-
-  atualizarTabela(id: string, payload: SalvarTabelaPayload): Observable<TabelaItem> {
-    return this._http.put<TabelaItem>(`/api/v1/admin/tabelas/${id}`, payload);
-  }
-
-  excluirTabela(id: string): Observable<void> {
-    return this._http.delete(`/api/v1/admin/tabelas/${id}`).pipe(
       map(() => {
         return;
       }),
@@ -332,5 +300,25 @@ export class CatalogService {
       form,
       { params },
     );
+  }
+
+  // ── Tabela Ordem Operadora ─────────────────────────────────────────────────
+
+  listarTabelaOrdem(operadoraId: string): Observable<TabelaOrdemOperadoraItem[]> {
+    return this._http.get<TabelaOrdemOperadoraItem[]>(
+      `/api/v1/admin/operadoras/${operadoraId}/tabela-ordem`,
+    );
+  }
+
+  salvarTabelaOrdem(operadoraId: string, payload: TabelaOrdemOperadoraItem[]): Observable<void> {
+    return this._http
+      .put(`/api/v1/admin/operadoras/${operadoraId}/tabela-ordem`, payload)
+      .pipe(map(() => undefined));
+  }
+
+  excluirTabelaOrdem(operadoraId: string): Observable<void> {
+    return this._http
+      .delete(`/api/v1/admin/operadoras/${operadoraId}/tabela-ordem`)
+      .pipe(map(() => undefined));
   }
 }

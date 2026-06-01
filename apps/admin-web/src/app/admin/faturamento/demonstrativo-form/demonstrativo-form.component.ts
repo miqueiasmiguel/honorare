@@ -70,60 +70,139 @@ interface ItemFormState {
         <h3 class="demonstrativo-form__itens-titulo">Itens do Demonstrativo</h3>
 
         @for (item of itens(); track $index) {
-          <div class="demonstrativo-form__item-row">
-            <input
-              type="text"
-              class="demonstrativo-form__item-senha"
-              placeholder="Senha"
-              [value]="item.senha"
-              (input)="atualizarItemSenha($index, $any($event.target).value)"
-            />
-            <input
-              type="text"
-              class="demonstrativo-form__item-codigo-tuss"
-              placeholder="Código TUSS"
-              [value]="item.codigoTuss"
-              (input)="atualizarItemCodigoTuss($index, $any($event.target).value)"
-            />
-            <input
-              type="text"
-              class="demonstrativo-form__item-descricao"
-              placeholder="Descrição"
-              [value]="item.descricao ?? ''"
-              (input)="atualizarItemDescricao($index, $any($event.target).value)"
-            />
-            <input
-              type="number"
-              class="demonstrativo-form__item-valor-apresentado"
-              placeholder="Valor Apresentado"
-              [value]="item.valorApresentado"
-              (input)="atualizarItemValorApresentado($index, $any($event.target).valueAsNumber)"
-            />
-            <input
-              type="number"
-              class="demonstrativo-form__item-valor-pago"
-              placeholder="Valor Pago"
-              [value]="item.valorPago"
-              (input)="atualizarItemValorPago($index, $any($event.target).valueAsNumber)"
-            />
-            <span class="demonstrativo-form__valor-glosado">
-              {{ item.valorApresentado - item.valorPago }}
-            </span>
-            <input
-              type="text"
-              class="demonstrativo-form__item-motivo-glosa"
-              placeholder="Motivo Glosa"
-              [value]="item.motivoGlosa ?? ''"
-              (input)="atualizarItemMotivoGlosa($index, $any($event.target).value)"
-            />
-            <button
-              type="button"
-              class="demonstrativo-form__btn-remover-item"
-              [disabled]="item.conciliado"
-              (click)="removerItem($index)"
-            >
-              Remover
-            </button>
+          <div
+            class="demonstrativo-form__item-card"
+            [class.demonstrativo-form__item-card--conciliado]="item.conciliado"
+          >
+            <div class="demonstrativo-form__item-header">
+              <span class="demonstrativo-form__item-numero">Item {{ $index + 1 }}</span>
+              @if (item.conciliado) {
+                <span
+                  class="demonstrativo-form__item-badge demonstrativo-form__item-badge--conciliado"
+                >
+                  Conciliado
+                </span>
+              }
+              <button
+                type="button"
+                class="demonstrativo-form__btn-remover-item"
+                [disabled]="item.conciliado"
+                (click)="removerItem($index)"
+              >
+                Remover
+              </button>
+            </div>
+
+            <div class="demonstrativo-form__item-campos demonstrativo-form__item-campos--linha-1">
+              <div class="demonstrativo-form__item-campo">
+                <label
+                  class="demonstrativo-form__item-label"
+                  [attr.for]="'item-' + $index + '-senha'"
+                >
+                  Senha
+                </label>
+                <input
+                  type="text"
+                  class="demonstrativo-form__item-input"
+                  [id]="'item-' + $index + '-senha'"
+                  [value]="item.senha"
+                  (input)="atualizarItemSenha($index, $any($event.target).value)"
+                />
+              </div>
+              <div class="demonstrativo-form__item-campo">
+                <label
+                  class="demonstrativo-form__item-label"
+                  [attr.for]="'item-' + $index + '-tuss'"
+                >
+                  Código TUSS
+                </label>
+                <input
+                  type="text"
+                  class="demonstrativo-form__item-input demonstrativo-form__item-input--mono"
+                  [id]="'item-' + $index + '-tuss'"
+                  [value]="item.codigoTuss"
+                  (input)="atualizarItemCodigoTuss($index, $any($event.target).value)"
+                />
+              </div>
+              <div class="demonstrativo-form__item-campo">
+                <label
+                  class="demonstrativo-form__item-label"
+                  [attr.for]="'item-' + $index + '-descricao'"
+                >
+                  Descrição
+                </label>
+                <input
+                  type="text"
+                  class="demonstrativo-form__item-input"
+                  [id]="'item-' + $index + '-descricao'"
+                  [value]="item.descricao ?? ''"
+                  (input)="atualizarItemDescricao($index, $any($event.target).value)"
+                />
+              </div>
+            </div>
+
+            <div class="demonstrativo-form__item-campos demonstrativo-form__item-campos--linha-2">
+              <div class="demonstrativo-form__item-campo">
+                <label
+                  class="demonstrativo-form__item-label"
+                  [attr.for]="'item-' + $index + '-vl-apresentado'"
+                >
+                  Vl. Apresentado (R$)
+                </label>
+                <input
+                  type="number"
+                  class="demonstrativo-form__item-input demonstrativo-form__item-input--valor"
+                  [id]="'item-' + $index + '-vl-apresentado'"
+                  min="0"
+                  step="0.01"
+                  [value]="item.valorApresentado"
+                  (input)="atualizarItemValorApresentado($index, $any($event.target).valueAsNumber)"
+                />
+              </div>
+              <div class="demonstrativo-form__item-campo">
+                <label
+                  class="demonstrativo-form__item-label"
+                  [attr.for]="'item-' + $index + '-vl-pago'"
+                >
+                  Vl. Pago (R$)
+                </label>
+                <input
+                  type="number"
+                  class="demonstrativo-form__item-input demonstrativo-form__item-input--valor"
+                  [id]="'item-' + $index + '-vl-pago'"
+                  min="0"
+                  step="0.01"
+                  [value]="item.valorPago"
+                  (input)="atualizarItemValorPago($index, $any($event.target).valueAsNumber)"
+                />
+              </div>
+              <div class="demonstrativo-form__item-campo">
+                <span class="demonstrativo-form__item-label">Vl. Glosado (R$)</span>
+                <span
+                  class="demonstrativo-form__valor-glosado"
+                  [class.demonstrativo-form__valor-glosado--zero]="
+                    item.valorApresentado - item.valorPago === 0
+                  "
+                >
+                  {{ (item.valorApresentado - item.valorPago).toFixed(2) }}
+                </span>
+              </div>
+              <div class="demonstrativo-form__item-campo">
+                <label
+                  class="demonstrativo-form__item-label"
+                  [attr.for]="'item-' + $index + '-motivo-glosa'"
+                >
+                  Motivo da Glosa
+                </label>
+                <input
+                  type="text"
+                  class="demonstrativo-form__item-input"
+                  [id]="'item-' + $index + '-motivo-glosa'"
+                  [value]="item.motivoGlosa ?? ''"
+                  (input)="atualizarItemMotivoGlosa($index, $any($event.target).value)"
+                />
+              </div>
+            </div>
           </div>
         }
 
@@ -132,7 +211,7 @@ interface ItemFormState {
           class="demonstrativo-form__btn-adicionar-item"
           (click)="adicionarItem()"
         >
-          Adicionar Item
+          + Adicionar Item
         </button>
       </div>
 
