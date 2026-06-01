@@ -523,6 +523,47 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
         return Result<ItemGuiaDto>.Ok(await MapItemToDtoAsync(itemId, ct));
     }
 
+    internal async Task<Result<ItemGuiaDto>> AtualizarPagamentoItemAsync(
+        Guid guiaId, Guid itemId,
+        decimal? valorLiquidado, string? motivoGlosa,
+        CancellationToken ct = default)
+    {
+        var guia = await _db.Guias.FirstOrDefaultAsync(g => g.Id == guiaId, ct);
+        if (guia is null)
+        {
+            return Result<ItemGuiaDto>.Fail(new NotFoundError("Guia não encontrada."));
+        }
+
+        var todosItens = await _db.ItensGuia
+            .Where(i => i.GuiaId == guiaId)
+            .ToListAsync(ct);
+
+        var item = todosItens.FirstOrDefault(i => i.Id == itemId);
+        if (item is null)
+        {
+            return Result<ItemGuiaDto>.Fail(new NotFoundError("Item não encontrado."));
+        }
+
+        item.SetValorLiquidado(valorLiquidado);
+        item.SetMotivoGlosa(motivoGlosa);
+
+        if (valorLiquidado is null)
+        {
+            if (guia.Situacao == SituacaoGuia.Liquidada)
+            {
+                guia.ReverterParaApresentada();
+            }
+        }
+        else if (todosItens.All(i => i.ValorLiquidado is not null))
+        {
+            guia.Liquidar();
+        }
+
+        await _db.SaveChangesAsync(ct);
+
+        return Result<ItemGuiaDto>.Ok(await MapItemToDtoAsync(itemId, ct));
+    }
+
     internal async Task<Result> ExcluirAsync(Guid id, CancellationToken ct = default)
     {
         var guia = await _db.Guias.FirstOrDefaultAsync(g => g.Id == id, ct);

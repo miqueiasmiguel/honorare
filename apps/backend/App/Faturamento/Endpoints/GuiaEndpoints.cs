@@ -191,12 +191,23 @@ internal static class GuiaEndpoints
         return Results.Ok(result.Value);
     }
 
-    private static Task<IResult> AtualizarPagamentoItemAsync(
+    private static async Task<IResult> AtualizarPagamentoItemAsync(
         Guid id, Guid itemId, AtualizarPagamentoItemRequest req,
         GuiaService service, CancellationToken ct)
     {
-        _ = (id, itemId, req, service, ct);
-        return Task.FromResult(Results.StatusCode(501));
+        var result = await service.AtualizarPagamentoItemAsync(id, itemId, req.ValorLiquidado, req.MotivoGlosa, ct);
+        if (result.IsFailure)
+        {
+            var statusCode = result.Error switch
+            {
+                ValidationError => StatusCodes.Status422UnprocessableEntity,
+                NotFoundError => StatusCodes.Status404NotFound,
+                _ => StatusCodes.Status400BadRequest,
+            };
+            return Results.Problem(statusCode: statusCode, detail: result.Error!.Message);
+        }
+
+        return Results.Ok(result.Value);
     }
 
     private static async Task<IResult> ExcluirGuiaAsync(
