@@ -83,8 +83,11 @@ export interface CriarItemGuiaPayload {
 }
 
 export interface ItemGuiaDisplay extends CriarItemGuiaPayload {
+  id?: string;
   codigoTuss?: string;
   descricaoProcedimento?: string;
+  valorLiquidado?: number | null;
+  motivoGlosa?: string | null;
 }
 
 export interface CriarGuiaPayload {

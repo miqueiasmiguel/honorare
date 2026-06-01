@@ -12,6 +12,7 @@ import type {
   GuiaCalculoResult,
   ItemGuiaDisplay,
   PosicaoExecutor,
+  SituacaoGuia,
   ViaAcesso,
 } from '../guia.types';
 import { ItemGuiaFormComponent } from './item-guia-form/item-guia-form.component';
@@ -123,27 +124,50 @@ import { ItemGuiaFormComponent } from './item-guia-form/item-guia-form.component
                 <span class="guia-form__item-badge">{{ item.tempoAnestesicoMin }} min</span>
               }
             </div>
-            @if (
-              item.valorApurado !== null ||
-              (item.valorLiquidado !== null && item.valorLiquidado !== undefined)
-            ) {
+            @if (item.valorApurado !== null) {
               <div class="guia-form__item-valores">
-                @if (item.valorApurado !== null) {
-                  <span class="guia-form__item-valor">
-                    <span class="guia-form__item-valor-label">Apurado</span>
-                    <span class="guia-form__item-valor-num">{{
-                      formatarMoeda(item.valorApurado)
-                    }}</span>
-                  </span>
-                }
-                @if (item.valorLiquidado !== null && item.valorLiquidado !== undefined) {
-                  <span class="guia-form__item-valor">
-                    <span class="guia-form__item-valor-label">Liquidado</span>
-                    <span class="guia-form__item-valor-num">{{
-                      formatarMoeda(item.valorLiquidado)
-                    }}</span>
-                  </span>
-                }
+                <span class="guia-form__item-valor">
+                  <span class="guia-form__item-valor-label">Apurado</span>
+                  <span class="guia-form__item-valor-num">{{
+                    formatarMoeda(item.valorApurado)
+                  }}</span>
+                </span>
+              </div>
+            }
+            @if (modoEditar() && item.id) {
+              <div class="guia-form__item-pagamento">
+                <div class="guia-form__item-pagamento-field">
+                  <label class="guia-form__item-pagamento-label" [for]="'vliq-' + item.id">
+                    VL Liquidado
+                  </label>
+                  <input
+                    class="guia-form__item-valor-input"
+                    [id]="'vliq-' + item.id"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    [value]="valoresLiquidadoEmEdicao()[item.id] ?? ''"
+                    (input)="onValorLiquidadoInput(item.id, $any($event.target).value)"
+                    (blur)="salvarPagamentoItem(item.id)"
+                    [disabled]="salvandoPagamento()[item.id]"
+                    placeholder="0,00"
+                  />
+                </div>
+                <div class="guia-form__item-pagamento-field">
+                  <label class="guia-form__item-pagamento-label" [for]="'mglosa-' + item.id">
+                    Motivo Glosa
+                  </label>
+                  <input
+                    class="guia-form__item-glosa-input"
+                    [id]="'mglosa-' + item.id"
+                    type="text"
+                    [value]="motivosGlosaEmEdicao()[item.id] ?? ''"
+                    (input)="onMotivoGlosaInput(item.id, $any($event.target).value)"
+                    (blur)="salvarPagamentoItem(item.id)"
+                    [disabled]="salvandoPagamento()[item.id]"
+                    placeholder="Código de glosa"
+                  />
+                </div>
               </div>
             }
             <button type="button" class="guia-form__btn-remover-item" (click)="removerItem($index)">
@@ -176,6 +200,13 @@ import { ItemGuiaFormComponent } from './item-guia-form/item-guia-form.component
           <h3 class="guia-form__apuracao-titulo">Apuração</h3>
           <app-calculo-detalhe [calculo]="calculo()" />
         </section>
+      }
+
+      @if (modoEditar() && situacao()) {
+        <div class="guia-form__situacao">
+          <span class="guia-form__situacao-label">Situação:</span>
+          <span class="guia-form__situacao-valor">{{ situacao() }}</span>
+        </div>
       }
 
       @if (erroValidacao()) {
@@ -242,6 +273,10 @@ export class GuiaFormComponent implements OnInit {
   readonly itens = signal<ItemGuiaDisplay[]>([]);
   readonly adicionandoItem = signal(false);
   readonly calculo = signal<GuiaCalculoResult | null>(null);
+  readonly situacao = signal<SituacaoGuia | null>(null);
+  readonly valoresLiquidadoEmEdicao = signal<Record<string, string>>({});
+  readonly motivosGlosaEmEdicao = signal<Record<string, string>>({});
+  readonly salvandoPagamento = signal<Record<string, boolean>>({});
 
   ngOnInit(): void {
     const id = this._route.snapshot.paramMap.get('id');
@@ -284,8 +319,10 @@ export class GuiaFormComponent implements OnInit {
           this.dataAtendimento.set(guia.dataAtendimento);
           this.ehPacote.set(guia.ehPacote);
           this.observacao.set(guia.observacao);
+          this.situacao.set(guia.situacao);
           this.itens.set(
             guia.itens.map((i) => ({
+              id: i.id,
               procedimentoId: i.procedimentoId,
               posicaoExecutor: i.posicaoExecutor,
               percentualOrdem: i.percentualOrdem,
@@ -297,8 +334,17 @@ export class GuiaFormComponent implements OnInit {
               codigoTuss: i.codigoTuss,
               descricaoProcedimento: i.descricaoProcedimento,
               valorLiquidado: i.valorLiquidado,
+              motivoGlosa: i.motivoGlosa,
             })),
           );
+          const liquidadoMap: Record<string, string> = {};
+          const glosaMap: Record<string, string> = {};
+          guia.itens.forEach((i) => {
+            liquidadoMap[i.id] = i.valorLiquidado != null ? String(i.valorLiquidado) : '';
+            glosaMap[i.id] = i.motivoGlosa ?? '';
+          });
+          this.valoresLiquidadoEmEdicao.set(liquidadoMap);
+          this.motivosGlosaEmEdicao.set(glosaMap);
           this.carregando.set(false);
         },
         error: () => {
@@ -368,6 +414,50 @@ export class GuiaFormComponent implements OnInit {
 
   cancelar(): void {
     void this._router.navigate(['/admin/guias']);
+  }
+
+  onValorLiquidadoInput(itemId: string, value: string): void {
+    this.valoresLiquidadoEmEdicao.update((m) => ({ ...m, [itemId]: value }));
+  }
+
+  onMotivoGlosaInput(itemId: string, value: string): void {
+    this.motivosGlosaEmEdicao.update((m) => ({ ...m, [itemId]: value }));
+  }
+
+  salvarPagamentoItem(itemId: string): void {
+    const guiaId = this.guiaId();
+    if (!guiaId) {
+      return;
+    }
+    const rawValor = this.valoresLiquidadoEmEdicao()[itemId] ?? '';
+    const valorLiquidado = rawValor === '' ? null : parseFloat(rawValor.replace(',', '.'));
+    const motivoGlosa = this.motivosGlosaEmEdicao()[itemId] || null;
+
+    this.salvandoPagamento.update((m) => ({ ...m, [itemId]: true }));
+    this._guiaService
+      .atualizarPagamentoItem(guiaId, itemId, valorLiquidado, motivoGlosa)
+      .subscribe({
+        next: (itemAtualizado) => {
+          this.itens.update((items) =>
+            items.map((i) =>
+              i.id === itemId
+                ? {
+                    ...i,
+                    valorLiquidado: itemAtualizado.valorLiquidado,
+                    motivoGlosa: itemAtualizado.motivoGlosa,
+                  }
+                : i,
+            ),
+          );
+          const todosLiquidados = this.itens().every((i) => i.valorLiquidado != null);
+          this.situacao.set(todosLiquidados ? 'Liquidada' : 'Apresentada');
+          this.salvandoPagamento.update((m) => ({ ...m, [itemId]: false }));
+        },
+        error: () => {
+          this.erroValidacao.set('Erro ao salvar pagamento do item.');
+          this.salvandoPagamento.update((m) => ({ ...m, [itemId]: false }));
+        },
+      });
   }
 
   onSubmit(event: Event): void {

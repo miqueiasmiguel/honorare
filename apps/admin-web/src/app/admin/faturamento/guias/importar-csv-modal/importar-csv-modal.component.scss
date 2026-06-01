@@ -1,0 +1,169 @@
+@use 'styles/tokens' as *;
+
+.importar-csv-modal__backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgb(0 0 0 / 50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.importar-csv-modal {
+  background-color: var(--color-pergaminho-claro);
+  border-radius: 8px;
+  padding: space(6);
+  width: 100%;
+  max-width: 520px;
+  display: flex;
+  flex-direction: column;
+  gap: space(4);
+  box-shadow:
+    0 4px 6px rgb(0 0 0 / 10%),
+    0 1px 3px rgb(0 0 0 / 8%);
+}
+
+.importar-csv-modal__header {
+  border-bottom: 1px solid var(--color-borda-discreta);
+  padding-bottom: space(3);
+}
+
+.importar-csv-modal__title {
+  @include text-h2;
+
+  color: var(--color-tinta);
+  margin: 0;
+}
+
+.importar-csv-modal__section {
+  display: flex;
+  flex-direction: column;
+  gap: space(1);
+}
+
+.importar-csv-modal__label {
+  @include text-label;
+
+  color: var(--color-tinta);
+}
+
+.importar-csv-modal__label--checkbox {
+  flex-direction: row;
+  align-items: center;
+  gap: space(2);
+  cursor: pointer;
+  display: flex;
+}
+
+.importar-csv-modal__select {
+  @include text-body;
+  @include transition(border-color);
+
+  height: 40px;
+  border: 1px solid var(--color-borda-media);
+  border-radius: 6px;
+  padding: 0 space(3);
+  background-color: var(--color-pergaminho-claro);
+  color: var(--color-tinta);
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-terracota);
+  }
+}
+
+.importar-csv-modal__input-arquivo {
+  @include text-body;
+
+  color: var(--color-tinta);
+}
+
+.importar-csv-modal__erro {
+  @include text-label;
+
+  color: var(--color-ferrugem);
+}
+
+.importar-csv-modal__acoes {
+  display: flex;
+  gap: space(3);
+  justify-content: flex-end;
+  padding-top: space(2);
+  border-top: 1px solid var(--color-borda-discreta);
+}
+
+.importar-csv-modal__btn-importar {
+  @include text-label;
+  @include transition(background-color);
+
+  height: 40px;
+  padding: 0 space(4);
+  border-radius: 6px;
+  border: none;
+  background-color: var(--color-terracota);
+  color: var(--color-pergaminho-claro);
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  &:hover:not(:disabled) {
+    background-color: var(--color-terracota-escuro);
+  }
+}
+
+.importar-csv-modal__btn-cancelar,
+.importar-csv-modal__btn-concluir {
+  @include text-label;
+  @include transition(background-color);
+
+  height: 40px;
+  padding: 0 space(4);
+  border-radius: 6px;
+  border: 1px solid var(--color-borda-media);
+  background-color: transparent;
+  color: var(--color-tinta);
+  cursor: pointer;
+
+  &:hover {
+    background-color: var(--color-pergaminho);
+  }
+}
+
+.importar-csv-modal__resultado {
+  display: flex;
+  flex-direction: column;
+  gap: space(2);
+}
+
+.importar-csv-modal__resultado-linha {
+  @include text-body;
+
+  color: var(--color-tinta);
+  margin: 0;
+}
+
+.importar-csv-modal__erros {
+  margin: 0;
+  padding-left: space(4);
+}
+
+.importar-csv-modal__erro-item {
+  @include text-body-small;
+
+  color: var(--color-ferrugem);
+}
+
+.importar-csv-modal__alertas {
+  margin: 0;
+  padding-left: space(4);
+}
+
+.importar-csv-modal__alerta-item {
+  @include text-body-small;
+
+  color: var(--color-ambar);
+}

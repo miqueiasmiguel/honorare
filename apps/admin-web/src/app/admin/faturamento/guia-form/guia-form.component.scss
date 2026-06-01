@@ -160,6 +160,102 @@
   color: var(--color-tinta);
 }
 
+.guia-form__item-pagamento {
+  display: flex;
+  gap: space(4);
+  padding-top: space(2);
+  border-top: 1px solid var(--color-borda-discreta);
+}
+
+.guia-form__item-pagamento-field {
+  display: flex;
+  flex-direction: column;
+  gap: space(1);
+}
+
+.guia-form__item-pagamento-label {
+  @include text-label;
+
+  color: var(--color-tinta-terciaria);
+}
+
+.guia-form__item-valor-input {
+  @include text-mono-value;
+  @include transition(border-color);
+
+  width: 110px;
+  height: 36px;
+  border: 1px solid var(--color-borda-media);
+  border-radius: 4px;
+  padding: 0 space(2);
+  background-color: var(--color-pergaminho-claro);
+  color: var(--color-tinta);
+
+  &::placeholder {
+    color: var(--color-tinta-terciaria);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-terracota);
+  }
+}
+
+.guia-form__item-glosa-input {
+  @include text-mono-value;
+  @include transition(border-color);
+
+  width: 140px;
+  height: 36px;
+  border: 1px solid var(--color-borda-media);
+  border-radius: 4px;
+  padding: 0 space(2);
+  background-color: var(--color-pergaminho-claro);
+  color: var(--color-tinta);
+
+  &::placeholder {
+    color: var(--color-tinta-terciaria);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-terracota);
+  }
+}
+
+.guia-form__situacao {
+  display: flex;
+  align-items: center;
+  gap: space(2);
+  padding: space(2) space(3);
+  border: 1px solid var(--color-borda-discreta);
+  border-radius: 6px;
+  background-color: var(--color-pergaminho);
+}
+
+.guia-form__situacao-label {
+  @include text-label;
+
+  color: var(--color-tinta-secundaria);
+}
+
+.guia-form__situacao-valor {
+  @include text-body;
+
+  color: var(--color-tinta);
+  font-weight: 600;
+}
+
 .guia-form__btn-remover-item {
   @include text-label;
   @include transition(color);

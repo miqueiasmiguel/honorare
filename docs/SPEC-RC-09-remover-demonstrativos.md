@@ -383,7 +383,7 @@ pnpm -F admin-web test:ci    # verde, ≥ 80% cobertura
 
 ---
 
-## Sessão 4 — Frontend: criar modal de importação CSV + edição inline de pagamento
+## Sessão 4 — Frontend: criar modal de importação CSV + edição inline de pagamento ✅
 
 **Objetivo:** implementar as duas novas features de frontend.
 Requer Sessão 3 concluída.

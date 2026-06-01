@@ -36,6 +36,7 @@ function setup(guias: GuiaItem[] = [makeGuia()], total?: number) {
   const guiaService = {
     listar: vi.fn().mockReturnValue(of(makeResult(guias, total ?? guias.length))),
     excluir: vi.fn().mockReturnValue(of(undefined)),
+    importarCsv: vi.fn(),
   };
   const catalogService = {
     listarPrestadores: vi
@@ -301,5 +302,24 @@ describe('GuiaListComponent', () => {
     const { component } = setup();
     component.onFiltroBeneficiarioChange('Carlos');
     expect(component.filtroBeneficiario()).toBe('Carlos');
+  });
+
+  it('clicar Importar CSV abre o modal', () => {
+    const { el, component } = setup();
+
+    el.querySelector<HTMLButtonElement>('.guia-list__btn-importar-csv')?.click();
+
+    expect(component.mostrarImportarCsvModal()).toBe(true);
+  });
+
+  it('onImportCsvConcluido fecha o modal e recarrega a lista', () => {
+    const { component, guiaService } = setup();
+    component.mostrarImportarCsvModal.set(true);
+    guiaService.listar.mockClear();
+
+    component.onImportCsvConcluido();
+
+    expect(component.mostrarImportarCsvModal()).toBe(false);
+    expect(guiaService.listar).toHaveBeenCalled();
   });
 });

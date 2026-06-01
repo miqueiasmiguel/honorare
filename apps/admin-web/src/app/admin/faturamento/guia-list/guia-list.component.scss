@@ -17,6 +17,11 @@
   color: var(--color-tinta);
 }
 
+.guia-list__header-acoes {
+  display: flex;
+  gap: space(2);
+}
+
 .guia-list__btn-nova {
   @include text-label;
 
@@ -32,6 +37,24 @@
 
   &:hover {
     background-color: var(--color-terracota-escuro);
+  }
+}
+
+.guia-list__btn-importar-csv {
+  @include text-label;
+  @include transition(border-color, color);
+
+  height: 40px;
+  padding: 0 space(4);
+  border: 1px solid var(--color-borda-media);
+  border-radius: 6px;
+  background-color: transparent;
+  color: var(--color-tinta-secundaria);
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--color-terracota);
+    color: var(--color-terracota);
   }
 }
 

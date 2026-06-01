@@ -1,0 +1,114 @@
+@if (open) {
+  <div class="importar-csv-modal__backdrop">
+    <div class="importar-csv-modal">
+      <header class="importar-csv-modal__header">
+        <h2 class="importar-csv-modal__title">Importar CSV da UNIMED</h2>
+      </header>
+
+      @if (resultado(); as res) {
+        <div class="importar-csv-modal__resultado">
+          <p class="importar-csv-modal__resultado-linha">
+            Guias criadas: {{ res.guiasCriadas }} / atualizadas: {{ res.guiasAtualizadas }}
+          </p>
+          <p class="importar-csv-modal__resultado-linha">
+            Itens criados: {{ res.itensCriados }} / atualizados: {{ res.itensAtualizados }} /
+            ignorados: {{ res.itensIgnorados }}
+          </p>
+          <p class="importar-csv-modal__resultado-linha">
+            Beneficiários criados: {{ res.beneficiariosCriados }}
+          </p>
+          @if (res.erros.length > 0) {
+            <ul class="importar-csv-modal__erros">
+              @for (e of res.erros; track e.linha) {
+                <li class="importar-csv-modal__erro-item">Linha {{ e.linha }}: {{ e.mensagem }}</li>
+              }
+            </ul>
+          }
+          @if (res.alertas.length > 0) {
+            <ul class="importar-csv-modal__alertas">
+              @for (a of res.alertas; track a.linha) {
+                <li class="importar-csv-modal__alerta-item">
+                  Linha {{ a.linha }}: {{ a.mensagem }}
+                </li>
+              }
+            </ul>
+          }
+        </div>
+        <div class="importar-csv-modal__acoes">
+          <button type="button" class="importar-csv-modal__btn-concluir" (click)="concluir()">
+            Concluir
+          </button>
+        </div>
+      } @else {
+        <section class="importar-csv-modal__section">
+          <label class="importar-csv-modal__label" for="importar-csv-prestador">Prestador</label>
+          <select
+            id="importar-csv-prestador"
+            class="importar-csv-modal__select"
+            (change)="prestadorId.set($any($event.target).value)"
+          >
+            <option value="" [selected]="!prestadorId()">Selecione um prestador</option>
+            @for (p of prestadores(); track p.id) {
+              <option [value]="p.id" [selected]="p.id === prestadorId()">{{ p.nome }}</option>
+            }
+          </select>
+        </section>
+
+        <section class="importar-csv-modal__section">
+          <label class="importar-csv-modal__label" for="importar-csv-operadora">Operadora</label>
+          <select
+            id="importar-csv-operadora"
+            class="importar-csv-modal__select"
+            (change)="operadoraId.set($any($event.target).value)"
+          >
+            <option value="" [selected]="!operadoraId()">Selecione uma operadora</option>
+            @for (o of operadoras(); track o.id) {
+              <option [value]="o.id" [selected]="o.id === operadoraId()">{{ o.nome }}</option>
+            }
+          </select>
+        </section>
+
+        <section class="importar-csv-modal__section">
+          <label class="importar-csv-modal__label" for="importar-csv-arquivo">Arquivo CSV</label>
+          <input
+            id="importar-csv-arquivo"
+            type="file"
+            accept=".csv"
+            class="importar-csv-modal__input-arquivo"
+            (change)="onArquivoChange($event)"
+          />
+        </section>
+
+        <section class="importar-csv-modal__section">
+          <label class="importar-csv-modal__label importar-csv-modal__label--checkbox">
+            <input
+              type="checkbox"
+              class="importar-csv-modal__checkbox"
+              [checked]="somenteValidar()"
+              (change)="somenteValidar.set($any($event.target).checked)"
+            />
+            Somente validar (não salvar)
+          </label>
+        </section>
+
+        @if (erroValidacao()) {
+          <p class="importar-csv-modal__erro">{{ erroValidacao() }}</p>
+        }
+
+        <div class="importar-csv-modal__acoes">
+          <button
+            type="button"
+            class="importar-csv-modal__btn-importar"
+            [disabled]="uploading()"
+            (click)="importar()"
+          >
+            {{ uploading() ? 'Importando…' : 'Importar' }}
+          </button>
+          <button type="button" class="importar-csv-modal__btn-cancelar" (click)="cancelar()">
+            Cancelar
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+}

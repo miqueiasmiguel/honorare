@@ -6,15 +6,32 @@ import { CatalogService } from '../../catalog/catalog.service';
 import { GuiaService } from '../guia.service';
 import type { OperadoraItem, PrestadorItem } from '../../catalog/catalog.types';
 import type { GuiaItem, SituacaoGuia } from '../guia.types';
+import { ImportarCsvModalComponent } from '../guias/importar-csv-modal/importar-csv-modal.component';
 
 @Component({
   selector: 'app-guia-list',
+  imports: [ImportarCsvModalComponent],
   template: `
     <div class="guia-list">
       <div class="guia-list__header">
         <h2 class="guia-list__title">Guias</h2>
-        <button class="guia-list__btn-nova" type="button" (click)="novaGuia()">Nova Guia</button>
+        <div class="guia-list__header-acoes">
+          <button
+            class="guia-list__btn-importar-csv"
+            type="button"
+            (click)="mostrarImportarCsvModal.set(true)"
+          >
+            Importar CSV
+          </button>
+          <button class="guia-list__btn-nova" type="button" (click)="novaGuia()">Nova Guia</button>
+        </div>
       </div>
+
+      <app-importar-csv-modal
+        [open]="mostrarImportarCsvModal()"
+        (concluido)="onImportCsvConcluido()"
+        (cancelado)="mostrarImportarCsvModal.set(false)"
+      />
 
       <div class="guia-list__filters">
         <div class="guia-list__filter-row">
@@ -216,6 +233,7 @@ export class GuiaListComponent implements OnInit {
   readonly filtroSemRecurso = signal(false);
   readonly filtroSomenteComGlosa = signal(false);
   readonly erroExclusao = signal('');
+  readonly mostrarImportarCsvModal = signal(false);
 
   readonly totalPaginas = computed(() =>
     Math.max(1, Math.ceil(this.total() / this.itensPorPagina())),
@@ -286,6 +304,11 @@ export class GuiaListComponent implements OnInit {
 
   novaGuia(): void {
     void this._router.navigate(['/admin/guias/nova']);
+  }
+
+  onImportCsvConcluido(): void {
+    this.mostrarImportarCsvModal.set(false);
+    this._carregar();
   }
 
   editar(id: string): void {

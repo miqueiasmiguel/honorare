@@ -31,12 +31,13 @@ const mockGuia: GuiaDetalheItem = {
       codigoTuss: '4030501',
       descricaoProcedimento: 'Colecistectomia',
       posicaoExecutor: 'Cirurgiao',
-      ordemProcedimento: 'Unico',
+      percentualOrdem: 1.0,
       viaAcesso: 'Convencional',
       acomodacao: 'Enfermaria',
       ehUrgencia: false,
       valorApurado: null,
       valorLiquidado: null,
+      motivoGlosa: null,
     },
   ],
 };
@@ -54,6 +55,22 @@ function makeGuiaServiceSpy(guia: GuiaDetalheItem | null = null) {
     atualizar: vi.fn().mockReturnValue(of(guia ?? mockGuia)),
     obterPorId: vi.fn().mockReturnValue(of(guia ?? mockGuia)),
     obterCalculo: vi.fn().mockReturnValue(of(mockCalculo)),
+    atualizarPagamentoItem: vi.fn().mockReturnValue(
+      of({
+        id: 'item-1',
+        procedimentoId: 'proc-1',
+        codigoTuss: '4030501',
+        descricaoProcedimento: 'Colecistectomia',
+        posicaoExecutor: 'Cirurgiao',
+        percentualOrdem: 1.0,
+        viaAcesso: 'Convencional',
+        acomodacao: 'Enfermaria',
+        ehUrgencia: false,
+        valorApurado: null,
+        valorLiquidado: 150.5,
+        motivoGlosa: 'CB',
+      }),
+    ),
   };
 }
 
@@ -258,6 +275,33 @@ describe('GuiaFormComponent', () => {
 
     const msgErro = el.querySelector('.guia-form__erro-validacao');
     expect(msgErro?.textContent).toContain('SemDeflator');
+  });
+
+  it('salvarPagamentoItem chama atualizarPagamentoItem com valores corretos', () => {
+    const { component, guiaService } = setup({ id: 'guia-1', guia: mockGuia });
+
+    component.valoresLiquidadoEmEdicao.update((m) => ({ ...m, 'item-1': '150.50' }));
+    component.motivosGlosaEmEdicao.update((m) => ({ ...m, 'item-1': 'CB' }));
+
+    component.salvarPagamentoItem('item-1');
+
+    expect(guiaService.atualizarPagamentoItem).toHaveBeenCalledWith(
+      'guia-1',
+      'item-1',
+      150.5,
+      'CB',
+    );
+  });
+
+  it('salvarPagamentoItem com valor vazio envia null', () => {
+    const { component, guiaService } = setup({ id: 'guia-1', guia: mockGuia });
+
+    component.valoresLiquidadoEmEdicao.update((m) => ({ ...m, 'item-1': '' }));
+    component.motivosGlosaEmEdicao.update((m) => ({ ...m, 'item-1': '' }));
+
+    component.salvarPagamentoItem('item-1');
+
+    expect(guiaService.atualizarPagamentoItem).toHaveBeenCalledWith('guia-1', 'item-1', null, null);
   });
 
   it('atualizar_Erro400ComDetalhe_ExibeMensagemDetalhe', () => {
