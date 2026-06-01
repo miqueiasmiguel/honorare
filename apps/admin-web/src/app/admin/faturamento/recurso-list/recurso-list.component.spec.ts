@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
 import { RecursoService } from '../recurso.service';
+import { CatalogService } from '../../catalog/catalog.service';
 import type { ListarRecursosResult, RecursoDto } from '../recurso.types';
 import { RecursoListComponent } from './recurso-list.component';
 
@@ -32,12 +33,21 @@ function setup(recursos: RecursoDto[] = [makeRecurso()]) {
     excluir: vi.fn().mockReturnValue(of(undefined)),
     baixarPdf: vi.fn(),
   };
+  const catalogService = {
+    listarPrestadores: vi
+      .fn()
+      .mockReturnValue(of({ itens: [], total: 0, pagina: 1, itensPorPagina: 200 })),
+    listarOperadoras: vi
+      .fn()
+      .mockReturnValue(of({ itens: [], total: 0, pagina: 1, itensPorPagina: 200 })),
+  };
   const router = { navigate: vi.fn().mockReturnValue(Promise.resolve(true)) };
 
   TestBed.configureTestingModule({
     imports: [RecursoListComponent],
     providers: [
       { provide: RecursoService, useValue: recursoService },
+      { provide: CatalogService, useValue: catalogService },
       { provide: Router, useValue: router },
     ],
   });
@@ -90,7 +100,10 @@ describe('RecursoListComponent', () => {
 
   it('botão PDF dispara download via service', () => {
     const { el, recursoService } = setup([makeRecurso({ id: 'rec-1' })]);
-    el.querySelector<HTMLButtonElement>('.recurso-list__btn-pdf')?.click();
+    const items = Array.from(el.querySelectorAll<HTMLButtonElement>('.recurso-list__menu-item'));
+    const pdfBtnIdx = items.findIndex((b) => b.innerHTML.includes('Baixar PDF'));
+    expect(pdfBtnIdx).toBeGreaterThanOrEqual(0);
+    items[pdfBtnIdx].click();
     expect(recursoService.baixarPdf).toHaveBeenCalledWith('rec-1');
   });
 });

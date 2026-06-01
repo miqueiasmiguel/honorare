@@ -1,8 +1,11 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { DatePipe } from '@angular/common';
+import { forkJoin } from 'rxjs';
 import { RecursoService } from '../recurso.service';
+import { CatalogService } from '../../catalog/catalog.service';
 import type { RecursoDto } from '../recurso.types';
+import type { OperadoraItem, PrestadorItem } from '../../catalog/catalog.types';
 
 @Component({
   selector: 'app-recurso-list',
@@ -16,20 +19,25 @@ import type { RecursoDto } from '../recurso.types';
       </div>
 
       <div class="recurso-list__filters">
-        <input
-          class="recurso-list__input--operadora"
-          type="text"
-          placeholder="ID Operadora"
-          [value]="filtroOperadoraId()"
-          (input)="onFiltroOperadoraChange($any($event.target).value)"
-        />
-        <input
-          class="recurso-list__input--prestador"
-          type="text"
-          placeholder="ID Prestador"
-          [value]="filtroPrestadorId()"
-          (input)="onFiltroPrestadorChange($any($event.target).value)"
-        />
+        <select
+          class="recurso-list__select"
+          (change)="onFiltroPrestadorChange($any($event.target).value)"
+        >
+          <option value="" [selected]="!filtroPrestadorId()">Todos os prestadores</option>
+          @for (p of prestadores(); track p.id) {
+            <option [value]="p.id" [selected]="p.id === filtroPrestadorId()">{{ p.nome }}</option>
+          }
+        </select>
+
+        <select
+          class="recurso-list__select"
+          (change)="onFiltroOperadoraChange($any($event.target).value)"
+        >
+          <option value="" [selected]="!filtroOperadoraId()">Todas as operadoras</option>
+          @for (o of operadoras(); track o.id) {
+            <option [value]="o.id" [selected]="o.id === filtroOperadoraId()">{{ o.nome }}</option>
+          }
+        </select>
       </div>
 
       <table class="recurso-list__table">
@@ -40,7 +48,7 @@ import type { RecursoDto } from '../recurso.types';
             <th class="recurso-list__th">Prestador</th>
             <th class="recurso-list__th">Data Emissão</th>
             <th class="recurso-list__th">Guias</th>
-            <th class="recurso-list__th">Ações</th>
+            <th class="recurso-list__th recurso-list__th--acoes">Ações</th>
           </tr>
         </thead>
         <tbody>
@@ -53,23 +61,34 @@ import type { RecursoDto } from '../recurso.types';
               <td class="recurso-list__cell">
                 <span class="recurso-list__badge">{{ r.totalGuias }}</span>
               </td>
-              <td class="recurso-list__cell">
-                <button
-                  class="recurso-list__btn-guias"
-                  type="button"
-                  (click)="gerenciarGuias(r.id)"
-                >
-                  Gerenciar guias
-                </button>
-                <button class="recurso-list__btn-pdf" type="button" (click)="baixarPdf(r.id)">
-                  PDF
-                </button>
-                <button class="recurso-list__btn-editar" type="button" (click)="editar(r.id)">
-                  Editar
-                </button>
-                <button class="recurso-list__btn-excluir" type="button" (click)="excluir(r)">
-                  Excluir
-                </button>
+              <td class="recurso-list__cell recurso-list__cell--acoes">
+                <div class="recurso-list__menu">
+                  <button class="recurso-list__menu-trigger" type="button" aria-label="Ações">
+                    &#8942;
+                  </button>
+                  <div class="recurso-list__menu-dropdown">
+                    <button
+                      class="recurso-list__menu-item"
+                      type="button"
+                      (click)="gerenciarGuias(r.id)"
+                    >
+                      Gerenciar guias
+                    </button>
+                    <button class="recurso-list__menu-item" type="button" (click)="editar(r.id)">
+                      Editar
+                    </button>
+                    <button class="recurso-list__menu-item" type="button" (click)="baixarPdf(r.id)">
+                      Baixar PDF
+                    </button>
+                    <button
+                      class="recurso-list__menu-item recurso-list__menu-item--excluir"
+                      type="button"
+                      (click)="excluir(r)"
+                    >
+                      Excluir
+                    </button>
+                  </div>
+                </div>
               </td>
             </tr>
           } @empty {
@@ -90,6 +109,7 @@ import type { RecursoDto } from '../recurso.types';
 })
 export class RecursoListComponent implements OnInit {
   private readonly _service = inject(RecursoService);
+  private readonly _catalogService = inject(CatalogService);
   private readonly _router = inject(Router);
   private _debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -101,8 +121,20 @@ export class RecursoListComponent implements OnInit {
   readonly filtroOperadoraId = signal('');
   readonly filtroPrestadorId = signal('');
   readonly erroExclusao = signal('');
+  readonly prestadores = signal<PrestadorItem[]>([]);
+  readonly operadoras = signal<OperadoraItem[]>([]);
 
   ngOnInit(): void {
+    forkJoin({
+      prestadores: this._catalogService.listarPrestadores({ pagina: 1, itensPorPagina: 200 }),
+      operadoras: this._catalogService.listarOperadoras({ pagina: 1, itensPorPagina: 200 }),
+    }).subscribe({
+      next: ({ prestadores, operadoras }) => {
+        this.prestadores.set(prestadores.itens);
+        this.operadoras.set(operadoras.itens);
+      },
+      error: () => undefined,
+    });
     this._carregar();
   }
 

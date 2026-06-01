@@ -50,11 +50,11 @@ public sealed class GuiaListTests(PostgresContainerFixture db)
     private static async Task<Guid> CriarGuiaAsync(
         GuiaService service,
         Guid prestadorId, Guid operadoraId, Guid beneficiarioId, Guid procedimentoId,
-        string senha, DateOnly data)
+        string numeroGuia, DateOnly data)
     {
         var cmd = new CriarGuiaCommand(
             prestadorId, operadoraId, beneficiarioId,
-            null, senha, data, false, string.Empty,
+            numeroGuia, data, false, string.Empty,
             [ItemPadrao(procedimentoId)]);
         var result = await service.CriarAsync(cmd);
         Assert.True(result.IsSuccess);
@@ -170,8 +170,8 @@ public sealed class GuiaListTests(PostgresContainerFixture db)
 
         var resultA = await serviceA.ListarAsync(new ListarGuiasQuery(null, null, null, null, null, null, null, null, null, 1, 100));
 
-        Assert.Contains(resultA.Itens, g => g.Senha == "SFISO-A");
-        Assert.DoesNotContain(resultA.Itens, g => g.Senha == "SFISO-B");
+        Assert.Contains(resultA.Itens, g => g.NumeroGuia == "SFISO-A");
+        Assert.DoesNotContain(resultA.Itens, g => g.NumeroGuia == "SFISO-B");
     }
 
     [Fact]
@@ -201,7 +201,7 @@ public sealed class GuiaListTests(PostgresContainerFixture db)
     }
 
     [Fact]
-    public async Task Listar_FiltraPorSenhaAsync()
+    public async Task Listar_FiltraPorNumeroGuiaAsync()
     {
         var tenantId = Guid.NewGuid();
         var (ctx, user, factory) = BuildTenant(tenantId);

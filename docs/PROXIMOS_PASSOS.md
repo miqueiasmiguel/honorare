@@ -137,7 +137,9 @@ O coração do MVP.
 
 ### F3.4 ✅ — Demonstrativos e conciliação manual
 
-**Entregues:** Entidades `Demonstrativo` (ITenantEntity, FK `OperadoraId` Restrict) e `ItemDemonstrativo` (cascade delete em `DemonstrativoId`, FK `ItemGuiaId` Restrict) com configurações EF Core e migration `AddDemonstrativo`. `ItemGuia` ganhou `SetValorLiquidado(decimal?)` e `Guia` ganhou `Liquidar()` / `ReverterParaApresentada()`. `DemonstrativoService` com CRUD completo (`CriarAsync`, `ListarAsync`, `ObterPorIdAsync`, `AtualizarAsync`, `ExcluirAsync`, `AdicionarItemAsync`, `RemoverItemAsync`) mais `ConciliarItemAsync` e `DesconciliarItemAsync`. Guards de integridade: excluir demonstrativo com item conciliado ou remover item conciliado lança 409. Auto-liquidação: ao conciliar, se todos os `ItemGuia` da guia ficarem com `ValorLiquidado IS NOT NULL`, a guia avança automaticamente para `Liquidada`; reversão automática ao desconciliar. Re-conciliação desconcilia o vínculo anterior antes de vincular ao novo. Endpoints REST em `/api/v1/admin/demonstrativos` (`POST`, `GET` lista paginada por operadora/competência, `GET /{id}` com itens, `PUT /{id}`, `DELETE /{id}`, `POST /{id}/itens`, `DELETE /{id}/itens/{itemId}`, `POST /{id}/itens/{itemId}/conciliar`, `DELETE /{id}/itens/{itemId}/conciliar`). `InvalidOperationException` mapeada para HTTP 409 no exception handler global. Suites xUnit (`DemonstrativoSchemaTests`, `DemonstrativoCrudTests`, `ConciliacaoTests`) cobrindo 18 casos. Telas Angular: `DemonstrativoListComponent` (tabela paginada, filtros por operadora e competência, badge de conciliados, botão excluir condicional), `DemonstrativoFormComponent` (criar/editar header + lista inline de itens com `valorGlosado` calculado no template, remoção bloqueada para itens conciliados), `ConciliacaoComponent` (painel de itens com badge Conciliado/Pendente, busca de guias por senha, vincular/desvincular inline, progresso "X de Y conciliados"); sidebar atualizado com "Demonstrativos" em "Faturamento".
+**⚠ Superseded por RC-09:** entidades `Demonstrativo`/`ItemDemonstrativo` e todos os endpoints `/demonstrativos` foram removidos. `ValorLiquidado` e `MotivoGlosa` são escritos diretamente em `ItemGuia` — via `ImportacaoGuiaCsvService` ou edição inline. Ver D-042 em `DECISOES.md`.
+
+**Entregues (histórico):** Entidades `Demonstrativo` (ITenantEntity, FK `OperadoraId` Restrict) e `ItemDemonstrativo` (cascade delete em `DemonstrativoId`, FK `ItemGuiaId` Restrict) com configurações EF Core e migration `AddDemonstrativo`. `ItemGuia` ganhou `SetValorLiquidado(decimal?)` e `Guia` ganhou `Liquidar()` / `ReverterParaApresentada()`. `DemonstrativoService` com CRUD completo (`CriarAsync`, `ListarAsync`, `ObterPorIdAsync`, `AtualizarAsync`, `ExcluirAsync`, `AdicionarItemAsync`, `RemoverItemAsync`) mais `ConciliarItemAsync` e `DesconciliarItemAsync`. Guards de integridade: excluir demonstrativo com item conciliado ou remover item conciliado lança 409. Auto-liquidação: ao conciliar, se todos os `ItemGuia` da guia ficarem com `ValorLiquidado IS NOT NULL`, a guia avança automaticamente para `Liquidada`; reversão automática ao desconciliar. Re-conciliação desconcilia o vínculo anterior antes de vincular ao novo. Endpoints REST em `/api/v1/admin/demonstrativos` (`POST`, `GET` lista paginada por operadora/competência, `GET /{id}` com itens, `PUT /{id}`, `DELETE /{id}`, `POST /{id}/itens`, `DELETE /{id}/itens/{itemId}`, `POST /{id}/itens/{itemId}/conciliar`, `DELETE /{id}/itens/{itemId}/conciliar`). `InvalidOperationException` mapeada para HTTP 409 no exception handler global. Suites xUnit (`DemonstrativoSchemaTests`, `DemonstrativoCrudTests`, `ConciliacaoTests`) cobrindo 18 casos. Telas Angular: `DemonstrativoListComponent` (tabela paginada, filtros por operadora e competência, badge de conciliados, botão excluir condicional), `DemonstrativoFormComponent` (criar/editar header + lista inline de itens com `valorGlosado` calculado no template, remoção bloqueada para itens conciliados), `ConciliacaoComponent` (painel de itens com badge Conciliado/Pendente, busca de guias por senha, vincular/desvincular inline, progresso "X de Y conciliados"); sidebar atualizado com "Demonstrativos" em "Faturamento".
 
 ### F3.5 ✅ — Geração de recurso (PDF)
 
@@ -151,7 +153,9 @@ O coração do MVP.
 
 **Spec:** `docs/SPEC-F3.6.md`
 
-### F3.8 ✅ — Importação de Demonstrativo + PercentualOrdem parametrizável
+### F3.8 ✅ — PercentualOrdem parametrizável + importação CSV analítico UNIMED
+
+**⚠ Parte superseded por RC-09:** `ImportacaoDemonstrativoService` renomeado para `ImportacaoGuiaCsvService`; criação de `ItemDemonstrativo` removida; endpoint migrado de `/demonstrativos/importar-csv` para `/guias/importar-csv`. A lógica de parse CSV, find-or-create de guias/itens e motor de cálculo permanece intacta.
 
 **Entregues (IO-01 a IO-05):** Enum `OrdemProcedimento` abolido — `ItemGuia.PercentualOrdem decimal` (0.01–1.00) substituiu com migration `RenameOrdemProcedimentoToPercentualOrdem`; `OrdemProcedimentoModifier` reescrito para aplicar o decimal diretamente, sem switch/case; `UnimedPipelineTests` atualizados. Nova entidade `TabelaOrdemOperadora` com CRUD completo (`SalvarTabelaOrdemAsync`, `ListarTabelaOrdemAsync`, `ExcluirTabelaOrdemAsync`, `ResolverPercentualOrdemAsync`) e defaults embutidos (MesmaVia 100%/50%/40%/30%/20%/10%; ViaDiferente 100%/70%/50%/40%/30%/10%); endpoints `GET/PUT/DELETE /api/v1/admin/operadoras/{id}/tabela-ordem`; migration `AddTabelaOrdemOperadora`; suite xUnit `TabelaOrdemOperadoraTests` cobrindo 6 casos. `Guia.NumeroGuia string?` com migration `AddNumeroGuia`. `ImportacaoDemonstrativoService` com parse do CSV analítico UNIMED, upsert de `Guia + ItemGuia + ItemDemonstrativo`, motor invocado ao final, auto-liquidação verificada; endpoint `POST /api/v1/admin/demonstrativos/importar-csv` com `somenteValidar=true` para preview; suite xUnit cobrindo 10 casos (anestesista, múltiplos itens, glosa, beneficiário novo, erro por linha, upsert de guia existente, item de equipamento ignorado, urgência, formato inválido, somenteValidar). Frontend: seção "Tabela de Atos Múltiplos" no `OperadoraFormComponent`; dropdown de ordem no `ItemGuiaFormComponent` alimentado pela tabela da operadora; `ImportarDemonstrativoModalComponent` com fluxo 2 passos (validar → confirmar), lista de erros/alertas por linha, integrado ao `DemonstrativoListComponent`.
 
@@ -168,6 +172,14 @@ O coração do MVP.
 **Entregues (RC-05 a RC-08):** `GuiaNoRecursoDto` expandido com `Observacao string?` e `Itens IReadOnlyList<ItemGuiaNoRecursoDto>` (substitui `TotalItens`); `ItemGuiaNoRecursoDto` expõe `CodigoTuss`, `DescricaoProcedimento`, `PosicaoExecutor`, `PercentualOrdem`, `ValorApurado`, `ValorLiquidado`. Endpoint `PATCH /api/v1/admin/guias/{id}/observacao` persiste texto livre até 2000 chars (string vazia = limpar). Endpoint `PATCH /api/v1/admin/guias/{id}/itens/{itemId}/valor-apurado` permite override manual do `ValorApurado` (null = limpar; valor > 0 exigido; `itemId` de guia diferente → 404); 3 casos em `GuiaCrudTests`. Frontend: linhas de guia vinculada expansíveis no `RecursoGuiasComponent` — textarea de observação com botão "Salvar observação", input numérico por item salvo ao `blur`/Enter, coluna GLOSA calculada no template (`ValorApurado − ValorLiquidado`); atualização do signal local sem reload da página; 2 novos métodos em `GuiaService` com cobertura via `guia.service.spec`.
 
 **Spec:** `docs/SPEC-F3.10.md`
+
+### RC-09 ✅ — Remover módulo de demonstrativos + importação CSV direta em ItemGuia
+
+**Entregues:** Entidades `Demonstrativo` e `ItemDemonstrativo` removidas; migration `RemoveDemonstrativoAddMotivoGlosa` (DropTable + AddColumn `motivo_glosa`). `ItemGuia` recebeu `MotivoGlosa string?` com `SetMotivoGlosa()`. `ImportacaoDemonstrativoService` → `ImportacaoGuiaCsvService` — escreve `ValorLiquidado` e `MotivoGlosa` diretamente em `ItemGuia` sem staging. Endpoint `POST /api/v1/admin/guias/importar-csv` (migrado de `/demonstrativos/importar-csv`). Endpoint `PATCH /api/v1/admin/guias/{id}/itens/{itemId}/pagamento` para edição manual de `ValorLiquidado`/`MotivoGlosa`. Frontend: modal `importar-csv-modal` integrado ao `guia-list`; edição inline `valorLiquidado`/`motivoGlosa` no `guia-form` com auto-liquidação e reversão de situação; tipos migrados para `guia.types.ts`; cliente TypeScript regenerado.
+
+**Decisão registrada:** D-042 (`DECISOES.md`).
+
+**Spec:** `docs/SPEC-RC-09-remover-demonstrativos.md`
 
 ### F3.7 — Unificar Procedimentos × Tabelas de Valores ✅
 
@@ -235,8 +247,7 @@ Se prazo apertar, cortar nesta ordem:
 
 1. F5 (relatórios agregados) — o recurso (F3.5) já entrega o essencial; relatórios analíticos ficam para depois
 2. F4.1 (PWA do médico) — médico acessa pelo admin web responsivo, PWA fica para fase 2
-3. F3.4 (conciliação automática) — só registra demonstrativo, não bate com guia automaticamente
-4. F2.4 (beneficiários como entidade) — campo de texto livre na guia
+3. F2.4 (beneficiários como entidade) — campo de texto livre na guia
 
 **Não cortar:** F0, F1.7 (auth), F2.2/F2.3 (operadoras/procedimentos/tabelas), F3.1/F3.2 (guia + cálculo), **F3.5 (geração de recurso)**, F4.3 (suspensão).
 

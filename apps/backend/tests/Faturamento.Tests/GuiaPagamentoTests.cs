@@ -32,7 +32,7 @@ public sealed class GuiaPagamentoTests(PostgresContainerFixture db)
 
         var cmd = new CriarGuiaCommand(
             prestador.Id, operadora.Id, null,
-            null, "PGT" + tenantId.ToString("N")[..5], new DateOnly(2025, 1, 1),
+            "PGT" + tenantId.ToString("N")[..5], new DateOnly(2025, 1, 1),
             false, string.Empty,
             [new CriarItemGuiaCommand(
                 proc.Id, PosicaoExecutor.Cirurgiao, 1.0m,
@@ -82,6 +82,33 @@ public sealed class GuiaPagamentoTests(PostgresContainerFixture db)
         var guia = await check.Guias.FirstOrDefaultAsync(g => g.Id == guiaId);
         Assert.NotNull(guia);
         Assert.Equal(SituacaoGuia.Liquidada, guia.Situacao);
+    }
+
+    [Fact]
+    public async Task AtualizarPagamentoItem_GuiaEmRecurso_MantemSituacaoEmRecursoAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user, factory) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var service = new GuiaService(ctx, user, factory);
+        var (guiaId, itemId) = await SeedGuiaAsync(ctx, service, tenantId);
+
+        var guiaEntity = await ctx.Guias.FirstAsync(g => g.Id == guiaId);
+        var recursoService = new RecursoService(ctx, user);
+        var recursoResult = await recursoService.CriarAsync(
+            new CriarRecursoCommand(guiaEntity.OperadoraId, guiaEntity.PrestadorId, new DateOnly(2026, 1, 1), null));
+        var recursoId = recursoResult.Value!.Id;
+        await recursoService.AdicionarGuiaAsync(recursoId, guiaId);
+
+        var result = await service.AtualizarPagamentoItemAsync(guiaId, itemId, 100m, null);
+
+        Assert.True(result.IsSuccess);
+
+        await using var check = db.CreateTenantContext(tenantId);
+        var guia = await check.Guias.FirstOrDefaultAsync(g => g.Id == guiaId);
+        Assert.NotNull(guia);
+        Assert.Equal(SituacaoGuia.EmRecurso, guia.Situacao);
+        Assert.Equal(recursoId, guia.RecursoId);
     }
 
     [Fact]

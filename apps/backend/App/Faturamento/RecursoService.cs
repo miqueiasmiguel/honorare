@@ -30,7 +30,7 @@ internal sealed record ItemGuiaNoRecursoDto(
     decimal? ValorLiquidado);
 
 internal sealed record GuiaNoRecursoDto(
-    Guid Id, string Senha, DateOnly DataAtendimento,
+    Guid Id, string NumeroGuia, DateOnly DataAtendimento,
     string? BeneficiarioNome, string? BeneficiarioCarteira,
     SituacaoGuia Situacao,
     string? Observacao,
@@ -44,7 +44,7 @@ internal sealed record ListarRecursosQuery(
 internal sealed record AdicionarGuiasEmLoteCommand(
     Guid PrestadorId, Guid OperadoraId,
     DateOnly? DataInicio, DateOnly? DataFim,
-    SituacaoGuia? Situacao, string? Senha, string? Beneficiario,
+    SituacaoGuia? Situacao, string? NumeroGuia, string? Beneficiario,
     bool? SomenteComGlosa);
 
 internal sealed record RecursoPdfData(
@@ -57,7 +57,7 @@ internal sealed record RecursoPdfData(
 
 internal sealed record GuiaPdfData(
     DateOnly DataAtendimento,
-    string Senha,
+    string NumeroGuia,
     string? BeneficiarioNome,
     string? BeneficiarioCarteira,
     string PosicaoExecutorLabel,
@@ -199,7 +199,7 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser)
             select new
             {
                 g.Id,
-                g.Senha,
+                g.NumeroGuia,
                 g.DataAtendimento,
                 g.Situacao,
                 g.Observacao,
@@ -243,7 +243,7 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser)
             guiasRaw.Count, header.CriadoEm);
 
         var guiaDtos = guiasRaw.Select(g => new GuiaNoRecursoDto(
-            g.Id, g.Senha, g.DataAtendimento,
+            g.Id, g.NumeroGuia, g.DataAtendimento,
             g.BeneficiarioNome, g.BeneficiarioCarteira,
             g.Situacao, g.Observacao,
             itensPorGuia.GetValueOrDefault(g.Id, []))).ToList();
@@ -366,9 +366,9 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser)
             q = q.Where(g => g.Situacao == cmd.Situacao.Value);
         }
 
-        if (!string.IsNullOrWhiteSpace(cmd.Senha))
+        if (!string.IsNullOrWhiteSpace(cmd.NumeroGuia))
         {
-            q = q.Where(g => g.Senha.Contains(cmd.Senha));
+            q = q.Where(g => g.NumeroGuia.Contains(cmd.NumeroGuia));
         }
 
         if (cmd.SomenteComGlosa == true)
@@ -419,7 +419,7 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser)
             select new
             {
                 g.Id,
-                g.Senha,
+                g.NumeroGuia,
                 g.DataAtendimento,
                 g.Observacao,
                 BeneficiarioNome = (string?)b.Nome,
@@ -487,7 +487,7 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser)
 
             return new GuiaPdfData(
                 g.DataAtendimento,
-                g.Senha,
+                g.NumeroGuia,
                 g.BeneficiarioNome,
                 g.BeneficiarioCarteira,
                 PosicaoLabel(primeiraPos),

@@ -32,13 +32,13 @@ public sealed class GuiaSchemaTests(PostgresContainerFixture db)
         var tenantId = Guid.NewGuid();
 
         Guid guiaId;
-        var senha = "SENHA-" + tenantId.ToString("N")[..6].ToUpperInvariant();
+        var numeroGuia = "GUIA-" + tenantId.ToString("N")[..6].ToUpperInvariant();
         var data = new DateOnly(2025, 1, 15);
 
         await using (var ctx = db.CreateTenantContext(tenantId))
         {
             var (prestadorId, operadoraId, beneficiarioId, _) = await SeedCatalogAsync(ctx, tenantId);
-            var guia = Guia.Create(tenantId, prestadorId, operadoraId, beneficiarioId, null, senha, data, false, "Observação de teste");
+            var guia = Guia.Create(tenantId, prestadorId, operadoraId, beneficiarioId, numeroGuia, data, false, "Observação de teste");
             ctx.Add(guia);
             await ctx.SaveChangesAsync();
             guiaId = guia.Id;
@@ -50,7 +50,7 @@ public sealed class GuiaSchemaTests(PostgresContainerFixture db)
         Assert.NotNull(salva);
         Assert.Equal(guiaId, salva.Id);
         Assert.Equal(tenantId, salva.TenantId);
-        Assert.Equal(senha, salva.Senha);
+        Assert.Equal(numeroGuia, salva.NumeroGuia);
         Assert.Equal(data, salva.DataAtendimento);
         Assert.Equal(SituacaoGuia.Apresentada, salva.Situacao);
         Assert.False(salva.EhPacote);
@@ -71,7 +71,7 @@ public sealed class GuiaSchemaTests(PostgresContainerFixture db)
             var (prestadorId, operadoraId, beneficiarioId, procId) = await SeedCatalogAsync(ctx, tenantId);
             procedimentoId = procId;
 
-            var guia = Guia.Create(tenantId, prestadorId, operadoraId, beneficiarioId, null, "ITEM-01", new DateOnly(2025, 2, 10), true, string.Empty);
+            var guia = Guia.Create(tenantId, prestadorId, operadoraId, beneficiarioId, "ITEM-01", new DateOnly(2025, 2, 10), true, string.Empty);
             ctx.Add(guia);
             await ctx.SaveChangesAsync();
             guiaId = guia.Id;
@@ -109,7 +109,7 @@ public sealed class GuiaSchemaTests(PostgresContainerFixture db)
         {
             var (prestadorId, operadoraId, beneficiarioId, procedimentoId) = await SeedCatalogAsync(ctx, tenantId);
 
-            var guia = Guia.Create(tenantId, prestadorId, operadoraId, beneficiarioId, null, "CASCADE-01", new DateOnly(2025, 3, 5), false, string.Empty);
+            var guia = Guia.Create(tenantId, prestadorId, operadoraId, beneficiarioId, "CASCADE-01", new DateOnly(2025, 3, 5), false, string.Empty);
             ctx.Add(guia);
             await ctx.SaveChangesAsync();
             guiaId = guia.Id;
@@ -139,7 +139,7 @@ public sealed class GuiaSchemaTests(PostgresContainerFixture db)
         await using (var ctxA = db.CreateTenantContext(tenantA))
         {
             var (prestadorId, operadoraId, beneficiarioId, _) = await SeedCatalogAsync(ctxA, tenantA);
-            var guia = Guia.Create(tenantA, prestadorId, operadoraId, beneficiarioId, null, "ISOLADO-A", new DateOnly(2025, 4, 1), false, string.Empty);
+            var guia = Guia.Create(tenantA, prestadorId, operadoraId, beneficiarioId, "ISOLADO-A", new DateOnly(2025, 4, 1), false, string.Empty);
             ctxA.Add(guia);
             await ctxA.SaveChangesAsync();
             guiaId = guia.Id;

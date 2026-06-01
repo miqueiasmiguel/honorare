@@ -36,7 +36,7 @@ export interface GuiaItem {
   beneficiarioId: string | null;
   beneficiarioNome: string;
   beneficiarioCarteira: string;
-  senha: string;
+  numeroGuia: string;
   dataAtendimento: string;
   situacao: SituacaoGuia;
   ehPacote: boolean;
@@ -56,7 +56,7 @@ export interface ListarGuiasParams {
   dataInicio?: string;
   dataFim?: string;
   situacao?: SituacaoGuia;
-  senha?: string;
+  numeroGuia?: string;
   beneficiario?: string;
   semRecurso?: boolean;
   somenteComGlosa?: boolean;
@@ -94,7 +94,7 @@ export interface CriarGuiaPayload {
   prestadorId: string;
   operadoraId: string;
   beneficiarioId: string | null;
-  senha: string;
+  numeroGuia: string;
   dataAtendimento: string;
   ehPacote: boolean;
   observacao: string;

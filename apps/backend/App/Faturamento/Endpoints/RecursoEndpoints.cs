@@ -84,7 +84,7 @@ internal static class RecursoEndpoints
         var cmd = new AdicionarGuiasEmLoteCommand(
             body.PrestadorId, body.OperadoraId,
             body.DataInicio, body.DataFim,
-            body.Situacao, body.Senha, body.Beneficiario, body.SomenteComGlosa);
+            body.Situacao, body.NumeroGuia, body.Beneficiario, body.SomenteComGlosa);
         var result = await service.AdicionarGuiasEmLoteAsync(id, cmd, ct);
         if (result.IsFailure)
         {
@@ -139,5 +139,5 @@ internal sealed record AtualizarRecursoRequest(
 internal sealed record AdicionarGuiasEmLoteRequest(
     Guid PrestadorId, Guid OperadoraId,
     DateOnly? DataInicio = null, DateOnly? DataFim = null,
-    SituacaoGuia? Situacao = null, string? Senha = null,
+    SituacaoGuia? Situacao = null, string? NumeroGuia = null,
     string? Beneficiario = null, bool? SomenteComGlosa = null);

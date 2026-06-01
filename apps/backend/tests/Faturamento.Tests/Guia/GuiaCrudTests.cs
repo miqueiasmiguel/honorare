@@ -58,7 +58,7 @@ public sealed class GuiaCrudTests(PostgresContainerFixture db)
 
         var cmd = new CriarGuiaCommand(
             prestadorId, operadoraId, beneficiarioId,
-            null, "SEN001", new DateOnly(2025, 6, 1), false, "Obs",
+            "GUIA001", new DateOnly(2025, 6, 1), false, "Obs",
             [ItemPadrao(procedimentoId)]);
 
         var result = await service.CriarAsync(cmd);
@@ -67,7 +67,7 @@ public sealed class GuiaCrudTests(PostgresContainerFixture db)
         Assert.Equal(prestadorId, result.Value!.PrestadorId);
         Assert.Equal(operadoraId, result.Value.OperadoraId);
         Assert.Equal(beneficiarioId, result.Value.BeneficiarioId);
-        Assert.Equal("SEN001", result.Value.Senha);
+        Assert.Equal("GUIA001", result.Value.NumeroGuia);
         Assert.Equal(SituacaoGuia.Apresentada, result.Value.Situacao);
         Assert.Single(result.Value.Itens);
     }
@@ -83,7 +83,7 @@ public sealed class GuiaCrudTests(PostgresContainerFixture db)
 
         var cmd = new CriarGuiaCommand(
             prestadorId, operadoraId, beneficiarioId,
-            null, "SEN002", new DateOnly(2025, 6, 1), false, "Obs",
+            "GUIA002", new DateOnly(2025, 6, 1), false, "Obs",
             []);
 
         var result = await service.CriarAsync(cmd);
@@ -103,7 +103,7 @@ public sealed class GuiaCrudTests(PostgresContainerFixture db)
 
         var cmd = new CriarGuiaCommand(
             prestadorId, operadoraId, beneficiarioId,
-            null, "SEN003", new DateOnly(2025, 6, 1), true, "Obs",
+            "GUIA003", new DateOnly(2025, 6, 1), true, "Obs",
             [ItemPadrao(procedimentoId, null)]);
 
         var result = await service.CriarAsync(cmd);
@@ -123,7 +123,7 @@ public sealed class GuiaCrudTests(PostgresContainerFixture db)
 
         var cmd = new CriarGuiaCommand(
             Guid.NewGuid(), operadoraId, beneficiarioId,
-            null, "SEN004", new DateOnly(2025, 6, 1), false, "Obs",
+            "GUIA004", new DateOnly(2025, 6, 1), false, "Obs",
             [ItemPadrao(procedimentoId)]);
 
         var result = await service.CriarAsync(cmd);
@@ -143,7 +143,7 @@ public sealed class GuiaCrudTests(PostgresContainerFixture db)
 
         var cmd = new CriarGuiaCommand(
             prestadorId, Guid.NewGuid(), beneficiarioId,
-            null, "SEN005", new DateOnly(2025, 6, 1), false, "Obs",
+            "GUIA005", new DateOnly(2025, 6, 1), false, "Obs",
             [ItemPadrao(procedimentoId)]);
 
         var result = await service.CriarAsync(cmd);
@@ -163,7 +163,7 @@ public sealed class GuiaCrudTests(PostgresContainerFixture db)
 
         var cmd = new CriarGuiaCommand(
             prestadorId, operadoraId, Guid.NewGuid(),
-            null, "SEN006", new DateOnly(2025, 6, 1), false, "Obs",
+            "GUIA006", new DateOnly(2025, 6, 1), false, "Obs",
             [ItemPadrao(procedimentoId)]);
 
         var result = await service.CriarAsync(cmd);
@@ -182,7 +182,7 @@ public sealed class GuiaCrudTests(PostgresContainerFixture db)
         var service = new GuiaService(ctx, user, factory);
 
         var cmd = new AtualizarGuiaCommand(
-            operadoraId, beneficiarioId, null, "SEN-UPD",
+            operadoraId, beneficiarioId, "GUIA-UPD",
             new DateOnly(2025, 7, 1), false, "Obs atualizada",
             [ItemPadrao(procedimentoId)]);
 
@@ -203,13 +203,13 @@ public sealed class GuiaCrudTests(PostgresContainerFixture db)
 
         var criar = new CriarGuiaCommand(
             prestadorId, operadoraId, beneficiarioId,
-            null, "SEN-SUBST", new DateOnly(2025, 6, 1), false, "Original",
+            "GUIA-SUBST", new DateOnly(2025, 6, 1), false, "Original",
             [ItemPadrao(procedimentoId)]);
         var criado = await service.CriarAsync(criar);
         Assert.True(criado.IsSuccess);
 
         var atualizar = new AtualizarGuiaCommand(
-            operadoraId, beneficiarioId, null, "SEN-SUBST2",
+            operadoraId, beneficiarioId, "GUIA-SUBST2",
             new DateOnly(2025, 6, 15), false, "Atualizado",
             [ItemPadrao(procedimentoId), ItemPadrao(procedimentoId)]);
 
@@ -245,7 +245,7 @@ public sealed class GuiaCrudTests(PostgresContainerFixture db)
 
         var cmd = new CriarGuiaCommand(
             prestadorId, operadoraId, beneficiarioId,
-            null, "SEN-DEL", new DateOnly(2025, 6, 1), false, "Obs",
+            "GUIA-DEL", new DateOnly(2025, 6, 1), false, "Obs",
             [ItemPadrao(procedimentoId)]);
         var criado = await service.CriarAsync(cmd);
         Assert.True(criado.IsSuccess);
@@ -271,7 +271,7 @@ public sealed class GuiaCrudTests(PostgresContainerFixture db)
 
         var criar = new CriarGuiaCommand(
             prestadorId, operadoraId, beneficiarioId,
-            null, "SEN-OBS", new DateOnly(2025, 6, 1), false, "",
+            "GUIA-OBS", new DateOnly(2025, 6, 1), false, "",
             [ItemPadrao(procedimentoId)]);
         var criado = await service.CriarAsync(criar);
         Assert.True(criado.IsSuccess);
@@ -311,7 +311,7 @@ public sealed class GuiaCrudTests(PostgresContainerFixture db)
 
         var cmd = new CriarGuiaCommand(
             prestadorId, operadoraId, beneficiarioId,
-            null, "SEN-VA1", new DateOnly(2025, 6, 1), false, "",
+            "GUIA-VA1", new DateOnly(2025, 6, 1), false, "",
             [ItemPadrao(procedimentoId)]);
         var criado = await service.CriarAsync(cmd);
         Assert.True(criado.IsSuccess);
@@ -337,7 +337,7 @@ public sealed class GuiaCrudTests(PostgresContainerFixture db)
 
         var cmd = new CriarGuiaCommand(
             prestadorId, operadoraId, beneficiarioId,
-            null, "SEN-VA2", new DateOnly(2025, 6, 1), false, "",
+            "GUIA-VA2", new DateOnly(2025, 6, 1), false, "",
             [ItemPadrao(procedimentoId)]);
         var criado = await service.CriarAsync(cmd);
         Assert.True(criado.IsSuccess);
@@ -363,13 +363,13 @@ public sealed class GuiaCrudTests(PostgresContainerFixture db)
 
         var g1 = await service.CriarAsync(new CriarGuiaCommand(
             prestadorId, operadoraId, beneficiarioId,
-            null, "SEN-VA3", new DateOnly(2025, 6, 1), false, "",
+            "GUIA-VA3", new DateOnly(2025, 6, 1), false, "",
             [ItemPadrao(procedimentoId)]));
         Assert.True(g1.IsSuccess);
 
         var g2 = await service.CriarAsync(new CriarGuiaCommand(
             prestadorId, operadoraId, beneficiarioId,
-            null, "SEN-VA4", new DateOnly(2025, 6, 1), false, "",
+            "GUIA-VA4", new DateOnly(2025, 6, 1), false, "",
             [ItemPadrao(procedimentoId)]));
         Assert.True(g2.IsSuccess);
 
@@ -393,7 +393,7 @@ public sealed class GuiaCrudTests(PostgresContainerFixture db)
 
         var cmd = new CriarGuiaCommand(
             prestadorId, operadoraId, beneficiarioId,
-            null, "SEN-ISO", new DateOnly(2025, 6, 1), false, "Obs",
+            "GUIA-ISO", new DateOnly(2025, 6, 1), false, "Obs",
             [ItemPadrao(procedimentoId)]);
         var criado = await serviceA.CriarAsync(cmd);
         Assert.True(criado.IsSuccess);

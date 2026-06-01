@@ -36,7 +36,7 @@ export interface ItemGuiaNoRecursoDto {
 
 export interface GuiaNoRecursoDto {
   id: string;
-  senha: string;
+  numeroGuia: string;
   dataAtendimento: string;
   beneficiarioNome: string | null;
   beneficiarioCarteira: string | null;
@@ -70,7 +70,7 @@ export interface AdicionarGuiasLoteParams {
   dataInicio?: string;
   dataFim?: string;
   situacao?: SituacaoGuia;
-  senha?: string;
+  numeroGuia?: string;
   beneficiario?: string;
   somenteComGlosa?: boolean;
 }

@@ -25,7 +25,7 @@ function makeDetalhe(overrides: Partial<MedicoGuiaDetalheDto> = {}): MedicoGuiaD
     beneficiarioNome: 'João Silva',
     beneficiarioCarteira: '12345',
     dataAtendimento: '2026-01-15',
-    senha: 'SEN001',
+    numeroGuia: 'SEN001',
     situacao: 'Apresentada',
     observacao: null,
     itens: [makeItem()],
@@ -71,8 +71,8 @@ function setup(
 }
 
 describe('GuiaDetalheComponent', () => {
-  it('exibe nome do beneficiário e senha no cabeçalho', () => {
-    const { el } = setup(makeDetalhe({ beneficiarioNome: 'Maria Souza', senha: 'SEN999' }));
+  it('exibe nome do beneficiário e guia no cabeçalho', () => {
+    const { el } = setup(makeDetalhe({ beneficiarioNome: 'Maria Souza', numeroGuia: 'SEN999' }));
     expect(el.textContent).toContain('Maria Souza');
     expect(el.textContent).toContain('SEN999');
   });

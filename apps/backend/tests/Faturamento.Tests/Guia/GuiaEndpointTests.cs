@@ -111,7 +111,7 @@ public sealed class GuiaEndpointTests : IAsyncLifetime
         prestadorId,
         operadoraId,
         beneficiarioId,
-        senha = "SEN-EP-001",
+        numeroGuia = "SEN-EP-001",
         dataAtendimento = "2025-06-01",
         ehPacote = false,
         observacao = "Obs endpoint",
@@ -204,7 +204,7 @@ public sealed class GuiaEndpointTests : IAsyncLifetime
         Assert.NotNull(response.Headers.Location);
         var content = await response.Content.ReadAsStringAsync();
         using var doc = JsonDocument.Parse(content);
-        Assert.Equal("SEN-EP-001", doc.RootElement.GetProperty("senha").GetString());
+        Assert.Equal("SEN-EP-001", doc.RootElement.GetProperty("numeroGuia").GetString());
     }
 
     [Fact]
@@ -218,7 +218,7 @@ public sealed class GuiaEndpointTests : IAsyncLifetime
             prestadorId,
             operadoraId,
             beneficiarioId,
-            senha = "SEN-EP-SEM",
+            numeroGuia = "SEN-EP-SEM",
             dataAtendimento = "2025-06-01",
             ehPacote = false,
             observacao = "",
@@ -247,7 +247,7 @@ public sealed class GuiaEndpointTests : IAsyncLifetime
         {
             operadoraId,
             beneficiarioId,
-            senha = "SEN-EP-UPD",
+            numeroGuia = "SEN-EP-UPD",
             dataAtendimento = "2025-07-01",
             ehPacote = false,
             observacao = "Atualizado",
@@ -259,7 +259,7 @@ public sealed class GuiaEndpointTests : IAsyncLifetime
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var content = await response.Content.ReadAsStringAsync();
         using var doc = JsonDocument.Parse(content);
-        Assert.Equal("SEN-EP-UPD", doc.RootElement.GetProperty("senha").GetString());
+        Assert.Equal("SEN-EP-UPD", doc.RootElement.GetProperty("numeroGuia").GetString());
     }
 
     [Fact]

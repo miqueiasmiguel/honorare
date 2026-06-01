@@ -49,7 +49,7 @@ public sealed class GuiaServiceCalculoTests(PostgresContainerFixture db)
         var factory = new PricingRuleSetFactory(ctx);
         var service = new GuiaService(ctx, user, factory);
 
-        var cmd = new CriarGuiaCommand(prestadorId, operadoraId, null, null, "SEN-CAL01",
+        var cmd = new CriarGuiaCommand(prestadorId, operadoraId, null, "SEN-CAL01",
             new DateOnly(2025, 1, 1), false, string.Empty,
             [new CriarItemGuiaCommand(procedimentoId, PosicaoExecutor.Cirurgiao,
                 1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null)]);
@@ -76,7 +76,7 @@ public sealed class GuiaServiceCalculoTests(PostgresContainerFixture db)
         var factory = new PricingRuleSetFactory(ctx);
         var service = new GuiaService(ctx, user, factory);
 
-        var cmd = new CriarGuiaCommand(prestadorId, operadoraId, null, null, "SEN-CAL02",
+        var cmd = new CriarGuiaCommand(prestadorId, operadoraId, null, "SEN-CAL02",
             new DateOnly(2025, 1, 1), false, string.Empty,
             [new CriarItemGuiaCommand(procedimentoId, PosicaoExecutor.Cirurgiao,
                 1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null)]);
@@ -98,7 +98,7 @@ public sealed class GuiaServiceCalculoTests(PostgresContainerFixture db)
         var factory = new PricingRuleSetFactory(ctx);
         var service = new GuiaService(ctx, user, factory);
 
-        var cmd = new CriarGuiaCommand(prestadorId, operadoraId, null, null, "SEN-CAL03",
+        var cmd = new CriarGuiaCommand(prestadorId, operadoraId, null, "SEN-CAL03",
             new DateOnly(2025, 1, 1), true, string.Empty,
             [new CriarItemGuiaCommand(procedimentoId, PosicaoExecutor.Cirurgiao,
                 1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, 500m)]);
@@ -127,14 +127,14 @@ public sealed class GuiaServiceCalculoTests(PostgresContainerFixture db)
         var factory = new PricingRuleSetFactory(ctx);
         var service = new GuiaService(ctx, user, factory);
 
-        var criar = new CriarGuiaCommand(prestadorId, operadoraId, null, null, "SEN-CAL04",
+        var criar = new CriarGuiaCommand(prestadorId, operadoraId, null, "SEN-CAL04",
             new DateOnly(2025, 1, 1), false, string.Empty,
             [new CriarItemGuiaCommand(procedimentoId, PosicaoExecutor.Cirurgiao,
                 1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null)]);
         var criado = await service.CriarAsync(criar);
         Assert.True(criado.IsSuccess);
 
-        var atualizar = new AtualizarGuiaCommand(operadoraId, null, null, "SEN-CAL04-UPD",
+        var atualizar = new AtualizarGuiaCommand(operadoraId, null, "SEN-CAL04-UPD",
             new DateOnly(2025, 2, 1), false, string.Empty,
             [new CriarItemGuiaCommand(procedimentoId, PosicaoExecutor.Cirurgiao,
                 1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null)]);
@@ -161,7 +161,7 @@ public sealed class GuiaServiceCalculoTests(PostgresContainerFixture db)
 
         // Create guia directly (bypasses service validation) to simulate a legacy uncalculated guia
         var guia = Guia.Create(tenantId, prestadorId, operadoraId, null,
-            "SEN-REC01", "SEN-REC01", new DateOnly(2025, 1, 1), false, string.Empty);
+            "SEN-REC01", new DateOnly(2025, 1, 1), false, string.Empty);
         ctx.Add(guia);
         var item = ItemGuia.Create(guia.Id, procedimentoId, PosicaoExecutor.Cirurgiao,
             1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);
@@ -198,7 +198,7 @@ public sealed class GuiaServiceCalculoTests(PostgresContainerFixture db)
         var factory = new PricingRuleSetFactory(ctx);
         var service = new GuiaService(ctx, user, factory);
 
-        var cmd = new CriarGuiaCommand(prestadorId, operadoraId, null, null, "SEN-REC02",
+        var cmd = new CriarGuiaCommand(prestadorId, operadoraId, null, "SEN-REC02",
             new DateOnly(2025, 1, 1), true, string.Empty,
             [new CriarItemGuiaCommand(procedimentoId, PosicaoExecutor.Cirurgiao,
                 1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, 300m)]);
@@ -222,7 +222,7 @@ public sealed class GuiaServiceCalculoTests(PostgresContainerFixture db)
         var factory = new PricingRuleSetFactory(ctx);
         var service = new GuiaService(ctx, user, factory);
 
-        var cmd = new CriarGuiaCommand(prestadorId, operadoraId, null, null, "SEN-CAL05",
+        var cmd = new CriarGuiaCommand(prestadorId, operadoraId, null, "SEN-CAL05",
             new DateOnly(2025, 1, 1), false, string.Empty,
             [new CriarItemGuiaCommand(procedimentoId, PosicaoExecutor.Cirurgiao,
                 1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null)]);

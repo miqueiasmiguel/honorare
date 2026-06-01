@@ -47,7 +47,7 @@ function makeItemGuiaNoRecurso(
 function makeGuiaNoRecurso(overrides: Partial<GuiaNoRecursoDto> = {}): GuiaNoRecursoDto {
   return {
     id: 'guia-1',
-    senha: 'S001',
+    numeroGuia: 'S001',
     dataAtendimento: '2026-01-10',
     beneficiarioNome: 'Paciente A',
     beneficiarioCarteira: '123',
@@ -68,7 +68,7 @@ function makeGuiaItem(overrides: Partial<GuiaItem> = {}): GuiaItem {
     beneficiarioId: null,
     beneficiarioNome: 'Paciente B',
     beneficiarioCarteira: '456',
-    senha: 'S002',
+    numeroGuia: 'S002',
     dataAtendimento: '2026-01-11',
     situacao: 'Apresentada',
     ehPacote: false,
@@ -131,8 +131,8 @@ function setup(options: { guias?: GuiaNoRecursoDto[]; candidatas?: GuiaItem[] } 
 describe('RecursoGuiasComponent', () => {
   it('exibeGuiasVinculadas', () => {
     const guias = [
-      makeGuiaNoRecurso({ id: 'g-1', senha: 'S001' }),
-      makeGuiaNoRecurso({ id: 'g-2', senha: 'S002' }),
+      makeGuiaNoRecurso({ id: 'g-1', numeroGuia: 'S001' }),
+      makeGuiaNoRecurso({ id: 'g-2', numeroGuia: 'S002' }),
     ];
     const { el } = setup({ guias });
     expect(el.querySelectorAll('.guia-card')).toHaveLength(2);
@@ -157,11 +157,11 @@ describe('RecursoGuiasComponent', () => {
 
   it('filtrosSaoPassadosParaListar', () => {
     const { el, component, guiaService } = setup();
-    component.filtroSenha.set('ABC');
+    component.filtroNumeroGuia.set('ABC');
     component.filtroSomenteGlosa.set(true);
     el.querySelector<HTMLButtonElement>('.recurso-guias__btn-filtrar')?.click();
     expect(guiaService.listar).toHaveBeenCalledWith(
-      expect.objectContaining({ senha: 'ABC', somenteComGlosa: true }),
+      expect.objectContaining({ numeroGuia: 'ABC', somenteComGlosa: true }),
     );
   });
 

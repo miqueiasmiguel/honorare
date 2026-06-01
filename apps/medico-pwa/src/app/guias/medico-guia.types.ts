@@ -12,7 +12,7 @@ export interface MedicoGuiaSummaryItem {
   operadoraNome: string;
   beneficiarioNome: string | null;
   beneficiarioCarteira: string | null;
-  senha: string | null;
+  numeroGuia: string | null;
   dataAtendimento: string;
   situacao: SituacaoGuia;
   totalItens: number;
@@ -50,7 +50,7 @@ export interface MedicoGuiaDetalheDto {
   beneficiarioNome: string | null;
   beneficiarioCarteira: string | null;
   dataAtendimento: string;
-  senha: string | null;
+  numeroGuia: string | null;
   situacao: SituacaoGuia;
   observacao: string | null;
   itens: MedicoItemGuiaDto[];

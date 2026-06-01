@@ -21,7 +21,7 @@ public sealed class UnimedRuleSetValorBaseTests(PostgresContainerFixture db)
         ctx.Add(procedimento);
         await ctx.SaveChangesAsync();
 
-        var guia = Guia.Create(tenantId, prestador.Id, operadora.Id, null, null, "SEN-U", new DateOnly(2025, 1, 1), false, string.Empty);
+        var guia = Guia.Create(tenantId, prestador.Id, operadora.Id, null, "SEN-U", new DateOnly(2025, 1, 1), false, string.Empty);
         ctx.Add(guia);
         await ctx.SaveChangesAsync();
 

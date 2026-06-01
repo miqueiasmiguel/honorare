@@ -16,7 +16,7 @@ function makeGuia(overrides: Partial<GuiaItem> = {}): GuiaItem {
     beneficiarioId: 'bene-1',
     beneficiarioNome: 'Maria',
     beneficiarioCarteira: '123456',
-    senha: 'SENHA01',
+    numeroGuia: 'GUIA01',
     dataAtendimento: '2024-03-15',
     situacao: 'Apresentada',
     ehPacote: false,
@@ -165,7 +165,7 @@ describe('GuiaListComponent', () => {
     component.filtroSituacao.set('Liquidada');
     component.filtroPrestadorId.set('prest-1');
     component.filtroOperadoraId.set('op-1');
-    component.filtroSenha.set('SENHA01');
+    component.filtroNumeroGuia.set('SENHA01');
     component.filtroBeneficiario.set('Maria');
     component.filtroSemRecurso.set(true);
     component.filtroSomenteComGlosa.set(true);
@@ -177,7 +177,7 @@ describe('GuiaListComponent', () => {
     expect(component.filtroSituacao()).toBe('');
     expect(component.filtroPrestadorId()).toBe('');
     expect(component.filtroOperadoraId()).toBe('');
-    expect(component.filtroSenha()).toBe('');
+    expect(component.filtroNumeroGuia()).toBe('');
     expect(component.filtroBeneficiario()).toBe('');
     expect(component.filtroSemRecurso()).toBe(false);
     expect(component.filtroSomenteComGlosa()).toBe(false);
@@ -292,10 +292,10 @@ describe('GuiaListComponent', () => {
     );
   });
 
-  it('onFiltroSenhaChange atualiza o signal filtroSenha', () => {
+  it('onFiltroNumeroGuiaChange atualiza o signal filtroNumeroGuia', () => {
     const { component } = setup();
-    component.onFiltroSenhaChange('SENHA123');
-    expect(component.filtroSenha()).toBe('SENHA123');
+    component.onFiltroNumeroGuiaChange('SENHA123');
+    expect(component.filtroNumeroGuia()).toBe('SENHA123');
   });
 
   it('onFiltroBeneficiarioChange atualiza o signal filtroBeneficiario', () => {

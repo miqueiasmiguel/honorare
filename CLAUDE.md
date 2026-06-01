@@ -637,27 +637,27 @@ These are firm decisions (see `docs/DECISOES.md` for full rationale):
 
 Business concepts use Portuguese; infrastructure and tooling use English.
 
-| Portuguese           | English meaning                                                                   |
-| -------------------- | --------------------------------------------------------------------------------- |
-| Guia                 | Invoice / claim                                                                   |
-| Demonstrativo        | Payment statement from operator                                                   |
-| Conta-corrente       | Running account / ledger                                                          |
-| Convênio / Operadora | Health plan / insurance operator                                                  |
-| Prestador            | Healthcare provider (the physician or clinic)                                     |
-| Beneficiário         | Patient / plan member                                                             |
-| Faturamento          | Billing                                                                           |
-| Glosa                | Claim denial / rejection by the operator                                          |
-| Tabela               | Pricing table (e.g., CBHPM, AMB, or operator-specific)                            |
-| Porte                | Procedure complexity tier                                                         |
-| Deflator             | Discount multiplier applied to auxiliary procedures                               |
-| Apuração             | Calculation/determination of the correct fee per pricing rules                    |
-| Senha                | Pre-authorization code issued by the operator for a procedure                     |
-| Apresentada          | Guia status: submitted to operator, awaiting payment                              |
-| Liquidada            | Guia status: payment fully settled by operator                                    |
-| Em Recurso           | Guia status: included in a formal dispute sent to operator                        |
-| ValorApurado         | System-determined correct fee (labeled "VL CORRETO" in the recurso PDF)           |
-| ValorLiquidado       | Amount actually paid by the operator (labeled "PG UNIMED" in the recurso PDF)     |
-| Recurso              | Formal dispute document sent to operator; also the entity grouping disputed guias |
+| Portuguese           | English meaning                                                                      |
+| -------------------- | ------------------------------------------------------------------------------------ |
+| Guia                 | Invoice / claim                                                                      |
+| Demonstrativo        | Payment statement from operator                                                      |
+| Conta-corrente       | Running account / ledger                                                             |
+| Convênio / Operadora | Health plan / insurance operator                                                     |
+| Prestador            | Healthcare provider (the physician or clinic)                                        |
+| Beneficiário         | Patient / plan member                                                                |
+| Faturamento          | Billing                                                                              |
+| Glosa                | Claim denial / rejection by the operator                                             |
+| Tabela               | Pricing table (e.g., CBHPM, AMB, or operator-specific)                               |
+| Porte                | Procedure complexity tier                                                            |
+| Deflator             | Discount multiplier applied to auxiliary procedures                                  |
+| Apuração             | Calculation/determination of the correct fee per pricing rules                       |
+| NumeroGuia           | Authorization code issued by the operator for a guia/claim (previously called Senha) |
+| Apresentada          | Guia status: submitted to operator, awaiting payment                                 |
+| Liquidada            | Guia status: payment fully settled by operator                                       |
+| Em Recurso           | Guia status: included in a formal dispute sent to operator                           |
+| ValorApurado         | System-determined correct fee (labeled "VL CORRETO" in the recurso PDF)              |
+| ValorLiquidado       | Amount actually paid by the operator (labeled "PG UNIMED" in the recurso PDF)        |
+| Recurso              | Formal dispute document sent to operator; also the entity grouping disputed guias    |
 
 ## Domain: UNIMED Calculation Rules
 

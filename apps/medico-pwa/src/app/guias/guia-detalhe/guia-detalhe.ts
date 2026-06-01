@@ -53,10 +53,10 @@ import type { MedicoGuiaDetalheDto, SituacaoCalculo, SituacaoGuia } from '../med
                 <span class="guia-detalhe__field-value">{{ d.beneficiarioCarteira }}</span>
               </div>
             }
-            @if (d.senha) {
+            @if (d.numeroGuia) {
               <div class="guia-detalhe__header-field">
-                <span class="guia-detalhe__field-label">Senha</span>
-                <span class="guia-detalhe__field-value">{{ d.senha }}</span>
+                <span class="guia-detalhe__field-label">Guia</span>
+                <span class="guia-detalhe__field-value">{{ d.numeroGuia }}</span>
               </div>
             }
             <div class="guia-detalhe__header-field">

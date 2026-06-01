@@ -3,32 +3,178 @@
 .guia-form {
   display: flex;
   flex-direction: column;
+  gap: space(6);
+  max-width: 860px;
+  padding: space(6) space(8);
+}
+
+// ── Topbar ────────────────────────────────────────────────────────────────────
+
+.guia-form__topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: space(4);
-  max-width: 720px;
+}
+
+.guia-form__topbar-info {
+  display: flex;
+  align-items: center;
+  gap: space(3);
+}
+
+.guia-form__topbar-titulo {
+  @include text-h2;
+
+  color: var(--color-tinta);
+  margin: 0;
+}
+
+.guia-form__topbar-acoes {
+  display: flex;
+  gap: space(3);
+  align-items: center;
+  flex-shrink: 0;
+}
+
+// ── Badge de situação ─────────────────────────────────────────────────────────
+
+.guia-form__situacao-badge {
+  @include text-label;
+
+  padding: space(1) space(3);
+  border-radius: space(1);
+
+  &--positivo {
+    color: var(--color-verde-musgo);
+    background-color: var(--color-verde-musgo-claro);
+  }
+
+  &--atencao {
+    color: var(--color-ambar);
+    background-color: var(--color-ambar-claro);
+  }
+
+  &--neutro {
+    color: var(--color-tinta-secundaria);
+    background-color: var(--color-pergaminho);
+    border: 1px solid var(--color-borda-discreta);
+  }
+}
+
+// ── Erro ──────────────────────────────────────────────────────────────────────
+
+.guia-form__erro-banner {
+  padding: space(3) space(4);
+  border-radius: 6px;
+  background-color: var(--color-ferrugem-claro);
+  border: 1px solid var(--color-ferrugem);
+}
+
+.guia-form__erro-validacao {
+  @include text-label;
+
+  color: var(--color-ferrugem);
+}
+
+// ── Seções (cards) ────────────────────────────────────────────────────────────
+
+.guia-form__secao {
+  display: flex;
+  flex-direction: column;
+  gap: space(4);
+  background-color: var(--color-pergaminho-claro);
+  border: 1px solid var(--color-borda-discreta);
+  border-radius: space(2);
   padding: space(6);
 }
 
-.guia-form__field {
+.guia-form__secao-titulo {
+  @include text-h3;
+
+  color: var(--color-tinta);
+  margin: 0;
+  padding-bottom: space(3);
+  border-bottom: 1px solid var(--color-borda-discreta);
+
+  &--inline {
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+}
+
+.guia-form__secao-cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: space(3);
+  border-bottom: 1px solid var(--color-borda-discreta);
+}
+
+// ── Grade de campos ───────────────────────────────────────────────────────────
+
+.guia-form__grade {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: space(4);
+}
+
+.guia-form__campo {
   display: flex;
   flex-direction: column;
   gap: space(1);
+
+  &--full {
+    grid-column: 1 / -1;
+  }
+
+  &--checkbox {
+    flex-direction: row;
+    align-items: center;
+    gap: space(2);
+  }
 }
 
-.guia-form__field--checkbox {
-  flex-direction: row;
-  align-items: center;
-  gap: space(2);
-}
+// ── Labels e controles ────────────────────────────────────────────────────────
 
 .guia-form__label {
   @include text-label;
 
+  color: var(--color-tinta-secundaria);
+}
+
+.guia-form__campo-readonly {
+  @include text-body;
+
+  display: flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 space(3);
   color: var(--color-tinta);
+  background-color: var(--color-pergaminho);
+  border: 1px solid var(--color-borda-discreta);
+  border-radius: 6px;
 }
 
 .guia-form__select--prestador,
-.guia-form__select--operadora,
-.guia-form__input--senha,
+.guia-form__select--operadora {
+  @include text-body;
+  @include transition(border-color, box-shadow);
+
+  height: 40px;
+  border: 1px solid var(--color-borda-media);
+  border-radius: 6px;
+  padding: 0 space(3);
+  color: var(--color-tinta);
+  background-color: var(--color-pergaminho-claro);
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-terracota);
+  }
+}
+
+.guia-form__input--numero-guia,
 .guia-form__input--data-atendimento {
   @include text-body;
   @include transition(border-color, box-shadow);
@@ -48,7 +194,7 @@
 
 .guia-form__textarea--observacao {
   @include text-body;
-  @include transition(border-color, box-shadow);
+  @include transition(border-color);
 
   min-height: space(16);
   border: 1px solid var(--color-borda-media);
@@ -68,36 +214,31 @@
   }
 }
 
-.guia-form__itens {
-  display: flex;
-  flex-direction: column;
-  gap: space(2);
-  border: 1px solid var(--color-borda-media);
-  border-radius: 6px;
-  padding: space(3);
-}
-
-.guia-form__itens-titulo {
-  @include text-h3;
-
-  color: var(--color-tinta);
-  margin: 0;
-}
+// ── Item da guia ──────────────────────────────────────────────────────────────
 
 .guia-form__item {
   display: flex;
   flex-direction: column;
-  gap: space(2);
-  padding: space(3);
+  gap: space(3);
+  padding: space(4);
   background-color: var(--color-pergaminho);
-  border-radius: 4px;
+  border-radius: 6px;
   border: 1px solid var(--color-borda-discreta);
 }
 
-.guia-form__item-header {
+.guia-form__item-topo {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: space(3);
+}
+
+.guia-form__item-identificacao {
   display: flex;
   align-items: baseline;
   gap: space(3);
+  flex: 1;
+  min-width: 0;
 }
 
 .guia-form__item-codigo {
@@ -111,6 +252,9 @@
   @include text-body;
 
   color: var(--color-tinta);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .guia-form__item-meta {
@@ -119,7 +263,7 @@
   gap: space(1);
 }
 
-.guia-form__item-badge {
+.guia-form__badge {
   @include text-label;
 
   padding: space(1) space(2);
@@ -127,22 +271,23 @@
   background-color: var(--color-pergaminho-claro);
   border: 1px solid var(--color-borda-discreta);
   color: var(--color-tinta-secundaria);
+
+  &--alerta {
+    background-color: var(--color-ferrugem-claro);
+    border-color: var(--color-ferrugem);
+    color: var(--color-ferrugem);
+  }
 }
 
-.guia-form__item-badge--urgencia {
-  background-color: var(--color-ferrugem-claro);
-  border-color: var(--color-ferrugem);
-  color: var(--color-ferrugem);
-}
-
-.guia-form__item-valores {
+.guia-form__item-financeiro {
   display: flex;
-  gap: space(4);
-  padding-top: space(1);
+  align-items: flex-start;
+  gap: space(6);
+  padding-top: space(3);
   border-top: 1px solid var(--color-borda-discreta);
 }
 
-.guia-form__item-valor {
+.guia-form__item-valor-grupo {
   display: flex;
   flex-direction: column;
   gap: space(1);
@@ -163,20 +308,12 @@
 .guia-form__item-pagamento {
   display: flex;
   gap: space(4);
-  padding-top: space(2);
-  border-top: 1px solid var(--color-borda-discreta);
 }
 
-.guia-form__item-pagamento-field {
+.guia-form__item-pagamento-campo {
   display: flex;
   flex-direction: column;
   gap: space(1);
-}
-
-.guia-form__item-pagamento-label {
-  @include text-label;
-
-  color: var(--color-tinta-terciaria);
 }
 
 .guia-form__item-valor-input {
@@ -210,7 +347,7 @@
   @include text-mono-value;
   @include transition(border-color);
 
-  width: 140px;
+  width: 160px;
   height: 36px;
   border: 1px solid var(--color-borda-media);
   border-radius: 4px;
@@ -233,47 +370,30 @@
   }
 }
 
-.guia-form__situacao {
-  display: flex;
-  align-items: center;
-  gap: space(2);
-  padding: space(2) space(3);
-  border: 1px solid var(--color-borda-discreta);
-  border-radius: 6px;
-  background-color: var(--color-pergaminho);
-}
-
-.guia-form__situacao-label {
-  @include text-label;
-
-  color: var(--color-tinta-secundaria);
-}
-
-.guia-form__situacao-valor {
-  @include text-body;
-
-  color: var(--color-tinta);
-  font-weight: 600;
-}
+// ── Botões de item ────────────────────────────────────────────────────────────
 
 .guia-form__btn-remover-item {
-  @include text-label;
+  @include text-h3;
   @include transition(color);
 
-  align-self: flex-end;
   background: none;
   border: none;
   cursor: pointer;
-  color: var(--color-ferrugem);
-  padding: space(1) space(2);
+  color: var(--color-tinta-terciaria);
+  padding: 0;
+  line-height: 1;
+  flex-shrink: 0;
+
+  &:hover {
+    color: var(--color-ferrugem);
+  }
 }
 
 .guia-form__btn-adicionar-item {
   @include text-label;
   @include transition(background-color);
 
-  align-self: flex-start;
-  height: 40px;
+  height: 36px;
   padding: 0 space(4);
   border-radius: 6px;
   border: 1px dashed var(--color-borda-media);
@@ -286,31 +406,7 @@
   }
 }
 
-.guia-form__apuracao {
-  border: 1px solid var(--color-borda-media);
-  border-radius: 6px;
-  padding: space(3);
-}
-
-.guia-form__apuracao-titulo {
-  @include text-h3;
-
-  color: var(--color-tinta);
-  margin: 0 0 space(3);
-}
-
-.guia-form__erro-validacao {
-  @include text-label;
-
-  color: var(--color-ferrugem);
-}
-
-.guia-form__actions {
-  display: flex;
-  gap: space(3);
-  justify-content: flex-end;
-  padding-top: space(4);
-}
+// ── Botões de formulário ──────────────────────────────────────────────────────
 
 .guia-form__btn-cancelar {
   @include text-label;
@@ -334,7 +430,7 @@
   @include transition(background-color);
 
   height: 40px;
-  padding: 0 space(4);
+  padding: 0 space(6);
   border-radius: 6px;
   border: none;
   background-color: var(--color-terracota);

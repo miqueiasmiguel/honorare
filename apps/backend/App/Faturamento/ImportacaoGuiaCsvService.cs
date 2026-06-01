@@ -141,20 +141,19 @@ internal sealed class ImportacaoGuiaCsvService(
                 beneficiariosCriados++;
             }
 
-            var senha = grupo.Key.Guia;
+            var numeroGuia = grupo.Key.Guia;
             var guia = await db.Guias
                 .FirstOrDefaultAsync(g =>
                     g.TenantId == tenantId &&
                     g.PrestadorId == prestadorId &&
-                    g.Senha == senha, ct);
+                    g.NumeroGuia == numeroGuia, ct);
 
             var guiaCriada = guia is null;
             if (guia is null)
             {
                 guia = Guia.Create(
                     tenantId, prestadorId, operadoraId,
-                    beneficiario.Id, null,
-                    senha, grupo.Key.DataServico,
+                    beneficiario.Id, numeroGuia, grupo.Key.DataServico,
                     false, string.Empty);
                 db.Guias.Add(guia);
                 await db.SaveChangesAsync(ct);

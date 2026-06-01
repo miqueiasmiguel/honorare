@@ -11,7 +11,7 @@ function makeGuia(overrides: Partial<MedicoGuiaSummaryItem> = {}): MedicoGuiaSum
     operadoraNome: 'UNIMED JP',
     beneficiarioNome: 'João Silva',
     beneficiarioCarteira: '12345',
-    senha: 'SEN001',
+    numeroGuia: 'SEN001',
     dataAtendimento: '2026-01-15',
     situacao: 'Apresentada',
     totalItens: 3,
@@ -54,7 +54,7 @@ function setup(result: MedicoListarGuiasResult = makeResult()) {
 
 describe('GuiaListComponent', () => {
   it('exibe lista de guias do service', () => {
-    const result = makeResult([makeGuia(), makeGuia({ id: 'guia-2', senha: 'SEN002' })]);
+    const result = makeResult([makeGuia(), makeGuia({ id: 'guia-2', numeroGuia: 'SEN002' })]);
     const { el } = setup(result);
     const cards = el.querySelectorAll('.guia-card');
     expect(cards).toHaveLength(2);

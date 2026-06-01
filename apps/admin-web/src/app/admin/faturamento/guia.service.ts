@@ -37,8 +37,8 @@ export class GuiaService {
     if (params.situacao) {
       httpParams = httpParams.set('situacao', params.situacao);
     }
-    if (params.senha) {
-      httpParams = httpParams.set('senha', params.senha);
+    if (params.numeroGuia) {
+      httpParams = httpParams.set('numeroGuia', params.numeroGuia);
     }
     if (params.beneficiario) {
       httpParams = httpParams.set('beneficiario', params.beneficiario);

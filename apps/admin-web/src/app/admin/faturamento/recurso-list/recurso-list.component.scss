@@ -39,8 +39,7 @@
     margin-bottom: space(4);
   }
 
-  &__input--operadora,
-  &__input--prestador {
+  &__select {
     height: 36px;
     padding: 0 space(3);
     border: 1px solid var(--color-borda-media);
@@ -48,13 +47,10 @@
     background-color: var(--color-pergaminho-claro);
     color: var(--color-tinta);
     width: 240px;
+    cursor: pointer;
 
     @include text-body;
     @include transition(border-color);
-
-    &::placeholder {
-      color: var(--color-tinta-terciaria);
-    }
 
     &:focus {
       outline: none;
@@ -77,6 +73,11 @@
     padding: space(2) space(3);
     text-align: left;
     color: var(--color-tinta-secundaria);
+
+    &--acoes {
+      width: 60px;
+      text-align: center;
+    }
   }
 
   &__row {
@@ -88,6 +89,11 @@
 
     padding: space(2) space(3);
     color: var(--color-tinta);
+
+    &--acoes {
+      text-align: center;
+      overflow: visible;
+    }
   }
 
   &__badge {
@@ -109,17 +115,27 @@
     text-align: center;
   }
 
-  &__btn-guias,
-  &__btn-pdf,
-  &__btn-editar {
-    padding: space(1) space(3);
+  // ── Menu de ações ─────────────────────────────────────────────────────────
+
+  &__menu {
+    position: relative;
+    display: inline-block;
+  }
+
+  &__menu-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
     border: 1px solid var(--color-borda-media);
     border-radius: 4px;
     background-color: transparent;
     color: var(--color-tinta-secundaria);
+    font-size: 18px;
+    line-height: 1;
     cursor: pointer;
 
-    @include text-label;
     @include transition-fast(background-color, border-color);
 
     &:hover {
@@ -128,20 +144,49 @@
     }
   }
 
-  &__btn-excluir {
-    padding: space(1) space(3);
+  &__menu-dropdown {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: calc(100% + 4px);
+    z-index: 100;
+    min-width: 180px;
+    background-color: var(--color-pergaminho-claro);
     border: 1px solid var(--color-borda-media);
-    border-radius: 4px;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgb(0 0 0 / 10%);
+    padding: space(1) 0;
+    flex-direction: column;
+  }
+
+  &__menu:hover &__menu-dropdown,
+  &__menu:focus-within &__menu-dropdown {
+    display: flex;
+  }
+
+  &__menu-item {
+    display: block;
+    width: 100%;
+    padding: space(2) space(4);
+    border: none;
     background-color: transparent;
-    color: var(--color-ferrugem);
+    color: var(--color-tinta);
+    text-align: left;
     cursor: pointer;
 
-    @include text-label;
-    @include transition-fast(background-color, border-color);
+    @include text-body;
+    @include transition-fast(background-color);
 
     &:hover {
-      background-color: var(--color-ferrugem-claro);
-      border-color: var(--color-ferrugem);
+      background-color: var(--color-borda-discreta);
+    }
+
+    &--excluir {
+      color: var(--color-ferrugem);
+
+      &:hover {
+        background-color: var(--color-ferrugem-claro);
+      }
     }
   }
 

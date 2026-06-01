@@ -68,10 +68,10 @@ public sealed class MedicoGuiaTests : IAsyncLifetime
 
     private static async Task<Guid> SeedGuiaAsync(
         App.Data.AppDbContext ctx, Guid tenantId, Guid prestadorId, Guid operadoraId,
-        Guid? beneficiarioId, Guid procedimentoId, string senha, DateOnly data)
+        Guid? beneficiarioId, Guid procedimentoId, string numeroGuia, DateOnly data)
     {
         var guia = Guia.Create(tenantId, prestadorId, operadoraId, beneficiarioId,
-            null, senha, data, false, string.Empty);
+            numeroGuia, data, false, string.Empty);
         ctx.Guias.Add(guia);
         var item = ItemGuia.Create(guia.Id, procedimentoId, PosicaoExecutor.Cirurgiao,
             1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);
@@ -141,8 +141,8 @@ public sealed class MedicoGuiaTests : IAsyncLifetime
         var content = await response.Content.ReadAsStringAsync();
         using var doc = JsonDocument.Parse(content);
         var itens = doc.RootElement.GetProperty("itens").EnumerateArray().ToList();
-        Assert.All(itens, item => Assert.NotEqual("MGM-002", item.GetProperty("senha").GetString()));
-        Assert.Contains(itens, item => item.GetProperty("senha").GetString() == "MGM-001");
+        Assert.All(itens, item => Assert.NotEqual("MGM-002", item.GetProperty("numeroGuia").GetString()));
+        Assert.Contains(itens, item => item.GetProperty("numeroGuia").GetString() == "MGM-001");
     }
 
     [Fact]
@@ -168,7 +168,7 @@ public sealed class MedicoGuiaTests : IAsyncLifetime
         var content = await response.Content.ReadAsStringAsync();
         using var doc = JsonDocument.Parse(content);
         var itens = doc.RootElement.GetProperty("itens").EnumerateArray().ToList();
-        Assert.All(itens, item => Assert.NotEqual("LIQ-MEDICO-01", item.GetProperty("senha").GetString()));
+        Assert.All(itens, item => Assert.NotEqual("LIQ-MEDICO-01", item.GetProperty("numeroGuia").GetString()));
     }
 
     [Fact]
@@ -198,12 +198,12 @@ public sealed class MedicoGuiaTests : IAsyncLifetime
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var content = await response.Content.ReadAsStringAsync();
         using var doc = JsonDocument.Parse(content);
-        var senhas = doc.RootElement.GetProperty("itens").EnumerateArray()
-            .Select(i => i.GetProperty("senha").GetString())
+        var numeros = doc.RootElement.GetProperty("itens").EnumerateArray()
+            .Select(i => i.GetProperty("numeroGuia").GetString())
             .ToList();
 
-        Assert.Contains("APRES-MED-01", senhas);
-        Assert.Contains("EMREC-MED-01", senhas);
+        Assert.Contains("APRES-MED-01", numeros);
+        Assert.Contains("EMREC-MED-01", numeros);
     }
 
     [Fact]
@@ -232,8 +232,8 @@ public sealed class MedicoGuiaTests : IAsyncLifetime
         using var doc = JsonDocument.Parse(content);
         var itens = doc.RootElement.GetProperty("itens").EnumerateArray().ToList();
 
-        Assert.All(itens, item => Assert.NotEqual("FO-UNIMED-01", item.GetProperty("senha").GetString()));
-        Assert.Contains(itens, item => item.GetProperty("senha").GetString() == "FO-AMIL-01");
+        Assert.All(itens, item => Assert.NotEqual("FO-UNIMED-01", item.GetProperty("numeroGuia").GetString()));
+        Assert.Contains(itens, item => item.GetProperty("numeroGuia").GetString() == "FO-AMIL-01");
     }
 
     [Fact]
@@ -258,8 +258,8 @@ public sealed class MedicoGuiaTests : IAsyncLifetime
         using var doc = JsonDocument.Parse(content);
         var itens = doc.RootElement.GetProperty("itens").EnumerateArray().ToList();
 
-        Assert.All(itens, item => Assert.NotEqual("FD-JAN-01", item.GetProperty("senha").GetString()));
-        Assert.Contains(itens, item => item.GetProperty("senha").GetString() == "FD-JUN-01");
+        Assert.All(itens, item => Assert.NotEqual("FD-JAN-01", item.GetProperty("numeroGuia").GetString()));
+        Assert.Contains(itens, item => item.GetProperty("numeroGuia").GetString() == "FD-JUN-01");
     }
 
     [Fact]
@@ -296,7 +296,7 @@ public sealed class MedicoGuiaTests : IAsyncLifetime
 
         await using var ctx = _db.CreateTenantContext(tenantId);
         var guia = Guia.Create(tenantId, medicoId, operadoraId, beneficiarioId,
-            null, "DET-CALC-01", new DateOnly(2025, 7, 1), false, string.Empty);
+                        "DET-CALC-01", new DateOnly(2025, 7, 1), false, string.Empty);
         ctx.Guias.Add(guia);
         var item = ItemGuia.Create(guia.Id, procedimentoId, PosicaoExecutor.Cirurgiao,
             1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, 100m);
@@ -328,7 +328,7 @@ public sealed class MedicoGuiaTests : IAsyncLifetime
 
         await using var ctx = _db.CreateTenantContext(tenantId);
         var guia = Guia.Create(tenantId, medicoId, operadoraId, beneficiarioId,
-            null, "DET-NCALC-01", new DateOnly(2025, 8, 1), false, string.Empty);
+                        "DET-NCALC-01", new DateOnly(2025, 8, 1), false, string.Empty);
         ctx.Guias.Add(guia);
         var item = ItemGuia.Create(guia.Id, procedimentoId, PosicaoExecutor.Cirurgiao,
             1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);

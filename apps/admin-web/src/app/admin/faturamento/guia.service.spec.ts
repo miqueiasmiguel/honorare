@@ -22,7 +22,7 @@ const GUIA_DETALHE: GuiaDetalheItem = {
   beneficiarioId: 'ben-1',
   beneficiarioNome: 'JOÃO SILVA',
   beneficiarioCarteira: '0001234567',
-  senha: '12345',
+  numeroGuia: '12345',
   dataAtendimento: '2026-05-01',
   situacao: 'Apresentada',
   ehPacote: false,
@@ -52,7 +52,7 @@ const CRIAR_PAYLOAD: CriarGuiaPayload = {
   prestadorId: 'prest-1',
   operadoraId: 'op-1',
   beneficiarioId: 'ben-1',
-  senha: '12345',
+  numeroGuia: '12345',
   dataAtendimento: '2026-05-01',
   ehPacote: false,
   observacao: '',
@@ -134,7 +134,7 @@ describe('GuiaService', () => {
         dataInicio: '2026-01-01',
         dataFim: '2026-01-31',
         situacao: 'Liquidada',
-        senha: 'ABC123',
+        numeroGuia: 'ABC123',
         beneficiario: 'João',
         semRecurso: true,
         somenteComGlosa: false,
@@ -148,7 +148,7 @@ describe('GuiaService', () => {
         r.params.get('dataInicio') === '2026-01-01' &&
         r.params.get('dataFim') === '2026-01-31' &&
         r.params.get('situacao') === 'Liquidada' &&
-        r.params.get('senha') === 'ABC123' &&
+        r.params.get('numeroGuia') === 'ABC123' &&
         r.params.get('beneficiario') === 'João' &&
         r.params.get('semRecurso') === 'true' &&
         r.params.get('somenteComGlosa') === 'false',
@@ -184,7 +184,7 @@ describe('GuiaService', () => {
     const payload: AtualizarGuiaPayload = {
       operadoraId: 'op-2',
       beneficiarioId: 'ben-1',
-      senha: '99999',
+      numeroGuia: '99999',
       dataAtendimento: '2026-05-02',
       ehPacote: false,
       observacao: 'obs',

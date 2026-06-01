@@ -8,7 +8,7 @@ namespace App.Faturamento;
 
 internal sealed record CriarGuiaCommand(
     Guid PrestadorId, Guid OperadoraId, Guid? BeneficiarioId,
-    string? NumeroGuia, string Senha, DateOnly DataAtendimento, bool EhPacote, string Observacao,
+    string NumeroGuia, DateOnly DataAtendimento, bool EhPacote, string Observacao,
     IReadOnlyList<CriarItemGuiaCommand> Itens);
 
 internal sealed record CriarItemGuiaCommand(
@@ -17,7 +17,7 @@ internal sealed record CriarItemGuiaCommand(
     bool EhUrgencia, decimal? ValorApurado, int? TempoAnestesicoMin = null);
 
 internal sealed record AtualizarGuiaCommand(
-    Guid OperadoraId, Guid? BeneficiarioId, string? NumeroGuia, string Senha,
+    Guid OperadoraId, Guid? BeneficiarioId, string NumeroGuia,
     DateOnly DataAtendimento, bool EhPacote, string Observacao,
     IReadOnlyList<CriarItemGuiaCommand> Itens);
 
@@ -28,14 +28,14 @@ internal sealed record AtualizarValorApuradoItemCommand(decimal? ValorApurado);
 internal sealed record ListarGuiasQuery(
     Guid? PrestadorId, Guid? OperadoraId,
     DateOnly? DataInicio, DateOnly? DataFim,
-    SituacaoGuia? Situacao, string? Senha, string? Beneficiario,
+    SituacaoGuia? Situacao, string? NumeroGuia, string? Beneficiario,
     bool? SemRecurso, bool? SomenteComGlosa,
     int Pagina, int ItensPorPagina);
 
 internal sealed record GuiaDto(
     Guid Id, Guid PrestadorId, string PrestadorNome,
     Guid OperadoraId, string OperadoraNome, Guid? BeneficiarioId,
-    string? BeneficiarioNome, string? BeneficiarioCarteira, string? NumeroGuia, string Senha,
+    string? BeneficiarioNome, string? BeneficiarioCarteira, string NumeroGuia,
     DateOnly DataAtendimento, SituacaoGuia Situacao, bool EhPacote,
     string Observacao, int TotalItens, DateTimeOffset CriadoEm, DateTimeOffset AtualizadoEm);
 
@@ -48,7 +48,7 @@ internal sealed record ItemGuiaDto(
 internal sealed record GuiaDetalheDto(
     Guid Id, Guid PrestadorId, string PrestadorNome,
     Guid OperadoraId, string OperadoraNome, Guid? BeneficiarioId,
-    string? BeneficiarioNome, string? BeneficiarioCarteira, string? NumeroGuia, string Senha,
+    string? BeneficiarioNome, string? BeneficiarioCarteira, string NumeroGuia,
     DateOnly DataAtendimento, SituacaoGuia Situacao, bool EhPacote,
     string Observacao, int TotalItens, DateTimeOffset CriadoEm, DateTimeOffset AtualizadoEm,
     IReadOnlyList<ItemGuiaDto> Itens);
@@ -134,7 +134,7 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
 
         var guia = Guia.Create(
             tenantId, cmd.PrestadorId, cmd.OperadoraId, cmd.BeneficiarioId,
-            cmd.NumeroGuia, cmd.Senha, cmd.DataAtendimento, cmd.EhPacote, cmd.Observacao);
+            cmd.NumeroGuia, cmd.DataAtendimento, cmd.EhPacote, cmd.Observacao);
 
         _db.Guias.Add(guia);
 
@@ -218,7 +218,6 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
                     BeneficiarioNome = (string?)b.Nome,
                     BeneficiarioCarteira = (string?)b.Carteira,
                     g.NumeroGuia,
-                    g.Senha,
                     g.DataAtendimento,
                     g.Situacao,
                     g.EhPacote,
@@ -227,9 +226,9 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
                     g.AtualizadoEm,
                 };
 
-        if (!string.IsNullOrWhiteSpace(query.Senha))
+        if (!string.IsNullOrWhiteSpace(query.NumeroGuia))
         {
-            q = q.Where(x => x.Senha.Contains(query.Senha));
+            q = q.Where(x => x.NumeroGuia.Contains(query.NumeroGuia));
         }
 
         if (!string.IsNullOrWhiteSpace(query.Beneficiario))
@@ -259,7 +258,7 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
             x.Id, x.PrestadorId, x.PrestadorNome,
             x.OperadoraId, x.OperadoraNome,
             x.BeneficiarioId, x.BeneficiarioNome, x.BeneficiarioCarteira,
-            x.NumeroGuia, x.Senha, x.DataAtendimento, x.Situacao, x.EhPacote,
+            x.NumeroGuia, x.DataAtendimento, x.Situacao, x.EhPacote,
             x.Observacao,
             counts.GetValueOrDefault(x.Id, 0),
             x.CriadoEm, x.AtualizadoEm)).ToList();
@@ -323,7 +322,7 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
 
         guia.Atualizar(
             cmd.OperadoraId, cmd.BeneficiarioId,
-            cmd.NumeroGuia, cmd.Senha.Trim(), cmd.DataAtendimento, cmd.EhPacote, cmd.Observacao.Trim());
+            cmd.NumeroGuia.Trim(), cmd.DataAtendimento, cmd.EhPacote, cmd.Observacao.Trim());
 
         var itens = new List<ItemGuia>(cmd.Itens.Count);
         foreach (var itemCmd in cmd.Itens)
@@ -554,7 +553,8 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
                 guia.ReverterParaApresentada();
             }
         }
-        else if (todosItens.All(i => i.ValorLiquidado is not null))
+        else if (todosItens.All(i => i.ValorLiquidado is not null)
+            && guia.Situacao != SituacaoGuia.EmRecurso)
         {
             guia.Liquidar();
         }
@@ -676,7 +676,6 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
                                 BeneficiarioNome = (string?)b.Nome,
                                 BeneficiarioCarteira = (string?)b.Carteira,
                                 g.NumeroGuia,
-                                g.Senha,
                                 g.DataAtendimento,
                                 g.Situacao,
                                 g.EhPacote,
@@ -705,7 +704,7 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
             header.Id, header.PrestadorId, header.PrestadorNome,
             header.OperadoraId, header.OperadoraNome,
             header.BeneficiarioId, header.BeneficiarioNome, header.BeneficiarioCarteira,
-            header.NumeroGuia, header.Senha, header.DataAtendimento, header.Situacao, header.EhPacote,
+            header.NumeroGuia, header.DataAtendimento, header.Situacao, header.EhPacote,
             header.Observacao, itens.Count, header.CriadoEm, header.AtualizadoEm,
             itens));
     }

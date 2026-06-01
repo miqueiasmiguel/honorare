@@ -29,7 +29,7 @@ internal static class GuiaEndpoints
         var query = new ListarGuiasQuery(
             req.PrestadorId, req.OperadoraId,
             req.DataInicio, req.DataFim,
-            req.Situacao, req.Senha, req.Beneficiario,
+            req.Situacao, req.NumeroGuia, req.Beneficiario,
             req.SemRecurso, req.SomenteComGlosa,
             req.Pagina, req.ItensPorPagina);
         var result = await service.ListarAsync(query, ct);
@@ -86,7 +86,7 @@ internal static class GuiaEndpoints
     {
         var cmd = new CriarGuiaCommand(
             body.PrestadorId, body.OperadoraId, body.BeneficiarioId,
-            body.NumeroGuia, body.Senha, body.DataAtendimento, body.EhPacote, body.Observacao,
+            body.NumeroGuia, body.DataAtendimento, body.EhPacote, body.Observacao,
             body.Itens.Select(i => new CriarItemGuiaCommand(
                 i.ProcedimentoId, i.PosicaoExecutor, i.PercentualOrdem,
                 i.ViaAcesso, i.Acomodacao, i.EhUrgencia, i.ValorApurado, i.TempoAnestesicoMin)).ToList());
@@ -110,7 +110,7 @@ internal static class GuiaEndpoints
     {
         var cmd = new AtualizarGuiaCommand(
             body.OperadoraId, body.BeneficiarioId,
-            body.NumeroGuia, body.Senha, body.DataAtendimento, body.EhPacote, body.Observacao,
+            body.NumeroGuia, body.DataAtendimento, body.EhPacote, body.Observacao,
             body.Itens.Select(i => new CriarItemGuiaCommand(
                 i.ProcedimentoId, i.PosicaoExecutor, i.PercentualOrdem,
                 i.ViaAcesso, i.Acomodacao, i.EhUrgencia, i.ValorApurado, i.TempoAnestesicoMin)).ToList());
@@ -228,7 +228,7 @@ internal static class GuiaEndpoints
 internal sealed record ListarGuiasRequest(
     Guid? PrestadorId = null, Guid? OperadoraId = null,
     DateOnly? DataInicio = null, DateOnly? DataFim = null,
-    SituacaoGuia? Situacao = null, string? Senha = null, string? Beneficiario = null,
+    SituacaoGuia? Situacao = null, string? NumeroGuia = null, string? Beneficiario = null,
     bool? SemRecurso = null, bool? SomenteComGlosa = null,
     int Pagina = 1, int ItensPorPagina = 20);
 
@@ -246,8 +246,7 @@ internal sealed record CriarGuiaRequest(
     Guid PrestadorId,
     Guid OperadoraId,
     Guid? BeneficiarioId,
-    string? NumeroGuia,
-    string Senha,
+    string NumeroGuia,
     DateOnly DataAtendimento,
     bool EhPacote,
     string Observacao,
@@ -262,8 +261,7 @@ internal sealed record AtualizarPagamentoItemRequest(decimal? ValorLiquidado, st
 internal sealed record AtualizarGuiaRequest(
     Guid OperadoraId,
     Guid? BeneficiarioId,
-    string? NumeroGuia,
-    string Senha,
+    string NumeroGuia,
     DateOnly DataAtendimento,
     bool EhPacote,
     string Observacao,

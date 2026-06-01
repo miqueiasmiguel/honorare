@@ -16,7 +16,7 @@ const mockGuia: GuiaDetalheItem = {
   beneficiarioId: 'bene-1',
   beneficiarioNome: 'Maria',
   beneficiarioCarteira: '123456',
-  senha: 'SENHA01',
+  numeroGuia: 'GUIA01',
   dataAtendimento: '2024-03-15',
   situacao: 'Apresentada',
   ehPacote: false,
@@ -135,7 +135,7 @@ describe('GuiaFormComponent', () => {
 
     expect(el.querySelector('.guia-form__select--prestador')).not.toBeNull();
     expect(el.querySelector('.guia-form__select--operadora')).not.toBeNull();
-    expect(el.querySelector('.guia-form__input--senha')).not.toBeNull();
+    expect(el.querySelector('.guia-form__input--numero-guia')).not.toBeNull();
     expect(el.querySelector('.guia-form__input--data-atendimento')).not.toBeNull();
     expect(el.querySelector('.guia-form__checkbox--eh-pacote')).not.toBeNull();
     expect(el.querySelector('.guia-form__textarea--observacao')).not.toBeNull();
@@ -148,7 +148,7 @@ describe('GuiaFormComponent', () => {
     component.prestadorId.set('p1');
     component.operadoraId.set('o1');
     component.beneficiarioId.set('b1');
-    component.senha.set('12345');
+    component.numeroGuia.set('12345');
     component.dataAtendimento.set('2024-01-01');
     fixture.detectChanges();
 
@@ -165,7 +165,7 @@ describe('GuiaFormComponent', () => {
     expect(component.modoEditar()).toBe(true);
     expect(component.prestadorId()).toBe('prest-1');
     expect(component.operadoraId()).toBe('op-1');
-    expect(component.senha()).toBe('SENHA01');
+    expect(component.numeroGuia()).toBe('GUIA01');
     expect(component.dataAtendimento()).toBe('2024-03-15');
     expect(component.itens()).toHaveLength(1);
   });
@@ -217,7 +217,7 @@ describe('GuiaFormComponent', () => {
     component.prestadorId.set('p1');
     component.operadoraId.set('o1');
     component.beneficiarioId.set('b1');
-    component.senha.set('12345');
+    component.numeroGuia.set('12345');
     component.dataAtendimento.set('2024-01-01');
     component.itens.set([
       {

@@ -31,7 +31,7 @@ honorare/
 App           # composition root, endpoints HTTP
 Identity      # tenants, usuários, autenticação Google OAuth, suspensão
 Catalog       # operadoras, procedimentos, tabelas, prestadores, beneficiários
-Faturamento   # guias, demonstrativos, cálculo, conciliação, divergências
+Faturamento   # guias, cálculo, divergências, geração de recurso
 Reporting     # queries agregadas para portal do médico e admin
 ```
 

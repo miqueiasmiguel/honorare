@@ -59,12 +59,12 @@ public sealed class RecursoPdfDataTests(PostgresContainerFixture db)
 
     private static async Task CriarGuiaEVincularAsync(
         AppDbContext ctx, ICurrentUser user,
-        Guid prestId, Guid opId, Guid procId, string senha, Guid recursoId)
+        Guid prestId, Guid opId, Guid procId, string numeroGuia, Guid recursoId)
     {
         var factory = new PricingRuleSetFactory(ctx);
         var guiaSvc = new GuiaService(ctx, user, factory);
         var cmd = new CriarGuiaCommand(
-            prestId, opId, null, null, senha, new DateOnly(2026, 3, 5), false, string.Empty,
+            prestId, opId, null, numeroGuia, new DateOnly(2026, 3, 5), false, string.Empty,
             [new CriarItemGuiaCommand(
                 procId, PosicaoExecutor.Cirurgiao, 1.0m,
                 ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null)]);
@@ -112,7 +112,7 @@ public sealed class RecursoPdfDataTests(PostgresContainerFixture db)
         var factory = new PricingRuleSetFactory(ctx);
         var guiaSvc = new GuiaService(ctx, user, factory);
         var cmd = new CriarGuiaCommand(
-            prestId, opId, null, null, "PDF-2IT-" + tenantId.ToString("N")[..4],
+            prestId, opId, null, "PDF-2IT-" + tenantId.ToString("N")[..4],
             new DateOnly(2026, 3, 5), false, string.Empty,
             [
                 new CriarItemGuiaCommand(procId, PosicaoExecutor.Cirurgiao, 1.0m,
@@ -165,7 +165,7 @@ public sealed class RecursoPdfDataTests(PostgresContainerFixture db)
         var factory = new PricingRuleSetFactory(ctx);
         var guiaSvc = new GuiaService(ctx, user, factory);
         var cmd = new CriarGuiaCommand(
-            prestId, opId, null, null, "PDF-PKG-" + tenantId.ToString("N")[..4],
+            prestId, opId, null, "PDF-PKG-" + tenantId.ToString("N")[..4],
             new DateOnly(2026, 3, 5), true, string.Empty,
             [new CriarItemGuiaCommand(
                 procId, PosicaoExecutor.Cirurgiao, 1.0m,
@@ -192,7 +192,7 @@ public sealed class RecursoPdfDataTests(PostgresContainerFixture db)
         var recursoId = await CriarRecursoAsync(ctx, user, opId, prestId);
 
         var guia = Guia.Create(tenantId, prestId, opId, null,
-            null, "PDF-FAT-" + tenantId.ToString("N")[..4], new DateOnly(2026, 3, 5), false, string.Empty);
+            "PDF-FAT-" + tenantId.ToString("N")[..4], new DateOnly(2026, 3, 5), false, string.Empty);
         ctx.Guias.Add(guia);
         var item = ItemGuia.Create(guia.Id, procId, PosicaoExecutor.Cirurgiao,
             1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, 35m);

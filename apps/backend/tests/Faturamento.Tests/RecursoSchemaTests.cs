@@ -83,7 +83,7 @@ public sealed class RecursoSchemaTests(PostgresContainerFixture db)
             ctx.Add(recurso);
 
             var guia = Guia.Create(tenantId, prestadorId, operadoraId, null,
-                null, "RE01" + tenantId.ToString("N")[..6], new DateOnly(2026, 1, 5), false, string.Empty);
+                "RE01" + tenantId.ToString("N")[..6], new DateOnly(2026, 1, 5), false, string.Empty);
             ctx.Add(guia);
             await ctx.SaveChangesAsync();
 
@@ -117,7 +117,7 @@ public sealed class RecursoSchemaTests(PostgresContainerFixture db)
             ctx.Add(recurso);
 
             var guia = Guia.Create(tenantId, prestadorId, operadoraId, null,
-                null, "RE02" + tenantId.ToString("N")[..6], new DateOnly(2026, 1, 5), false, string.Empty);
+                "RE02" + tenantId.ToString("N")[..6], new DateOnly(2026, 1, 5), false, string.Empty);
             ctx.Add(guia);
             await ctx.SaveChangesAsync();
 
@@ -153,7 +153,7 @@ public sealed class RecursoSchemaTests(PostgresContainerFixture db)
             ctx.Add(recurso);
 
             var guia = Guia.Create(tenantId, prestadorId, operadoraId, null,
-                null, "RE03" + tenantId.ToString("N")[..6], new DateOnly(2026, 1, 5), false, string.Empty);
+                "RE03" + tenantId.ToString("N")[..6], new DateOnly(2026, 1, 5), false, string.Empty);
             ctx.Add(guia);
             await ctx.SaveChangesAsync();
 
@@ -189,7 +189,7 @@ public sealed class RecursoSchemaTests(PostgresContainerFixture db)
             ctx.Add(recurso);
 
             var guia = Guia.Create(tenantId, prestadorId, operadoraId, null,
-                null, "RE04" + tenantId.ToString("N")[..6], new DateOnly(2026, 3, 1), false, string.Empty);
+                "RE04" + tenantId.ToString("N")[..6], new DateOnly(2026, 3, 1), false, string.Empty);
             ctx.Add(guia);
             await ctx.SaveChangesAsync();
 

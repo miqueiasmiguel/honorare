@@ -16,7 +16,7 @@
 
 - **Glosa:** valor não pago pela operadora, com motivo informado. Pode ser legítima (procedimento realmente não autorizado) ou indevida (oportunidade de contestar).
 
-- **Senha:** código de pré-autorização emitido pela operadora para o procedimento. Campo obrigatório na `Guia` — é o identificador que a operadora usa para cruzar a guia apresentada com o demonstrativo de pagamento.
+- **NumeroGuia:** número da guia de autorização emitido pela operadora. Campo obrigatório na `Guia` — é o identificador que a operadora usa para cruzar a guia apresentada com o demonstrativo de pagamento (anteriormente chamado de "Senha").
 
 - **Conciliação:** edição direta de `ValorLiquidado` e `MotivoGlosa` por `ItemGuia` — via importação CSV da UNIMED ou edição inline no admin. **Auto-liquidação:** quando todos os `ItemGuia` de uma guia têm `ValorLiquidado IS NOT NULL`, a guia avança automaticamente para `Liquidada`. **Reversão:** ao limpar `ValorLiquidado` de qualquer item, se a guia estava `Liquidada`, ela volta para `Apresentada`.
 

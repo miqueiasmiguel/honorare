@@ -43,21 +43,21 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
     private static async Task<Guid> CriarGuiaAsync(
         AppDbContext ctx, ICurrentUser user,
         Guid prestadorId, Guid operadoraId, Guid procedimentoId,
-        string senha)
+        string numeroGuia)
     {
-        return await CriarGuiaAsync(ctx, user, prestadorId, operadoraId, procedimentoId, senha,
+        return await CriarGuiaAsync(ctx, user, prestadorId, operadoraId, procedimentoId, numeroGuia,
             new DateOnly(2026, 1, 10));
     }
 
     private static async Task<Guid> CriarGuiaAsync(
         AppDbContext ctx, ICurrentUser user,
         Guid prestadorId, Guid operadoraId, Guid procedimentoId,
-        string senha, DateOnly dataAtendimento)
+        string numeroGuia, DateOnly dataAtendimento)
     {
         var factory = new PricingRuleSetFactory(ctx);
         var svc = new GuiaService(ctx, user, factory);
         var cmd = new CriarGuiaCommand(
-            prestadorId, operadoraId, null, null, senha,
+            prestadorId, operadoraId, null, numeroGuia,
             dataAtendimento, false, string.Empty,
             [new CriarItemGuiaCommand(
                 procedimentoId, PosicaoExecutor.Cirurgiao, 1.0m,
@@ -454,7 +454,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         var factory = new PricingRuleSetFactory(ctx);
         var guiaSvc = new GuiaService(ctx, user, factory);
         var guiaResult = await guiaSvc.CriarAsync(new CriarGuiaCommand(
-            prestId, opId, null, null, $"RC05-A-{pfx}", new DateOnly(2026, 3, 10), false, string.Empty,
+            prestId, opId, null, $"RC05-A-{pfx}", new DateOnly(2026, 3, 10), false, string.Empty,
             [
                 new CriarItemGuiaCommand(procId, PosicaoExecutor.Cirurgiao, 1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null),
                 new CriarItemGuiaCommand(procId, PosicaoExecutor.PrimeiroAuxiliar, 0.3m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null),
@@ -495,7 +495,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         var factory = new PricingRuleSetFactory(ctx);
         var guiaSvc = new GuiaService(ctx, user, factory);
         var guiaResult = await guiaSvc.CriarAsync(new CriarGuiaCommand(
-            prestId, opId, null, null, $"RC05-OBS-{pfx}", new DateOnly(2026, 4, 5), false,
+            prestId, opId, null, $"RC05-OBS-{pfx}", new DateOnly(2026, 4, 5), false,
             "Guia glosada indevidamente",
             [new CriarItemGuiaCommand(procId, PosicaoExecutor.Cirurgiao, 1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null)]));
         var guiaId = guiaResult.Value!.Id;

@@ -76,9 +76,9 @@ import { ImportarCsvModalComponent } from '../guias/importar-csv-modal/importar-
           <input
             class="guia-list__input"
             type="text"
-            placeholder="Senha / pré-autorização"
-            [value]="filtroSenha()"
-            (input)="onFiltroSenhaChange($any($event.target).value)"
+            placeholder="Guia"
+            [value]="filtroNumeroGuia()"
+            (input)="onFiltroNumeroGuiaChange($any($event.target).value)"
           />
 
           <input
@@ -137,7 +137,7 @@ import { ImportarCsvModalComponent } from '../guias/importar-csv-modal/importar-
             <th class="guia-list__th">Operadora</th>
             <th class="guia-list__th">Beneficiário</th>
             <th class="guia-list__th">Carteira</th>
-            <th class="guia-list__th">Senha</th>
+            <th class="guia-list__th">Guia</th>
             <th class="guia-list__th">Situação</th>
             <th class="guia-list__th">Nº Itens</th>
             <th class="guia-list__th">Ações</th>
@@ -156,7 +156,7 @@ import { ImportarCsvModalComponent } from '../guias/importar-csv-modal/importar-
                 <td class="guia-list__cell">{{ g.operadoraNome }}</td>
                 <td class="guia-list__cell">{{ g.beneficiarioNome }}</td>
                 <td class="guia-list__cell">{{ g.beneficiarioCarteira }}</td>
-                <td class="guia-list__cell">{{ g.senha }}</td>
+                <td class="guia-list__cell">{{ g.numeroGuia }}</td>
                 <td class="guia-list__cell">{{ g.situacao }}</td>
                 <td class="guia-list__cell guia-list__cell--mono">{{ g.totalItens }}</td>
                 <td class="guia-list__cell">
@@ -228,7 +228,7 @@ export class GuiaListComponent implements OnInit {
   readonly filtroOperadoraId = signal('');
   readonly filtroDataInicio = signal('');
   readonly filtroDataFim = signal('');
-  readonly filtroSenha = signal('');
+  readonly filtroNumeroGuia = signal('');
   readonly filtroBeneficiario = signal('');
   readonly filtroSemRecurso = signal(false);
   readonly filtroSomenteComGlosa = signal(false);
@@ -294,7 +294,7 @@ export class GuiaListComponent implements OnInit {
     this.filtroOperadoraId.set('');
     this.filtroDataInicio.set('');
     this.filtroDataFim.set('');
-    this.filtroSenha.set('');
+    this.filtroNumeroGuia.set('');
     this.filtroBeneficiario.set('');
     this.filtroSemRecurso.set(false);
     this.filtroSomenteComGlosa.set(false);
@@ -360,8 +360,8 @@ export class GuiaListComponent implements OnInit {
     this._carregar();
   }
 
-  onFiltroSenhaChange(value: string): void {
-    this.filtroSenha.set(value);
+  onFiltroNumeroGuiaChange(value: string): void {
+    this.filtroNumeroGuia.set(value);
     this._textoFiltroChange$.next();
   }
 
@@ -405,7 +405,7 @@ export class GuiaListComponent implements OnInit {
         operadoraId: this.filtroOperadoraId() || undefined,
         dataInicio: this.filtroDataInicio() || undefined,
         dataFim: this.filtroDataFim() || undefined,
-        senha: this.filtroSenha() || undefined,
+        numeroGuia: this.filtroNumeroGuia() || undefined,
         beneficiario: this.filtroBeneficiario() || undefined,
         semRecurso: this.filtroSemRecurso() || undefined,
         somenteComGlosa: this.filtroSomenteComGlosa() || undefined,

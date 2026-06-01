@@ -84,7 +84,7 @@ public sealed class ImportacaoGuiaCsvTests(PostgresContainerFixture db)
         Assert.Equal(1, resultado.Value.ItensCriados);
 
         await using var check = db.CreateTenantContext(tenantId);
-        var guia = await check.Guias.FirstOrDefaultAsync(g => g.Senha == "34280511" && g.PrestadorId == prestadorId);
+        var guia = await check.Guias.FirstOrDefaultAsync(g => g.NumeroGuia == "34280511" && g.PrestadorId == prestadorId);
         Assert.NotNull(guia);
 
         var itemGuia = await check.ItensGuia.FirstOrDefaultAsync(i => i.GuiaId == guia.Id);
@@ -133,7 +133,7 @@ public sealed class ImportacaoGuiaCsvTests(PostgresContainerFixture db)
         Assert.True(resultado.IsSuccess);
 
         await using var check = db.CreateTenantContext(tenantId);
-        var guia = await check.Guias.FirstOrDefaultAsync(g => g.Senha == "12345678" && g.PrestadorId == prestadorId);
+        var guia = await check.Guias.FirstOrDefaultAsync(g => g.NumeroGuia == "12345678" && g.PrestadorId == prestadorId);
         Assert.NotNull(guia);
 
         var itens = await check.ItensGuia
@@ -176,7 +176,7 @@ public sealed class ImportacaoGuiaCsvTests(PostgresContainerFixture db)
         Assert.True(resultado.IsSuccess);
 
         await using var check = db.CreateTenantContext(tenantId);
-        var guia = await check.Guias.FirstOrDefaultAsync(g => g.Senha == "99887766" && g.PrestadorId == prestadorId);
+        var guia = await check.Guias.FirstOrDefaultAsync(g => g.NumeroGuia == "99887766" && g.PrestadorId == prestadorId);
         Assert.NotNull(guia);
 
         var itemGuia = await check.ItensGuia.FirstOrDefaultAsync(i => i.GuiaId == guia.Id);
@@ -271,7 +271,7 @@ public sealed class ImportacaoGuiaCsvTests(PostgresContainerFixture db)
         ctx.Add(TabelaProcedimento.Create(tenantId, operadoraId, proc.Id, 200m));
         ctx.Add(DeflatorPrestador.Create(tenantId, prestadorId, operadoraId, PosicaoExecutor.Cirurgiao, 100m));
         var guiaExistente = Guia.Create(tenantId, prestadorId, operadoraId, null,
-            null, "34280511", new DateOnly(2025, 1, 1), false, string.Empty);
+            "34280511", new DateOnly(2025, 1, 1), false, string.Empty);
         ctx.Add(guiaExistente);
         await ctx.SaveChangesAsync();
 
@@ -291,7 +291,7 @@ public sealed class ImportacaoGuiaCsvTests(PostgresContainerFixture db)
         Assert.Equal(1, resultado.Value.GuiasAtualizadas);
 
         await using var check = db.CreateTenantContext(tenantId);
-        var count = await check.Guias.CountAsync(g => g.Senha == "34280511" && g.PrestadorId == prestadorId);
+        var count = await check.Guias.CountAsync(g => g.NumeroGuia == "34280511" && g.PrestadorId == prestadorId);
         Assert.Equal(1, count);
 
         var itemAdicionado = await check.ItensGuia.FirstOrDefaultAsync(i => i.GuiaId == guiaExistente.Id);
@@ -321,7 +321,7 @@ public sealed class ImportacaoGuiaCsvTests(PostgresContainerFixture db)
         Assert.Equal(1, resultado.Value!.ItensIgnorados);
 
         await using var check = db.CreateTenantContext(tenantId);
-        var guia = await check.Guias.FirstOrDefaultAsync(g => g.Senha == "11223344" && g.PrestadorId == prestadorId);
+        var guia = await check.Guias.FirstOrDefaultAsync(g => g.NumeroGuia == "11223344" && g.PrestadorId == prestadorId);
         if (guia != null)
         {
             var itemGuiaCount = await check.ItensGuia.CountAsync(i => i.GuiaId == guia.Id);
@@ -358,7 +358,7 @@ public sealed class ImportacaoGuiaCsvTests(PostgresContainerFixture db)
         Assert.True(resultado.IsSuccess);
 
         await using var check = db.CreateTenantContext(tenantId);
-        var guia = await check.Guias.FirstOrDefaultAsync(g => g.Senha == "22334455" && g.PrestadorId == prestadorId);
+        var guia = await check.Guias.FirstOrDefaultAsync(g => g.NumeroGuia == "22334455" && g.PrestadorId == prestadorId);
         Assert.NotNull(guia);
 
         var itemGuia = await check.ItensGuia.FirstOrDefaultAsync(i => i.GuiaId == guia.Id);
@@ -414,7 +414,7 @@ public sealed class ImportacaoGuiaCsvTests(PostgresContainerFixture db)
         Assert.True(resultado.Value.ItensPrevistas >= 1);
 
         await using var check = db.CreateTenantContext(tenantId);
-        var guiasCount = await check.Guias.CountAsync(g => g.PrestadorId == prestadorId && g.Senha == "33445566");
+        var guiasCount = await check.Guias.CountAsync(g => g.PrestadorId == prestadorId && g.NumeroGuia == "33445566");
         Assert.Equal(0, guiasCount);
     }
 
@@ -448,7 +448,7 @@ public sealed class ImportacaoGuiaCsvTests(PostgresContainerFixture db)
         Assert.Equal(1, resultado.Value!.ItensCriados);
 
         await using var check = db.CreateTenantContext(tenantId);
-        var guia = await check.Guias.FirstOrDefaultAsync(g => g.Senha == "34113710" && g.PrestadorId == prestadorId);
+        var guia = await check.Guias.FirstOrDefaultAsync(g => g.NumeroGuia == "34113710" && g.PrestadorId == prestadorId);
         Assert.NotNull(guia);
         var itemGuia = await check.ItensGuia.FirstOrDefaultAsync(i => i.GuiaId == guia.Id);
         Assert.NotNull(itemGuia);
@@ -485,7 +485,7 @@ public sealed class ImportacaoGuiaCsvTests(PostgresContainerFixture db)
         Assert.Equal(1, resultado.Value!.GuiasCriadas);
 
         await using var check = db.CreateTenantContext(tenantId);
-        var guia = await check.Guias.FirstOrDefaultAsync(g => g.Senha == "11223301" && g.PrestadorId == prestadorId);
+        var guia = await check.Guias.FirstOrDefaultAsync(g => g.NumeroGuia == "11223301" && g.PrestadorId == prestadorId);
         Assert.NotNull(guia);
         Assert.Equal(new DateOnly(2026, 4, 22), guia.DataAtendimento);
     }
@@ -669,7 +669,7 @@ public sealed class ImportacaoGuiaCsvTests(PostgresContainerFixture db)
         Assert.True(resultado.IsSuccess);
 
         await using var check = db.CreateTenantContext(tenantId);
-        var guia = await check.Guias.FirstOrDefaultAsync(g => g.Senha == "12340099" && g.PrestadorId == prestadorId);
+        var guia = await check.Guias.FirstOrDefaultAsync(g => g.NumeroGuia == "12340099" && g.PrestadorId == prestadorId);
         Assert.NotNull(guia);
         var itemGuia = await check.ItensGuia.FirstOrDefaultAsync(i => i.GuiaId == guia.Id);
         Assert.NotNull(itemGuia);

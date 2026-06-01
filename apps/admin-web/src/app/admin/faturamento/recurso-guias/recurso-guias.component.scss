@@ -3,25 +3,41 @@
 .recurso-guias {
   padding: space(6);
 
+  // ── Page header ────────────────────────────────────────────────────────────
+
   &__header {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
-    margin-bottom: space(6);
+    gap: space(6);
     padding-bottom: space(4);
-    border-bottom: 2px solid var(--color-borda-media);
+    margin-bottom: space(6);
+    border-bottom: 1px solid var(--color-borda-media);
   }
 
-  &__header-info {
+  &__meta {
     display: flex;
-    gap: space(4);
-    align-items: baseline;
+    flex-direction: column;
+    gap: space(1);
+  }
+
+  &__breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: space(2);
+  }
+
+  &__sep {
+    @include text-body;
+
+    color: var(--color-tinta-terciaria);
   }
 
   &__operadora {
-    @include text-h2;
+    @include text-body;
 
     color: var(--color-tinta);
+    font-weight: 500;
   }
 
   &__prestador {
@@ -30,13 +46,14 @@
     color: var(--color-tinta-secundaria);
   }
 
-  &__numero {
-    @include text-label;
+  &__titulo {
+    @include text-h2;
 
-    color: var(--color-tinta-terciaria);
+    color: var(--color-tinta);
   }
 
   &__btn-pdf {
+    flex-shrink: 0;
     height: 40px;
     padding: 0 space(4);
     border: 1px solid var(--color-terracota);
@@ -53,80 +70,89 @@
     }
   }
 
+  // ── Section card ──────────────────────────────────────────────────────────
+
   &__secao {
-    margin-bottom: space(8);
+    background-color: var(--color-pergaminho-claro);
+    border: 1px solid var(--color-borda-discreta);
+    border-radius: space(2);
+    margin-bottom: space(4);
+    overflow: hidden;
+  }
+
+  &__secao-header {
+    display: flex;
+    align-items: center;
+    padding: space(4) space(6);
+    border-bottom: 1px solid var(--color-borda-discreta);
+    background-color: var(--color-pergaminho-claro);
   }
 
   &__secao-titulo {
     @include text-h3;
 
+    display: flex;
+    align-items: center;
+    gap: space(2);
     color: var(--color-tinta);
-    margin-bottom: space(3);
   }
 
-  &__tabela,
-  &__tabela-candidatas {
-    width: 100%;
-    border-collapse: collapse;
+  &__count {
+    @include text-label;
+
+    padding: 2px space(2);
+    border-radius: 10px;
+    background-color: var(--color-borda-media);
+    color: var(--color-tinta-secundaria);
+  }
+
+  &__secao-body {
+    padding: space(4) space(6);
+  }
+
+  // ── Filter panel ──────────────────────────────────────────────────────────
+
+  &__filtros-painel {
+    display: flex;
+    flex-direction: column;
+    gap: space(3);
+    padding: space(4);
+    background-color: var(--color-pergaminho);
+    border: 1px solid var(--color-borda-discreta);
+    border-radius: space(1);
     margin-bottom: space(4);
   }
 
-  &__linha-guia,
-  &__linha-candidata {
-    border-bottom: 1px solid var(--color-borda-discreta);
-  }
-
-  &__btn-remover {
-    padding: space(1) space(3);
-    border: 1px solid var(--color-borda-media);
-    border-radius: 4px;
-    background-color: transparent;
-    color: var(--color-ferrugem);
-    cursor: pointer;
-
-    @include text-label;
-    @include transition-fast(background-color, border-color);
-
-    &:hover {
-      background-color: var(--color-ferrugem-claro);
-      border-color: var(--color-ferrugem);
-    }
-  }
-
-  &__btn-adicionar {
-    padding: space(1) space(3);
-    border: 1px solid var(--color-terracota);
-    border-radius: 4px;
-    background-color: transparent;
-    color: var(--color-terracota);
-    cursor: pointer;
-
-    @include text-label;
-    @include transition-fast(background-color);
-
-    &:hover {
-      background-color: var(--color-pergaminho-claro);
-    }
-  }
-
-  &__vazio {
-    @include text-body;
-
-    color: var(--color-tinta-secundaria);
-    padding: space(3);
-  }
-
-  &__filtros {
-    display: flex;
-    flex-wrap: wrap;
+  &__filtros-grade {
+    display: grid;
+    grid-template-columns: 1fr 1fr 200px auto;
     gap: space(3);
     align-items: center;
-    margin-bottom: space(4);
+  }
+
+  &__filtros-linha {
+    display: flex;
+    align-items: center;
+    gap: space(3);
+  }
+
+  &__date-range {
+    display: flex;
+    align-items: center;
+    gap: space(2);
+  }
+
+  &__date-sep {
+    @include text-body-small;
+
+    color: var(--color-tinta-terciaria);
+    flex-shrink: 0;
   }
 
   &__filtro-input,
   &__filtro-select {
     @include text-body;
+    @include transition(border-color);
 
     height: 36px;
     padding: 0 space(3);
@@ -134,6 +160,20 @@
     border-radius: 4px;
     color: var(--color-tinta);
     background-color: var(--color-pergaminho-claro);
+    width: 100%;
+
+    &:focus {
+      outline: none;
+      border-color: var(--color-terracota);
+    }
+
+    &::placeholder {
+      color: var(--color-tinta-terciaria);
+    }
+
+    &--data {
+      width: 160px;
+    }
   }
 
   &__filtro-toggle {
@@ -144,16 +184,19 @@
     gap: space(2);
     color: var(--color-tinta);
     cursor: pointer;
+    white-space: nowrap;
   }
 
   &__btn-filtrar {
     height: 36px;
-    padding: 0 space(4);
-    border: 1px solid var(--color-borda-media);
+    padding: 0 space(6);
+    border: none;
     border-radius: 4px;
     background-color: var(--color-tinta);
     color: var(--color-pergaminho-claro);
     cursor: pointer;
+    margin-left: auto;
+    flex-shrink: 0;
 
     @include text-label;
     @include transition-fast(background-color);
@@ -166,10 +209,13 @@
   &__hint {
     @include text-body;
 
-    color: var(--color-tinta-secundaria);
-    padding: space(4);
+    color: var(--color-tinta-terciaria);
+    text-align: center;
+    padding: space(8);
     font-style: italic;
   }
+
+  // ── Candidate table ───────────────────────────────────────────────────────
 
   &__acoes-candidatas {
     display: flex;
@@ -180,7 +226,7 @@
   &__btn-adicionar-todas {
     height: 36px;
     padding: 0 space(4);
-    border: 1px solid var(--color-terracota);
+    border: none;
     border-radius: 4px;
     background-color: var(--color-terracota);
     color: var(--color-pergaminho-claro);
@@ -190,28 +236,124 @@
     @include transition-fast(background-color);
 
     &:hover {
-      background-color: var(--color-ferrugem);
+      background-color: var(--color-terracota-escuro);
     }
+  }
+
+  &__tabela-candidatas {
+    width: 100%;
+    border-collapse: collapse;
+
+    th {
+      @include text-label;
+
+      padding: space(2) space(3);
+      text-align: left;
+      color: var(--color-tinta-secundaria);
+      background-color: var(--color-pergaminho);
+      border-bottom: 1px solid var(--color-borda-media);
+    }
+
+    td {
+      @include text-body;
+
+      padding: space(2) space(3);
+      color: var(--color-tinta);
+      vertical-align: middle;
+    }
+  }
+
+  &__linha-candidata {
+    border-bottom: 1px solid var(--color-borda-discreta);
+
+    @include transition-fast(background-color);
+
+    &:hover {
+      background-color: var(--color-pergaminho);
+    }
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  &__btn-adicionar {
+    padding: space(1) space(3);
+    border: 1px solid var(--color-terracota);
+    border-radius: 4px;
+    background-color: transparent;
+    color: var(--color-terracota);
+    cursor: pointer;
+    white-space: nowrap;
+
+    @include text-label;
+    @include transition-fast(background-color);
+
+    &:hover {
+      background-color: var(--color-pergaminho-claro);
+    }
+  }
+
+  // ── Situação badge ────────────────────────────────────────────────────────
+
+  &__situacao-badge {
+    @include text-label;
+
+    display: inline-block;
+    padding: space(1) space(2);
+    border-radius: space(1);
+    background-color: var(--color-borda-discreta);
+    color: var(--color-tinta-secundaria);
+
+    &--apresentada {
+      color: var(--color-ambar);
+      background-color: var(--color-ambar-claro);
+    }
+
+    &--liquidada {
+      color: var(--color-verde-musgo);
+      background-color: var(--color-verde-musgo-claro);
+    }
+  }
+
+  // ── Misc ──────────────────────────────────────────────────────────────────
+
+  &__vazio {
+    @include text-body;
+
+    color: var(--color-tinta-secundaria);
+    padding: space(6);
+    text-align: center;
   }
 
   &__erro {
     @include text-body;
 
+    padding: space(3) space(4);
+    margin-top: space(3);
+    border-radius: space(1);
+    background-color: var(--color-ferrugem-claro);
     color: var(--color-ferrugem);
-    margin-top: space(4);
   }
 }
 
+// ── Guia card ─────────────────────────────────────────────────────────────────
+
 .guia-card {
   border: 1px solid var(--color-borda-discreta);
-  border-radius: 4px;
-  margin-bottom: space(3);
+  border-radius: space(1);
+  margin-bottom: space(2);
   overflow: hidden;
 
+  &:last-child {
+    margin-bottom: 0;
+  }
+
   &__header {
-    display: flex;
+    display: grid;
+    grid-template-columns: 120px 100px 1fr 80px auto auto 28px;
+    gap: space(3);
     align-items: center;
-    gap: space(4);
     padding: space(3) space(4);
     background-color: var(--color-pergaminho-claro);
     cursor: pointer;
@@ -219,37 +361,38 @@
     @include transition-fast(background-color);
 
     &:hover {
-      background-color: var(--color-borda-discreta);
+      background-color: var(--color-pergaminho);
     }
   }
 
-  &__senha {
+  &__numero-guia {
     @include text-label;
 
     color: var(--color-tinta);
     font-weight: 600;
-    min-width: 80px;
+    font-family: var(--font-mono);
   }
 
   &__data {
     @include text-body;
 
     color: var(--color-tinta-secundaria);
-    min-width: 90px;
   }
 
   &__beneficiario {
     @include text-body;
 
     color: var(--color-tinta);
-    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   &__itens {
     @include text-label;
 
     color: var(--color-tinta-terciaria);
-    min-width: 60px;
+    text-align: right;
   }
 
   &__obs-badge {
@@ -257,9 +400,9 @@
 
     padding: 2px space(2);
     border-radius: 4px;
-    background-color: var(--color-terracota);
-    color: var(--color-pergaminho-claro);
-    font-size: 11px;
+    background-color: var(--color-ambar-claro);
+    color: var(--color-ambar);
+    white-space: nowrap;
   }
 
   &__remover {
@@ -269,7 +412,7 @@
     background-color: transparent;
     color: var(--color-ferrugem);
     cursor: pointer;
-    margin-left: auto;
+    white-space: nowrap;
 
     @include text-label;
     @include transition-fast(background-color, border-color);
@@ -281,15 +424,24 @@
   }
 
   &__expand-icon {
-    @include text-label;
-
+    display: flex;
+    align-items: center;
+    justify-content: center;
     color: var(--color-tinta-terciaria);
+    font-size: 16px;
+    transform: rotate(90deg);
+
+    @include transition-fast(transform);
+
+    &--aberta {
+      transform: rotate(270deg);
+    }
   }
 
   &__detalhe {
     padding: space(4);
     border-top: 1px solid var(--color-borda-discreta);
-    background-color: var(--color-fundo);
+    background-color: var(--color-pergaminho);
   }
 
   &__observacao {
@@ -307,6 +459,7 @@
 
   &__obs-input {
     @include text-body;
+    @include transition(border-color);
 
     padding: space(2) space(3);
     border: 1px solid var(--color-borda-media);
@@ -340,7 +493,7 @@
     }
 
     &:hover:not(:disabled) {
-      background-color: var(--color-ferrugem);
+      background-color: var(--color-terracota-escuro);
     }
   }
 
@@ -363,6 +516,10 @@
       color: var(--color-tinta-secundaria);
       background-color: var(--color-pergaminho-claro);
     }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
   }
 
   &__valor-apurado-cell {
@@ -371,6 +528,7 @@
 
   &__valor-input {
     @include text-mono-value;
+    @include transition(border-color);
 
     width: 100%;
     padding: space(1) space(2);

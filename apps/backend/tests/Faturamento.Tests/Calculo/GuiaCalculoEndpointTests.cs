@@ -62,7 +62,7 @@ public sealed class GuiaCalculoEndpointTests(PostgresContainerFixture db)
         var factory = new PricingRuleSetFactory(ctx);
         var service = new GuiaService(ctx, user, factory);
 
-        var cmd = new CriarGuiaCommand(prestadorId, operadoraId, null, null, "SEN-VIS01",
+        var cmd = new CriarGuiaCommand(prestadorId, operadoraId, null, "SEN-VIS01",
             new DateOnly(2025, 1, 1), false, string.Empty,
             [new CriarItemGuiaCommand(procedimentoId, PosicaoExecutor.Cirurgiao,
                 1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null)]);
@@ -92,7 +92,7 @@ public sealed class GuiaCalculoEndpointTests(PostgresContainerFixture db)
 
         // Create guia directly (bypasses service validation) to simulate a legacy uncalculated guia
         var guia = Guia.Create(tenantId, prestadorId, operadoraId, null,
-            "SEN-VIS02", "SEN-VIS02", new DateOnly(2025, 1, 1), false, string.Empty);
+            "SEN-VIS02", new DateOnly(2025, 1, 1), false, string.Empty);
         ctx.Add(guia);
         ctx.Add(ItemGuia.Create(guia.Id, procedimentoId, PosicaoExecutor.Cirurgiao,
             1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null));
@@ -123,7 +123,7 @@ public sealed class GuiaCalculoEndpointTests(PostgresContainerFixture db)
 
         // Create guia directly (bypasses service validation) to simulate a legacy uncalculated guia
         var guia = Guia.Create(tenantId, prestadorId, operadoraId, null,
-            "SEN-VIS04", "SEN-VIS04", new DateOnly(2025, 1, 1), false, string.Empty);
+            "SEN-VIS04", new DateOnly(2025, 1, 1), false, string.Empty);
         ctx.Add(guia);
         ctx.Add(ItemGuia.Create(guia.Id, procedimentoId, PosicaoExecutor.Cirurgiao,
             1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null));
@@ -152,7 +152,7 @@ public sealed class GuiaCalculoEndpointTests(PostgresContainerFixture db)
         var factory = new PricingRuleSetFactory(ctx);
         var service = new GuiaService(ctx, user, factory);
 
-        var cmd = new CriarGuiaCommand(prestadorId, operadoraId, null, null, "SEN-VIS03",
+        var cmd = new CriarGuiaCommand(prestadorId, operadoraId, null, "SEN-VIS03",
             new DateOnly(2025, 1, 1), true, string.Empty,
             [new CriarItemGuiaCommand(procedimentoId, PosicaoExecutor.Cirurgiao,
                 1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, 350m)]);
@@ -265,7 +265,7 @@ public sealed class GuiaCalculoHttpTests : IAsyncLifetime
             prestadorId,
             operadoraId,
             beneficiarioId = (Guid?)null,
-            senha = "SEN-HTTP-CAL",
+            numeroGuia = "SEN-HTTP-CAL",
             dataAtendimento = "2025-06-01",
             ehPacote = false,
             observacao = "",

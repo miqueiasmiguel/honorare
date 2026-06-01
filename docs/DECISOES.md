@@ -274,7 +274,7 @@ Operadoras e procedimentos são dados de tenant, gerenciados pelo `TenantAdmin`.
 
 Nenhuma guia pode ser criada ou atualizada a menos que **todos os itens sejam calculados com sucesso** pelo motor (`SituacaoApuracao.Calculado`). O motor executa em pré-voo com IDs temporários antes de qualquer persistência. Se qualquer item retornar `SemDeflator`, `SemTabela` ou `Indeterminado`, a operação é rejeitada com mensagem descritiva indicando quantos itens falharam e por qual motivo.
 
-O import de demonstrativo CSV (importação em lote) faz uma verificação antecipada mais leve: valida que existe `DeflatorPrestador` para cada `PosicaoExecutor` distinta presente no arquivo antes de começar o loop de criação. Se algum deflator estiver faltando, o import inteiro é rejeitado com indicação da posição.
+A importação de guias via CSV (`ImportacaoGuiaCsvService`) faz uma verificação antecipada mais leve: valida que existe `DeflatorPrestador` para cada `PosicaoExecutor` distinta presente no arquivo antes de começar o loop de criação. Se algum deflator estiver faltando, o import inteiro é rejeitado com indicação da posição.
 
 **Exceções intencionais:**
 
@@ -298,7 +298,7 @@ O endpoint `POST /api/v1/admin/guias/{id}/recalcular` descarta o `Calculo` exist
 - Um deflator ou tabela é adicionado depois que a guia já foi criada (guias legadas de antes do D-038).
 - Os valores do catálogo são corrigidos e o cálculo precisa ser atualizado.
 
-O recálculo não altera `ValorLiquidado` (vem do demonstrativo, não do motor) nem a situação da guia.
+O recálculo não altera `ValorLiquidado` (definido via importação CSV ou edição inline — não pelo motor) nem a situação da guia.
 
 **Guias pacote:** recálculo é rejeitado com erro — `ValorApurado` é manual.
 
