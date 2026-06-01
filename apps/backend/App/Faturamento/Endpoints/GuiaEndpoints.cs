@@ -1,4 +1,5 @@
 using App.Catalog;
+using Microsoft.AspNetCore.Mvc;
 
 namespace App.Faturamento.Endpoints;
 
@@ -16,6 +17,8 @@ internal static class GuiaEndpoints
         g.MapPut("{id:guid}", AtualizarGuiaAsync);
         g.MapPatch("{id:guid}/observacao", AtualizarObservacaoAsync);
         g.MapPatch("{id:guid}/itens/{itemId:guid}/valor-apurado", AtualizarValorApuradoItemAsync);
+        g.MapPost("importar-csv", ImportarCsvAsync).DisableAntiforgery();
+        g.MapPatch("{id:guid}/itens/{itemId:guid}/pagamento", AtualizarPagamentoItemAsync);
         g.MapDelete("{id:guid}", ExcluirGuiaAsync);
     }
 
@@ -163,6 +166,39 @@ internal static class GuiaEndpoints
         return Results.Ok(result.Value);
     }
 
+    private static async Task<IResult> ImportarCsvAsync(
+        [FromForm] IFormFile arquivo,
+        [FromForm] Guid prestadorId,
+        [FromForm] Guid operadoraId,
+        [FromForm] bool somenteValidar,
+        ImportacaoGuiaCsvService service,
+        CancellationToken ct)
+    {
+        await using var stream = arquivo.OpenReadStream();
+        var result = await service.ImportarAsync(stream, prestadorId, operadoraId, somenteValidar, ct);
+
+        if (result.IsFailure)
+        {
+            var statusCode = result.Error switch
+            {
+                ValidationError => StatusCodes.Status400BadRequest,
+                NotFoundError => StatusCodes.Status404NotFound,
+                _ => StatusCodes.Status400BadRequest,
+            };
+            return Results.Problem(statusCode: statusCode, detail: result.Error!.Message);
+        }
+
+        return Results.Ok(result.Value);
+    }
+
+    private static Task<IResult> AtualizarPagamentoItemAsync(
+        Guid id, Guid itemId, AtualizarPagamentoItemRequest req,
+        GuiaService service, CancellationToken ct)
+    {
+        _ = (id, itemId, req, service, ct);
+        return Task.FromResult(Results.StatusCode(501));
+    }
+
     private static async Task<IResult> ExcluirGuiaAsync(
         Guid id, GuiaService service, CancellationToken ct)
     {
@@ -209,6 +245,8 @@ internal sealed record CriarGuiaRequest(
 internal sealed record AtualizarObservacaoRequest(string Observacao);
 
 internal sealed record AtualizarValorApuradoItemRequest(decimal? ValorApurado);
+
+internal sealed record AtualizarPagamentoItemRequest(decimal? ValorLiquidado, string? MotivoGlosa);
 
 internal sealed record AtualizarGuiaRequest(
     Guid OperadoraId,

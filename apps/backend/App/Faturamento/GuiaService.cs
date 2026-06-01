@@ -43,7 +43,7 @@ internal sealed record ItemGuiaDto(
     Guid Id, Guid ProcedimentoId, string CodigoTuss, string DescricaoProcedimento,
     PosicaoExecutor PosicaoExecutor, decimal PercentualOrdem,
     ViaAcesso ViaAcesso, Acomodacao Acomodacao, bool EhUrgencia,
-    decimal? ValorApurado, decimal? ValorLiquidado);
+    decimal? ValorApurado, decimal? ValorLiquidado, string? MotivoGlosa);
 
 internal sealed record GuiaDetalheDto(
     Guid Id, Guid PrestadorId, string PrestadorNome,
@@ -657,7 +657,7 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
                                i.Id, i.ProcedimentoId, p.CodigoTuss, p.Descricao,
                                i.PosicaoExecutor, i.PercentualOrdem,
                                i.ViaAcesso, i.Acomodacao,
-                               i.EhUrgencia, i.ValorApurado, i.ValorLiquidado))
+                               i.EhUrgencia, i.ValorApurado, i.ValorLiquidado, i.MotivoGlosa))
                           .ToListAsync(ct);
 
         return Result<GuiaDetalheDto>.Ok(new GuiaDetalheDto(
@@ -678,7 +678,7 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
                           i.Id, i.ProcedimentoId, p.CodigoTuss, p.Descricao,
                           i.PosicaoExecutor, i.PercentualOrdem,
                           i.ViaAcesso, i.Acomodacao,
-                          i.EhUrgencia, i.ValorApurado, i.ValorLiquidado))
+                          i.EhUrgencia, i.ValorApurado, i.ValorLiquidado, i.MotivoGlosa))
                      .FirstAsync(ct);
     }
 }

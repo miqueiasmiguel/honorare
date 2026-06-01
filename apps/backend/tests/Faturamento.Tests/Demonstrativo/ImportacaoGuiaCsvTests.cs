@@ -7,10 +7,10 @@ using App.Faturamento.Motor;
 using Faturamento.Tests.Fixtures;
 using Microsoft.EntityFrameworkCore;
 
-namespace Faturamento.Tests.DemonstrativoImportacao;
+namespace Faturamento.Tests.ImportacaoGuiaCsv;
 
 [Collection(nameof(PostgresCollection))]
-public sealed class ImportacaoDemonstrativoTests(PostgresContainerFixture db)
+public sealed class ImportacaoGuiaCsvTests(PostgresContainerFixture db)
 {
     private const string CsvHeader =
         "GUIA;CODIGO;BENEFICIARIO;DATA SERVICO;CODIGO PROCEDIMENTO;NOME PROCEDIMENTO;" +
@@ -28,7 +28,7 @@ public sealed class ImportacaoDemonstrativoTests(PostgresContainerFixture db)
         $"{guia};{codigo};{beneficiario};{dataServico};{codigoProcedimento};{nomeProcedimento};" +
         $"{funcao};{executante};{percentVia};{acomodacao};{acrescimo};{qtdePaga};{honorario};{glosa};{codGlosa};{total}";
 
-    private (AppDbContext ctx, ImportacaoDemonstrativoService service) BuildService(Guid tenantId)
+    private (AppDbContext ctx, ImportacaoGuiaCsvService service) BuildService(Guid tenantId)
     {
         var user = new FakeTenantUserIO04(tenantId);
         var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -36,7 +36,7 @@ public sealed class ImportacaoDemonstrativoTests(PostgresContainerFixture db)
             .Options;
         var ctx = new AppDbContext(options, user);
         var factory = new PricingRuleSetFactory(ctx);
-        return (ctx, new ImportacaoDemonstrativoService(ctx, user, factory));
+        return (ctx, new ImportacaoGuiaCsvService(ctx, user, factory));
     }
 
     private static async Task<(Guid prestadorId, Guid operadoraId)> SeedBaseAsync(AppDbContext ctx, Guid tenantId)
@@ -50,7 +50,7 @@ public sealed class ImportacaoDemonstrativoTests(PostgresContainerFixture db)
     }
 
     [Fact]
-    public async Task ImportarCsv_AnestesistaValido_CriaGuiaItemDemonstrativoAsync()
+    public async Task ImportarCsv_AnestesistaValido_CriaGuiaItemAsync()
     {
         var tenantId = Guid.NewGuid();
         await using var ctx = db.CreateTenantContext(tenantId);
@@ -86,18 +86,13 @@ public sealed class ImportacaoDemonstrativoTests(PostgresContainerFixture db)
         await using var check = db.CreateTenantContext(tenantId);
         var guia = await check.Guias.FirstOrDefaultAsync(g => g.Senha == "34280511" && g.PrestadorId == prestadorId);
         Assert.NotNull(guia);
-        Assert.Null(guia.NumeroGuia);
 
         var itemGuia = await check.ItensGuia.FirstOrDefaultAsync(i => i.GuiaId == guia.Id);
         Assert.NotNull(itemGuia);
         Assert.Equal(PosicaoExecutor.Anestesista, itemGuia.PosicaoExecutor);
         Assert.Equal(1.0m, itemGuia.PercentualOrdem);
         Assert.NotNull(itemGuia.ValorApurado);
-
-        var itemDem = await check.ItensDemonstrativo.FirstOrDefaultAsync(i => i.ItemGuiaId == itemGuia.Id);
-        Assert.NotNull(itemDem);
-        Assert.Equal("34280511", itemDem.Senha);
-        Assert.Equal(itemDem.ValorPago, itemGuia.ValorLiquidado);
+        Assert.Equal(500m, itemGuia.ValorLiquidado);
     }
 
     [Fact]
@@ -187,12 +182,7 @@ public sealed class ImportacaoDemonstrativoTests(PostgresContainerFixture db)
         var itemGuia = await check.ItensGuia.FirstOrDefaultAsync(i => i.GuiaId == guia.Id);
         Assert.NotNull(itemGuia);
         Assert.Equal(0m, itemGuia.ValorLiquidado);
-
-        var itemDem = await check.ItensDemonstrativo.FirstOrDefaultAsync(i => i.ItemGuiaId == itemGuia.Id);
-        Assert.NotNull(itemDem);
-        Assert.Equal(0m, itemDem.ValorPago);
-        Assert.True(itemDem.ValorGlosado > 0);
-        Assert.Equal("2602", itemDem.MotivoGlosa);
+        Assert.Equal("2602", itemGuia.MotivoGlosa);
     }
 
     [Fact]
@@ -377,7 +367,7 @@ public sealed class ImportacaoDemonstrativoTests(PostgresContainerFixture db)
     }
 
     [Fact]
-    public async Task ImportarCsv_FormatoInvalido_RetornaErro400Async()
+    public async Task ImportarCsv_FormatoInvalido_RetornaErroAsync()
     {
         var tenantId = Guid.NewGuid();
         await using var ctx = db.CreateTenantContext(tenantId);
@@ -419,15 +409,13 @@ public sealed class ImportacaoDemonstrativoTests(PostgresContainerFixture db)
         var resultado = await service.ImportarAsync(ToCsvStream(csv), prestadorId, operadoraId, true, CancellationToken.None);
 
         Assert.True(resultado.IsSuccess);
-        Assert.Null(resultado.Value!.DemonstrativoId);
+        Assert.True(resultado.Value!.SomenteValidar);
         Assert.True(resultado.Value.GuiasPrevistas >= 1);
         Assert.True(resultado.Value.ItensPrevistas >= 1);
 
         await using var check = db.CreateTenantContext(tenantId);
         var guiasCount = await check.Guias.CountAsync(g => g.PrestadorId == prestadorId && g.Senha == "33445566");
         Assert.Equal(0, guiasCount);
-        var demsCount = await check.Demonstrativos.CountAsync(d => d.OperadoraId == operadoraId);
-        Assert.Equal(0, demsCount);
     }
 
     [Fact]
@@ -530,15 +518,10 @@ public sealed class ImportacaoDemonstrativoTests(PostgresContainerFixture db)
 
         Assert.True(resultado.IsSuccess);
         Assert.Equal("741443463", resultado.Value!.IdentificadorPagamento);
-
-        await using var check = db.CreateTenantContext(tenantId);
-        var dem = await check.Demonstrativos.FirstOrDefaultAsync(d => d.Id == resultado.Value.DemonstrativoId);
-        Assert.NotNull(dem);
-        Assert.Equal("741443463", dem.IdentificadorPagamento);
     }
 
     [Fact]
-    public async Task ImportarCsv_IdentificadorDuplicado_RejeicaoAsync()
+    public async Task ImportarCsv_ReimportarMesmoCsv_SobreescreveValoresAsync()
     {
         var tenantId = Guid.NewGuid();
         await using var ctx = db.CreateTenantContext(tenantId);
@@ -566,8 +549,7 @@ public sealed class ImportacaoDemonstrativoTests(PostgresContainerFixture db)
         Assert.True(resultado1.IsSuccess);
 
         var resultado2 = await service.ImportarAsync(ToCsvStream(csv), prestadorId, operadoraId, false, CancellationToken.None);
-        Assert.True(resultado2.IsFailure);
-        Assert.IsType<ValidationError>(resultado2.Error);
+        Assert.True(resultado2.IsSuccess);
     }
 
     [Fact]
@@ -598,7 +580,7 @@ public sealed class ImportacaoDemonstrativoTests(PostgresContainerFixture db)
     }
 
     [Fact]
-    public async Task ImportarCsv_TodosFuncoesDesconhecidas_NaoCriaDemonstrativoAsync()
+    public async Task ImportarCsv_TodosFuncoesDesconhecidas_RejeicaoAsync()
     {
         var tenantId = Guid.NewGuid();
         await using var ctx = db.CreateTenantContext(tenantId);
@@ -621,10 +603,6 @@ public sealed class ImportacaoDemonstrativoTests(PostgresContainerFixture db)
 
         Assert.True(resultado.IsFailure);
         Assert.IsType<ValidationError>(resultado.Error);
-
-        await using var check = db.CreateTenantContext(tenantId);
-        var count = await check.Demonstrativos.CountAsync(d => d.OperadoraId == operadoraId);
-        Assert.Equal(0, count);
     }
 
     [Fact]
@@ -660,6 +638,42 @@ public sealed class ImportacaoDemonstrativoTests(PostgresContainerFixture db)
         Assert.Equal(1, resultado.Value!.ItensCriados);
         Assert.Contains(resultado.Value.Alertas, a =>
             a.Mensagem.Contains("FUNCAO_INVALIDA_X", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task ImportarCsv_CodGlosaPreenchido_MotivoGlosaSalvoAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        await using var ctx = db.CreateTenantContext(tenantId);
+        var (prestadorId, operadoraId) = await SeedBaseAsync(ctx, tenantId);
+
+        var proc = Procedimento.Create(tenantId, "31009099", "PROC GLOSA MOTIVO", "1", null, false, false);
+        ctx.Add(proc);
+        await ctx.SaveChangesAsync();
+
+        ctx.Add(TabelaProcedimento.Create(tenantId, operadoraId, proc.Id, 200m));
+        ctx.Add(DeflatorPrestador.Create(tenantId, prestadorId, operadoraId, PosicaoExecutor.Cirurgiao, 100m));
+        await ctx.SaveChangesAsync();
+
+        var csv = string.Join("\n",
+            "IO06_MOTIVO",
+            CsvHeader,
+            CsvRow("12340099", "0000000000000099", "PACIENTE MOTIVO", "01/01/2025",
+                "31009099", "PROC GLOSA MOTIVO", "CIRURGIAO", "DR IO06",
+                "100", "ENFERMARIA", "", "0", "200,00", "200,00", "CB", "0,00"));
+
+        var (svcCtx, service) = BuildService(tenantId);
+        await using var _ = svcCtx;
+        var resultado = await service.ImportarAsync(ToCsvStream(csv), prestadorId, operadoraId, false, CancellationToken.None);
+
+        Assert.True(resultado.IsSuccess);
+
+        await using var check = db.CreateTenantContext(tenantId);
+        var guia = await check.Guias.FirstOrDefaultAsync(g => g.Senha == "12340099" && g.PrestadorId == prestadorId);
+        Assert.NotNull(guia);
+        var itemGuia = await check.ItensGuia.FirstOrDefaultAsync(i => i.GuiaId == guia.Id);
+        Assert.NotNull(itemGuia);
+        Assert.Equal("CB", itemGuia.MotivoGlosa);
     }
 }
 

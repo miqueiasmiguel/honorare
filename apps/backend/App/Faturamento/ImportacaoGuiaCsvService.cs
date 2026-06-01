@@ -10,7 +10,6 @@ namespace App.Faturamento;
 internal sealed record ImportacaoResultado(
     string IdentificadorPagamento,
     bool SomenteValidar,
-    Guid? DemonstrativoId,
     int GuiasCriadas,
     int GuiasAtualizadas,
     int ItensCriados,
@@ -26,7 +25,7 @@ internal sealed record ErroImportacao(int Linha, string Mensagem);
 
 internal sealed record AlertaImportacao(int Linha, string Mensagem);
 
-internal sealed class ImportacaoDemonstrativoService(
+internal sealed class ImportacaoGuiaCsvService(
     AppDbContext db, ICurrentUser currentUser, PricingRuleSetFactory factory)
 {
     private static readonly string[] _requiredHeaders =
@@ -59,20 +58,6 @@ internal sealed class ImportacaoDemonstrativoService(
 
         var linhas = parseResult.Value!;
 
-        if (!string.IsNullOrWhiteSpace(identificadorPagamento))
-        {
-            var jaImportado = await db.Demonstrativos.AnyAsync(
-                d => d.TenantId == tenantId &&
-                     d.OperadoraId == operadoraId &&
-                     d.IdentificadorPagamento == identificadorPagamento, ct);
-            if (jaImportado)
-            {
-                return Result<ImportacaoResultado>.Fail(
-                    new ValidationError(
-                        $"Demonstrativo com identificador '{identificadorPagamento}' já foi importado para esta operadora."));
-            }
-        }
-
         var linhasComFuncao = linhas.Where(l => !string.IsNullOrWhiteSpace(l.Funcao)).ToList();
         if (linhasComFuncao.Count > 0 && linhasComFuncao.All(l => MapearFuncao(l.Funcao) is null))
         {
@@ -96,7 +81,7 @@ internal sealed class ImportacaoDemonstrativoService(
             var itensPrevistas = linhas.Count(l => !string.IsNullOrWhiteSpace(l.Funcao));
 
             return Result<ImportacaoResultado>.Ok(new ImportacaoResultado(
-                identificadorPagamento, true, null,
+                identificadorPagamento, true,
                 0, 0, 0, 0, 0, 0,
                 guiasPrevistas, itensPrevistas,
                 [], []));
@@ -126,22 +111,6 @@ internal sealed class ImportacaoDemonstrativoService(
                 }
             }
         }
-
-        var datasServico = linhas.Select(l => l.DataServico).ToList();
-        var dataReferencia = datasServico.Count > 0
-            ? datasServico
-                .GroupBy(d => d)
-                .OrderByDescending(g => g.Count())
-                .First().Key
-            : DateOnly.FromDateTime(DateTime.UtcNow);
-
-        var competencia = $"{dataReferencia.Year}-{dataReferencia.Month:00}";
-
-        var demonstrativo = Demonstrativo.Create(
-            tenantId, operadoraId, competencia,
-            dataReferencia, null, identificadorPagamento);
-        db.Demonstrativos.Add(demonstrativo);
-        await db.SaveChangesAsync(ct);
 
         var erros = new List<ErroImportacao>();
         var alertas = new List<AlertaImportacao>();
@@ -259,13 +228,8 @@ internal sealed class ImportacaoDemonstrativoService(
                 }
 
                 var itemGuia = itensGrupo[^1];
-                var valorPago = linha.Total;
-                var itemDem = ItemDemonstrativo.Create(
-                    demonstrativo.Id, senha, linha.CodigoProcedimento,
-                    linha.NomeProcedimento, linha.Honorario, valorPago, linha.CodGlosa);
-                itemDem.Conciliar(itemGuia.Id);
-                itemGuia.SetValorLiquidado(valorPago);
-                db.ItensDemonstrativo.Add(itemDem);
+                itemGuia.SetValorLiquidado(linha.Total);
+                itemGuia.SetMotivoGlosa(linha.CodGlosa);
                 await db.SaveChangesAsync(ct);
             }
 
@@ -301,7 +265,7 @@ internal sealed class ImportacaoDemonstrativoService(
         }
 
         return Result<ImportacaoResultado>.Ok(new ImportacaoResultado(
-            identificadorPagamento, false, demonstrativo.Id,
+            identificadorPagamento, false,
             guiasCriadas, guiasAtualizadas,
             itensCriados, itensAtualizados, itensIgnorados,
             beneficiariosCriados,

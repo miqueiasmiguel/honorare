@@ -28,8 +28,6 @@ internal class AppDbContext(
     public DbSet<ItemGuia> ItensGuia => Set<ItemGuia>();
     public DbSet<Calculo> Calculos => Set<Calculo>();
     public DbSet<PassoCalculo> PassosCalculo => Set<PassoCalculo>();
-    public DbSet<Demonstrativo> Demonstrativos => Set<Demonstrativo>();
-    public DbSet<ItemDemonstrativo> ItensDemonstrativo => Set<ItemDemonstrativo>();
     public DbSet<Recurso> Recursos => Set<Recurso>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

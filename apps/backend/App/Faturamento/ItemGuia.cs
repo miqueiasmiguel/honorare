@@ -15,6 +15,7 @@ internal sealed class ItemGuia
     public int? TempoAnestesicoMin { get; private set; }
     public decimal? ValorApurado { get; private set; }
     public decimal? ValorLiquidado { get; private set; }
+    public string? MotivoGlosa { get; private set; }
     public DateTimeOffset CriadoEm { get; private set; }
 
     private ItemGuia() { }
@@ -22,6 +23,8 @@ internal sealed class ItemGuia
     internal void SetValorApurado(decimal? valor) => ValorApurado = valor;
 
     internal void SetValorLiquidado(decimal? valor) => ValorLiquidado = valor;
+
+    internal void SetMotivoGlosa(string? valor) => MotivoGlosa = valor?.Trim();
 
     internal void SetTempoAnestesicoMin(int? valor) => TempoAnestesicoMin = valor;
 
