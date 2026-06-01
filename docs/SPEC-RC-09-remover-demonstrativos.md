@@ -444,7 +444,7 @@ Testar manualmente no browser: importar um CSV de teste; editar `valorLiquidado`
 
 ---
 
-## Sessão 5 — Integração final + docs
+## Sessão 5 — Integração final + docs ✅
 
 **Objetivo:** regenerar o cliente TypeScript, garantir cobertura global e atualizar a documentação.
 Requer Sessões 1–4 concluídas.

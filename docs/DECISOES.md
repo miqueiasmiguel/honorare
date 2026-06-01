@@ -314,6 +314,12 @@ O endpoint `PATCH /api/v1/admin/guias/{id}/itens/{itemId}/valor-apurado` permite
 
 **Revisitar:** se houver demanda de audit trail por item (flag `FoiEditadoManualmente`) — hoje não rastreado.
 
+### D-042: Módulo de Demonstrativo e Conciliação removido
+
+O passo de matching `ItemDemonstrativo ↔ ItemGuia` não agrega valor quando a entrada é manual (D-003). `ValorLiquidado` e `MotivoGlosa` são escritos diretamente em `ItemGuia` — via importação CSV ou edição inline. Não reconstruir.
+
+**Revisitar:** nunca — decisão estrutural do MVP.
+
 ### D-023: CLAUDE.md em três níveis
 
 - Raiz: regras gerais do monorepo

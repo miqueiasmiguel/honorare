@@ -10,15 +10,15 @@
 
 - **Procedimento:** entrada do Rol de Procedimentos da ANS, identificada por código TUSS (Terminologia Unificada da Saúde Suplementar). Cada procedimento tem porte, porte anestésico, etc.
 
-- **Demonstrativo:** documento que a operadora devolve ao prestador informando o que foi pago e o que foi glosado.
+- **Demonstrativo:** entidade removida em RC-09; substituído por edição direta em `ItemGuia` (ver D-042).
 
-- **ItemDemonstrativo:** linha do demonstrativo de pagamento. Contém `Senha` (código de pré-autorização), `CodigoTuss`, `ValorApresentado`, `ValorPago`, `ValorGlosado` (= `ValorApresentado − ValorPago`, calculado e armazenado na criação) e `MotivoGlosa`. Vincula-se a um `ItemGuia` via `ItemGuiaId` (null = não conciliado).
+- **ItemDemonstrativo:** entidade removida em RC-09; substituído por edição direta em `ItemGuia` (ver D-042).
 
 - **Glosa:** valor não pago pela operadora, com motivo informado. Pode ser legítima (procedimento realmente não autorizado) ou indevida (oportunidade de contestar).
 
 - **Senha:** código de pré-autorização emitido pela operadora para o procedimento. Campo obrigatório na `Guia` — é o identificador que a operadora usa para cruzar a guia apresentada com o demonstrativo de pagamento.
 
-- **Conciliação:** processo de match entre `ItemGuia` (o que o médico cobrou) e `ItemDemonstrativo` (o que a operadora pagou). Ao conciliar, `ItemGuia.ValorLiquidado` recebe `ItemDemonstrativo.ValorPago`. **Auto-liquidação:** quando todos os `ItemGuia` de uma guia têm `ValorLiquidado IS NOT NULL`, a guia avança automaticamente para `Liquidada`. **Reversão:** ao desconciliar qualquer item, se a guia estava `Liquidada`, ela volta para `Apresentada`. **Re-conciliação:** vincular um `ItemDemonstrativo` já conciliado a outro `ItemGuia` desconcilia automaticamente o vínculo anterior (limpa `ValorLiquidado` do `ItemGuia` anterior).
+- **Conciliação:** edição direta de `ValorLiquidado` e `MotivoGlosa` por `ItemGuia` — via importação CSV da UNIMED ou edição inline no admin. **Auto-liquidação:** quando todos os `ItemGuia` de uma guia têm `ValorLiquidado IS NOT NULL`, a guia avança automaticamente para `Liquidada`. **Reversão:** ao limpar `ValorLiquidado` de qualquer item, se a guia estava `Liquidada`, ela volta para `Apresentada`.
 
 - **Divergência:** quando o valor calculado pelo sistema difere do valor pago pela operadora. Pode indicar glosa indevida, subpagamento sem glosa, ou erro de cálculo.
 
@@ -33,7 +33,7 @@
   - `Liquidada` — operadora liquidou integralmente (exibido em verde). "Liquidação" é o termo financeiro correto para o pagamento efetuado pelo convênio.
   - `EmRecurso` — guia com divergência incluída em recurso formal enviado à operadora (exibido em vermelho); armazena referência ao `Recurso`.
 
-  Fluxo normal: `Apresentada` → `Liquidada` (automaticamente quando todos os `ItemGuia` são conciliados via demonstrativo). Fluxo de divergência: `Apresentada` → `EmRecurso`.
+  Fluxo normal: `Apresentada` → `Liquidada` (automaticamente quando todos os `ItemGuia` têm `ValorLiquidado` preenchido). Fluxo de divergência: `Apresentada` → `EmRecurso`.
 
 - **Recurso (entidade):** representa um conjunto de guias com divergência agrupadas num envio formal à operadora. Tem número próprio no formato `AAAAMM` + sequencial (ex: `202512` = primeiro recurso de dezembro/2025). O título do documento gerado é `[Nome do médico] CRM [número] — RECURSO [número]`. Guias incluídas em um recurso têm situação `EmRecurso` com referência ao número.
 
@@ -223,7 +223,8 @@ No modelo de dados, **cada Unimed Singular é uma `Operadora` separada**. A regr
 Para cada `ItemGuia` calculado, o sistema gera:
 
 - `ValorApurado`: resultado da apuração de honorários — o que deveria ter sido liquidado (aparece como "VL CORRETO" no recurso)
-- `ValorLiquidado`: o que a operadora efetivamente liquidou (aparece como "PG UNIMED" no recurso; vem do demonstrativo)
+- `ValorLiquidado`: o que a operadora efetivamente liquidou (aparece como "PG UNIMED" no recurso; editado via importação CSV ou inline no admin)
+- `MotivoGlosa`: código de glosa informado pela operadora (ex: "CB"); preenchido via importação CSV ou edição inline
 - `Divergencia`: classificação (Conforme, SubLiquidado, SobrepLiquidado, Pendente, IndeterminadoCalculo)
 - `Trace`: passo a passo de qual regra aplicou e como (auditoria/explicabilidade)
 

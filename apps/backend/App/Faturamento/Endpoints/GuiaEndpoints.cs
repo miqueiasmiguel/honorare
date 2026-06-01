@@ -167,7 +167,7 @@ internal static class GuiaEndpoints
     }
 
     private static async Task<IResult> ImportarCsvAsync(
-        [FromForm] IFormFile arquivo,
+        IFormFile arquivo,
         [FromForm] Guid prestadorId,
         [FromForm] Guid operadoraId,
         [FromForm] bool somenteValidar,
