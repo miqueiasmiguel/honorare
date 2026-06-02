@@ -220,4 +220,144 @@ describe('AuthService', () => {
       expect(service.isAuthenticated()).toBe(false);
     });
   });
+
+  // ── Wave 3: impersonation ─────────────────────────────────────────────────
+
+  describe('enterImpersonation()', () => {
+    function makeFakeJwt(payload: Record<string, unknown>): string {
+      return `header.${btoa(JSON.stringify(payload))}.sig`;
+    }
+
+    it('guarda o _rt SaaS e troca os tokens', () => {
+      const accessToken = makeFakeJwt({ role: 'SaasAdmin', sub: 'u' });
+      service.storeTokens({ accessToken, refreshToken: 'saas-rt', expiresIn: 900 });
+
+      let result: boolean | undefined;
+      service.enterImpersonation('tenant-abc', 'Clínica XYZ').subscribe((v) => (result = v));
+
+      const req = httpMock.expectOne('/api/v1/saas/tenants/tenant-abc/impersonate');
+      expect(req.request.method).toBe('POST');
+      expect(req.request.headers.get('Authorization')).toBe(`Bearer ${accessToken}`);
+      req.flush({
+        accessToken: 'imp-at',
+        refreshToken: 'imp-rt',
+        expiresIn: 900,
+      } satisfies TokenResponse);
+
+      expect(localStorage.getItem('_rt_saas')).toBe('saas-rt');
+      expect(localStorage.getItem('_rt')).toBe('imp-rt');
+      expect(localStorage.getItem('_imp_name')).toBe('Clínica XYZ');
+      expect(service.getAccessToken()).toBe('imp-at');
+      expect(result).toBe(true);
+    });
+
+    it('retorna false quando o endpoint responde com erro', () => {
+      const accessToken = makeFakeJwt({ role: 'SaasAdmin', sub: 'u' });
+      service.storeTokens({ accessToken, refreshToken: 'saas-rt', expiresIn: 900 });
+
+      let result: boolean | undefined;
+      service.enterImpersonation('tenant-bad', 'Bad').subscribe((v) => (result = v));
+
+      const req = httpMock.expectOne('/api/v1/saas/tenants/tenant-bad/impersonate');
+      req.flush('Not Found', { status: 404, statusText: 'Not Found' });
+
+      expect(result).toBe(false);
+      expect(localStorage.getItem('_rt_saas')).toBeNull();
+    });
+  });
+
+  describe('exitImpersonation()', () => {
+    function makeFakeJwt(payload: Record<string, unknown>): string {
+      return `header.${btoa(JSON.stringify(payload))}.sig`;
+    }
+
+    it('restaura o _rt SaaS e limpa _imp_name', () => {
+      const impToken = makeFakeJwt({ role: 'SaasAdmin', sub: 'u', tenant_id: 'tid' });
+      localStorage.setItem('_rt_saas', 'saas-rt');
+      localStorage.setItem('_imp_name', 'Clínica XYZ');
+      service.storeTokens({ accessToken: impToken, refreshToken: 'imp-rt', expiresIn: 900 });
+
+      let result: boolean | undefined;
+      service.exitImpersonation().subscribe((v) => (result = v));
+
+      const exitReq = httpMock.expectOne('/api/v1/saas/impersonation/exit');
+      expect(exitReq.request.method).toBe('POST');
+      expect(exitReq.request.headers.get('Authorization')).toBe(`Bearer ${impToken}`);
+      exitReq.flush(null);
+
+      expect(localStorage.getItem('_rt')).toBe('saas-rt');
+      expect(localStorage.getItem('_rt_saas')).toBeNull();
+      expect(localStorage.getItem('_imp_name')).toBeNull();
+
+      const refreshReq = httpMock.expectOne('/api/v1/auth/refresh');
+      expect((refreshReq.request.body as { refreshToken: string }).refreshToken).toBe('saas-rt');
+      refreshReq.flush({
+        accessToken: 'saas-at',
+        refreshToken: 'saas-rt-new',
+        expiresIn: 900,
+      } satisfies TokenResponse);
+
+      expect(result).toBe(true);
+      expect(service.getAccessToken()).toBe('saas-at');
+    });
+
+    it('restaura tokens mesmo quando o endpoint de exit falha (best-effort)', () => {
+      const impToken = makeFakeJwt({ role: 'SaasAdmin', sub: 'u', tenant_id: 'tid' });
+      localStorage.setItem('_rt_saas', 'saas-rt');
+      localStorage.setItem('_imp_name', 'Clínica XYZ');
+      service.storeTokens({ accessToken: impToken, refreshToken: 'imp-rt', expiresIn: 900 });
+
+      service.exitImpersonation().subscribe();
+
+      const exitReq = httpMock.expectOne('/api/v1/saas/impersonation/exit');
+      exitReq.flush('Server Error', { status: 500, statusText: 'Internal Server Error' });
+
+      expect(localStorage.getItem('_rt')).toBe('saas-rt');
+      expect(localStorage.getItem('_rt_saas')).toBeNull();
+      expect(localStorage.getItem('_imp_name')).toBeNull();
+
+      httpMock.expectOne('/api/v1/auth/refresh').flush({
+        accessToken: 'saas-at',
+        refreshToken: 'new-rt',
+        expiresIn: 900,
+      } satisfies TokenResponse);
+    });
+  });
+
+  describe('isImpersonating', () => {
+    function makeFakeJwt(payload: Record<string, unknown>): string {
+      return `header.${btoa(JSON.stringify(payload))}.sig`;
+    }
+
+    it('é true quando o token tem role SaasAdmin + tenant_id', () => {
+      service.storeTokens({
+        accessToken: makeFakeJwt({ role: 'SaasAdmin', sub: 'u', tenant_id: 'tid' }),
+        refreshToken: 'rt',
+        expiresIn: 900,
+      });
+      expect(service.isImpersonating()).toBe(true);
+    });
+
+    it('é false quando role SaasAdmin sem tenant_id', () => {
+      service.storeTokens({
+        accessToken: makeFakeJwt({ role: 'SaasAdmin', sub: 'u' }),
+        refreshToken: 'rt',
+        expiresIn: 900,
+      });
+      expect(service.isImpersonating()).toBe(false);
+    });
+
+    it('é false quando não há token', () => {
+      expect(service.isImpersonating()).toBe(false);
+    });
+
+    it('é false quando role não é SaasAdmin mesmo com tenant_id', () => {
+      service.storeTokens({
+        accessToken: makeFakeJwt({ role: 'TenantAdmin', sub: 'u', tenant_id: 'tid' }),
+        refreshToken: 'rt',
+        expiresIn: 900,
+      });
+      expect(service.isImpersonating()).toBe(false);
+    });
+  });
 });

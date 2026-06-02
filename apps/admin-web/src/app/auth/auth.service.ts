@@ -1,6 +1,16 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { HttpBackend, HttpClient } from '@angular/common/http';
-import { catchError, finalize, firstValueFrom, map, Observable, of, shareReplay, tap } from 'rxjs';
+import {
+  catchError,
+  finalize,
+  firstValueFrom,
+  map,
+  Observable,
+  of,
+  shareReplay,
+  switchMap,
+  tap,
+} from 'rxjs';
 
 export interface TokenResponse {
   accessToken: string;
@@ -9,6 +19,8 @@ export interface TokenResponse {
 }
 
 const RefreshTokenKey = '_rt';
+const SaasRefreshKey = '_rt_saas';
+const ImpNameKey = '_imp_name';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -17,6 +29,7 @@ export class AuthService {
 
   private readonly _accessToken = signal<string | null>(null);
   private readonly _expiresAt = signal<number | null>(null);
+  private readonly _actingTenantName = signal<string | null>(localStorage.getItem(ImpNameKey));
   private _refreshInFlight$: Observable<boolean> | null = null;
 
   readonly isAuthenticated = computed(() => {
@@ -38,6 +51,21 @@ export class AuthService {
       return null;
     }
   });
+
+  readonly isImpersonating = computed((): boolean => {
+    const token = this._accessToken();
+    if (!token) return false;
+    try {
+      const segment = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+      const padded = segment + '='.repeat((4 - (segment.length % 4)) % 4);
+      const payload = JSON.parse(atob(padded)) as Record<string, unknown>;
+      return payload['role'] === 'SaasAdmin' && payload['tenant_id'] != null;
+    } catch {
+      return false;
+    }
+  });
+
+  readonly actingTenantName = computed(() => this._actingTenantName());
 
   getAccessToken(): string | null {
     return this._accessToken();
@@ -75,6 +103,58 @@ export class AuthService {
       return Promise.resolve();
     }
     return firstValueFrom(this.refresh().pipe(map(() => undefined)));
+  }
+
+  enterImpersonation(tenantId: string, tenantName: string): Observable<boolean> {
+    const currentToken = this._accessToken();
+    return this._http
+      .post<TokenResponse>(
+        `/api/v1/saas/tenants/${tenantId}/impersonate`,
+        {},
+        {
+          headers: currentToken ? { Authorization: `Bearer ${currentToken}` } : {},
+        },
+      )
+      .pipe(
+        tap((resp) => {
+          const currentRt = localStorage.getItem(RefreshTokenKey);
+          if (currentRt) {
+            localStorage.setItem(SaasRefreshKey, currentRt);
+          }
+          this.storeTokens(resp);
+          localStorage.setItem(ImpNameKey, tenantName);
+          this._actingTenantName.set(tenantName);
+        }),
+        map(() => true),
+        catchError(() => of(false)),
+      );
+  }
+
+  exitImpersonation(): Observable<boolean> {
+    const currentToken = this._accessToken();
+    return this._http
+      .post(
+        '/api/v1/saas/impersonation/exit',
+        {},
+        {
+          headers: currentToken ? { Authorization: `Bearer ${currentToken}` } : {},
+        },
+      )
+      .pipe(
+        catchError(() => of(null)),
+        switchMap(() => {
+          const saasRt = localStorage.getItem(SaasRefreshKey);
+          if (saasRt) {
+            localStorage.setItem(RefreshTokenKey, saasRt);
+          } else {
+            localStorage.removeItem(RefreshTokenKey);
+          }
+          localStorage.removeItem(SaasRefreshKey);
+          localStorage.removeItem(ImpNameKey);
+          this._actingTenantName.set(null);
+          return this.refresh();
+        }),
+      );
   }
 
   private _doRefresh(): Observable<boolean> {
