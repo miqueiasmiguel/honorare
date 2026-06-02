@@ -44,7 +44,7 @@ internal sealed class AuthService(AppDbContext db, IConfiguration config)
 
         var refreshTokenDays = _config.GetValue<int>("Jwt:RefreshTokenDays", 7);
         var refreshToken = RefreshToken.Create(
-            user.Id, tokenHash, DateTimeOffset.UtcNow.AddDays(refreshTokenDays));
+            user.Id, tokenHash, DateTimeOffset.UtcNow.AddDays(refreshTokenDays), actingTenantId: null);
         _db.RefreshTokens.Add(refreshToken);
         await _db.SaveChangesAsync(ct);
 
@@ -83,7 +83,7 @@ internal sealed class AuthService(AppDbContext db, IConfiguration config)
         var (rawNew, newHash) = GenerateRefreshTokenPair();
         var refreshTokenDays = _config.GetValue<int>("Jwt:RefreshTokenDays", 7);
         var newToken = RefreshToken.Create(
-            user.Id, newHash, DateTimeOffset.UtcNow.AddDays(refreshTokenDays));
+            user.Id, newHash, DateTimeOffset.UtcNow.AddDays(refreshTokenDays), actingTenantId: null);
 
         token.Revoke(newToken.Id.ToString());
         _db.RefreshTokens.Add(newToken);
@@ -94,6 +94,34 @@ internal sealed class AuthService(AppDbContext db, IConfiguration config)
 
         var expiresIn = _config.GetValue<int>("Jwt:AccessTokenMinutes", 15) * 60;
         return Result<AuthTokens>.Ok(new AuthTokens(accessToken, rawNew, expiresIn));
+    }
+
+    internal async Task<Result<AuthTokens>> CreateImpersonationTokensAsync(
+        Guid saasUserId, Guid tenantId, CancellationToken ct = default)
+    {
+        var user = await _db.Users.FindAsync([saasUserId], ct);
+        if (user is null || !user.IsActive || user.TenantId is not null)
+        {
+            return Result<AuthTokens>.Fail(new ForbiddenError("Usuário não autorizado para impersonação."));
+        }
+
+        var tenantExists = await _db.Tenants.AnyAsync(t => t.Id == tenantId, ct);
+        if (!tenantExists)
+        {
+            return Result<AuthTokens>.Fail(new NotFoundError("Tenant não encontrado."));
+        }
+
+        var accessToken = CreateAccessToken(user, "SaasAdmin", tenantOverride: tenantId);
+        var (rawRefreshToken, tokenHash) = GenerateRefreshTokenPair();
+
+        var refreshTokenDays = _config.GetValue<int>("Jwt:RefreshTokenDays", 7);
+        var refreshToken = RefreshToken.Create(
+            user.Id, tokenHash, DateTimeOffset.UtcNow.AddDays(refreshTokenDays), actingTenantId: tenantId);
+        _db.RefreshTokens.Add(refreshToken);
+        await _db.SaveChangesAsync(ct);
+
+        var expiresIn = _config.GetValue<int>("Jwt:AccessTokenMinutes", 15) * 60;
+        return Result<AuthTokens>.Ok(new AuthTokens(accessToken, rawRefreshToken, expiresIn));
     }
 
     internal async Task LogoutAsync(Guid userId, CancellationToken ct = default)
@@ -141,7 +169,7 @@ internal sealed class AuthService(AppDbContext db, IConfiguration config)
         user.TenantId is null ? "SaasAdmin" :
         user.MedicoId is not null ? "Medico" : "TenantAdmin";
 
-    private string CreateAccessToken(ApplicationUser user, string role)
+    private string CreateAccessToken(ApplicationUser user, string role, Guid? tenantOverride = null)
     {
         var secret = _config["Jwt:Secret"]!;
         var issuer = _config["Jwt:Issuer"]!;
@@ -162,9 +190,15 @@ internal sealed class AuthService(AppDbContext db, IConfiguration config)
             new("role", role)
         };
 
-        if (user.TenantId is not null)
+        var effectiveTenantId = tenantOverride ?? user.TenantId;
+        if (effectiveTenantId is not null)
         {
-            claims.Add(new Claim("tenant_id", user.TenantId.Value.ToString()));
+            claims.Add(new Claim("tenant_id", effectiveTenantId.Value.ToString()));
+        }
+
+        if (tenantOverride is not null)
+        {
+            claims.Add(new Claim("act_as_saas", "true"));
         }
 
         if (user.MedicoId is not null)

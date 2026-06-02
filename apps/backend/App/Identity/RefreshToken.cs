@@ -9,18 +9,24 @@ internal sealed class RefreshToken
     public DateTimeOffset CreatedAt { get; private set; }
     public bool IsRevoked { get; private set; }
     public string? ReplacedByTokenId { get; private set; }
+    public Guid? ActingTenantId { get; private set; }
 
     private RefreshToken() { }
 
-    public static RefreshToken Create(Guid userId, string tokenHash, DateTimeOffset expiresAt) => new()
+    public static RefreshToken Create(
+        Guid userId, string tokenHash, DateTimeOffset expiresAt, Guid? actingTenantId = null)
     {
-        Id = Guid.NewGuid(),
-        UserId = userId,
-        TokenHash = tokenHash,
-        ExpiresAt = expiresAt,
-        CreatedAt = DateTimeOffset.UtcNow,
-        IsRevoked = false
-    };
+        return new RefreshToken
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            TokenHash = tokenHash,
+            ExpiresAt = expiresAt,
+            CreatedAt = DateTimeOffset.UtcNow,
+            IsRevoked = false,
+            ActingTenantId = actingTenantId
+        };
+    }
 
     public Result Revoke(string? replacedByTokenId = null)
     {

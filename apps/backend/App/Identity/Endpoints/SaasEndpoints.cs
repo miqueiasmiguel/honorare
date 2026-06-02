@@ -12,6 +12,7 @@ internal static class SaasEndpoints
         g.MapGet("/tenants/{tenantId}/users", ListTenantUsersAsync);
         g.MapPost("/tenants/{tenantId}/users", CreateUserAsync);
         g.MapPatch("/tenants/{tenantId}/users/{userId}/status", UpdateUserStatusAsync);
+        g.MapPost("/tenants/{tenantId}/impersonate", ImpersonateAsync);
     }
 
     private static async Task<IResult> ListTenantsAsync(
@@ -97,6 +98,24 @@ internal static class SaasEndpoints
         }
 
         return Results.NoContent();
+    }
+
+    private static async Task<IResult> ImpersonateAsync(
+        Guid tenantId, ICurrentUser currentUser, AuthService authService, CancellationToken ct)
+    {
+        var result = await authService.CreateImpersonationTokensAsync(currentUser.UserId, tenantId, ct);
+        if (result.IsFailure)
+        {
+            var statusCode = result.Error switch
+            {
+                NotFoundError => StatusCodes.Status404NotFound,
+                ForbiddenError => StatusCodes.Status403Forbidden,
+                _ => StatusCodes.Status400BadRequest
+            };
+            return Results.Problem(statusCode: statusCode, detail: result.Error!.Message);
+        }
+
+        return Results.Ok(result.Value);
     }
 }
 

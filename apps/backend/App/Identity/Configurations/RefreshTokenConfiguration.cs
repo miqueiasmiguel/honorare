@@ -13,5 +13,6 @@ internal sealed class RefreshTokenConfiguration : IEntityTypeConfiguration<Refre
         builder.Property(t => t.TokenHash).HasMaxLength(64).IsRequired();
         builder.Property(t => t.CreatedAt).IsRequired();
         builder.Property(t => t.ExpiresAt).IsRequired();
+        builder.Property(t => t.ActingTenantId);
     }
 }
