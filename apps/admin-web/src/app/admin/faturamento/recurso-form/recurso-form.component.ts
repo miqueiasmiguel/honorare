@@ -152,8 +152,8 @@ export class RecursoFormComponent implements OnInit {
       });
     } else {
       this._recursoService.criar(payload).subscribe({
-        next: () => {
-          void this._router.navigate(['/admin/recursos']);
+        next: (recurso) => {
+          void this._router.navigate(['/admin/recursos', recurso.id, 'guias']);
         },
         error: () => {
           this.erroValidacao.set('Erro ao criar. Tente novamente.');

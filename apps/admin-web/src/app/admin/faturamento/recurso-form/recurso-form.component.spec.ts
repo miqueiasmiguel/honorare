@@ -75,7 +75,7 @@ function setup(options: { id?: string } = {}) {
 }
 
 describe('RecursoFormComponent', () => {
-  it('form cria recurso e navega para lista', () => {
+  it('form cria recurso e navega para gerenciamento de guias', () => {
     const { component, el, recursoService, router } = setup();
 
     component.operadoraId.set('op-1');
@@ -85,7 +85,7 @@ describe('RecursoFormComponent', () => {
     el.querySelector<HTMLButtonElement>('.recurso-form__btn-salvar')?.click();
 
     expect(recursoService.criar).toHaveBeenCalled();
-    expect(router.navigate).toHaveBeenCalledWith(['/admin/recursos']);
+    expect(router.navigate).toHaveBeenCalledWith(['/admin/recursos', 'rec-1', 'guias']);
   });
 
   it('form carrega recurso existente e preenche campos', () => {

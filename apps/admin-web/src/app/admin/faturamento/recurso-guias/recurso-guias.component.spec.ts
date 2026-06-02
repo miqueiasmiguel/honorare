@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { RecursoService } from '../recurso.service';
 import { GuiaService } from '../guia.service';
@@ -106,6 +106,7 @@ function setup(options: { guias?: GuiaNoRecursoDto[]; candidatas?: GuiaItem[] } 
       paramMap: { get: (key: string) => (key === 'id' ? 'rec-1' : null) },
     },
   };
+  const router = { navigate: vi.fn().mockReturnValue(Promise.resolve(true)) };
 
   TestBed.configureTestingModule({
     imports: [RecursoGuiasComponent],
@@ -113,6 +114,7 @@ function setup(options: { guias?: GuiaNoRecursoDto[]; candidatas?: GuiaItem[] } 
       { provide: RecursoService, useValue: recursoService },
       { provide: GuiaService, useValue: guiaService },
       { provide: ActivatedRoute, useValue: activatedRoute },
+      { provide: Router, useValue: router },
     ],
   });
 
@@ -124,6 +126,7 @@ function setup(options: { guias?: GuiaNoRecursoDto[]; candidatas?: GuiaItem[] } 
     component: fixture.componentInstance,
     recursoService,
     guiaService,
+    router,
     el: fixture.nativeElement as HTMLElement,
   };
 }
@@ -225,6 +228,12 @@ describe('RecursoGuiasComponent', () => {
     const { el, recursoService } = setup();
     el.querySelector<HTMLButtonElement>('.recurso-guias__btn-pdf')?.click();
     expect(recursoService.baixarPdf).toHaveBeenCalledWith('rec-1');
+  });
+
+  it('botaoEditarNavegaParaFormularioDoRecurso', () => {
+    const { el, router } = setup();
+    el.querySelector<HTMLButtonElement>('.recurso-guias__btn-editar')?.click();
+    expect(router.navigate).toHaveBeenCalledWith(['/admin/recursos', 'rec-1']);
   });
 
   it('deve_exibir_guias_com_numero_de_itens', () => {

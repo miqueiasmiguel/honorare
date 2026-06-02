@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { RecursoService } from '../recurso.service';
 import { GuiaService } from '../guia.service';
 import type { GuiaItem, SituacaoGuia } from '../guia.types';
@@ -18,9 +18,14 @@ import type { GuiaNoRecursoDto, RecursoDto } from '../recurso.types';
           </div>
           <h2 class="recurso-guias__titulo">{{ recurso()?.numero ?? '—' }}</h2>
         </div>
-        <button class="recurso-guias__btn-pdf" type="button" (click)="baixarPdf()">
-          Baixar PDF
-        </button>
+        <div class="recurso-guias__header-acoes">
+          <button class="recurso-guias__btn-editar" type="button" (click)="editarRecurso()">
+            Editar recurso
+          </button>
+          <button class="recurso-guias__btn-pdf" type="button" (click)="baixarPdf()">
+            Baixar PDF
+          </button>
+        </div>
       </header>
 
       <section class="recurso-guias__secao">
@@ -290,6 +295,7 @@ export class RecursoGuiasComponent implements OnInit {
   private readonly _recursoService = inject(RecursoService);
   private readonly _guiaService = inject(GuiaService);
   private readonly _route = inject(ActivatedRoute);
+  private readonly _router = inject(Router);
 
   readonly recursoId = signal<string | null>(null);
   readonly recurso = signal<RecursoDto | null>(null);
@@ -502,6 +508,13 @@ export class RecursoGuiasComponent implements OnInit {
         this.erroValidacao.set('Erro ao remover guia. Tente novamente.');
       },
     });
+  }
+
+  editarRecurso(): void {
+    const id = this.recursoId();
+    if (id) {
+      void this._router.navigate(['/admin/recursos', id]);
+    }
   }
 
   baixarPdf(): void {
