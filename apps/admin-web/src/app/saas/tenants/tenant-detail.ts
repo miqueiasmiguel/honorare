@@ -1,7 +1,8 @@
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { AuthService } from '../../auth/auth.service';
 import { SaasService } from '../saas.service';
 import type {
   CreateUserPayload,
@@ -20,6 +21,8 @@ import type {
 export class TenantDetail implements OnInit {
   private readonly saasService = inject(SaasService);
   private readonly route = inject(ActivatedRoute);
+  private readonly _auth = inject(AuthService);
+  private readonly _router = inject(Router);
 
   readonly tenantId = signal('');
   readonly tenant = signal<TenantSummary | null>(null);
@@ -125,6 +128,19 @@ export class TenantDetail implements OnInit {
       Medico: 'badge badge--medico',
     };
     return map[role];
+  }
+
+  gerenciar(): void {
+    const t = this.tenant();
+    if (!t) {
+      return;
+    }
+    this._auth.enterImpersonation(t.id, t.name).subscribe({
+      next: () => {
+        void this._router.navigate(['/admin']);
+      },
+      error: () => undefined,
+    });
   }
 
   formatDate(isoDate: string): string {

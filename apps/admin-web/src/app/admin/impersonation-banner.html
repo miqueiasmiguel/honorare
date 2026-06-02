@@ -1,0 +1,14 @@
+@if (auth.isImpersonating()) {
+  <div class="impersonation-banner" data-testid="impersonation-banner">
+    <span class="impersonation-banner__text"> Operando como {{ auth.actingTenantName() }} </span>
+    <span class="impersonation-banner__sep" aria-hidden="true">·</span>
+    <button
+      class="impersonation-banner__exit"
+      type="button"
+      data-testid="btn-sair-impersonation"
+      (click)="exitImpersonation()"
+    >
+      Sair
+    </button>
+  </div>
+}

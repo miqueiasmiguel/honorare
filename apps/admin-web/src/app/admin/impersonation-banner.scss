@@ -1,0 +1,40 @@
+@use 'styles/tokens' as *;
+
+.impersonation-banner {
+  display: flex;
+  align-items: center;
+  gap: space(2);
+  padding: space(2) space(6);
+  background-color: var(--color-ambar-claro);
+  border-bottom: 2px solid var(--color-ambar);
+}
+
+.impersonation-banner__text {
+  @include text-body-small;
+
+  color: var(--color-tinta);
+  font-weight: 500;
+}
+
+.impersonation-banner__sep {
+  @include text-body-small;
+
+  color: var(--color-tinta-secundaria);
+}
+
+.impersonation-banner__exit {
+  @include text-body-small;
+
+  color: var(--color-terracota);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0;
+
+  @include transition-fast(color);
+
+  &:hover {
+    color: var(--color-terracota-escuro);
+  }
+}

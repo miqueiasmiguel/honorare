@@ -12,6 +12,14 @@
         <span [class]="badgeClass(t.status)">{{ t.status }}</span>
       </div>
       <div class="tenant-detail__header-actions">
+        <button
+          class="tenant-detail__btn"
+          type="button"
+          data-testid="btn-gerenciar"
+          (click)="gerenciar()"
+        >
+          Gerenciar dados deste cliente
+        </button>
         @if (t.status === 'Ativo') {
           <button
             class="tenant-detail__btn tenant-detail__btn--warn"

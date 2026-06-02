@@ -27,22 +27,22 @@
     gap: space(2);
   }
 
-  &__sep {
+  &__sep,
+  &__operadora,
+  &__prestador {
     @include text-body;
+  }
 
+  &__sep {
     color: var(--color-tinta-terciaria);
   }
 
   &__operadora {
-    @include text-body;
-
     color: var(--color-tinta);
     font-weight: 500;
   }
 
   &__prestador {
-    @include text-body;
-
     color: var(--color-tinta-secundaria);
   }
 
@@ -52,17 +52,40 @@
     color: var(--color-tinta);
   }
 
-  &__btn-pdf {
+  &__header-acoes {
+    display: flex;
+    align-items: center;
+    gap: space(2);
     flex-shrink: 0;
+  }
+
+  &__btn-pdf,
+  &__btn-editar {
     height: 40px;
     padding: 0 space(4);
-    border: 1px solid var(--color-terracota);
     border-radius: space(1);
     background-color: transparent;
-    color: var(--color-terracota);
     cursor: pointer;
 
     @include text-label;
+  }
+
+  &__btn-editar {
+    border: 1px solid var(--color-borda-media);
+    color: var(--color-tinta);
+
+    @include transition-fast(background-color, border-color);
+
+    &:hover {
+      background-color: var(--color-pergaminho-claro);
+      border-color: var(--color-tinta-secundaria);
+    }
+  }
+
+  &__btn-pdf {
+    border: 1px solid var(--color-terracota);
+    color: var(--color-terracota);
+
     @include transition-fast(background-color);
 
     &:hover {
@@ -223,17 +246,21 @@
     margin-bottom: space(3);
   }
 
-  &__btn-adicionar-todas {
-    height: 36px;
-    padding: 0 space(4);
-    border: none;
+  &__btn-adicionar-todas,
+  &__btn-adicionar {
     border-radius: 4px;
-    background-color: var(--color-terracota);
-    color: var(--color-pergaminho-claro);
     cursor: pointer;
 
     @include text-label;
     @include transition-fast(background-color);
+  }
+
+  &__btn-adicionar-todas {
+    height: 36px;
+    padding: 0 space(4);
+    border: none;
+    background-color: var(--color-terracota);
+    color: var(--color-pergaminho-claro);
 
     &:hover {
       background-color: var(--color-terracota-escuro);
@@ -280,14 +307,9 @@
   &__btn-adicionar {
     padding: space(1) space(3);
     border: 1px solid var(--color-terracota);
-    border-radius: 4px;
     background-color: transparent;
     color: var(--color-terracota);
-    cursor: pointer;
     white-space: nowrap;
-
-    @include text-label;
-    @include transition-fast(background-color);
 
     &:hover {
       background-color: var(--color-pergaminho-claro);
@@ -506,8 +528,6 @@
       padding: space(2) space(3);
       text-align: left;
       border-bottom: 1px solid var(--color-borda-discreta);
-
-      @include text-body;
     }
 
     th {
@@ -515,6 +535,10 @@
 
       color: var(--color-tinta-secundaria);
       background-color: var(--color-pergaminho-claro);
+    }
+
+    td {
+      @include text-body;
     }
 
     tr:last-child td {

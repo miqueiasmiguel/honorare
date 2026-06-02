@@ -1,7 +1,10 @@
-import { TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { ActivatedRoute, provideRouter } from '@angular/router';
+import { TestBed } from '@angular/core/testing';
+import { ActivatedRoute, provideRouter, Router } from '@angular/router';
+import { of } from 'rxjs';
+import { AuthService } from '../../auth/auth.service';
 import { TenantDetail } from './tenant-detail';
 import type { TenantSummary, UserSummary } from '../saas.types';
 
@@ -50,10 +53,17 @@ const MOCK_ROUTE = {
   },
 };
 
+const authMock = {
+  isImpersonating: signal(false),
+  actingTenantName: signal<string | null>(null),
+  enterImpersonation: vi.fn().mockReturnValue(of(true)),
+};
+
 describe('TenantDetail', () => {
   let httpMock: HttpTestingController;
 
   beforeEach(() => {
+    authMock.enterImpersonation = vi.fn().mockReturnValue(of(true));
     TestBed.configureTestingModule({
       imports: [TenantDetail],
       providers: [
@@ -61,6 +71,7 @@ describe('TenantDetail', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: ActivatedRoute, useValue: MOCK_ROUTE },
+        { provide: AuthService, useValue: authMock },
       ],
     });
     httpMock = TestBed.inject(HttpTestingController);
@@ -158,5 +169,19 @@ describe('TenantDetail', () => {
     fixture.detectChanges();
 
     expect(el.querySelector('#medicoId')).toBeTruthy();
+  });
+
+  it('TenantDetail_BotaoGerenciar_ChamaEnterImpersonationENavega', () => {
+    const fixture = createAndFlush();
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate');
+
+    const el = fixture.nativeElement as HTMLElement;
+    const btn = el.querySelector<HTMLButtonElement>('[data-testid="btn-gerenciar"]');
+    btn?.click();
+    fixture.detectChanges();
+
+    expect(authMock.enterImpersonation).toHaveBeenCalledWith('tenant-1', 'Clínica Alfa');
+    expect(navigateSpy).toHaveBeenCalledWith(['/admin']);
   });
 });
