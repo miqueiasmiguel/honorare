@@ -36,9 +36,7 @@ dotnet test apps/backend/Honorare.slnx            # Run all xUnit tests + covera
 # Run migrations from INSIDE the App project directory (--output-dir is relative to it):
 #
 #   cd apps/backend/App
-#   dotnet ef migrations add <Name> --output-dir Catalog/Migrations --namespace App.Catalog.Migrations
-#   dotnet ef migrations add <Name> --output-dir Faturamento/Migrations --namespace App.Faturamento.Migrations
-#   dotnet ef migrations add <Name> --output-dir Identity/Migrations --namespace App.Identity.Migrations
+#   dotnet ef migrations add <Name> --output-dir Migrations --namespace App.Migrations
 
 # ── Frontend — lint ────────────────────────────────────────────────────────────
 pnpm -F admin-web lint              # ESLint (--max-warnings 0)
