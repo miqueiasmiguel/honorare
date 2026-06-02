@@ -29,6 +29,7 @@ internal class AppDbContext(
     public DbSet<Calculo> Calculos => Set<Calculo>();
     public DbSet<PassoCalculo> PassosCalculo => Set<PassoCalculo>();
     public DbSet<Recurso> Recursos => Set<Recurso>();
+    public DbSet<ImpersonationLog> ImpersonationLogs => Set<ImpersonationLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

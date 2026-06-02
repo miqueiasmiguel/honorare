@@ -140,10 +140,35 @@ internal sealed class AuthService(AppDbContext db, IConfiguration config)
         var refreshToken = RefreshToken.Create(
             user.Id, tokenHash, DateTimeOffset.UtcNow.AddDays(refreshTokenDays), actingTenantId: tenantId);
         _db.RefreshTokens.Add(refreshToken);
+
+        _db.ImpersonationLogs.Add(ImpersonationLog.Create(saasUserId, tenantId));
         await _db.SaveChangesAsync(ct);
 
         var expiresIn = _config.GetValue<int>("Jwt:AccessTokenMinutes", 15) * 60;
         return Result<AuthTokens>.Ok(new AuthTokens(accessToken, rawRefreshToken, expiresIn));
+    }
+
+    internal async Task EndImpersonationAsync(Guid saasUserId, CancellationToken ct = default)
+    {
+        var impTokens = await _db.RefreshTokens
+            .Where(t => t.UserId == saasUserId && !t.IsRevoked && t.ActingTenantId != null)
+            .ToListAsync(ct);
+
+        foreach (var token in impTokens)
+        {
+            token.Revoke();
+        }
+
+        var openLogs = await _db.ImpersonationLogs
+            .Where(l => l.SaasUserId == saasUserId && l.EndedAt == null)
+            .ToListAsync(ct);
+
+        foreach (var log in openLogs)
+        {
+            log.Close();
+        }
+
+        await _db.SaveChangesAsync(ct);
     }
 
     internal async Task LogoutAsync(Guid userId, CancellationToken ct = default)

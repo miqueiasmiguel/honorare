@@ -175,6 +175,7 @@ else
 }
 
 app.UseAuthentication();
+app.UseMiddleware<ImpersonationSpanMiddleware>();
 app.UseMiddleware<TenantStatusMiddleware>();
 app.UseAuthorization();
 

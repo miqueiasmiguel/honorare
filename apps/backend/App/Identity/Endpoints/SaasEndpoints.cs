@@ -13,6 +13,7 @@ internal static class SaasEndpoints
         g.MapPost("/tenants/{tenantId}/users", CreateUserAsync);
         g.MapPatch("/tenants/{tenantId}/users/{userId}/status", UpdateUserStatusAsync);
         g.MapPost("/tenants/{tenantId}/impersonate", ImpersonateAsync);
+        g.MapPost("/impersonation/exit", ExitImpersonationAsync);
     }
 
     private static async Task<IResult> ListTenantsAsync(
@@ -116,6 +117,13 @@ internal static class SaasEndpoints
         }
 
         return Results.Ok(result.Value);
+    }
+
+    private static async Task<IResult> ExitImpersonationAsync(
+        ICurrentUser currentUser, AuthService authService, CancellationToken ct)
+    {
+        await authService.EndImpersonationAsync(currentUser.UserId, ct);
+        return Results.NoContent();
     }
 }
 
