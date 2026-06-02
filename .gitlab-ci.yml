@@ -1,0 +1,149 @@
+stages:
+  - test
+  - sast
+
+include:
+  - template: Security/SAST.gitlab-ci.yml
+
+# ─── Backend ──────────────────────────────────────────────────────────────────
+
+backend:
+  stage: test
+  image: mcr.microsoft.com/dotnet/sdk:10.0
+  services:
+    - name: docker:27-dind
+      alias: docker
+      command: ["--tls=false"]
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+    NUGET_PACKAGES: "$CI_PROJECT_DIR/.nuget/packages"
+  cache:
+    key: nuget-$CI_COMMIT_REF_SLUG
+    paths:
+      - .nuget/packages/
+  rules:
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+    - changes:
+        - apps/backend/**/*
+        - .gitlab-ci.yml
+  script:
+    - apt-get update -qq && apt-get install -y -qq bc
+    - dotnet restore apps/backend/Honorare.slnx
+    - dotnet build apps/backend/Honorare.slnx --no-restore --configuration Release
+    - |
+      dotnet test apps/backend/Honorare.slnx \
+        --no-build \
+        --configuration Release \
+        --collect:"XPlat Code Coverage" \
+        --results-directory ./coverage \
+        -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.ExcludeByAttribute=GeneratedCodeAttribute
+    - dotnet tool install --global dotnet-reportgenerator-globaltool
+    - export PATH="$PATH:$HOME/.dotnet/tools"
+    - |
+      reportgenerator \
+        -reports:"coverage/**/coverage.cobertura.xml" \
+        -targetdir:"coverage/report" \
+        -reporttypes:"Cobertura;TextSummary" \
+        -assemblyfilters:"-*Migrations*;-*Program*"
+    - |
+      COVERAGE=$(grep -oP 'Line coverage: \K[0-9.]+' coverage/report/Summary.txt || echo "0")
+      echo "Line coverage: ${COVERAGE}%"
+      if (( $(echo "$COVERAGE < 80" | bc -l) )); then
+        echo "Coverage ${COVERAGE}% is below the required 80% threshold."
+        exit 1
+      fi
+  coverage: '/Line coverage: \d+\.\d+/'
+  artifacts:
+    when: always
+    paths:
+      - coverage/report/
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage/report/Cobertura.xml
+    expire_in: 7 days
+
+# ─── Admin Web ────────────────────────────────────────────────────────────────
+
+admin-web:
+  stage: test
+  image: node:22
+  cache:
+    key: pnpm-$CI_COMMIT_REF_SLUG
+    paths:
+      - .pnpm/
+  rules:
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+    - changes:
+        - apps/admin-web/**/*
+        - packages/api-contracts/**/*
+        - .gitlab-ci.yml
+  before_script:
+    - npm install -g pnpm@latest
+    - pnpm config set store-dir "$CI_PROJECT_DIR/.pnpm"
+  script:
+    - pnpm install --frozen-lockfile
+    - pnpm -F admin-web prettier:check
+    - pnpm -F admin-web lint
+    - pnpm -F admin-web stylelint
+    - pnpm -F admin-web test:ci
+    - |
+      SUMMARY="apps/admin-web/coverage/coverage-summary.json"
+      if [ ! -f "$SUMMARY" ]; then
+        echo "Coverage summary not found at $SUMMARY"
+        exit 1
+      fi
+      node -e "
+        const pct = require('./$SUMMARY').total.lines.pct;
+        console.log('Line coverage: ' + pct + '%');
+        if (pct < 80) { console.error('Coverage ' + pct + '% is below the required 80% threshold.'); process.exit(1); }
+      "
+    - pnpm -F admin-web build --base-href /admin/
+  artifacts:
+    when: always
+    paths:
+      - apps/admin-web/coverage/
+    expire_in: 7 days
+
+# ─── Medico PWA ───────────────────────────────────────────────────────────────
+
+medico-pwa:
+  stage: test
+  image: node:22
+  cache:
+    key: pnpm-$CI_COMMIT_REF_SLUG
+    paths:
+      - .pnpm/
+  rules:
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+    - changes:
+        - apps/medico-pwa/**/*
+        - packages/api-contracts/**/*
+        - .gitlab-ci.yml
+  before_script:
+    - npm install -g pnpm@latest
+    - pnpm config set store-dir "$CI_PROJECT_DIR/.pnpm"
+  script:
+    - pnpm install --frozen-lockfile
+    - pnpm -F medico-pwa prettier:check
+    - pnpm -F medico-pwa lint
+    - pnpm -F medico-pwa stylelint
+    - pnpm -F medico-pwa test:ci
+    - |
+      SUMMARY="apps/medico-pwa/coverage/coverage-summary.json"
+      if [ ! -f "$SUMMARY" ]; then
+        echo "Coverage summary not found at $SUMMARY"
+        exit 1
+      fi
+      node -e "
+        const pct = require('./$SUMMARY').total.lines.pct;
+        console.log('Line coverage: ' + pct + '%');
+        if (pct < 80) { console.error('Coverage ' + pct + '% is below the required 80% threshold.'); process.exit(1); }
+      "
+    - pnpm -F medico-pwa build --base-href /app/
+  artifacts:
+    when: always
+    paths:
+      - apps/medico-pwa/coverage/
+    expire_in: 7 days

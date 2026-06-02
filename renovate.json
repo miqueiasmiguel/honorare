@@ -1,0 +1,32 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "schedule": ["every monday"],
+  "packageRules": [
+    {
+      "matchManagers": ["npm"],
+      "matchPackageNames": ["/^@angular//", "zone.js"],
+      "groupName": "angular"
+    },
+    {
+      "matchManagers": ["npm"],
+      "matchPackageNames": ["angular-eslint", "/^typescript-eslint/", "@eslint/js", "/^eslint/"],
+      "groupName": "eslint"
+    },
+    {
+      "matchManagers": ["npm"],
+      "matchPackageNames": ["/^stylelint/"],
+      "groupName": "stylelint"
+    },
+    {
+      "matchManagers": ["nuget"],
+      "matchPackageNames": ["/^OpenTelemetry/"],
+      "groupName": "opentelemetry"
+    },
+    {
+      "matchManagers": ["nuget"],
+      "matchPackageNames": ["/^Microsoft.EntityFrameworkCore/", "/^Npgsql.EntityFrameworkCore/"],
+      "groupName": "entityframework"
+    }
+  ]
+}
