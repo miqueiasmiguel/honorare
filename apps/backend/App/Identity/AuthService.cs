@@ -70,6 +70,30 @@ internal sealed class AuthService(AppDbContext db, IConfiguration config)
             return Result<AuthTokens>.Fail(new UnauthorizedError("Token inválido."));
         }
 
+        var refreshTokenDays = _config.GetValue<int>("Jwt:RefreshTokenDays", 7);
+        var expiresIn = _config.GetValue<int>("Jwt:AccessTokenMinutes", 15) * 60;
+
+        if (token.ActingTenantId is not null)
+        {
+            if (user.TenantId is not null)
+            {
+                return Result<AuthTokens>.Fail(new UnauthorizedError("Token inválido."));
+            }
+
+            var (rawNewImp, newHashImp) = GenerateRefreshTokenPair();
+            var newImpToken = RefreshToken.Create(
+                user.Id, newHashImp, DateTimeOffset.UtcNow.AddDays(refreshTokenDays),
+                actingTenantId: token.ActingTenantId);
+
+            token.Revoke(newImpToken.Id.ToString());
+            _db.RefreshTokens.Add(newImpToken);
+
+            var impAccessToken = CreateAccessToken(user, "SaasAdmin", tenantOverride: token.ActingTenantId);
+            await _db.SaveChangesAsync(ct);
+
+            return Result<AuthTokens>.Ok(new AuthTokens(impAccessToken, rawNewImp, expiresIn));
+        }
+
         if (user.TenantId is not null)
         {
             var tenant = await _db.Tenants
@@ -81,7 +105,6 @@ internal sealed class AuthService(AppDbContext db, IConfiguration config)
         }
 
         var (rawNew, newHash) = GenerateRefreshTokenPair();
-        var refreshTokenDays = _config.GetValue<int>("Jwt:RefreshTokenDays", 7);
         var newToken = RefreshToken.Create(
             user.Id, newHash, DateTimeOffset.UtcNow.AddDays(refreshTokenDays), actingTenantId: null);
 
@@ -92,7 +115,6 @@ internal sealed class AuthService(AppDbContext db, IConfiguration config)
         var accessToken = CreateAccessToken(user, role);
         await _db.SaveChangesAsync(ct);
 
-        var expiresIn = _config.GetValue<int>("Jwt:AccessTokenMinutes", 15) * 60;
         return Result<AuthTokens>.Ok(new AuthTokens(accessToken, rawNew, expiresIn));
     }
 

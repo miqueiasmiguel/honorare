@@ -1,4 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Cryptography;
+using System.Text;
 using App;
 using App.Data;
 using App.Identity;
@@ -145,5 +147,87 @@ public class ImpersonationTests(PostgresContainerFixture db)
         var result = await service.CreateImpersonationTokensAsync(saasUser.Id, tenant.Id);
 
         Assert.True(result.IsSuccess);
+    }
+
+    // ── IMP-03: Refresh_DeImpersonacao_MantemTenantEMarker ─────────────────────
+
+    [Fact]
+    public async Task Refresh_DeImpersonacao_MantemTenantEMarkerAsync()
+    {
+        await using var ctx = await db.CreateContextAsync();
+        var service = CreateService(ctx);
+
+        var saasUser = await CreateSaasAdminAsync(ctx);
+        var tenant = Tenant.Create("Tenant Refresh Imp");
+        ctx.Tenants.Add(tenant);
+        await ctx.SaveChangesAsync();
+
+        var impResult = await service.CreateImpersonationTokensAsync(saasUser.Id, tenant.Id);
+        Assert.True(impResult.IsSuccess);
+
+        var result = await service.RefreshTokenAsync(impResult.Value!.RefreshToken);
+
+        Assert.True(result.IsSuccess);
+        var claims = DecodeJwtClaims(result.Value!.AccessToken);
+        Assert.Equal(tenant.Id.ToString(), claims["tenant_id"]);
+        Assert.Equal("true", claims["act_as_saas"]);
+        Assert.Equal(saasUser.Id.ToString(), claims[JwtRegisteredClaimNames.Sub]);
+        Assert.Equal("SaasAdmin", claims["role"]);
+    }
+
+    // ── IMP-03: Refresh_RotacionaPreservandoActingTenantId ─────────────────────
+
+    [Fact]
+    public async Task Refresh_RotacionaPreservandoActingTenantIdAsync()
+    {
+        await using var ctx = await db.CreateContextAsync();
+        var service = CreateService(ctx);
+
+        var saasUser = await CreateSaasAdminAsync(ctx);
+        var tenant = Tenant.Create("Tenant Rotacao Imp");
+        ctx.Tenants.Add(tenant);
+        await ctx.SaveChangesAsync();
+
+        var impResult = await service.CreateImpersonationTokensAsync(saasUser.Id, tenant.Id);
+        Assert.True(impResult.IsSuccess);
+
+        var refreshResult = await service.RefreshTokenAsync(impResult.Value!.RefreshToken);
+        Assert.True(refreshResult.IsSuccess);
+
+        ctx.ChangeTracker.Clear();
+        var newRefreshToken = await ctx.RefreshTokens
+            .FirstOrDefaultAsync(t => t.UserId == saasUser.Id && !t.IsRevoked);
+
+        Assert.NotNull(newRefreshToken);
+        Assert.Equal(tenant.Id, newRefreshToken!.ActingTenantId);
+    }
+
+    // ── IMP-03: Refresh_ImpersonacaoDeUsuarioRebaixado_Falha ───────────────────
+
+    [Fact]
+    public async Task Refresh_ImpersonacaoDeUsuarioRebaixado_FalhaAsync()
+    {
+        await using var ctx = await db.CreateContextAsync();
+        var service = CreateService(ctx);
+
+        // User has TenantId set — not a SaasAdmin
+        var tenant = Tenant.Create("Tenant Rebaixado");
+        ctx.Tenants.Add(tenant);
+        var tenantUser = ApplicationUser.Create($"{Guid.NewGuid()}@rebaixado.test", tenant.Id);
+        ctx.Users.Add(tenantUser);
+
+        // Simulate a leaked impersonation refresh token belonging to this non-SaasAdmin user
+        var rawToken = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
+        var tokenHash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(rawToken)));
+        var leakedToken = RefreshToken.Create(
+            tenantUser.Id, tokenHash, DateTimeOffset.UtcNow.AddDays(7),
+            actingTenantId: Guid.NewGuid());
+        ctx.RefreshTokens.Add(leakedToken);
+        await ctx.SaveChangesAsync();
+
+        var result = await service.RefreshTokenAsync(rawToken);
+
+        Assert.True(result.IsFailure);
+        Assert.IsType<UnauthorizedError>(result.Error);
     }
 }
