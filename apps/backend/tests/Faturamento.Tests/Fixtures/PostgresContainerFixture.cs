@@ -47,12 +47,21 @@ public sealed class PostgresContainerFixture : IAsyncLifetime
         return new AppDbContext(options, new TenantCurrentUser(tenantId));
     }
 
+    internal AppDbContext CreateImpersonationContext(Guid tenantId)
+    {
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseNpgsql(ConnectionString)
+            .Options;
+        return new AppDbContext(options, new ImpersonatingCurrentUser(tenantId));
+    }
+
     private sealed class SaasAdminCurrentUser : ICurrentUser
     {
         public Guid UserId => Guid.Empty;
         public Guid? TenantId => null;
         public Guid? MedicoId => null;
         public bool IsSaasAdmin => true;
+        public bool IsImpersonating => false;
         public bool IsAuthenticated => true;
     }
 
@@ -62,6 +71,17 @@ public sealed class PostgresContainerFixture : IAsyncLifetime
         public Guid? TenantId => tenantId;
         public Guid? MedicoId => null;
         public bool IsSaasAdmin => false;
+        public bool IsImpersonating => false;
+        public bool IsAuthenticated => true;
+    }
+
+    private sealed class ImpersonatingCurrentUser(Guid tenantId) : ICurrentUser
+    {
+        public Guid UserId => Guid.Empty;
+        public Guid? TenantId => tenantId;
+        public Guid? MedicoId => null;
+        public bool IsSaasAdmin => true;
+        public bool IsImpersonating => true;
         public bool IsAuthenticated => true;
     }
 }

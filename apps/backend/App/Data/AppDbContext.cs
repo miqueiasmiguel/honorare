@@ -57,6 +57,8 @@ internal class AppDbContext(
         where TEntity : class, ITenantEntity
     {
         modelBuilder.Entity<TEntity>()
-            .HasQueryFilter(e => _currentUser.IsSaasAdmin || e.TenantId == _currentUser.TenantId);
+            .HasQueryFilter(e =>
+                (_currentUser.IsSaasAdmin && _currentUser.TenantId == null)
+                || e.TenantId == _currentUser.TenantId);
     }
 }

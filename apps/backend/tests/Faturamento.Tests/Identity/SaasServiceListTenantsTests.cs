@@ -107,6 +107,7 @@ public sealed class SaasServiceListTenantsTests(PostgresContainerFixture db)
         public Guid? TenantId => null;
         public Guid? MedicoId => null;
         public bool IsSaasAdmin => true;
+        public bool IsImpersonating => false;
         public bool IsAuthenticated => true;
     }
 }

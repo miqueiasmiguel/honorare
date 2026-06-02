@@ -6,5 +6,6 @@ internal interface ICurrentUser
     Guid? TenantId { get; }
     Guid? MedicoId { get; }
     bool IsSaasAdmin { get; }
+    bool IsImpersonating { get; }
     bool IsAuthenticated { get; }
 }

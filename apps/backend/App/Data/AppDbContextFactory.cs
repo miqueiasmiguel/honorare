@@ -32,6 +32,7 @@ internal sealed class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbCon
         public Guid? TenantId => null;
         public Guid? MedicoId => null;
         public bool IsSaasAdmin => true;
+        public bool IsImpersonating => false;
         public bool IsAuthenticated => false;
     }
 }

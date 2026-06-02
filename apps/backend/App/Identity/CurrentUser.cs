@@ -36,4 +36,6 @@ internal sealed class CurrentUser(IHttpContextAccessor httpContextAccessor) : IC
     }
 
     public bool IsSaasAdmin => User?.IsInRole("SaasAdmin") ?? false;
+
+    public bool IsImpersonating => IsSaasAdmin && TenantId is not null;
 }

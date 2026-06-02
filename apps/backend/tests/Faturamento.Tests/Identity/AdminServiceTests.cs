@@ -265,4 +265,5 @@ file sealed class FakeCurrentUser(Guid userId, Guid tenantId) : ICurrentUser
     public Guid? TenantId => tenantId;
     public Guid? MedicoId => null;
     public bool IsSaasAdmin => false;
+    public bool IsImpersonating => false;
 }

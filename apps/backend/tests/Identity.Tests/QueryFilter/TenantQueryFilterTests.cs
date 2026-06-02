@@ -21,6 +21,7 @@ internal sealed class TenantAdminCurrentUser(Guid tenantId) : ICurrentUser
     public Guid? TenantId => tenantId;
     public Guid? MedicoId => null;
     public bool IsSaasAdmin => false;
+    public bool IsImpersonating => false;
     public bool IsAuthenticated => true;
 }
 
@@ -31,6 +32,7 @@ internal sealed class SaasAdminCurrentUser : ICurrentUser
     public Guid? TenantId => null;
     public Guid? MedicoId => null;
     public bool IsSaasAdmin => true;
+    public bool IsImpersonating => false;
     public bool IsAuthenticated => true;
 }
 

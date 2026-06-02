@@ -481,5 +481,6 @@ file sealed class FakeTenantUser(Guid tenantId) : ICurrentUser
     public Guid? TenantId => tenantId;
     public Guid? MedicoId => null;
     public bool IsSaasAdmin => false;
+    public bool IsImpersonating => false;
     public bool IsAuthenticated => true;
 }
