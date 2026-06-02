@@ -5,8 +5,8 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { AuthService } from '../auth/auth.service';
 import { adminGuard } from './admin.guard';
 
-function makeFakeJwt(role: string): string {
-  return `h.${btoa(JSON.stringify({ role, sub: 'user-id' }))}.s`;
+function makeFakeJwt(role: string, extra: Record<string, unknown> = {}): string {
+  return `h.${btoa(JSON.stringify({ role, sub: 'user-id', ...extra }))}.s`;
 }
 
 describe('adminGuard', () => {
@@ -63,6 +63,18 @@ describe('adminGuard', () => {
 
     expect(result).toBeInstanceOf(UrlTree);
     expect(router.serializeUrl(result)).toBe('/');
+  });
+
+  it('adminGuard_WhenSaasAdminIsImpersonating_AllowsActivation', () => {
+    authService.storeTokens({
+      accessToken: makeFakeJwt('SaasAdmin', { tenant_id: 'tenant-123' }),
+      refreshToken: 'rt',
+      expiresIn: 900,
+    });
+
+    const result = runGuard();
+
+    expect(result).toBe(true);
   });
 
   it('adminGuard_WhenRoleIsMedico_RedirectsToRoot', () => {
