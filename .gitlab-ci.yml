@@ -169,7 +169,7 @@ medico-pwa:
 build-backend:
   extends: .build-image
   script:
-    - docker build -t "$CI_REGISTRY_IMAGE/backend:latest" apps/backend/
+    - docker build --network host -t "$CI_REGISTRY_IMAGE/backend:latest" apps/backend/
     - docker push "$CI_REGISTRY_IMAGE/backend:latest"
   rules:
     - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
@@ -180,7 +180,7 @@ build-backend:
 build-admin-web:
   extends: .build-image
   script:
-    - docker build -t "$CI_REGISTRY_IMAGE/admin-web:latest" -f apps/admin-web/Dockerfile --build-arg BASE_HREF=/admin/ .
+    - docker build --network host -t "$CI_REGISTRY_IMAGE/admin-web:latest" -f apps/admin-web/Dockerfile --build-arg BASE_HREF=/admin/ .
     - docker push "$CI_REGISTRY_IMAGE/admin-web:latest"
   rules:
     - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
@@ -192,7 +192,7 @@ build-admin-web:
 build-medico-pwa:
   extends: .build-image
   script:
-    - docker build -t "$CI_REGISTRY_IMAGE/medico-pwa:latest" -f apps/medico-pwa/Dockerfile --build-arg BASE_HREF=/app/ .
+    - docker build --network host -t "$CI_REGISTRY_IMAGE/medico-pwa:latest" -f apps/medico-pwa/Dockerfile --build-arg BASE_HREF=/app/ .
     - docker push "$CI_REGISTRY_IMAGE/medico-pwa:latest"
   rules:
     - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
