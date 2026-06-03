@@ -132,10 +132,20 @@ using (var scope = app.Services.CreateScope())
 
 ConfigurationValidator.Validate(app.Configuration);
 
-app.UseForwardedHeaders(new ForwardedHeadersOptions
+var forwardedHeadersOptions = new ForwardedHeadersOptions
 {
     ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
-});
+};
+
+// Atrás do Cloudflare Tunnel + Nginx (rede Docker), o proxy imediato não é
+// loopback. Sem limpar as listas conhecidas o ASP.NET ignora o cabeçalho
+// X-Forwarded-Proto e constrói o redirect_uri do OAuth (e o cookie de
+// correlação) como http, quebrando o login Google. O backend só é acessível
+// internamente atrás do proxy, então confiar no cabeçalho é seguro aqui.
+forwardedHeadersOptions.KnownIPNetworks.Clear();
+forwardedHeadersOptions.KnownProxies.Clear();
+
+app.UseForwardedHeaders(forwardedHeadersOptions);
 
 app.UseExceptionHandler(exApp => exApp.Run(async ctx =>
 {
@@ -175,10 +185,10 @@ if (app.Environment.IsDevelopment())
         options.RoutePrefix = "api/docs";
     });
 }
-else
-{
-    app.UseHttpsRedirection();
-}
+
+// Sem UseHttpsRedirection: o TLS termina no Cloudflare e o backend serve apenas
+// HTTP interno atrás do tunnel. Forçar redirect para https aqui causaria loop
+// (o backend nunca expõe porta https própria).
 
 app.UseAuthentication();
 app.UseMiddleware<ImpersonationSpanMiddleware>();

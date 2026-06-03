@@ -216,8 +216,13 @@ build-medico-pwa:
 deploy:
   stage: deploy
   image: alpine:latest
+  # Manual: o deploy migrou para o homelab (na LAN, inalcançável pelas runners
+  # da nuvem por SSH). Este job permanece para a VPS, acionável sob demanda; o
+  # deploy do homelab é feito localmente na máquina (ver infra/docker-compose.homelab.yml).
   rules:
     - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+      when: manual
+      allow_failure: true
   before_script:
     - apk add --no-cache openssh-client rsync
     - eval $(ssh-agent -s)

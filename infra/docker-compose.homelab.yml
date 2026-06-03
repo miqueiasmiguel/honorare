@@ -1,0 +1,38 @@
+# Override para deploy no homelab atrás de um Cloudflare Tunnel.
+#
+# Uso (na máquina do homelab, junto com base + prod):
+#   docker compose \
+#     -f docker-compose.yml \
+#     -f docker-compose.prod.yml \
+#     -f docker-compose.homelab.yml up -d
+#
+# O cloudflared roda no modo "token" (túnel gerenciado remotamente): o
+# mapeamento hostname→serviço é definido no dashboard Cloudflare Zero Trust
+# apontando para http://nginx:80 (resolvido via DNS da rede Docker).
+#
+# Variáveis adicionais necessárias no .env: TUNNEL_TOKEN
+
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run --token ${TUNNEL_TOKEN}
+    depends_on:
+      - nginx
+
+  # Políticas de restart — sem isso um container que pare (ex.: SIGTERM, OOM,
+  # reboot da máquina) não volta sozinho, como ocorreu na VPS.
+  nginx:
+    restart: unless-stopped
+
+  backend:
+    restart: unless-stopped
+
+  postgres:
+    restart: unless-stopped
+
+  admin-web:
+    restart: unless-stopped
+
+  medico-pwa:
+    restart: unless-stopped
