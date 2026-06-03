@@ -1,3 +1,13 @@
+# Roda apenas em pushes de branch. Pipelines de merge request (detached)
+# falham na busca do ref (refs/heads/refs/merge-requests/N/head) neste runner;
+# o feedback de testes já vem da pipeline de branch e o deploy roda no push
+# para master, então não precisamos de pipelines de merge request.
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+    - if: $CI_COMMIT_BRANCH
+
 stages:
   - test
   - sast
