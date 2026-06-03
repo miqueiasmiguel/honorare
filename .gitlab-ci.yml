@@ -1,6 +1,8 @@
 stages:
   - test
   - sast
+  - build
+  - deploy
 
 include:
   - template: Security/SAST.gitlab-ci.yml
@@ -147,3 +149,77 @@ medico-pwa:
     paths:
       - apps/medico-pwa/coverage/
     expire_in: 7 days
+
+# ─── Build ────────────────────────────────────────────────────────────────────
+
+.build-image:
+  stage: build
+  image: docker:27
+  services:
+    - name: docker:27-dind
+      command: ["--tls=false"]
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+    DOCKER_TLS_CERTDIR: ""
+  rules:
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+
+build-backend:
+  extends: .build-image
+  script:
+    - docker build -t "$CI_REGISTRY_IMAGE/backend:latest" apps/backend/
+    - docker push "$CI_REGISTRY_IMAGE/backend:latest"
+  rules:
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+    - changes:
+        - apps/backend/**/*
+        - .gitlab-ci.yml
+
+build-admin-web:
+  extends: .build-image
+  script:
+    - docker build -t "$CI_REGISTRY_IMAGE/admin-web:latest" -f apps/admin-web/Dockerfile --build-arg BASE_HREF=/admin/ .
+    - docker push "$CI_REGISTRY_IMAGE/admin-web:latest"
+  rules:
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+    - changes:
+        - apps/admin-web/**/*
+        - packages/api-contracts/**/*
+        - .gitlab-ci.yml
+
+build-medico-pwa:
+  extends: .build-image
+  script:
+    - docker build -t "$CI_REGISTRY_IMAGE/medico-pwa:latest" -f apps/medico-pwa/Dockerfile --build-arg BASE_HREF=/app/ .
+    - docker push "$CI_REGISTRY_IMAGE/medico-pwa:latest"
+  rules:
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+    - changes:
+        - apps/medico-pwa/**/*
+        - packages/api-contracts/**/*
+        - .gitlab-ci.yml
+
+# ─── Deploy ───────────────────────────────────────────────────────────────────
+
+deploy:
+  stage: deploy
+  image: alpine:latest
+  rules:
+    - if: "$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH"
+  before_script:
+    - apk add --no-cache openssh-client rsync
+    - eval $(ssh-agent -s)
+    - echo "$VPS_SSH_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh && chmod 700 ~/.ssh
+    - ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts
+  script:
+    - ssh "$VPS_USER@$VPS_HOST" "mkdir -p ~/honorare/infra"
+    - rsync -av --exclude='.env' infra/ "$VPS_USER@$VPS_HOST:~/honorare/infra/"
+    - |
+      ssh "$VPS_USER@$VPS_HOST" "
+        docker login $CI_REGISTRY -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD &&
+        docker compose -f ~/honorare/infra/docker-compose.yml -f ~/honorare/infra/docker-compose.prod.yml pull &&
+        docker compose -f ~/honorare/infra/docker-compose.yml -f ~/honorare/infra/docker-compose.prod.yml up -d
+      "
