@@ -1,0 +1,23 @@
+# Override do Cloudflare Tunnel (acesso externo). Separado do homelab.yml para
+# permitir deploy LAN-only sem exigir TUNNEL_TOKEN.
+#
+# Uso (quando for ativar o túnel), adicione este arquivo ao comando do deploy:
+#   docker compose \
+#     -f docker-compose.yml \
+#     -f docker-compose.prod.yml \
+#     -f docker-compose.homelab.yml \
+#     -f docker-compose.tunnel.yml up -d
+#
+# O cloudflared roda no modo "token" (túnel gerenciado remotamente): o
+# mapeamento hostname→serviço é definido no dashboard Cloudflare Zero Trust
+# apontando para http://nginx:80 (resolvido via DNS da rede Docker).
+#
+# Variável necessária no .env: TUNNEL_TOKEN
+
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run --token ${TUNNEL_TOKEN}
+    depends_on:
+      - nginx
