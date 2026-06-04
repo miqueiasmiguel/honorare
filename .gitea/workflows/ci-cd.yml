@@ -133,7 +133,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Login no registry do Gitea
-        run: docker login "$REGISTRY" -u "${{ github.actor }}" -p "${{ secrets.GITEA_TOKEN }}"
+        run: docker login "$REGISTRY" -u "$IMAGE_OWNER" -p "${{ secrets.REGISTRY_TOKEN }}"
       - run: docker build -t "$REGISTRY/$IMAGE_OWNER/backend:latest" apps/backend/
       - run: docker push "$REGISTRY/$IMAGE_OWNER/backend:latest"
 
@@ -144,7 +144,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Login no registry do Gitea
-        run: docker login "$REGISTRY" -u "${{ github.actor }}" -p "${{ secrets.GITEA_TOKEN }}"
+        run: docker login "$REGISTRY" -u "$IMAGE_OWNER" -p "${{ secrets.REGISTRY_TOKEN }}"
       - run: docker build -t "$REGISTRY/$IMAGE_OWNER/admin-web:latest" -f apps/admin-web/Dockerfile --build-arg BASE_HREF=/admin/ .
       - run: docker push "$REGISTRY/$IMAGE_OWNER/admin-web:latest"
 
@@ -155,7 +155,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Login no registry do Gitea
-        run: docker login "$REGISTRY" -u "${{ github.actor }}" -p "${{ secrets.GITEA_TOKEN }}"
+        run: docker login "$REGISTRY" -u "$IMAGE_OWNER" -p "${{ secrets.REGISTRY_TOKEN }}"
       - run: docker build -t "$REGISTRY/$IMAGE_OWNER/medico-pwa:latest" -f apps/medico-pwa/Dockerfile --build-arg BASE_HREF=/app/ .
       - run: docker push "$REGISTRY/$IMAGE_OWNER/medico-pwa:latest"
 
@@ -204,7 +204,7 @@ jobs:
           EOF
       - name: Pull + up
         run: |
-          docker login "$REGISTRY" -u "${{ github.actor }}" -p "${{ secrets.GITEA_TOKEN }}"
+          docker login "$REGISTRY" -u "$IMAGE_OWNER" -p "${{ secrets.REGISTRY_TOKEN }}"
           cd "$DEPLOY_DIR"
           COMPOSE="-f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.homelab.yml --env-file .env"
           docker compose $COMPOSE pull
