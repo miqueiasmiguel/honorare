@@ -201,6 +201,7 @@ jobs:
           GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
           Jwt__Secret=${{ secrets.JWT_SECRET }}
           TUNNEL_TOKEN=${{ secrets.TUNNEL_TOKEN }}
+          NGINX_PORT=${{ vars.NGINX_PORT || '8080' }}
           EOF
       - name: Pull + up
         run: |

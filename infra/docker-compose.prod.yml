@@ -1,11 +1,27 @@
+# Override de produção.
+#
+# PRINCÍPIO DE PORTAS: em produção, atrás do nginx (proxy reverso), o ÚNICO
+# serviço que publica porta no host é o nginx. Todo o resto conversa pela rede
+# interna do Docker (backend↔postgres↔otel↔...), sem porta no host — assim o
+# Honorare nunca colide com os outros serviços do homelab.
+#
+# ATENÇÃO: `ports: []` NÃO limpa as portas do base — o Compose CONCATENA listas
+# de ports. É preciso o tag `!override` (Compose 2.20+) para realmente remover.
+#
+# A porta do nginx é configurável via NGINX_PORT (default 8080) para você
+# escolher uma livre no host. Quando o Cloudflare Tunnel estiver ativo, o
+# cloudflared alcança o nginx pela rede Docker (http://nginx:80) e o nginx nem
+# precisa publicar porta — aí dá pra usar `ports: !override []` nele também.
+
 services:
   postgres:
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    ports: []
+    ports: !override []
 
   backend:
     image: gitea.m2sf.duckdns.org/miqueiasfilho/backend:latest
+    ports: !override [] # nginx faz proxy para backend:8080 pela rede interna
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__Default: "Host=postgres;Port=5432;Database=honorare;Username=honorare;Password=${POSTGRES_PASSWORD}"
@@ -16,20 +32,25 @@ services:
   medico-pwa:
     image: gitea.m2sf.duckdns.org/miqueiasfilho/medico-pwa:latest
 
+  nginx:
+    # Único serviço exposto no host. Porta configurável (default 8080).
+    ports: !override
+      - "${NGINX_PORT:-8080}:80"
+
   otel-collector:
-    ports: []
+    ports: !override []
 
   jaeger:
-    ports: []
+    ports: !override []
 
   prometheus:
-    ports: []
+    ports: !override []
 
   loki:
-    ports: []
+    ports: !override []
 
   grafana:
     environment:
       GF_AUTH_ANONYMOUS_ENABLED: "false"
       GF_AUTH_DISABLE_LOGIN_FORM: "false"
-    ports: []
+    ports: !override []
