@@ -8,13 +8,16 @@
 # `container.options` no config.yaml do act_runner — necessário para o
 # Testcontainers do backend e para `docker build`.
 #
-# Testes rodam em qualquer push (feedback por branch). Build + deploy só na
-# master, e o deploy depende de todos os builds (testes barram o deploy).
+# Roda APENAS em pushes na master: test → build → deploy, com o deploy
+# dependente dos builds (testes barram o deploy). Para feedback de teste antes
+# do merge, dá para adicionar um trigger `pull_request:` depois.
 
 name: CI/CD
 
 on:
   push:
+    branches:
+      - master
 
 env:
   REGISTRY: gitea.m2sf.duckdns.org
