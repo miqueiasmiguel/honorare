@@ -28,12 +28,20 @@ jobs:
     # Sem `container:` override: a imagem padrão (catthehacker) tem Node, exigido
     # pelas actions JS (checkout/setup-dotnet). A imagem dotnet/sdk não tem Node
     # e quebrava o checkout com exit 127. O .NET vem via setup-dotnet.
+    #
+    # Testcontainers fala com um daemon Docker DEDICADO (serviço dind), não com
+    # o socket do host. Acessar o socket do host por duas camadas de container
+    # causava RegexMatchTimeoutException no init do Testcontainers (contenção).
+    # Este é o mesmo padrão que funcionava no GitLab CI.
+    services:
+      docker:
+        image: docker:27-dind
+        options: --privileged
+        env:
+          DOCKER_TLS_CERTDIR: "" # escuta em tcp://0.0.0.0:2375 sem TLS
     env:
-      # Testcontainers usa o socket do Docker (auto-montado pelo act_runner).
-      DOCKER_HOST: unix:///var/run/docker.sock
-      # Se os testes não alcançarem o Postgres efêmero, defina o host override
-      # para o gateway da bridge do Docker (normalmente 172.17.0.1):
-      #   TESTCONTAINERS_HOST_OVERRIDE: "172.17.0.1"
+      DOCKER_HOST: tcp://docker:2375
+      DOCKER_TLS_CERTDIR: ""
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
