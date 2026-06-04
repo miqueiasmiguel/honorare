@@ -27,12 +27,13 @@ cache:
   enabled: true
 
 container:
-  # Monta o socket do host em todos os job containers (inclusive nos que
-  # sobrescrevem container.image, como test-backend no dotnet/sdk).
-  options: "-v /var/run/docker.sock:/var/run/docker.sock"
+  # NÃO declarar o socket aqui: o act_runner já bind-monta
+  # /var/run/docker.sock em todo job container automaticamente (docker_host
+  # vazio = autodetecção). Declarar de novo causa "Duplicate mount point".
+  # Isso vale inclusive para jobs que sobrescrevem container.image
+  # (ex.: test-backend no dotnet/sdk) — todos recebem o socket.
   valid_volumes:
-    - "/var/run/docker.sock"
+    # Necessário para o job `deploy` poder bind-montar este caminho.
     - "/opt/honorare/infra"
-  # docker_host vazio = autodetecção (usa o socket montado acima).
   docker_host: ""
   force_pull: false
