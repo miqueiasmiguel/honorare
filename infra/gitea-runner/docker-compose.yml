@@ -1,0 +1,44 @@
+# Stack do GitLab→Gitea Actions runner para o Portainer (homelab).
+#
+# Imagem: gitea/runner (rebrand 1.0 do antigo gitea/act_runner).
+# Use a tag SEM -dind: com o socket do host montado, os serviços do deploy
+# sobem no daemon do HOST (visíveis ao cloudflared). Uma tag -dind subiria os
+# containers num daemon interno efêmero — errado para deploy de produção.
+#
+# Pré-requisitos no HOST (criar ANTES de subir a stack):
+#   sudo mkdir -p /opt/honorare/infra /opt/honorare/gitea-runner
+#   # copie infra/gitea-runner/config.yaml para /opt/honorare/gitea-runner/config.yaml
+#
+# Variável da stack (Portainer → Environment variables):
+#   RUNNER_TOKEN = token de registro (Gitea → Settings → Actions → Runners →
+#                  Create new Runner). É de uso único; o volume gitea_runner_data
+#                  persiste o registro (.runner) para não reusar o token a cada
+#                  restart.
+
+services:
+  gitea-runner:
+    image: gitea/runner:latest
+    container_name: gitea-runner
+    restart: unless-stopped
+    environment:
+      GITEA_INSTANCE_URL: https://gitea.m2sf.duckdns.org
+      GITEA_RUNNER_REGISTRATION_TOKEN: ${RUNNER_TOKEN}
+      GITEA_RUNNER_NAME: homelab-runner
+      # Mapeia a label para a imagem catthehacker (tem docker CLI + git + node).
+      # O default mapearia para uma imagem Node SEM docker → builds falhariam.
+      GITEA_RUNNER_LABELS: "ubuntu-latest:docker://catthehacker/ubuntu:act-latest"
+      CONFIG_FILE: /config/config.yaml
+    volumes:
+      # Socket do host: o runner spawna os job containers no daemon do HOST.
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Config (precisa existir no host antes de subir a stack).
+      - /opt/honorare/gitea-runner/config.yaml:/config/config.yaml:ro
+      # Estado do runner (.runner) — persistente, senão o token é reusado.
+      - gitea_runner_data:/data
+    # Descomente se o hostname do Gitea NÃO resolver de dentro da LAN
+    # (NAT hairpin ausente). Aponte para o IP LAN do Gitea:
+    # extra_hosts:
+    #   - "gitea.m2sf.duckdns.org:192.168.x.y"
+
+volumes:
+  gitea_runner_data:

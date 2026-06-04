@@ -5,16 +5,16 @@ services:
     ports: []
 
   backend:
-    image: registry.gitlab.com/miqueiasmiguel/honorare/backend:latest
+    image: gitea.m2sf.duckdns.org/miqueiasfilho/backend:latest
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__Default: "Host=postgres;Port=5432;Database=honorare;Username=honorare;Password=${POSTGRES_PASSWORD}"
 
   admin-web:
-    image: registry.gitlab.com/miqueiasmiguel/honorare/admin-web:latest
+    image: gitea.m2sf.duckdns.org/miqueiasfilho/admin-web:latest
 
   medico-pwa:
-    image: registry.gitlab.com/miqueiasmiguel/honorare/medico-pwa:latest
+    image: gitea.m2sf.duckdns.org/miqueiasfilho/medico-pwa:latest
 
   otel-collector:
     ports: []

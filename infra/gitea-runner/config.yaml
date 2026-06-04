@@ -1,0 +1,38 @@
+# Config do act_runner (imagem gitea/runner) — homelab.
+#
+# Este arquivo precisa existir no HOST antes de subir a stack do runner
+# (o Portainer não cria bind mounts de arquivo). Caminho sugerido:
+#   /opt/honorare/gitea-runner/config.yaml
+#
+# Pontos load-bearing:
+#  - container.options monta o socket do Docker do HOST em TODO job container,
+#    necessário para `docker build`, `docker push` e o Testcontainers do backend.
+#  - valid_volumes libera o socket e o diretório persistente de deploy
+#    (/opt/honorare/infra), que o job `deploy` bind-monta com caminho idêntico.
+
+log:
+  level: info
+
+runner:
+  capacity: 2 # nº de jobs simultâneos
+  timeout: 1h
+  # As labels são fixadas no REGISTRO (via GITEA_RUNNER_LABELS na stack), não
+  # lidas daqui em runtime. Para trocá-las depois: apague o volume de dados
+  # (.runner) e registre de novo. Mapeamento usado:
+  #   ubuntu-latest:docker://catthehacker/ubuntu:act-latest
+  fetch_timeout: 5s
+  fetch_interval: 2s
+
+cache:
+  enabled: true
+
+container:
+  # Monta o socket do host em todos os job containers (inclusive nos que
+  # sobrescrevem container.image, como test-backend no dotnet/sdk).
+  options: "-v /var/run/docker.sock:/var/run/docker.sock"
+  valid_volumes:
+    - "/var/run/docker.sock"
+    - "/opt/honorare/infra"
+  # docker_host vazio = autodetecção (usa o socket montado acima).
+  docker_host: ""
+  force_pull: false

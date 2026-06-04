@@ -1,0 +1,204 @@
+# Pipeline única de CI/CD no Gitea Actions (porta do antigo .gitlab-ci.yml).
+#
+# Topologia de runner (ver runbook no README/infra): um act_runner no homelab
+# com dois labels —
+#   ubuntu-latest:docker  → jobs de test/build (containers)
+#   homelab:host          → job de deploy (roda direto no host, com docker local)
+# O socket do Docker (/var/run/docker.sock) é montado nos job containers via
+# `container.options` no config.yaml do act_runner — necessário para o
+# Testcontainers do backend e para `docker build`.
+#
+# Testes rodam em qualquer push (feedback por branch). Build + deploy só na
+# master, e o deploy depende de todos os builds (testes barram o deploy).
+
+name: CI/CD
+
+on:
+  push:
+
+env:
+  REGISTRY: gitea.m2sf.duckdns.org
+  IMAGE_OWNER: miqueiasfilho
+
+jobs:
+  # ─── Test ─────────────────────────────────────────────────────────────────
+
+  test-backend:
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/dotnet/sdk:10.0
+    env:
+      # Testcontainers usa o socket do Docker montado no job container.
+      DOCKER_HOST: unix:///var/run/docker.sock
+      # Se os testes não alcançarem o Postgres efêmero, defina o host override
+      # para o gateway da bridge do Docker (normalmente 172.17.0.1):
+      #   TESTCONTAINERS_HOST_OVERRIDE: "172.17.0.1"
+    steps:
+      - uses: actions/checkout@v4
+      - run: apt-get update -qq && apt-get install -y -qq bc
+      - run: dotnet restore apps/backend/Honorare.slnx
+      - run: dotnet build apps/backend/Honorare.slnx --no-restore --configuration Release
+      - name: Test + coverage
+        run: |
+          dotnet test apps/backend/Honorare.slnx \
+            --no-build \
+            --configuration Release \
+            --collect:"XPlat Code Coverage" \
+            --results-directory ./coverage \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.ExcludeByAttribute=GeneratedCodeAttribute
+      - name: Coverage threshold (80%)
+        run: |
+          dotnet tool install --global dotnet-reportgenerator-globaltool
+          export PATH="$PATH:$HOME/.dotnet/tools"
+          reportgenerator \
+            -reports:"coverage/**/coverage.cobertura.xml" \
+            -targetdir:"coverage/report" \
+            -reporttypes:"TextSummary" \
+            -assemblyfilters:"-*Migrations*;-*Program*"
+          COVERAGE=$(grep -oP 'Line coverage: \K[0-9.]+' coverage/report/Summary.txt || echo "0")
+          echo "Line coverage: ${COVERAGE}%"
+          if (( $(echo "$COVERAGE < 80" | bc -l) )); then
+            echo "Coverage ${COVERAGE}% is below the required 80% threshold."
+            exit 1
+          fi
+
+  test-admin-web:
+    runs-on: ubuntu-latest
+    container:
+      image: node:22
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm install -g pnpm@latest
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm -F admin-web prettier:check
+      - run: pnpm -F admin-web lint
+      - run: pnpm -F admin-web stylelint
+      - run: pnpm -F admin-web test:ci
+      - name: Coverage threshold (80%)
+        run: |
+          SUMMARY="apps/admin-web/coverage/coverage-summary.json"
+          if [ ! -f "$SUMMARY" ]; then
+            echo "Coverage summary not found at $SUMMARY"
+            exit 1
+          fi
+          node -e "
+            const pct = require('./$SUMMARY').total.lines.pct;
+            console.log('Line coverage: ' + pct + '%');
+            if (pct < 80) { console.error('Coverage ' + pct + '% is below the required 80% threshold.'); process.exit(1); }
+          "
+      - run: pnpm -F admin-web build --base-href /admin/
+
+  test-medico-pwa:
+    runs-on: ubuntu-latest
+    container:
+      image: node:22
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm install -g pnpm@latest
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm -F medico-pwa prettier:check
+      - run: pnpm -F medico-pwa lint
+      - run: pnpm -F medico-pwa stylelint
+      - run: pnpm -F medico-pwa test:ci
+      - name: Coverage threshold (80%)
+        run: |
+          SUMMARY="apps/medico-pwa/coverage/coverage-summary.json"
+          if [ ! -f "$SUMMARY" ]; then
+            echo "Coverage summary not found at $SUMMARY"
+            exit 1
+          fi
+          node -e "
+            const pct = require('./$SUMMARY').total.lines.pct;
+            console.log('Line coverage: ' + pct + '%');
+            if (pct < 80) { console.error('Coverage ' + pct + '% is below the required 80% threshold.'); process.exit(1); }
+          "
+      - run: pnpm -F medico-pwa build --base-href /app/
+
+  # ─── Build & Push (somente master) ──────────────────────────────────────────
+  # Sem `container:` — roda na imagem padrão do label (catthehacker/ubuntu),
+  # que já tem docker CLI + git. O `docker build` usa o socket do host montado.
+
+  build-backend:
+    runs-on: ubuntu-latest
+    needs: test-backend
+    if: github.ref == 'refs/heads/master'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Login no registry do Gitea
+        run: docker login "$REGISTRY" -u "${{ github.actor }}" -p "${{ secrets.GITEA_TOKEN }}"
+      - run: docker build -t "$REGISTRY/$IMAGE_OWNER/backend:latest" apps/backend/
+      - run: docker push "$REGISTRY/$IMAGE_OWNER/backend:latest"
+
+  build-admin-web:
+    runs-on: ubuntu-latest
+    needs: test-admin-web
+    if: github.ref == 'refs/heads/master'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Login no registry do Gitea
+        run: docker login "$REGISTRY" -u "${{ github.actor }}" -p "${{ secrets.GITEA_TOKEN }}"
+      - run: docker build -t "$REGISTRY/$IMAGE_OWNER/admin-web:latest" -f apps/admin-web/Dockerfile --build-arg BASE_HREF=/admin/ .
+      - run: docker push "$REGISTRY/$IMAGE_OWNER/admin-web:latest"
+
+  build-medico-pwa:
+    runs-on: ubuntu-latest
+    needs: test-medico-pwa
+    if: github.ref == 'refs/heads/master'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Login no registry do Gitea
+        run: docker login "$REGISTRY" -u "${{ github.actor }}" -p "${{ secrets.GITEA_TOKEN }}"
+      - run: docker build -t "$REGISTRY/$IMAGE_OWNER/medico-pwa:latest" -f apps/medico-pwa/Dockerfile --build-arg BASE_HREF=/app/ .
+      - run: docker push "$REGISTRY/$IMAGE_OWNER/medico-pwa:latest"
+
+  # ─── Deploy no homelab (somente master) ───────────────────────────────────────
+  # Executor docker (runner containerizado via Portainer). O job fala com o
+  # daemon do HOST pelo socket montado no runner, então o compose sobe os
+  # serviços na máquina (visíveis ao cloudflared). NÃO roda o compose do
+  # checkout (workspace efêmero) — usa um diretório PERSISTENTE bind-montado.
+  #
+  # IMPORTANTE: o volume usa caminho IDÊNTICO host↔container
+  # (/opt/honorare/infra). O `docker compose` resolve os bind mounts relativos
+  # (ex.: ./postgres/data) para um caminho absoluto e entrega ao daemon do HOST;
+  # se os caminhos diferissem, o mount cairia num lugar inexistente no host.
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: [build-backend, build-admin-web, build-medico-pwa]
+    if: github.ref == 'refs/heads/master'
+    container:
+      image: catthehacker/ubuntu:act-latest
+      volumes:
+        - /opt/honorare/infra:/opt/honorare/infra
+    env:
+      DEPLOY_DIR: /opt/honorare/infra
+    steps:
+      - uses: actions/checkout@v4
+      - name: Garantir ferramentas (rsync + docker compose)
+        run: |
+          command -v rsync >/dev/null || (apt-get update -qq && apt-get install -y -qq rsync)
+          docker compose version >/dev/null || (apt-get update -qq && apt-get install -y -qq docker-compose-plugin)
+      - name: Sincronizar infra para o diretório persistente
+        # Sem --delete; exclui estado de runtime (.env e dados do Postgres)
+        # para nunca destruir o banco nem os segredos já presentes na máquina.
+        run: |
+          mkdir -p "$DEPLOY_DIR"
+          rsync -a --exclude='.env' --exclude='postgres/data/' infra/ "$DEPLOY_DIR/"
+      - name: Gerar .env a partir dos secrets
+        run: |
+          umask 077
+          cat > "$DEPLOY_DIR/.env" <<EOF
+          POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+          GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+          Jwt__Secret=${{ secrets.JWT_SECRET }}
+          TUNNEL_TOKEN=${{ secrets.TUNNEL_TOKEN }}
+          EOF
+      - name: Pull + up
+        run: |
+          docker login "$REGISTRY" -u "${{ github.actor }}" -p "${{ secrets.GITEA_TOKEN }}"
+          cd "$DEPLOY_DIR"
+          COMPOSE="-f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.homelab.yml --env-file .env"
+          docker compose $COMPOSE pull
+          docker compose $COMPOSE up -d --remove-orphans
+          docker image prune -f
