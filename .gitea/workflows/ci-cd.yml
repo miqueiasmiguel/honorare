@@ -8,14 +8,19 @@
 # `container.options` no config.yaml do act_runner — necessário para o
 # Testcontainers do backend e para `docker build`.
 #
-# Roda APENAS em pushes na master: test → build → deploy, com o deploy
-# dependente dos builds (testes barram o deploy). Para feedback de teste antes
-# do merge, dá para adicionar um trigger `pull_request:` depois.
+# Triggers:
+#  - pull_request → master: roda só os jobs de teste (build/deploy têm
+#    `if: github.ref == 'refs/heads/master'`, que não casa em PR). É o que
+#    barra o merge quando exigido na branch protection.
+#  - push → master: pipeline completa (test → build → deploy).
 
 name: CI/CD
 
 on:
   push:
+    branches:
+      - master
+  pull_request:
     branches:
       - master
 
