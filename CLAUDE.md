@@ -17,7 +17,7 @@ pnpm install                        # Install all JS/TS deps + activate Husky ho
 # ── Dev ────────────────────────────────────────────────────────────────────────
 pnpm dev:up                         # Start Docker Compose (Postgres + backend + Nginx + observability)
 pnpm -F admin-web dev               # Dev server: admin Angular SPA  (http://localhost:4200/admin/)
-pnpm -F medico-pwa dev              # Dev server: doctor Angular PWA  (http://localhost:4201/app/)
+pnpm -F medico-pwa start            # Dev server: doctor Angular PWA  (http://localhost:4200/app/)
 pnpm generate-api-client            # Regenerate TS client from OpenAPI spec
 
 # ── Backend (.NET) ─────────────────────────────────────────────────────────────
