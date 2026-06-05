@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Honorare">
+  <rect width="32" height="32" rx="7" fill="#F6F1EA" />
+  <path
+    d="M11 6.5 V25.5 M11 15 Q11 12.5 14 12.5 H18 Q21 12.5 21 15 V25.5"
+    fill="none"
+    stroke="#B8593A"
+    stroke-width="3"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>
