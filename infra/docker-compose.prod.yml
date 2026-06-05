@@ -51,6 +51,13 @@ services:
 
   grafana:
     environment:
+      # Acesso exige login (anônimo desligado, formulário habilitado).
       GF_AUTH_ANONYMOUS_ENABLED: "false"
       GF_AUTH_DISABLE_LOGIN_FORM: "false"
+      # Senha do usuário admin inicial (default "admin" força troca no 1º acesso).
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      # Servido sob https://honorare.m2sf.com.br/grafana — o nginx encaminha o
+      # prefixo /grafana e o Grafana monta links/assets a partir dele.
+      GF_SERVER_ROOT_URL: "https://honorare.m2sf.com.br/grafana"
+      GF_SERVER_SERVE_FROM_SUB_PATH: "true"
     ports: !override []
