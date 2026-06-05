@@ -215,7 +215,7 @@ jobs:
         run: |
           docker login "$REGISTRY" -u "$IMAGE_OWNER" -p "${{ secrets.REGISTRY_TOKEN }}"
           cd "$DEPLOY_DIR"
-          COMPOSE="-f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.homelab.yml --env-file .env"
+          COMPOSE="-f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.homelab.yml -f docker-compose.tunnel.yml --env-file .env"
           docker compose $COMPOSE pull
           docker compose $COMPOSE up -d --remove-orphans
           # O nginx usa imagem fixa (nginx:alpine) e recebe a config por bind-mount
