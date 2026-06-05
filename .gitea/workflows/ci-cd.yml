@@ -215,7 +215,16 @@ jobs:
         run: |
           docker login "$REGISTRY" -u "$IMAGE_OWNER" -p "${{ secrets.REGISTRY_TOKEN }}"
           cd "$DEPLOY_DIR"
-          COMPOSE="-f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.homelab.yml --env-file .env"
+          COMPOSE="-f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.homelab.yml -f docker-compose.tunnel.yml --env-file .env"
           docker compose $COMPOSE pull
           docker compose $COMPOSE up -d --remove-orphans
+          # O nginx usa imagem fixa (nginx:alpine) e recebe a config por bind-mount
+          # de um ARQUIVO único (./nginx/nginx.conf). Dois efeitos se somam:
+          #   1. O `up -d` acima não recria o nginx quando só o CONTEÚDO do
+          #      nginx.conf muda — a spec do container é idêntica entre deploys.
+          #   2. Bind-mount de arquivo fixa o INODE no start do container; o rsync
+          #      reescreve o arquivo (rename atômico → inode novo), então nem o
+          #      arquivo no disco nem um `nginx -s reload` chegam ao processo.
+          # Recriar o container força o mount a re-resolver para o arquivo atual.
+          docker compose $COMPOSE up -d --force-recreate nginx
           docker image prune -f
