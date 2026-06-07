@@ -157,6 +157,35 @@ describe('GuiaService', () => {
     req.flush(makeListResult());
   });
 
+  it('listar_mapeiaOrdenarPorParaNomeDoEnumDoBackend', () => {
+    service
+      .listar({ pagina: 1, itensPorPagina: 20, ordenarPor: 'prestadorNome', descendente: false })
+      .subscribe();
+
+    const req = httpMock.expectOne(
+      (r) =>
+        r.url === '/api/v1/admin/guias' &&
+        r.params.get('ordenarPor') === 'Prestador' &&
+        r.params.get('descendente') === 'false',
+    );
+    expect(req.request.method).toBe('GET');
+    req.flush(makeListResult());
+  });
+
+  it('listar_mapeiaBeneficiarioNomeEDescendente', () => {
+    service
+      .listar({ pagina: 1, itensPorPagina: 20, ordenarPor: 'beneficiarioNome', descendente: true })
+      .subscribe();
+
+    const req = httpMock.expectOne(
+      (r) =>
+        r.url === '/api/v1/admin/guias' &&
+        r.params.get('ordenarPor') === 'Beneficiario' &&
+        r.params.get('descendente') === 'true',
+    );
+    req.flush(makeListResult());
+  });
+
   it('obterPorId_chamaCaminhoCorreto', () => {
     let result: GuiaDetalheItem | undefined;
     service.obterPorId('guia-1').subscribe((v) => (result = v));

@@ -7,11 +7,23 @@ import type {
   GuiaCalculoResult,
   GuiaDetalheItem,
   GuiaItem,
+  GuiaOrdenacao,
   ItemGuiaItem,
   ListarGuiasParams,
   ListarGuiasResult,
   ResultadoImportacaoGuiaDto,
 } from './guia.types';
+
+// Mapeia o campo de ordenação da UI (nome da coluna em camelCase) para o
+// membro do enum GuiaOrdenacao esperado pelo backend.
+const ORDENACAO_BACKEND: Record<GuiaOrdenacao, string> = {
+  dataAtendimento: 'DataAtendimento',
+  numeroGuia: 'NumeroGuia',
+  prestadorNome: 'Prestador',
+  operadoraNome: 'Operadora',
+  beneficiarioNome: 'Beneficiario',
+  situacao: 'Situacao',
+};
 
 @Injectable({ providedIn: 'root' })
 export class GuiaService {
@@ -48,6 +60,12 @@ export class GuiaService {
     }
     if (params.somenteComGlosa !== undefined) {
       httpParams = httpParams.set('somenteComGlosa', params.somenteComGlosa.toString());
+    }
+    if (params.ordenarPor) {
+      httpParams = httpParams.set('ordenarPor', ORDENACAO_BACKEND[params.ordenarPor]);
+    }
+    if (params.descendente !== undefined) {
+      httpParams = httpParams.set('descendente', params.descendente.toString());
     }
 
     return this._http.get<ListarGuiasResult>('/api/v1/admin/guias', { params: httpParams });

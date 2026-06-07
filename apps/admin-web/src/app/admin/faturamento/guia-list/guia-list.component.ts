@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { CatalogService } from '../../catalog/catalog.service';
 import { GuiaService } from '../guia.service';
 import type { OperadoraItem, PrestadorItem } from '../../catalog/catalog.types';
-import type { GuiaItem, SituacaoGuia } from '../guia.types';
+import type { GuiaItem, GuiaOrdenacao, SituacaoGuia } from '../guia.types';
 import { ImportarCsvModalComponent } from '../guias/importar-csv-modal/importar-csv-modal.component';
 
 @Component({
@@ -132,13 +132,43 @@ import { ImportarCsvModalComponent } from '../guias/importar-csv-modal/importar-
       <table class="guia-list__table">
         <thead>
           <tr class="guia-list__head-row">
-            <th class="guia-list__th">Data</th>
-            <th class="guia-list__th">Prestador</th>
-            <th class="guia-list__th">Operadora</th>
-            <th class="guia-list__th">Beneficiário</th>
+            <th class="guia-list__th guia-list__th--sortable">
+              <button class="guia-list__sort" type="button" (click)="ordenar('dataAtendimento')">
+                Data
+                <span class="guia-list__sort-icon">{{ iconeOrdenacao('dataAtendimento') }}</span>
+              </button>
+            </th>
+            <th class="guia-list__th guia-list__th--sortable">
+              <button class="guia-list__sort" type="button" (click)="ordenar('prestadorNome')">
+                Prestador
+                <span class="guia-list__sort-icon">{{ iconeOrdenacao('prestadorNome') }}</span>
+              </button>
+            </th>
+            <th class="guia-list__th guia-list__th--sortable">
+              <button class="guia-list__sort" type="button" (click)="ordenar('operadoraNome')">
+                Operadora
+                <span class="guia-list__sort-icon">{{ iconeOrdenacao('operadoraNome') }}</span>
+              </button>
+            </th>
+            <th class="guia-list__th guia-list__th--sortable">
+              <button class="guia-list__sort" type="button" (click)="ordenar('beneficiarioNome')">
+                Beneficiário
+                <span class="guia-list__sort-icon">{{ iconeOrdenacao('beneficiarioNome') }}</span>
+              </button>
+            </th>
             <th class="guia-list__th">Carteira</th>
-            <th class="guia-list__th">Guia</th>
-            <th class="guia-list__th">Situação</th>
+            <th class="guia-list__th guia-list__th--sortable">
+              <button class="guia-list__sort" type="button" (click)="ordenar('numeroGuia')">
+                Guia
+                <span class="guia-list__sort-icon">{{ iconeOrdenacao('numeroGuia') }}</span>
+              </button>
+            </th>
+            <th class="guia-list__th guia-list__th--sortable">
+              <button class="guia-list__sort" type="button" (click)="ordenar('situacao')">
+                Situação
+                <span class="guia-list__sort-icon">{{ iconeOrdenacao('situacao') }}</span>
+              </button>
+            </th>
             <th class="guia-list__th">Nº Itens</th>
             <th class="guia-list__th">Ações</th>
           </tr>
@@ -232,6 +262,8 @@ export class GuiaListComponent implements OnInit {
   readonly filtroBeneficiario = signal('');
   readonly filtroSemRecurso = signal(false);
   readonly filtroSomenteComGlosa = signal(false);
+  readonly ordenarPor = signal<GuiaOrdenacao>('dataAtendimento');
+  readonly descendente = signal(true);
   readonly erroExclusao = signal('');
   readonly mostrarImportarCsvModal = signal(false);
 
@@ -298,6 +330,8 @@ export class GuiaListComponent implements OnInit {
     this.filtroBeneficiario.set('');
     this.filtroSemRecurso.set(false);
     this.filtroSomenteComGlosa.set(false);
+    this.ordenarPor.set('dataAtendimento');
+    this.descendente.set(true);
     this.pagina.set(1);
     this._carregar();
   }
@@ -382,6 +416,25 @@ export class GuiaListComponent implements OnInit {
     this._carregar();
   }
 
+  ordenar(coluna: GuiaOrdenacao): void {
+    if (this.ordenarPor() === coluna) {
+      this.descendente.update((d) => !d);
+    } else {
+      this.ordenarPor.set(coluna);
+      // data começa decrescente (mais recentes primeiro); colunas de texto, crescente
+      this.descendente.set(coluna === 'dataAtendimento');
+    }
+    this.pagina.set(1);
+    this._carregar();
+  }
+
+  iconeOrdenacao(coluna: GuiaOrdenacao): string {
+    if (this.ordenarPor() !== coluna) {
+      return '';
+    }
+    return this.descendente() ? '↓' : '↑';
+  }
+
   paginaAnterior(): void {
     if (this.pagina() > 1) {
       this.pagina.update((p) => p - 1);
@@ -409,6 +462,8 @@ export class GuiaListComponent implements OnInit {
         beneficiario: this.filtroBeneficiario() || undefined,
         semRecurso: this.filtroSemRecurso() || undefined,
         somenteComGlosa: this.filtroSomenteComGlosa() || undefined,
+        ordenarPor: this.ordenarPor(),
+        descendente: this.descendente(),
         pagina: this.pagina(),
         itensPorPagina: this.itensPorPagina(),
       })
