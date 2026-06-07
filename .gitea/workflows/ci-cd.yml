@@ -25,7 +25,7 @@ on:
       - master
 
 env:
-  REGISTRY: gitea.m2sf.duckdns.org
+  REGISTRY: gitea.m2sf.com.br
   IMAGE_OWNER: miqueiasfilho
 
 jobs:
