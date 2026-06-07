@@ -21,7 +21,7 @@ services:
     container_name: gitea-runner
     restart: unless-stopped
     environment:
-      GITEA_INSTANCE_URL: https://gitea.m2sf.duckdns.org
+      GITEA_INSTANCE_URL: https://gitea.m2sf.com.br
       GITEA_RUNNER_REGISTRATION_TOKEN: ${RUNNER_TOKEN}
       GITEA_RUNNER_NAME: homelab-runner
       # Mapeia a label para a imagem catthehacker (tem docker CLI + git + node).
@@ -38,7 +38,7 @@ services:
     # Descomente se o hostname do Gitea NÃO resolver de dentro da LAN
     # (NAT hairpin ausente). Aponte para o IP LAN do Gitea:
     # extra_hosts:
-    #   - "gitea.m2sf.duckdns.org:192.168.x.y"
+    #   - "gitea.m2sf.com.br:192.168.0.250"
 
 volumes:
   gitea_runner_data:

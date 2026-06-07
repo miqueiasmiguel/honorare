@@ -20,17 +20,17 @@ services:
     ports: !override []
 
   backend:
-    image: gitea.m2sf.duckdns.org/miqueiasfilho/backend:latest
+    image: gitea.m2sf.com.br/miqueiasfilho/backend:latest
     ports: !override [] # nginx faz proxy para backend:8080 pela rede interna
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ConnectionStrings__Default: "Host=postgres;Port=5432;Database=honorare;Username=honorare;Password=${POSTGRES_PASSWORD}"
 
   admin-web:
-    image: gitea.m2sf.duckdns.org/miqueiasfilho/admin-web:latest
+    image: gitea.m2sf.com.br/miqueiasfilho/admin-web:latest
 
   medico-pwa:
-    image: gitea.m2sf.duckdns.org/miqueiasfilho/medico-pwa:latest
+    image: gitea.m2sf.com.br/miqueiasfilho/medico-pwa:latest
 
   nginx:
     # Único serviço exposto no host. Porta configurável (default 8080).
