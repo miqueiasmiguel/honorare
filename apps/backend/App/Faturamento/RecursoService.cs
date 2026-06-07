@@ -196,6 +196,7 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser)
             join b in _db.Beneficiarios on g.BeneficiarioId equals (Guid?)b.Id into bs
             from b in bs.DefaultIfEmpty()
             where g.RecursoId == id
+            orderby g.DataAtendimento
             select new
             {
                 g.Id,

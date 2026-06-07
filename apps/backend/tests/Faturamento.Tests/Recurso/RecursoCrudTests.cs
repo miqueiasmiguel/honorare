@@ -506,6 +506,35 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         Assert.True(result.IsSuccess);
         Assert.Equal("Guia glosada indevidamente", result.Value!.Guias[0].Observacao);
     }
+
+    [Fact]
+    public async Task ObterPorId_GuiasVinculadasOrdenadasPorDataAtendimentoAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (opId, prestId, procId) = await SeedCatalogAsync(ctx, tenantId);
+        var service = new RecursoService(ctx, user);
+        var pfx = tenantId.ToString("N")[..4];
+
+        var recursoId = (await service.CriarAsync(
+            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 7, 1), null))).Value!.Id;
+
+        // criadas fora de ordem cronológica
+        var g3 = await CriarGuiaAsync(ctx, user, prestId, opId, procId, $"OV-C-{pfx}", new DateOnly(2026, 7, 20));
+        var g1 = await CriarGuiaAsync(ctx, user, prestId, opId, procId, $"OV-A-{pfx}", new DateOnly(2026, 7, 5));
+        var g2 = await CriarGuiaAsync(ctx, user, prestId, opId, procId, $"OV-B-{pfx}", new DateOnly(2026, 7, 12));
+        await service.AdicionarGuiaAsync(recursoId, g3);
+        await service.AdicionarGuiaAsync(recursoId, g1);
+        await service.AdicionarGuiaAsync(recursoId, g2);
+
+        var result = await service.ObterPorIdAsync(recursoId);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(
+            [new DateOnly(2026, 7, 5), new DateOnly(2026, 7, 12), new DateOnly(2026, 7, 20)],
+            result.Value!.Guias.Select(g => g.DataAtendimento).ToArray());
+    }
 }
 
 file sealed class FakeRecursoTenantUser(Guid tenantId) : ICurrentUser

@@ -25,12 +25,23 @@ internal sealed record AtualizarObservacaoCommand(string Observacao);
 
 internal sealed record AtualizarValorApuradoItemCommand(decimal? ValorApurado);
 
+internal enum GuiaOrdenacao
+{
+    DataAtendimento,
+    NumeroGuia,
+    Prestador,
+    Operadora,
+    Beneficiario,
+    Situacao,
+}
+
 internal sealed record ListarGuiasQuery(
     Guid? PrestadorId, Guid? OperadoraId,
     DateOnly? DataInicio, DateOnly? DataFim,
     SituacaoGuia? Situacao, string? NumeroGuia, string? Beneficiario,
     bool? SemRecurso, bool? SomenteComGlosa,
-    int Pagina, int ItensPorPagina);
+    int Pagina, int ItensPorPagina,
+    GuiaOrdenacao OrdenarPor = GuiaOrdenacao.DataAtendimento, bool Descendente = true);
 
 internal sealed record GuiaDto(
     Guid Id, Guid PrestadorId, string PrestadorNome,
@@ -241,8 +252,31 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
         var itensPorPagina = Math.Min(query.ItensPorPagina, 100);
         var skip = (query.Pagina - 1) * itensPorPagina;
 
-        var pagina = await q
-            .OrderByDescending(x => x.DataAtendimento)
+        // Ordenação dinâmica. Desempate estável por CriadoEm desc em todos os casos —
+        // sem ele a paginação fica não-determinística quando a chave primária empata.
+        var ordenado = query.OrdenarPor switch
+        {
+            GuiaOrdenacao.NumeroGuia => query.Descendente
+                ? q.OrderByDescending(x => x.NumeroGuia)
+                : q.OrderBy(x => x.NumeroGuia),
+            GuiaOrdenacao.Prestador => query.Descendente
+                ? q.OrderByDescending(x => x.PrestadorNome)
+                : q.OrderBy(x => x.PrestadorNome),
+            GuiaOrdenacao.Operadora => query.Descendente
+                ? q.OrderByDescending(x => x.OperadoraNome)
+                : q.OrderBy(x => x.OperadoraNome),
+            GuiaOrdenacao.Beneficiario => query.Descendente
+                ? q.OrderByDescending(x => x.BeneficiarioNome)
+                : q.OrderBy(x => x.BeneficiarioNome),
+            GuiaOrdenacao.Situacao => query.Descendente
+                ? q.OrderByDescending(x => x.Situacao)
+                : q.OrderBy(x => x.Situacao),
+            _ => query.Descendente
+                ? q.OrderByDescending(x => x.DataAtendimento)
+                : q.OrderBy(x => x.DataAtendimento),
+        };
+
+        var pagina = await ordenado
             .ThenByDescending(x => x.CriadoEm)
             .Skip(skip)
             .Take(itensPorPagina)

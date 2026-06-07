@@ -31,7 +31,8 @@ internal static class GuiaEndpoints
             req.DataInicio, req.DataFim,
             req.Situacao, req.NumeroGuia, req.Beneficiario,
             req.SemRecurso, req.SomenteComGlosa,
-            req.Pagina, req.ItensPorPagina);
+            req.Pagina, req.ItensPorPagina,
+            req.OrdenarPor, req.Descendente);
         var result = await service.ListarAsync(query, ct);
         return Results.Ok(result);
     }
@@ -230,7 +231,8 @@ internal sealed record ListarGuiasRequest(
     DateOnly? DataInicio = null, DateOnly? DataFim = null,
     SituacaoGuia? Situacao = null, string? NumeroGuia = null, string? Beneficiario = null,
     bool? SemRecurso = null, bool? SomenteComGlosa = null,
-    int Pagina = 1, int ItensPorPagina = 20);
+    int Pagina = 1, int ItensPorPagina = 20,
+    GuiaOrdenacao OrdenarPor = GuiaOrdenacao.DataAtendimento, bool Descendente = true);
 
 internal sealed record CriarItemGuiaRequest(
     Guid ProcedimentoId,

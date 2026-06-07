@@ -175,6 +175,34 @@
   border-bottom: 1px solid var(--color-borda-media);
 }
 
+.guia-list__th--sortable {
+  padding: 0;
+}
+
+.guia-list__sort {
+  @include text-label;
+  @include transition(color);
+
+  display: inline-flex;
+  align-items: center;
+  gap: space(1);
+  width: 100%;
+  padding: space(2) space(3);
+  background: none;
+  border: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--color-terracota);
+  }
+}
+
+.guia-list__sort-icon {
+  color: var(--color-terracota);
+}
+
 .guia-list__row {
   border-bottom: 1px solid var(--color-borda-discreta);
 }

@@ -11,6 +11,14 @@ export type ViaAcesso =
   | 'NaoAplicavel';
 export type Acomodacao = 'Enfermaria' | 'Apartamento' | 'Ambulatorial';
 
+export type GuiaOrdenacao =
+  | 'dataAtendimento'
+  | 'numeroGuia'
+  | 'prestadorNome'
+  | 'operadoraNome'
+  | 'beneficiarioNome'
+  | 'situacao';
+
 export interface ItemGuiaItem {
   id: string;
   procedimentoId: string;
@@ -60,6 +68,8 @@ export interface ListarGuiasParams {
   beneficiario?: string;
   semRecurso?: boolean;
   somenteComGlosa?: boolean;
+  ordenarPor?: GuiaOrdenacao;
+  descendente?: boolean;
   pagina: number;
   itensPorPagina: number;
 }

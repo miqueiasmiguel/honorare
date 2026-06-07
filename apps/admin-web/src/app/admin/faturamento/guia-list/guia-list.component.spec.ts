@@ -304,6 +304,44 @@ describe('GuiaListComponent', () => {
     expect(component.filtroBeneficiario()).toBe('Carlos');
   });
 
+  it('ordenar por nova coluna define ordenarPor, reseta página e usa direção padrão asc', () => {
+    const { component, guiaService } = setup([makeGuia()], 50);
+    component.pagina.set(3);
+    guiaService.listar.mockClear();
+
+    component.ordenar('prestadorNome');
+
+    expect(component.ordenarPor()).toBe('prestadorNome');
+    expect(component.descendente()).toBe(false);
+    expect(component.pagina()).toBe(1);
+    expect(guiaService.listar).toHaveBeenCalledWith(
+      expect.objectContaining({ ordenarPor: 'prestadorNome', descendente: false, pagina: 1 }),
+    );
+  });
+
+  it('ordenar pela mesma coluna alterna a direção', () => {
+    const { component } = setup();
+    expect(component.ordenarPor()).toBe('dataAtendimento');
+    expect(component.descendente()).toBe(true);
+
+    component.ordenar('dataAtendimento');
+    expect(component.descendente()).toBe(false);
+
+    component.ordenar('dataAtendimento');
+    expect(component.descendente()).toBe(true);
+  });
+
+  it('iconeOrdenacao retorna seta apenas para a coluna ativa', () => {
+    const { component } = setup();
+    // padrão: dataAtendimento descendente
+    expect(component.iconeOrdenacao('dataAtendimento')).toBe('↓');
+    expect(component.iconeOrdenacao('numeroGuia')).toBe('');
+
+    component.ordenar('numeroGuia');
+    expect(component.iconeOrdenacao('numeroGuia')).toBe('↑');
+    expect(component.iconeOrdenacao('dataAtendimento')).toBe('');
+  });
+
   it('clicar Importar CSV abre o modal', () => {
     const { el, component } = setup();
 

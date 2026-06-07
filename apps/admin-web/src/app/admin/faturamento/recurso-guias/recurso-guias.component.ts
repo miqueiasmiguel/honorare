@@ -1,8 +1,8 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RecursoService } from '../recurso.service';
 import { GuiaService } from '../guia.service';
-import type { GuiaItem, SituacaoGuia } from '../guia.types';
+import type { GuiaItem, GuiaOrdenacao, SituacaoGuia } from '../guia.types';
 import type { GuiaNoRecursoDto, RecursoDto } from '../recurso.types';
 
 @Component({
@@ -38,7 +38,45 @@ import type { GuiaNoRecursoDto, RecursoDto } from '../recurso.types';
           </h3>
         </div>
         <div class="recurso-guias__secao-body">
-          @for (guia of guias(); track guia.id) {
+          @if (guias().length > 1) {
+            <div class="recurso-guias__ordenacao">
+              <label class="recurso-guias__ordenacao-label">
+                Ordenar por
+                <select
+                  class="recurso-guias__ordenacao-select"
+                  (change)="selecionarOrdenacaoVinculadas($any($event.target).value)"
+                >
+                  <option
+                    value="dataAtendimento"
+                    [selected]="vinculadasOrdenarPor() === 'dataAtendimento'"
+                  >
+                    Data
+                  </option>
+                  <option value="numeroGuia" [selected]="vinculadasOrdenarPor() === 'numeroGuia'">
+                    Guia
+                  </option>
+                  <option
+                    value="beneficiarioNome"
+                    [selected]="vinculadasOrdenarPor() === 'beneficiarioNome'"
+                  >
+                    Beneficiário
+                  </option>
+                  <option value="situacao" [selected]="vinculadasOrdenarPor() === 'situacao'">
+                    Situação
+                  </option>
+                </select>
+              </label>
+              <button
+                class="recurso-guias__ordenacao-dir"
+                type="button"
+                [attr.aria-label]="vinculadasDescendente() ? 'Decrescente' : 'Crescente'"
+                (click)="alternarDirecaoVinculadas()"
+              >
+                {{ vinculadasDescendente() ? '↓' : '↑' }}
+              </button>
+            </div>
+          }
+          @for (guia of guiasOrdenadas(); track guia.id) {
             <div class="guia-card">
               <div
                 class="guia-card__header"
@@ -234,10 +272,54 @@ import type { GuiaNoRecursoDto, RecursoDto } from '../recurso.types';
             <table class="recurso-guias__tabela-candidatas">
               <thead>
                 <tr>
-                  <th>Guia</th>
-                  <th>Data</th>
-                  <th>Beneficiário</th>
-                  <th>Situação</th>
+                  <th class="recurso-guias__th--sortable">
+                    <button
+                      class="recurso-guias__sort"
+                      type="button"
+                      (click)="ordenarCandidatas('numeroGuia')"
+                    >
+                      Guia
+                      <span class="recurso-guias__sort-icon">{{
+                        iconeCandidatas('numeroGuia')
+                      }}</span>
+                    </button>
+                  </th>
+                  <th class="recurso-guias__th--sortable">
+                    <button
+                      class="recurso-guias__sort"
+                      type="button"
+                      (click)="ordenarCandidatas('dataAtendimento')"
+                    >
+                      Data
+                      <span class="recurso-guias__sort-icon">{{
+                        iconeCandidatas('dataAtendimento')
+                      }}</span>
+                    </button>
+                  </th>
+                  <th class="recurso-guias__th--sortable">
+                    <button
+                      class="recurso-guias__sort"
+                      type="button"
+                      (click)="ordenarCandidatas('beneficiarioNome')"
+                    >
+                      Beneficiário
+                      <span class="recurso-guias__sort-icon">{{
+                        iconeCandidatas('beneficiarioNome')
+                      }}</span>
+                    </button>
+                  </th>
+                  <th class="recurso-guias__th--sortable">
+                    <button
+                      class="recurso-guias__sort"
+                      type="button"
+                      (click)="ordenarCandidatas('situacao')"
+                    >
+                      Situação
+                      <span class="recurso-guias__sort-icon">{{
+                        iconeCandidatas('situacao')
+                      }}</span>
+                    </button>
+                  </th>
                   <th>Itens</th>
                   <th></th>
                 </tr>
@@ -316,6 +398,25 @@ export class RecursoGuiasComponent implements OnInit {
   readonly carregandoCandidatas = signal(false);
   readonly filtroAplicado = signal(false);
   readonly erroValidacao = signal('');
+
+  // Ordenação das guias vinculadas (cards) — client-side, dados já carregados
+  readonly vinculadasOrdenarPor = signal<GuiaOrdenacao>('dataAtendimento');
+  readonly vinculadasDescendente = signal(false);
+  readonly guiasOrdenadas = computed(() => {
+    const campo = this.vinculadasOrdenarPor();
+    const fator = this.vinculadasDescendente() ? -1 : 1;
+    return [...this.guias()].sort(
+      (a, b) =>
+        fator *
+        this._valorVinculada(a, campo).localeCompare(this._valorVinculada(b, campo), 'pt-BR', {
+          numeric: true,
+        }),
+    );
+  });
+
+  // Ordenação das candidatas (tabela) — server-side via filtrar()
+  readonly candidatasOrdenarPor = signal<GuiaOrdenacao>('dataAtendimento');
+  readonly candidatasDescendente = signal(true);
 
   readonly guiaExpandida = signal<string | null>(null);
   readonly observacoesEmEdicao = signal<Record<string, string | undefined>>({});
@@ -412,6 +513,44 @@ export class RecursoGuiasComponent implements OnInit {
     }).format(value);
   }
 
+  private _valorVinculada(g: GuiaNoRecursoDto, campo: GuiaOrdenacao): string {
+    switch (campo) {
+      case 'numeroGuia':
+        return g.numeroGuia;
+      case 'beneficiarioNome':
+        return g.beneficiarioNome ?? '';
+      case 'situacao':
+        return g.situacao;
+      default:
+        return g.dataAtendimento;
+    }
+  }
+
+  selecionarOrdenacaoVinculadas(coluna: GuiaOrdenacao): void {
+    this.vinculadasOrdenarPor.set(coluna);
+  }
+
+  alternarDirecaoVinculadas(): void {
+    this.vinculadasDescendente.update((d) => !d);
+  }
+
+  ordenarCandidatas(coluna: GuiaOrdenacao): void {
+    if (this.candidatasOrdenarPor() === coluna) {
+      this.candidatasDescendente.update((d) => !d);
+    } else {
+      this.candidatasOrdenarPor.set(coluna);
+      this.candidatasDescendente.set(coluna === 'dataAtendimento');
+    }
+    this.filtrar();
+  }
+
+  iconeCandidatas(coluna: GuiaOrdenacao): string {
+    if (this.candidatasOrdenarPor() !== coluna) {
+      return '';
+    }
+    return this.candidatasDescendente() ? '↓' : '↑';
+  }
+
   filtrar(): void {
     const id = this.recursoId();
     if (!id) {
@@ -431,6 +570,8 @@ export class RecursoGuiasComponent implements OnInit {
         dataFim: this.filtroDataFim() || undefined,
         situacao: situacao !== '' ? situacao : undefined,
         somenteComGlosa: this.filtroSomenteGlosa() || undefined,
+        ordenarPor: this.candidatasOrdenarPor(),
+        descendente: this.candidatasDescendente(),
         pagina: 1,
         itensPorPagina: 50,
       })

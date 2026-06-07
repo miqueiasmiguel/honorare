@@ -141,6 +141,56 @@ describe('RecursoGuiasComponent', () => {
     expect(el.querySelectorAll('.guia-card')).toHaveLength(2);
   });
 
+  it('guiasOrdenadas ordena vinculadas por data ascendente por padrão', () => {
+    const guias = [
+      makeGuiaNoRecurso({ id: 'g-c', dataAtendimento: '2026-03-20' }),
+      makeGuiaNoRecurso({ id: 'g-a', dataAtendimento: '2026-03-05' }),
+      makeGuiaNoRecurso({ id: 'g-b', dataAtendimento: '2026-03-12' }),
+    ];
+    const { component } = setup({ guias });
+
+    expect(component.guiasOrdenadas().map((g) => g.id)).toEqual(['g-a', 'g-b', 'g-c']);
+  });
+
+  it('alternarDirecaoVinculadas inverte a ordem das vinculadas', () => {
+    const guias = [
+      makeGuiaNoRecurso({ id: 'g-c', dataAtendimento: '2026-03-20' }),
+      makeGuiaNoRecurso({ id: 'g-a', dataAtendimento: '2026-03-05' }),
+      makeGuiaNoRecurso({ id: 'g-b', dataAtendimento: '2026-03-12' }),
+    ];
+    const { component } = setup({ guias });
+
+    component.alternarDirecaoVinculadas();
+
+    expect(component.guiasOrdenadas().map((g) => g.id)).toEqual(['g-c', 'g-b', 'g-a']);
+  });
+
+  it('selecionarOrdenacaoVinculadas ordena por numeroGuia', () => {
+    const guias = [
+      makeGuiaNoRecurso({ id: 'g-3', numeroGuia: 'G03', dataAtendimento: '2026-03-01' }),
+      makeGuiaNoRecurso({ id: 'g-1', numeroGuia: 'G01', dataAtendimento: '2026-03-02' }),
+      makeGuiaNoRecurso({ id: 'g-2', numeroGuia: 'G02', dataAtendimento: '2026-03-03' }),
+    ];
+    const { component } = setup({ guias });
+
+    component.selecionarOrdenacaoVinculadas('numeroGuia');
+
+    expect(component.guiasOrdenadas().map((g) => g.numeroGuia)).toEqual(['G01', 'G02', 'G03']);
+  });
+
+  it('ordenarCandidatas alterna direção e refaz a busca com os params', () => {
+    const { component, guiaService } = setup();
+    guiaService.listar.mockClear();
+
+    component.ordenarCandidatas('numeroGuia');
+
+    expect(component.candidatasOrdenarPor()).toBe('numeroGuia');
+    expect(component.candidatasDescendente()).toBe(false);
+    expect(guiaService.listar).toHaveBeenCalledWith(
+      expect.objectContaining({ ordenarPor: 'numeroGuia', descendente: false }),
+    );
+  });
+
   it('botaoRemoverChamaServiceEAtualizaLista', () => {
     const { el, component, recursoService } = setup({
       guias: [makeGuiaNoRecurso({ id: 'guia-1' })],
