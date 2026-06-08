@@ -689,7 +689,7 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
             .Select(g => $"{g.Count()} item(ns) com situação '{g.Key}'")
             .ToList();
         return $"Não é possível criar a guia: {string.Join("; ", situacoes)}. " +
-               "Verifique deflators, tabelas de procedimento e portes anestésicos.";
+               "Verifique tabelas de procedimento e portes anestésicos.";
     }
 
     private async Task<Result<GuiaDetalheDto>> ObterDetalheDtoInternalAsync(

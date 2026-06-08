@@ -6,7 +6,6 @@ internal enum SituacaoApuracao
 {
     Calculado,
     SemTabela,
-    SemDeflator,
     Indeterminado,
 }
 

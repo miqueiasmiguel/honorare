@@ -4,16 +4,14 @@ internal static class AnestesiaCalculator
 {
     internal static (decimal valorFinal, IReadOnlyList<PassoApuracao> passos) Calcular(
         decimal valorReferencia,
-        decimal deflatorPercentual,
         decimal percentualOrdem,
         bool ehUrgencia,
         bool ehSadt)
     {
         var passos = new List<PassoApuracao>();
 
-        var fatorBase = deflatorPercentual / 100m;
-        var valorAtual = valorReferencia * fatorBase;
-        passos.Add(new PassoApuracao("ValorBase", fatorBase, valorAtual));
+        var valorAtual = valorReferencia;
+        passos.Add(new PassoApuracao("ValorBase", 1.0m, valorAtual));
 
         if (percentualOrdem != 1.0m)
         {

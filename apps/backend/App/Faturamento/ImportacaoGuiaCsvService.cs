@@ -87,31 +87,6 @@ internal sealed class ImportacaoGuiaCsvService(
                 [], []));
         }
 
-        if (operadora.TipoRuleSet != TipoRuleSet.Nulo)
-        {
-            var posicoesNecessarias = linhas
-                .Select(l => MapearFuncao(l.Funcao))
-                .Where(p => p.HasValue)
-                .Select(p => p!.Value)
-                .Distinct()
-                .ToList();
-
-            foreach (var posicao in posicoesNecessarias)
-            {
-                var temDeflator = await db.DeflatoresPrestador.AnyAsync(
-                    d => d.PrestadorId == prestadorId &&
-                         d.OperadoraId == operadoraId &&
-                         d.Posicao == posicao, ct);
-                if (!temDeflator)
-                {
-                    return Result<ImportacaoResultado>.Fail(
-                        new ValidationError(
-                            $"Deflator não cadastrado para a posição '{posicao}' do prestador nesta operadora. " +
-                            "Cadastre o deflator antes de importar o demonstrativo."));
-                }
-            }
-        }
-
         var erros = new List<ErroImportacao>();
         var alertas = new List<AlertaImportacao>();
         var funcoesIgnoradas = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
