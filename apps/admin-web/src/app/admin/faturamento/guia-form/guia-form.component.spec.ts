@@ -292,7 +292,7 @@ describe('GuiaFormComponent', () => {
     );
   });
 
-  it('criar_Erro400ComDeflator_ExibeMensagemDetalhe', () => {
+  it('criar_Erro400ComSemTabela_ExibeMensagemDetalhe', () => {
     const { component, fixture, el, guiaService } = setup();
 
     guiaService.criar.mockReturnValueOnce(
@@ -301,7 +301,7 @@ describe('GuiaFormComponent', () => {
           new HttpErrorResponse({
             error: {
               detail:
-                "Não é possível criar a guia: 1 item(ns) com situação 'SemDeflator'. Verifique deflators, tabelas de procedimento e portes anestésicos.",
+                "Não é possível criar a guia: 1 item(ns) com situação 'SemTabela'. Verifique tabelas de procedimento e portes anestésicos.",
             },
             status: 400,
           }),
@@ -328,7 +328,7 @@ describe('GuiaFormComponent', () => {
     fixture.detectChanges();
 
     const msgErro = el.querySelector('.guia-form__erro-validacao');
-    expect(msgErro?.textContent).toContain('SemDeflator');
+    expect(msgErro?.textContent).toContain('SemTabela');
   });
 
   it('salvarPagamentoItem chama atualizarPagamentoItem com valores corretos', () => {
@@ -387,7 +387,7 @@ describe('GuiaFormComponent', () => {
           new HttpErrorResponse({
             error: {
               detail:
-                "Não é possível criar a guia: 1 item(ns) com situação 'SemDeflator'. Verifique deflators, tabelas de procedimento e portes anestésicos.",
+                "Não é possível criar a guia: 1 item(ns) com situação 'SemTabela'. Verifique tabelas de procedimento e portes anestésicos.",
             },
             status: 400,
           }),
@@ -401,6 +401,6 @@ describe('GuiaFormComponent', () => {
     fixture.detectChanges();
 
     const msgErro = el.querySelector('.guia-form__erro-validacao');
-    expect(msgErro?.textContent).toContain('SemDeflator');
+    expect(msgErro?.textContent).toContain('SemTabela');
   });
 });

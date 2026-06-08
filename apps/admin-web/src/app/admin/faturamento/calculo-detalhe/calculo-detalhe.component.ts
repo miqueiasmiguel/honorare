@@ -62,7 +62,6 @@ export class CalculoDetalheComponent {
     const map: Record<ItemCalculoItem['situacao'], string> = {
       Calculado: 'badge--calculado',
       SemTabela: 'badge--sem-tabela',
-      SemDeflator: 'badge--sem-deflator',
       Indeterminado: 'badge--indeterminado',
       Pacote: 'badge--pacote',
     };

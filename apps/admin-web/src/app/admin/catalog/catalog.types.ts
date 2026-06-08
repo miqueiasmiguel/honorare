@@ -130,20 +130,6 @@ export interface DefinirEmailAcessoPayload {
   email: string;
 }
 
-export interface DeflatorItem {
-  id: string;
-  prestadorId: string;
-  operadoraId: string;
-  posicao: PosicaoExecutor;
-  percentual: number;
-}
-
-export interface SalvarDeflatorPayload {
-  operadoraId: string;
-  posicao: PosicaoExecutor;
-  percentual: number;
-}
-
 export interface TabelaItem {
   id: string;
   operadoraId: string;

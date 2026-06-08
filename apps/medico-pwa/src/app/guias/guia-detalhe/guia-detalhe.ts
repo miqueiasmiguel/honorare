@@ -514,7 +514,7 @@ export class GuiaDetalheComponent implements OnInit {
 
   badgeClassCalculo(situacao: SituacaoCalculo): string {
     if (situacao === 'Calculado') return 'badge badge--verde';
-    if (situacao === 'SemTabela' || situacao === 'SemDeflator' || situacao === 'Indeterminado') {
+    if (situacao === 'SemTabela' || situacao === 'Indeterminado') {
       return 'badge badge--ferrugem';
     }
     return 'badge badge--ambar';
@@ -524,7 +524,6 @@ export class GuiaDetalheComponent implements OnInit {
     const labels: Record<SituacaoCalculo, string> = {
       Calculado: 'Calculado',
       SemTabela: 'Sem Tabela',
-      SemDeflator: 'Sem Deflator',
       Indeterminado: 'Indeterminado',
       Pacote: 'Pacote',
       NaoCalculado: 'Não Calculado',

@@ -138,7 +138,7 @@ Casos cujo único propósito era provar rejeição por deflator ausente (em
 
 ---
 
-## Sessão 3 — Frontend: remover UI de deflator
+## Sessão 3 — Frontend: remover UI de deflator ✅ concluída
 
 **Requer Sessão 1** (contratos do backend já mudaram).
 

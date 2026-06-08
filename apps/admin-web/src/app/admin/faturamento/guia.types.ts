@@ -125,7 +125,7 @@ export interface ItemCalculoItem {
   itemGuiaId: string;
   codigoTuss: string;
   descricaoProcedimento: string;
-  situacao: 'Calculado' | 'SemTabela' | 'SemDeflator' | 'Indeterminado' | 'Pacote';
+  situacao: 'Calculado' | 'SemTabela' | 'Indeterminado' | 'Pacote';
   valorApurado: number | null;
   passos: PassoCalculoItem[];
 }
