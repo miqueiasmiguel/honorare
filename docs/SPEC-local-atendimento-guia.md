@@ -53,7 +53,7 @@ Base backend: `apps/backend/App/Faturamento` · Base front: `apps/admin-web/src/
 
 ---
 
-## LA-02 · Backend: importação CSV `LOCAL ATENDIMENTO`
+## LA-02 · Backend: importação CSV `LOCAL ATENDIMENTO` ✅ concluída
 
 Arquivo `ImportacaoGuiaCsvService.cs` — lê colunas por header via `Col(cols, idx, "NOME")` (case-insensitive, `""` se ausente → retrocompatível). Agrupa linhas por `(Guia, DataServico)`.
 
