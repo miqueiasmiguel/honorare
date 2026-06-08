@@ -270,18 +270,21 @@ Operadoras e procedimentos são dados de tenant, gerenciados pelo `TenantAdmin`.
 
 **Revisitar:** nunca — decisão de separação de responsabilidades clara.
 
-### D-038: Deflator é pré-requisito obrigatório para criação de guia
+### D-038: Apuração bem-sucedida é pré-requisito obrigatório para criação de guia
 
-Nenhuma guia pode ser criada ou atualizada a menos que **todos os itens sejam calculados com sucesso** pelo motor (`SituacaoApuracao.Calculado`). O motor executa em pré-voo com IDs temporários antes de qualquer persistência. Se qualquer item retornar `SemDeflator`, `SemTabela` ou `Indeterminado`, a operação é rejeitada com mensagem descritiva indicando quantos itens falharam e por qual motivo.
+> **Emenda (D-044, 2026-06-08):** a parte relativa a deflator foi revertida. `DeflatorPrestador` foi
+> removido por completo (sempre 100% na prática) e `SemDeflator` deixou de existir. O motivo de
+> rejeição `SemDeflator` e a pré-validação de deflator no import não se aplicam mais. O restante
+> desta decisão (rejeição por `SemTabela`/`Indeterminado`, pré-voo, exceções) permanece em vigor.
 
-A importação de guias via CSV (`ImportacaoGuiaCsvService`) faz uma verificação antecipada mais leve: valida que existe `DeflatorPrestador` para cada `PosicaoExecutor` distinta presente no arquivo antes de começar o loop de criação. Se algum deflator estiver faltando, o import inteiro é rejeitado com indicação da posição.
+Nenhuma guia pode ser criada ou atualizada a menos que **todos os itens sejam calculados com sucesso** pelo motor (`SituacaoApuracao.Calculado`). O motor executa em pré-voo com IDs temporários antes de qualquer persistência. Se qualquer item retornar `SemTabela` ou `Indeterminado`, a operação é rejeitada com mensagem descritiva indicando quantos itens falharam e por qual motivo.
 
 **Exceções intencionais:**
 
 - Guias **pacote** (`EhPacote = true`) têm `ValorApurado` preenchido manualmente — a apuração não é invocada.
 - Operadoras com `TipoRuleSet.Nulo` são isentas — não têm motor de cálculo.
 
-**Revisitar:** nunca — deflator negociado é dado primário sem o qual a apuração não pode ocorrer.
+**Revisitar:** ver D-044 para a remoção do deflator.
 
 ### D-039: `ACRESCIMO = 0,00%` no CSV UNIMED não é urgência
 
@@ -329,6 +332,16 @@ A `Guia` tem `LocalAtendimento string` (varchar 200, NOT NULL default `''`) — 
 **Recurso não tem campo próprio:** o `Recurso` não armazena local de atendimento; o detalhe e o PDF exibem o local **de cada guia** incluída. O segmento "Local" só aparece quando o valor não é vazio.
 
 **Revisitar:** se o local de atendimento passar a influenciar regra de cálculo (hoje é puramente informativo) ou se a UNIMED exigir local agregado por recurso.
+
+### D-044: `DeflatorPrestador` removido — `valor_base` é o valor de tabela cheio
+
+A entidade `DeflatorPrestador` (percentual negociado por prestador/operadora/posição, multiplicador sobre o valor de tabela) era **sempre 100%** na prática: todos os 10 cenários E2E ground-truth usavam `100m`, e os únicos valores ≠100 viviam em testes de matemática pura. Como `valor_base = TabelaProcedimento.Valor × 1.0 = TabelaProcedimento.Valor`, a entidade era puro atrito de cadastro sem efeito sobre os valores apurados. **Removida por completo** — entidade, tabela (`DropTable("DeflatoresPrestador")`), DTOs, endpoints CRUD, situação `SemDeflator` e UI associada.
+
+**Emenda a D-038:** o deflator deixa de ser pré-requisito de criação/importação de guia. `SemDeflator` deixa de existir; a pré-validação de deflator no `ImportacaoGuiaCsvService` foi removida. As rejeições por `SemTabela` e `Indeterminado` (e o pré-voo do motor) **permanecem** inalteradas.
+
+**Não confundir** com os descontos de posição de execução auxiliar (1º aux ×0.6 · 2º ×0.4 · 3º ×0.3): esses vivem em `PosicaoExecutorModifier` e **continuam** no motor, intocados.
+
+**Revisitar:** se a UNIMED passar a negociar deflatores por prestador ≠ 100% — reintroduzir como multiplicador sobre `valor_base`.
 
 ### D-023: CLAUDE.md em três níveis
 

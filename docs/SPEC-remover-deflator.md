@@ -176,7 +176,7 @@ guias/guia-detalhe/guia-detalhe.ts (l.517, l.527) → remover SemDeflator da con
 
 ---
 
-## Sessão 4 — Docs
+## Sessão 4 — Docs ✅ concluída
 
 ### 4.1 `docs/DECISOES.md`
 
