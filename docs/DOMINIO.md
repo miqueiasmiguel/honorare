@@ -4,7 +4,7 @@
 
 ### Conceitos centrais
 
-- **Guia:** documento de cobrança apresentado pelo prestador (médico/clínica) à operadora. Tipos principais: Consulta, SP/SADT (serviços profissionais e SADT), Internação, Honorários. Uma guia tem múltiplos itens. `NumeroGuia string?` armazena o número TISS da guia (preenchido na importação via CSV; opcional em guias criadas manualmente).
+- **Guia:** documento de cobrança apresentado pelo prestador (médico/clínica) à operadora. Tipos principais: Consulta, SP/SADT (serviços profissionais e SADT), Internação, Honorários. Uma guia tem múltiplos itens. `NumeroGuia string?` armazena o número TISS da guia (preenchido na importação via CSV; opcional em guias criadas manualmente). `LocalAtendimento string` (varchar 200, NOT NULL default `''`) é um campo de texto livre informativo — preenchido na importação CSV (coluna `LOCAL ATENDIMENTO`) ou editado no formulário; exibido na listagem, no detalhe da guia e por-guia no recurso/PDF. **Não é usado no cálculo** (o motor usa `Acomodacao`). Ver D-043.
 
 - **ItemGuia:** uma linha da guia. Representa **um procedimento executado por um profissional num papel**. Se o cirurgião teve 2 auxiliares e 1 anestesista, a mesma cirurgia gera 4 itens (cirurgião, 1º aux, 2º aux, anestesista).
 
@@ -49,7 +49,7 @@
 
 - **Acomodação:** tipo de internação contratada no plano do paciente. Valores: Enfermaria, Apartamento, Ambulatorial. **Plano contratado é o que importa** para cálculo, não onde o paciente está fisicamente (com exceções abaixo).
 
-- **Local de atendimento:** onde o procedimento aconteceu. Valores: Ambulatorial, Enfermaria, Apartamento, UTI, Day Clinic, PS/Consultório.
+- **Local de atendimento:** onde o procedimento aconteceu. Valores conceituais: Ambulatorial, Enfermaria, Apartamento, UTI, Day Clinic, PS/Consultório. **A chave de preço é `Acomodacao`** (Enfermaria/Apartamento/Ambulatorial), não este atributo. A captura informativa do local fica no campo de texto livre `Guia.LocalAtendimento` (armazena a string do CSV verbatim, sem restrição de enum) — ver glossário da Guia e D-043.
 
 - **Via de acesso:** Convencional, Videolaparoscopia, Endoscópica, Percutânea, Não Aplicável.
 
