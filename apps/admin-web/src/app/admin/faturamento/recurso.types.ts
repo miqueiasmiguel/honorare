@@ -42,6 +42,7 @@ export interface GuiaNoRecursoDto {
   beneficiarioCarteira: string | null;
   situacao: string;
   observacao: string | null;
+  localAtendimento: string;
   itens: ItemGuiaNoRecursoDto[];
 }
 

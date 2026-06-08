@@ -113,7 +113,7 @@ Não tocar `Recurso.cs`, `RecursoConfiguration.cs`, commands/endpoints do recurs
 
 ---
 
-## LA-05 · Frontend: local nas guias do recurso
+## LA-05 · Frontend: local nas guias do recurso ✅ concluída
 
 **`recurso.types.ts`:** add `localAtendimento: string` em `GuiaNoRecursoDto`.
 
