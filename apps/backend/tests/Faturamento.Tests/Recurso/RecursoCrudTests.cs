@@ -34,7 +34,6 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         await ctx.SaveChangesAsync();
 
         ctx.Add(TabelaProcedimento.Create(tenantId, operadora.Id, procedimento.Id, 200m));
-        ctx.Add(DeflatorPrestador.Create(tenantId, prestador.Id, operadora.Id, PosicaoExecutor.Cirurgiao, 100m));
         await ctx.SaveChangesAsync();
 
         return (operadora.Id, prestador.Id, procedimento.Id);
@@ -442,7 +441,6 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         await using var _ = ctx;
         var (opId, prestId, procId) = await SeedCatalogAsync(ctx, tenantId);
 
-        ctx.Add(DeflatorPrestador.Create(tenantId, prestId, opId, PosicaoExecutor.PrimeiroAuxiliar, 70m));
         await ctx.SaveChangesAsync();
 
         var service = new RecursoService(ctx, user);

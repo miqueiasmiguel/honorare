@@ -24,8 +24,7 @@ public sealed class UnimedAnestesiaPipelineTests(PostgresContainerFixture db)
     }
 
     private static async Task<(Guid prestadorId, Guid operadoraId, Guid procedimentoId)>
-        SeedCompletoAsync(AppDbContext ctx, Guid tenantId, decimal deflatorPercentual = 100m,
-            string? porteAnestesico = "J")
+        SeedCompletoAsync(AppDbContext ctx, Guid tenantId, string? porteAnestesico = "J")
     {
         var prestador = Prestador.Create(tenantId, "Dr. Anestesia", null);
         var operadora = Operadora.Create(tenantId, "UNIMED-AN" + tenantId.ToString("N")[..6], null, null, TipoRuleSet.Unimed);
@@ -36,7 +35,6 @@ public sealed class UnimedAnestesiaPipelineTests(PostgresContainerFixture db)
         await ctx.SaveChangesAsync();
 
         ctx.Add(TabelaPorteAnestesico.Create(tenantId, operadora.Id, "J", 526.50m, 842.40m, null));
-        ctx.Add(DeflatorPrestador.Create(tenantId, prestador.Id, operadora.Id, PosicaoExecutor.Anestesista, deflatorPercentual));
         await ctx.SaveChangesAsync();
 
         return (prestador.Id, operadora.Id, proc.Id);
@@ -51,26 +49,6 @@ public sealed class UnimedAnestesiaPipelineTests(PostgresContainerFixture db)
         ctx.Add(prestador);
         ctx.Add(operadora);
         ctx.Add(proc);
-        await ctx.SaveChangesAsync();
-
-        ctx.Add(DeflatorPrestador.Create(tenantId, prestador.Id, operadora.Id, PosicaoExecutor.Anestesista, 100m));
-        await ctx.SaveChangesAsync();
-
-        return (prestador.Id, operadora.Id, proc.Id);
-    }
-
-    private static async Task<(Guid prestadorId, Guid operadoraId, Guid procedimentoId)>
-        SeedSemDeflatorAsync(AppDbContext ctx, Guid tenantId)
-    {
-        var prestador = Prestador.Create(tenantId, "Dr. SemDeflator", null);
-        var operadora = Operadora.Create(tenantId, "UNIMED-SD" + tenantId.ToString("N")[..6], null, null, TipoRuleSet.Unimed);
-        var proc = Procedimento.Create(tenantId, tenantId.ToString("N")[..8], "Proc SemDeflator", "1", "J", false, false);
-        ctx.Add(prestador);
-        ctx.Add(operadora);
-        ctx.Add(proc);
-        await ctx.SaveChangesAsync();
-
-        ctx.Add(TabelaPorteAnestesico.Create(tenantId, operadora.Id, "J", 526.50m, 842.40m, null));
         await ctx.SaveChangesAsync();
 
         return (prestador.Id, operadora.Id, proc.Id);
@@ -159,36 +137,6 @@ public sealed class UnimedAnestesiaPipelineTests(PostgresContainerFixture db)
 
         Assert.False(result.IsSuccess);
         Assert.IsType<ValidationError>(result.Error);
-    }
-
-    [Fact]
-    public async Task Anestesista_SemDeflator_CriacaoRejeitadaAsync()
-    {
-        var tenantId = Guid.NewGuid();
-        var (ctx, service) = Build(tenantId);
-        await using var _ = ctx;
-        var (pId, oId, procId) = await SeedSemDeflatorAsync(ctx, tenantId);
-
-        var result = await service.CriarAsync(
-            Cmd(pId, oId, procId, "SEN-AN06", Acomodacao.Enfermaria, false));
-
-        Assert.False(result.IsSuccess);
-        Assert.IsType<ValidationError>(result.Error);
-    }
-
-    [Fact]
-    public async Task Anestesista_Deflator80_Enfermaria_CalculadoAsync()
-    {
-        var tenantId = Guid.NewGuid();
-        var (ctx, service) = Build(tenantId);
-        await using var _ = ctx;
-        var (pId, oId, procId) = await SeedCompletoAsync(ctx, tenantId, deflatorPercentual: 80m);
-
-        var result = await service.CriarAsync(
-            Cmd(pId, oId, procId, "SEN-AN07", Acomodacao.Enfermaria, false));
-
-        Assert.True(result.IsSuccess);
-        Assert.Equal(421.20m, result.Value!.Itens[0].ValorApurado);
     }
 
     [Fact]

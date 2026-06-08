@@ -97,7 +97,7 @@ falhar — Sessão 2.)
 
 ---
 
-## Sessão 2 — Backend TDD: ajustar/remover testes
+## Sessão 2 — Backend TDD: ajustar/remover testes ✅ concluída
 
 **Requer Sessão 1.** Rodar `dotnet test apps/backend/Honorare.slnx`, corrigir até verde + cobertura.
 
