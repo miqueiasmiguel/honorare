@@ -92,7 +92,7 @@ Não tocar `Recurso.cs`, `RecursoConfiguration.cs`, commands/endpoints do recurs
 
 ---
 
-## LA-04 · Frontend: guia (tipos + form + listagem)
+## LA-04 · Frontend: guia (tipos + form + listagem) ✅ concluída
 
 **`guia.types.ts`:** add `localAtendimento: string` em `GuiaItem`, `CriarGuiaPayload`, `AtualizarGuiaPayload` (`GuiaDetalheItem` herda).
 

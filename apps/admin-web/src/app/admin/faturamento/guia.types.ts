@@ -49,6 +49,7 @@ export interface GuiaItem {
   situacao: SituacaoGuia;
   ehPacote: boolean;
   observacao: string;
+  localAtendimento: string;
   totalItens: number;
   criadoEm: string;
   atualizadoEm: string;
@@ -108,6 +109,7 @@ export interface CriarGuiaPayload {
   dataAtendimento: string;
   ehPacote: boolean;
   observacao: string;
+  localAtendimento: string;
   itens: CriarItemGuiaPayload[];
 }
 

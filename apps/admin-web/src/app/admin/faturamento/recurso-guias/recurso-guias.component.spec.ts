@@ -73,6 +73,7 @@ function makeGuiaItem(overrides: Partial<GuiaItem> = {}): GuiaItem {
     situacao: 'Apresentada',
     ehPacote: false,
     observacao: '',
+    localAtendimento: '',
     totalItens: 1,
     criadoEm: '2026-01-11T00:00:00Z',
     atualizadoEm: '2026-01-11T00:00:00Z',

@@ -21,6 +21,7 @@ const mockGuia: GuiaDetalheItem = {
   situacao: 'Apresentada',
   ehPacote: false,
   observacao: '',
+  localAtendimento: 'Hospital Central',
   totalItens: 1,
   criadoEm: '2024-03-15T10:00:00Z',
   atualizadoEm: '2024-03-15T10:00:00Z',
@@ -167,6 +168,7 @@ describe('GuiaFormComponent', () => {
     expect(component.operadoraId()).toBe('op-1');
     expect(component.numeroGuia()).toBe('GUIA01');
     expect(component.dataAtendimento()).toBe('2024-03-15');
+    expect(component.localAtendimento()).toBe('Hospital Central');
     expect(component.itens()).toHaveLength(1);
   });
 
@@ -236,6 +238,58 @@ describe('GuiaFormComponent', () => {
 
     expect(guiaService.criar).toHaveBeenCalled();
     expect(router.navigate).toHaveBeenCalledWith(['/admin/guias']);
+  });
+
+  it('submit criar inclui localAtendimento no payload', () => {
+    const { component, fixture, el, guiaService } = setup();
+
+    component.prestadorId.set('p1');
+    component.operadoraId.set('o1');
+    component.dataAtendimento.set('2024-01-01');
+    component.localAtendimento.set('Clínica Norte');
+    component.itens.set([
+      {
+        procedimentoId: 'proc-1',
+        posicaoExecutor: 'Cirurgiao',
+        percentualOrdem: 1.0,
+        viaAcesso: 'Convencional',
+        acomodacao: 'Enfermaria',
+        ehUrgencia: false,
+        valorApurado: null,
+      },
+    ]);
+    fixture.detectChanges();
+
+    el.querySelector<HTMLButtonElement>('.guia-form__btn-salvar')?.click();
+
+    expect(guiaService.criar).toHaveBeenCalledWith(
+      expect.objectContaining({ localAtendimento: 'Clínica Norte' }),
+    );
+  });
+
+  it('submit editar inclui localAtendimento no payload', () => {
+    const { component, fixture, el, guiaService } = setup({ id: 'guia-1', guia: mockGuia });
+
+    component.localAtendimento.set('Hospital Sul');
+    component.itens.set([
+      {
+        procedimentoId: 'proc-1',
+        posicaoExecutor: 'Cirurgiao',
+        percentualOrdem: 1.0,
+        viaAcesso: 'Convencional',
+        acomodacao: 'Enfermaria',
+        ehUrgencia: false,
+        valorApurado: null,
+      },
+    ]);
+    fixture.detectChanges();
+
+    el.querySelector<HTMLButtonElement>('.guia-form__btn-salvar')?.click();
+
+    expect(guiaService.atualizar).toHaveBeenCalledWith(
+      'guia-1',
+      expect.objectContaining({ localAtendimento: 'Hospital Sul' }),
+    );
   });
 
   it('criar_Erro400ComDeflator_ExibeMensagemDetalhe', () => {

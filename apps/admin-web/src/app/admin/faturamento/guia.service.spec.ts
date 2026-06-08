@@ -27,6 +27,7 @@ const GUIA_DETALHE: GuiaDetalheItem = {
   situacao: 'Apresentada',
   ehPacote: false,
   observacao: '',
+  localAtendimento: '',
   totalItens: 1,
   criadoEm: '2026-05-01T00:00:00Z',
   atualizadoEm: '2026-05-01T00:00:00Z',
@@ -56,6 +57,7 @@ const CRIAR_PAYLOAD: CriarGuiaPayload = {
   dataAtendimento: '2026-05-01',
   ehPacote: false,
   observacao: '',
+  localAtendimento: '',
   itens: [
     {
       procedimentoId: 'proc-1',

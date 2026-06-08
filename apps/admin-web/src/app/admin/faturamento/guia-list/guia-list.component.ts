@@ -157,6 +157,7 @@ import { ImportarCsvModalComponent } from '../guias/importar-csv-modal/importar-
               </button>
             </th>
             <th class="guia-list__th">Carteira</th>
+            <th class="guia-list__th">Local</th>
             <th class="guia-list__th guia-list__th--sortable">
               <button class="guia-list__sort" type="button" (click)="ordenar('numeroGuia')">
                 Guia
@@ -176,7 +177,7 @@ import { ImportarCsvModalComponent } from '../guias/importar-csv-modal/importar-
         <tbody>
           @if (loading()) {
             <tr>
-              <td class="guia-list__empty" colspan="9">Carregando...</td>
+              <td class="guia-list__empty" colspan="10">Carregando...</td>
             </tr>
           } @else {
             @for (g of guias(); track g.id) {
@@ -186,6 +187,7 @@ import { ImportarCsvModalComponent } from '../guias/importar-csv-modal/importar-
                 <td class="guia-list__cell">{{ g.operadoraNome }}</td>
                 <td class="guia-list__cell">{{ g.beneficiarioNome }}</td>
                 <td class="guia-list__cell">{{ g.beneficiarioCarteira }}</td>
+                <td class="guia-list__cell">{{ g.localAtendimento }}</td>
                 <td class="guia-list__cell">{{ g.numeroGuia }}</td>
                 <td class="guia-list__cell">{{ g.situacao }}</td>
                 <td class="guia-list__cell guia-list__cell--mono">{{ g.totalItens }}</td>
@@ -200,7 +202,7 @@ import { ImportarCsvModalComponent } from '../guias/importar-csv-modal/importar-
               </tr>
             } @empty {
               <tr>
-                <td class="guia-list__empty" colspan="9">Nenhuma guia encontrada.</td>
+                <td class="guia-list__empty" colspan="10">Nenhuma guia encontrada.</td>
               </tr>
             }
           }
