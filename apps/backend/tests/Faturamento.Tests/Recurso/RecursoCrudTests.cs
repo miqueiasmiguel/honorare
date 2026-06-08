@@ -508,6 +508,33 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
     }
 
     [Fact]
+    public async Task ObterPorId_RetornaGuiasComLocalAtendimentoAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (opId, prestId, procId) = await SeedCatalogAsync(ctx, tenantId);
+        var service = new RecursoService(ctx, user);
+        var pfx = tenantId.ToString("N")[..4];
+
+        var recursoId = (await service.CriarAsync(
+            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 5, 1), null))).Value!.Id;
+
+        var factory = new PricingRuleSetFactory(ctx);
+        var guiaSvc = new GuiaService(ctx, user, factory);
+        var guiaResult = await guiaSvc.CriarAsync(new CriarGuiaCommand(
+            prestId, opId, null, $"RC-LA-{pfx}", new DateOnly(2026, 5, 5), false, string.Empty,
+            [new CriarItemGuiaCommand(procId, PosicaoExecutor.Cirurgiao, 1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null)],
+            "Hospital Santa Casa"));
+        await service.AdicionarGuiaAsync(recursoId, guiaResult.Value!.Id);
+
+        var result = await service.ObterPorIdAsync(recursoId);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("Hospital Santa Casa", result.Value!.Guias[0].LocalAtendimento);
+    }
+
+    [Fact]
     public async Task ObterPorId_GuiasVinculadasOrdenadasPorDataAtendimentoAsync()
     {
         var tenantId = Guid.NewGuid();
