@@ -14,7 +14,7 @@ public sealed class ImportacaoGuiaCsvTests(PostgresContainerFixture db)
 {
     private const string CsvHeader =
         "GUIA;CODIGO;BENEFICIARIO;DATA SERVICO;CODIGO PROCEDIMENTO;NOME PROCEDIMENTO;" +
-        "FUNCAO;EXECUTANTE DO SERVICO;% VIA;ACOMODACAO;ACRESCIMO;QTDE PAGA;HONORARIO;GLOSA;COD_GLOSA;TOTAL";
+        "FUNCAO;EXECUTANTE DO SERVICO;% VIA;ACOMODACAO;ACRESCIMO;QTDE PAGA;HONORARIO;GLOSA;COD_GLOSA;TOTAL;LOCAL ATENDIMENTO";
 
     private static MemoryStream ToCsvStream(string csv) =>
         new(Encoding.UTF8.GetBytes(csv));
@@ -24,9 +24,10 @@ public sealed class ImportacaoGuiaCsvTests(PostgresContainerFixture db)
         string codigoProcedimento, string nomeProcedimento,
         string funcao, string executante,
         string percentVia, string acomodacao, string acrescimo,
-        string qtdePaga, string honorario, string glosa, string codGlosa, string total) =>
+        string qtdePaga, string honorario, string glosa, string codGlosa, string total,
+        string localAtendimento = "") =>
         $"{guia};{codigo};{beneficiario};{dataServico};{codigoProcedimento};{nomeProcedimento};" +
-        $"{funcao};{executante};{percentVia};{acomodacao};{acrescimo};{qtdePaga};{honorario};{glosa};{codGlosa};{total}";
+        $"{funcao};{executante};{percentVia};{acomodacao};{acrescimo};{qtdePaga};{honorario};{glosa};{codGlosa};{total};{localAtendimento}";
 
     private (AppDbContext ctx, ImportacaoGuiaCsvService service) BuildService(Guid tenantId)
     {
@@ -674,6 +675,113 @@ public sealed class ImportacaoGuiaCsvTests(PostgresContainerFixture db)
         var itemGuia = await check.ItensGuia.FirstOrDefaultAsync(i => i.GuiaId == guia.Id);
         Assert.NotNull(itemGuia);
         Assert.Equal("CB", itemGuia.MotivoGlosa);
+    }
+
+    [Fact]
+    public async Task ImportarCsv_ComLocalAtendimento_PreencheNaGuiaAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        await using var ctx = db.CreateTenantContext(tenantId);
+        var (prestadorId, operadoraId) = await SeedBaseAsync(ctx, tenantId);
+
+        var proc = Procedimento.Create(tenantId, "31010001", "PROC LOCAL", "1", null, false, false);
+        ctx.Add(proc);
+        await ctx.SaveChangesAsync();
+
+        ctx.Add(TabelaProcedimento.Create(tenantId, operadoraId, proc.Id, 200m));
+        ctx.Add(DeflatorPrestador.Create(tenantId, prestadorId, operadoraId, PosicaoExecutor.Cirurgiao, 100m));
+        await ctx.SaveChangesAsync();
+
+        var csv = string.Join("\n",
+            "LA02_001",
+            CsvHeader,
+            CsvRow("44550011", "0000000000001001", "PACIENTE LOCAL", "01/01/2025",
+                "31010001", "PROC LOCAL", "CIRURGIAO", "DR IO04",
+                "100", "ENFERMARIA", "", "1", "200,00", "0,00", "", "200,00",
+                "HOSPITAL SAO LUCAS"));
+
+        var (svcCtx, service) = BuildService(tenantId);
+        await using var _ = svcCtx;
+        var resultado = await service.ImportarAsync(ToCsvStream(csv), prestadorId, operadoraId, false, CancellationToken.None);
+
+        Assert.True(resultado.IsSuccess);
+
+        await using var check = db.CreateTenantContext(tenantId);
+        var guia = await check.Guias.FirstOrDefaultAsync(g => g.NumeroGuia == "44550011" && g.PrestadorId == prestadorId);
+        Assert.NotNull(guia);
+        Assert.Equal("HOSPITAL SAO LUCAS", guia.LocalAtendimento);
+    }
+
+    [Fact]
+    public async Task ImportarCsv_GuiaExistenteSemLocal_BackfillAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        await using var ctx = db.CreateTenantContext(tenantId);
+        var (prestadorId, operadoraId) = await SeedBaseAsync(ctx, tenantId);
+
+        var proc = Procedimento.Create(tenantId, "31010002", "PROC BACKFILL", "1", null, false, false);
+        ctx.Add(proc);
+        ctx.Add(TabelaProcedimento.Create(tenantId, operadoraId, proc.Id, 200m));
+        ctx.Add(DeflatorPrestador.Create(tenantId, prestadorId, operadoraId, PosicaoExecutor.Cirurgiao, 100m));
+        var guiaExistente = Guia.Create(tenantId, prestadorId, operadoraId, null,
+            "44550022", new DateOnly(2025, 1, 1), false, string.Empty);
+        ctx.Add(guiaExistente);
+        await ctx.SaveChangesAsync();
+
+        var csv = string.Join("\n",
+            "LA02_002",
+            CsvHeader,
+            CsvRow("44550022", "0000000000001002", "PACIENTE BACK", "01/01/2025",
+                "31010002", "PROC BACKFILL", "CIRURGIAO", "DR IO04",
+                "100", "ENFERMARIA", "", "1", "200,00", "0,00", "", "200,00",
+                "CLINICA NOVA"));
+
+        var (svcCtx, service) = BuildService(tenantId);
+        await using var _ = svcCtx;
+        var resultado = await service.ImportarAsync(ToCsvStream(csv), prestadorId, operadoraId, false, CancellationToken.None);
+
+        Assert.True(resultado.IsSuccess);
+
+        await using var check = db.CreateTenantContext(tenantId);
+        var guia = await check.Guias.FirstOrDefaultAsync(g => g.NumeroGuia == "44550022" && g.PrestadorId == prestadorId);
+        Assert.NotNull(guia);
+        Assert.Equal("CLINICA NOVA", guia.LocalAtendimento);
+    }
+
+    [Fact]
+    public async Task ImportarCsv_GuiaExistenteComLocal_NaoSobrescreveAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        await using var ctx = db.CreateTenantContext(tenantId);
+        var (prestadorId, operadoraId) = await SeedBaseAsync(ctx, tenantId);
+
+        var proc = Procedimento.Create(tenantId, "31010003", "PROC NOSOBRE", "1", null, false, false);
+        ctx.Add(proc);
+        ctx.Add(TabelaProcedimento.Create(tenantId, operadoraId, proc.Id, 200m));
+        ctx.Add(DeflatorPrestador.Create(tenantId, prestadorId, operadoraId, PosicaoExecutor.Cirurgiao, 100m));
+        var guiaExistente = Guia.Create(tenantId, prestadorId, operadoraId, null,
+            "44550033", new DateOnly(2025, 1, 1), false, string.Empty, "LOCAL ORIGINAL");
+        ctx.Add(guiaExistente);
+        await ctx.SaveChangesAsync();
+
+        var csv = string.Join("\n",
+            "LA02_003",
+            CsvHeader,
+            CsvRow("44550033", "0000000000001003", "PACIENTE NOSOBRE", "01/01/2025",
+                "31010003", "PROC NOSOBRE", "CIRURGIAO", "DR IO04",
+                "100", "ENFERMARIA", "", "1", "200,00", "0,00", "", "200,00",
+                "LOCAL NOVO CSV"));
+
+        var (svcCtx, service) = BuildService(tenantId);
+        await using var _ = svcCtx;
+        var resultado = await service.ImportarAsync(ToCsvStream(csv), prestadorId, operadoraId, false, CancellationToken.None);
+
+        Assert.True(resultado.IsSuccess);
+
+        await using var check = db.CreateTenantContext(tenantId);
+        var guia = await check.Guias.FirstOrDefaultAsync(g => g.NumeroGuia == "44550033" && g.PrestadorId == prestadorId);
+        Assert.NotNull(guia);
+        Assert.Equal("LOCAL ORIGINAL", guia.LocalAtendimento);
     }
 }
 

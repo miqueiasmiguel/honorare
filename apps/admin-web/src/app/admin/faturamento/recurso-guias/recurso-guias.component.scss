@@ -410,7 +410,7 @@
 
   &__header {
     display: grid;
-    grid-template-columns: 120px 100px 1fr 80px auto auto 28px;
+    grid-template-columns: 120px 100px 1fr auto 80px auto auto 28px;
     gap: space(3);
     align-items: center;
     padding: space(3) space(4);
@@ -442,6 +442,15 @@
     @include text-body;
 
     color: var(--color-tinta);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &__local {
+    @include text-label;
+
+    color: var(--color-tinta-secundaria);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

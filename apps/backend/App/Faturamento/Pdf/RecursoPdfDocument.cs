@@ -79,7 +79,8 @@ internal sealed class RecursoPdfDocument(RecursoPdfData data) : IDocument
             col.Item().Background("#EEEEEE").Padding(3)
                 .Text($"{guia.DataAtendimento:dd/MM/yyyy}  |  Guia: {guia.NumeroGuia}" +
                     (guia.BeneficiarioNome is not null ? $"  |  {guia.BeneficiarioNome}" : string.Empty) +
-                    $"  |  {guia.PosicaoExecutorLabel}");
+                    $"  |  {guia.PosicaoExecutorLabel}" +
+                    (!string.IsNullOrEmpty(guia.LocalAtendimento) ? $"  |  {guia.LocalAtendimento}" : string.Empty));
 
             if (!string.IsNullOrEmpty(guia.Observacao))
             {

@@ -126,6 +126,17 @@ import { ItemGuiaFormComponent } from './item-guia-form/item-guia-form.component
             />
           </div>
 
+          <div class="guia-form__campo guia-form__campo--full">
+            <label class="guia-form__label" for="local-atendimento">Local de Atendimento</label>
+            <input
+              type="text"
+              id="local-atendimento"
+              class="guia-form__input--local-atendimento"
+              [value]="localAtendimento()"
+              (input)="localAtendimento.set($any($event.target).value)"
+            />
+          </div>
+
           <div class="guia-form__campo guia-form__campo--full guia-form__campo--checkbox">
             <input
               type="checkbox"
@@ -319,6 +330,7 @@ export class GuiaFormComponent implements OnInit {
   readonly beneficiarioId = signal('');
   readonly numeroGuia = signal('');
   readonly dataAtendimento = signal('');
+  readonly localAtendimento = signal('');
   readonly ehPacote = signal(false);
   readonly observacao = signal('');
 
@@ -371,6 +383,7 @@ export class GuiaFormComponent implements OnInit {
           );
           this.numeroGuia.set(guia.numeroGuia);
           this.dataAtendimento.set(guia.dataAtendimento);
+          this.localAtendimento.set(guia.localAtendimento);
           this.ehPacote.set(guia.ehPacote);
           this.observacao.set(guia.observacao);
           this.situacao.set(guia.situacao);
@@ -548,6 +561,7 @@ export class GuiaFormComponent implements OnInit {
           dataAtendimento: this.dataAtendimento(),
           ehPacote: this.ehPacote(),
           observacao: this.observacao(),
+          localAtendimento: this.localAtendimento(),
           itens,
         })
         .subscribe({
@@ -571,6 +585,7 @@ export class GuiaFormComponent implements OnInit {
           dataAtendimento: this.dataAtendimento(),
           ehPacote: this.ehPacote(),
           observacao: this.observacao(),
+          localAtendimento: this.localAtendimento(),
           itens,
         })
         .subscribe({

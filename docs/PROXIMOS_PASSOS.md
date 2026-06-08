@@ -187,6 +187,14 @@ O coração do MVP.
 
 **Spec:** `docs/SPEC-REFACTOR-PROCEDIMENTOS.md`
 
+### LA — Local de atendimento na guia ✅
+
+**Entregues (LA-01 a LA-05):** `Guia.LocalAtendimento string` (varchar 200, NOT NULL default `''`, guardado com `.Trim()`) com migration `AddLocalAtendimentoGuia`; commands/DTOs/endpoints de guia e projeções `ListarAsync`/`ObterDetalheDtoInternalAsync` propagam o campo; `Guia.AtualizarLocalAtendimento`. Importação CSV (`ImportacaoGuiaCsvService`) lê a coluna `LOCAL ATENDIMENTO` e faz backfill **sem sobrescrever** guia já preenchida. Recurso: `GuiaNoRecursoDto` e `GuiaPdfData` expõem `LocalAtendimento` (`ObterPorIdAsync`/`ObterDadosPdfAsync`); `RecursoPdfDocument.ComposeGuia` acrescenta o segmento "Local" por-guia apenas quando não vazio (Recurso não tem campo próprio). Frontend admin-web: campo no `guia-form`, coluna "Local" no `guia-list`, exibição por-guia no `recurso-guias`; tipos locais atualizados e cliente regenerado.
+
+**Decisão registrada:** D-043 (`DECISOES.md`).
+
+**Spec:** `docs/SPEC-local-atendimento-guia.md`
+
 ## Fase 4 — Visualização (2-3 semanas)
 
 ### F4.1 ✅ — Portal do médico (PWA)

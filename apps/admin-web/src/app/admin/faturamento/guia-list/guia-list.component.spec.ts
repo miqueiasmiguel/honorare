@@ -21,6 +21,7 @@ function makeGuia(overrides: Partial<GuiaItem> = {}): GuiaItem {
     situacao: 'Apresentada',
     ehPacote: false,
     observacao: '',
+    localAtendimento: 'Hospital Central',
     totalItens: 1,
     criadoEm: '2024-03-15T10:00:00Z',
     atualizadoEm: '2024-03-15T10:00:00Z',
@@ -76,6 +77,12 @@ describe('GuiaListComponent', () => {
     const { el } = setup(guias);
     const rows = el.querySelectorAll('.guia-list__row');
     expect(rows).toHaveLength(2);
+  });
+
+  it('renderiza coluna Local com o valor da guia', () => {
+    const { el } = setup([makeGuia({ localAtendimento: 'Clínica Oeste' })]);
+    const row = el.querySelector('.guia-list__row');
+    expect(row?.textContent).toContain('Clínica Oeste');
   });
 
   it('linha Apresentada tem classe CSS correta', () => {

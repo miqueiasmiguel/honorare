@@ -34,6 +34,7 @@ internal sealed record GuiaNoRecursoDto(
     string? BeneficiarioNome, string? BeneficiarioCarteira,
     SituacaoGuia Situacao,
     string? Observacao,
+    string LocalAtendimento,
     IReadOnlyList<ItemGuiaNoRecursoDto> Itens);
 
 internal sealed record RecursoDetalheDto(RecursoDto Header, IReadOnlyList<GuiaNoRecursoDto> Guias);
@@ -62,6 +63,7 @@ internal sealed record GuiaPdfData(
     string? BeneficiarioCarteira,
     string PosicaoExecutorLabel,
     string? Observacao,
+    string LocalAtendimento,
     IReadOnlyList<ItemPdfData> Itens);
 
 internal sealed record ItemPdfData(
@@ -204,6 +206,7 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser)
                 g.DataAtendimento,
                 g.Situacao,
                 g.Observacao,
+                g.LocalAtendimento,
                 BeneficiarioNome = (string?)b.Nome,
                 BeneficiarioCarteira = (string?)b.Carteira,
             }).ToListAsync(ct);
@@ -246,7 +249,7 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser)
         var guiaDtos = guiasRaw.Select(g => new GuiaNoRecursoDto(
             g.Id, g.NumeroGuia, g.DataAtendimento,
             g.BeneficiarioNome, g.BeneficiarioCarteira,
-            g.Situacao, g.Observacao,
+            g.Situacao, g.Observacao, g.LocalAtendimento,
             itensPorGuia.GetValueOrDefault(g.Id, []))).ToList();
 
         return Result<RecursoDetalheDto>.Ok(new RecursoDetalheDto(headerDto, guiaDtos));
@@ -423,6 +426,7 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser)
                 g.NumeroGuia,
                 g.DataAtendimento,
                 g.Observacao,
+                g.LocalAtendimento,
                 BeneficiarioNome = (string?)b.Nome,
                 BeneficiarioCarteira = (string?)b.Carteira,
             }).ToListAsync(ct);
@@ -493,6 +497,7 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser)
                 g.BeneficiarioCarteira,
                 PosicaoLabel(primeiraPos),
                 string.IsNullOrEmpty(g.Observacao) ? null : g.Observacao,
+                g.LocalAtendimento,
                 itemDtos);
         }).ToList();
 

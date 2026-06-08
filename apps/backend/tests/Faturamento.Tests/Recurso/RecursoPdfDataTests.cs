@@ -137,6 +137,35 @@ public sealed class RecursoPdfDataTests(PostgresContainerFixture db)
     }
 
     [Fact]
+    public async Task ObterDadosPdf_RetornaLocalAtendimentoAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (opId, prestId, procId) = await SeedCatalogAsync(ctx, tenantId);
+        var recursoId = await CriarRecursoAsync(ctx, user, opId, prestId);
+
+        var factory = new PricingRuleSetFactory(ctx);
+        var guiaSvc = new GuiaService(ctx, user, factory);
+        var cmd = new CriarGuiaCommand(
+            prestId, opId, null, "PDF-LA-" + tenantId.ToString("N")[..4],
+            new DateOnly(2026, 3, 5), false, string.Empty,
+            [new CriarItemGuiaCommand(procId, PosicaoExecutor.Cirurgiao, 1.0m,
+                ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null)],
+            "Hospital São Lucas");
+        var guiaResult = await guiaSvc.CriarAsync(cmd);
+        Assert.True(guiaResult.IsSuccess);
+
+        var recursoSvc = new RecursoService(ctx, user);
+        await recursoSvc.AdicionarGuiaAsync(recursoId, guiaResult.Value!.Id);
+
+        var result = await recursoSvc.ObterDadosPdfAsync(recursoId);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("Hospital São Lucas", result.Value!.Guias[0].LocalAtendimento);
+    }
+
+    [Fact]
     public async Task ObterDadosPdf_ValorPago_NullVirazZeroAsync()
     {
         var tenantId = Guid.NewGuid();

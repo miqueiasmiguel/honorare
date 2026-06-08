@@ -53,6 +53,7 @@ function makeGuiaNoRecurso(overrides: Partial<GuiaNoRecursoDto> = {}): GuiaNoRec
     beneficiarioCarteira: '123',
     situacao: 'EmRecurso',
     observacao: null,
+    localAtendimento: '',
     itens: [],
     ...overrides,
   };
@@ -73,6 +74,7 @@ function makeGuiaItem(overrides: Partial<GuiaItem> = {}): GuiaItem {
     situacao: 'Apresentada',
     ehPacote: false,
     observacao: '',
+    localAtendimento: '',
     totalItens: 1,
     criadoEm: '2026-01-11T00:00:00Z',
     atualizadoEm: '2026-01-11T00:00:00Z',
@@ -284,6 +286,18 @@ describe('RecursoGuiasComponent', () => {
     const { el, router } = setup();
     el.querySelector<HTMLButtonElement>('.recurso-guias__btn-editar')?.click();
     expect(router.navigate).toHaveBeenCalledWith(['/admin/recursos', 'rec-1']);
+  });
+
+  it('deve_exibir_local_atendimento_no_card_quando_preenchido', () => {
+    const guias = [makeGuiaNoRecurso({ localAtendimento: 'HOSPITAL SAO LUCAS' })];
+    const { el } = setup({ guias });
+    expect(el.querySelector('.guia-card__local')?.textContent).toContain('HOSPITAL SAO LUCAS');
+  });
+
+  it('nao_exibe_local_atendimento_no_card_quando_vazio', () => {
+    const guias = [makeGuiaNoRecurso({ localAtendimento: '' })];
+    const { el } = setup({ guias });
+    expect(el.querySelector('.guia-card__local')).toBeNull();
   });
 
   it('deve_exibir_guias_com_numero_de_itens', () => {

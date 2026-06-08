@@ -19,6 +19,7 @@ internal sealed class GuiaConfiguration : IEntityTypeConfiguration<Guia>
         builder.Property(g => g.Situacao).HasConversion<string>().IsRequired();
         builder.Property(g => g.EhPacote).IsRequired();
         builder.Property(g => g.Observacao).HasMaxLength(2000).IsRequired();
+        builder.Property(g => g.LocalAtendimento).HasMaxLength(200).IsRequired().HasDefaultValue("");
         builder.Property(g => g.CriadoEm).IsRequired();
         builder.Property(g => g.AtualizadoEm).IsRequired();
 

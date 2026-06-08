@@ -175,7 +175,8 @@
 }
 
 .guia-form__input--numero-guia,
-.guia-form__input--data-atendimento {
+.guia-form__input--data-atendimento,
+.guia-form__input--local-atendimento {
   @include text-body;
   @include transition(border-color, box-shadow);
 

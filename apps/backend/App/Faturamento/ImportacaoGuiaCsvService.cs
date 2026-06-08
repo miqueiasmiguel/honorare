@@ -154,13 +154,20 @@ internal sealed class ImportacaoGuiaCsvService(
                 guia = Guia.Create(
                     tenantId, prestadorId, operadoraId,
                     beneficiario.Id, numeroGuia, grupo.Key.DataServico,
-                    false, string.Empty);
+                    false, string.Empty, primeiraLinha.LocalAtendimento);
                 db.Guias.Add(guia);
                 await db.SaveChangesAsync(ct);
                 guiasCriadas++;
             }
             else
             {
+                if (string.IsNullOrEmpty(guia.LocalAtendimento) &&
+                    !string.IsNullOrWhiteSpace(primeiraLinha.LocalAtendimento))
+                {
+                    guia.AtualizarLocalAtendimento(primeiraLinha.LocalAtendimento);
+                    await db.SaveChangesAsync(ct);
+                }
+
                 guiasAtualizadas++;
             }
 
@@ -356,7 +363,8 @@ internal sealed class ImportacaoGuiaCsvService(
                 Honorario: honorario.Value,
                 Glosa: ParseDecimal(Col(cols, idx, "GLOSA")) ?? 0m,
                 CodGlosa: Col(cols, idx, "COD_GLOSA"),
-                Total: total.Value));
+                Total: total.Value,
+                LocalAtendimento: Col(cols, idx, "LOCAL ATENDIMENTO")));
         }
 
         return Result<IReadOnlyList<LinhaCSV>>.Ok(linhas);
@@ -490,5 +498,6 @@ internal sealed class ImportacaoGuiaCsvService(
         decimal Honorario,
         decimal Glosa,
         string CodGlosa,
-        decimal Total);
+        decimal Total,
+        string LocalAtendimento);
 }

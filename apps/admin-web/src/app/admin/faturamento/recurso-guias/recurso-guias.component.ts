@@ -88,6 +88,9 @@ import type { GuiaNoRecursoDto, RecursoDto } from '../recurso.types';
                 <span class="guia-card__numero-guia">{{ guia.numeroGuia }}</span>
                 <span class="guia-card__data">{{ formatarData(guia.dataAtendimento) }}</span>
                 <span class="guia-card__beneficiario">{{ guia.beneficiarioNome ?? '—' }}</span>
+                @if (guia.localAtendimento) {
+                  <span class="guia-card__local">{{ guia.localAtendimento }}</span>
+                }
                 <span class="guia-card__itens">{{ guia.itens.length }} iten(s)</span>
                 @if (guia.observacao) {
                   <span class="guia-card__obs-badge">Obs.</span>

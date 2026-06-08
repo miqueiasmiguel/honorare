@@ -320,6 +320,16 @@ O passo de matching `ItemDemonstrativo ↔ ItemGuia` não agrega valor quando a 
 
 **Revisitar:** nunca — decisão estrutural do MVP.
 
+### D-043: `LocalAtendimento` é texto livre informativo na guia, com backfill que nunca sobrescreve
+
+A `Guia` tem `LocalAtendimento string` (varchar 200, NOT NULL default `''`) — texto livre, **não** um enum e **não** uma entrada do motor de cálculo. A apuração é dirigida por `Acomodacao`; `LocalAtendimento` existe apenas para exibição (listagem, detalhe, e por-guia no recurso e no PDF).
+
+**Backfill sem sobrescrita:** a importação CSV (`ImportacaoGuiaCsvService`, coluna `LOCAL ATENDIMENTO`) só preenche o campo quando a guia ainda está vazia. Uma guia com local já preenchido **nunca** é sobrescrita por reimportação — o valor editado manualmente pelo operador prevalece sobre o CSV.
+
+**Recurso não tem campo próprio:** o `Recurso` não armazena local de atendimento; o detalhe e o PDF exibem o local **de cada guia** incluída. O segmento "Local" só aparece quando o valor não é vazio.
+
+**Revisitar:** se o local de atendimento passar a influenciar regra de cálculo (hoje é puramente informativo) ou se a UNIMED exigir local agregado por recurso.
+
 ### D-023: CLAUDE.md em três níveis
 
 - Raiz: regras gerais do monorepo

@@ -49,7 +49,7 @@ Valores padrão aplicados quando nenhuma tabela está configurada:
 | `GLOSA`                          | `ItemDemonstrativo.ValorGlosado`     | Decimal pt-BR (vírgula)                                                       |
 | `COD_GLOSA`                      | `ItemDemonstrativo.MotivoGlosa`      | String — pode ser vazio                                                       |
 | `TOTAL`                          | `ItemDemonstrativo.ValorPago`        | Decimal pt-BR (vírgula)                                                       |
-| `LOCAL ATENDIMENTO`              | Ignorado                             | Informativo; não mapeado no MVP                                               |
+| `LOCAL ATENDIMENTO`              | `Guia.LocalAtendimento`              | Texto livre informativo; backfill que não sobrescreve valor existente (D-043) |
 | `HORA DE REALIZACAO`             | Ignorado                             | Não há campo horário em `ItemGuia`                                            |
 | `QTDE APRESENTADA` / `QTDE PAGA` | Ignorados                            | Glosa já capturada por `ValorGlosado`                                         |
 | `CUSTO` / `FILME`                | Ignorados                            | Sempre zero nos demonstrativos analisados                                     |
