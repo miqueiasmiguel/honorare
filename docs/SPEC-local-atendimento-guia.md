@@ -75,7 +75,7 @@ Arquivo `ImportacaoGuiaCsvService.cs` — lê colunas por header via `Col(cols, 
 
 ---
 
-## LA-03 · Backend: local por-guia no Recurso (detalhe + PDF)
+## LA-03 · Backend: local por-guia no Recurso (detalhe + PDF) ✅ concluída
 
 Não tocar `Recurso.cs`, `RecursoConfiguration.cs`, commands/endpoints do recurso.
 
