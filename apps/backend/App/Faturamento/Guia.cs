@@ -14,6 +14,7 @@ internal sealed class Guia : ITenantEntity
     public SituacaoGuia Situacao { get; private set; }
     public bool EhPacote { get; private set; }
     public string Observacao { get; private set; } = string.Empty;
+    public string LocalAtendimento { get; private set; } = string.Empty;
     public Guid? RecursoId { get; private set; }
     public DateTimeOffset CriadoEm { get; private set; }
     public DateTimeOffset AtualizadoEm { get; private set; }
@@ -28,7 +29,8 @@ internal sealed class Guia : ITenantEntity
         string numeroGuia,
         DateOnly dataAtendimento,
         bool ehPacote,
-        string observacao)
+        string observacao,
+        string localAtendimento = "")
     {
         var now = DateTimeOffset.UtcNow;
         return new Guia
@@ -43,6 +45,7 @@ internal sealed class Guia : ITenantEntity
             Situacao = SituacaoGuia.Apresentada,
             EhPacote = ehPacote,
             Observacao = observacao.Trim(),
+            LocalAtendimento = localAtendimento.Trim(),
             CriadoEm = now,
             AtualizadoEm = now,
         };
@@ -70,13 +73,20 @@ internal sealed class Guia : ITenantEntity
         AtualizadoEm = DateTimeOffset.UtcNow;
     }
 
+    internal void AtualizarLocalAtendimento(string localAtendimento)
+    {
+        LocalAtendimento = localAtendimento.Trim();
+        AtualizadoEm = DateTimeOffset.UtcNow;
+    }
+
     internal void Atualizar(
         Guid operadoraId,
         Guid? beneficiarioId,
         string numeroGuia,
         DateOnly dataAtendimento,
         bool ehPacote,
-        string observacao)
+        string observacao,
+        string localAtendimento = "")
     {
         OperadoraId = operadoraId;
         BeneficiarioId = beneficiarioId;
@@ -84,6 +94,7 @@ internal sealed class Guia : ITenantEntity
         DataAtendimento = dataAtendimento;
         EhPacote = ehPacote;
         Observacao = observacao;
+        LocalAtendimento = localAtendimento.Trim();
         AtualizadoEm = DateTimeOffset.UtcNow;
     }
 }

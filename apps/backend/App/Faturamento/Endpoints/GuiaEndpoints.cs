@@ -90,7 +90,8 @@ internal static class GuiaEndpoints
             body.NumeroGuia, body.DataAtendimento, body.EhPacote, body.Observacao,
             body.Itens.Select(i => new CriarItemGuiaCommand(
                 i.ProcedimentoId, i.PosicaoExecutor, i.PercentualOrdem,
-                i.ViaAcesso, i.Acomodacao, i.EhUrgencia, i.ValorApurado, i.TempoAnestesicoMin)).ToList());
+                i.ViaAcesso, i.Acomodacao, i.EhUrgencia, i.ValorApurado, i.TempoAnestesicoMin)).ToList(),
+            body.LocalAtendimento ?? string.Empty);
 
         var result = await service.CriarAsync(cmd, ct);
         if (result.IsFailure)
@@ -114,7 +115,8 @@ internal static class GuiaEndpoints
             body.NumeroGuia, body.DataAtendimento, body.EhPacote, body.Observacao,
             body.Itens.Select(i => new CriarItemGuiaCommand(
                 i.ProcedimentoId, i.PosicaoExecutor, i.PercentualOrdem,
-                i.ViaAcesso, i.Acomodacao, i.EhUrgencia, i.ValorApurado, i.TempoAnestesicoMin)).ToList());
+                i.ViaAcesso, i.Acomodacao, i.EhUrgencia, i.ValorApurado, i.TempoAnestesicoMin)).ToList(),
+            body.LocalAtendimento ?? string.Empty);
 
         var result = await service.AtualizarAsync(id, cmd, ct);
         if (result.IsFailure)
@@ -252,7 +254,8 @@ internal sealed record CriarGuiaRequest(
     DateOnly DataAtendimento,
     bool EhPacote,
     string Observacao,
-    IReadOnlyList<CriarItemGuiaRequest> Itens);
+    IReadOnlyList<CriarItemGuiaRequest> Itens,
+    string? LocalAtendimento = null);
 
 internal sealed record AtualizarObservacaoRequest(string Observacao);
 
@@ -267,4 +270,5 @@ internal sealed record AtualizarGuiaRequest(
     DateOnly DataAtendimento,
     bool EhPacote,
     string Observacao,
-    IReadOnlyList<CriarItemGuiaRequest> Itens);
+    IReadOnlyList<CriarItemGuiaRequest> Itens,
+    string? LocalAtendimento = null);
