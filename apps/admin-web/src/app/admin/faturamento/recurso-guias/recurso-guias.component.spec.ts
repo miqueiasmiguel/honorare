@@ -54,6 +54,7 @@ function makeGuiaNoRecurso(overrides: Partial<GuiaNoRecursoDto> = {}): GuiaNoRec
     situacao: 'EmRecurso',
     observacao: null,
     localAtendimento: '',
+    ehPacote: false,
     itens: [],
     ...overrides,
   };

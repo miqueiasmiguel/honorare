@@ -4,6 +4,7 @@ import { map, Observable } from 'rxjs';
 import type {
   AtualizarGuiaPayload,
   CriarGuiaPayload,
+  CriarItemGuiaPayload,
   GuiaCalculoResult,
   GuiaDetalheItem,
   GuiaItem,
@@ -81,6 +82,10 @@ export class GuiaService {
 
   atualizar(id: string, payload: AtualizarGuiaPayload): Observable<GuiaDetalheItem> {
     return this._http.put<GuiaDetalheItem>(`/api/v1/admin/guias/${id}`, payload);
+  }
+
+  adicionarItem(guiaId: string, payload: CriarItemGuiaPayload): Observable<GuiaDetalheItem> {
+    return this._http.post<GuiaDetalheItem>(`/api/v1/admin/guias/${guiaId}/itens`, payload);
   }
 
   obterCalculo(id: string): Observable<GuiaCalculoResult> {
