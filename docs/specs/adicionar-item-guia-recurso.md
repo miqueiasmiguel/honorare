@@ -234,7 +234,7 @@ private static async Task<IResult> AdicionarItemAsync(
 
 ### TASK-ADDITEM-02 — Backend: expor `EhPacote` em `GuiaNoRecursoDto`
 
-- [ ] pendente
+- [x] concluída
 
 **Objetivo:** o frontend precisa saber se a guia é pacote para mostrar o campo de valor manual no
 modal. Adicionar `bool EhPacote` ao `GuiaNoRecursoDto` e preencher na projeção do detalhe do recurso.
@@ -282,9 +282,9 @@ var guiaDtos = guiasRaw.Select(g => new GuiaNoRecursoDto(
 
 **Aceite:**
 
-- [ ] `dotnet build apps/backend/Honorare.slnx` sem warnings
-- [ ] `dotnet test apps/backend/Honorare.slnx` verde
-- [ ] `GuiaNoRecursoDto` serializa `ehPacote`
+- [x] `dotnet build apps/backend/Honorare.slnx` sem warnings
+- [x] `dotnet test apps/backend/Honorare.slnx` verde
+- [x] `GuiaNoRecursoDto` serializa `ehPacote`
 
 **Commit:** `feat(faturamento): expõe EhPacote no detalhe do recurso (TASK-ADDITEM-02)`
 
@@ -553,7 +553,7 @@ recarrega o recurso.
 ## Checklist final
 
 - [x] TASK-ADDITEM-01 — Backend: `AdicionarItemAsync` + endpoint
-- [ ] TASK-ADDITEM-02 — Backend: `EhPacote` no `GuiaNoRecursoDto`
+- [x] TASK-ADDITEM-02 — Backend: `EhPacote` no `GuiaNoRecursoDto`
 - [ ] TASK-ADDITEM-03 — Frontend: `adicionarItem` + tipo `ehPacote`
 - [ ] TASK-ADDITEM-04 — Frontend: `AdicionarItemModalComponent`
 - [ ] TASK-ADDITEM-05 — Frontend: integração na `recurso-guias`
