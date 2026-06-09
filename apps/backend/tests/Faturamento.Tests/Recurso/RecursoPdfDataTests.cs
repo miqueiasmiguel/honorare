@@ -42,7 +42,6 @@ public sealed class RecursoPdfDataTests(PostgresContainerFixture db)
         await ctx.SaveChangesAsync();
 
         ctx.Add(TabelaProcedimento.Create(tenantId, operadora.Id, procedimento.Id, 200m));
-        ctx.Add(DeflatorPrestador.Create(tenantId, prestador.Id, operadora.Id, PosicaoExecutor.Cirurgiao, 100m));
         await ctx.SaveChangesAsync();
 
         return (operadora.Id, prestador.Id, procedimento.Id);
@@ -104,7 +103,6 @@ public sealed class RecursoPdfDataTests(PostgresContainerFixture db)
         await ctx.SaveChangesAsync();
 
         ctx.Add(TabelaProcedimento.Create(tenantId, opId, proc2.Id, 150m));
-        ctx.Add(DeflatorPrestador.Create(tenantId, prestId, opId, PosicaoExecutor.PrimeiroAuxiliar, 100m));
         await ctx.SaveChangesAsync();
 
         var recursoId = await CriarRecursoAsync(ctx, user, opId, prestId);

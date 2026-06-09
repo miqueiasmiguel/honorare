@@ -7,7 +7,6 @@ import type {
   BeneficiarioItem,
   CriarPrestadorPayload,
   DefinirEmailAcessoPayload,
-  DeflatorItem,
   ImportarCsvResult,
   ImportarTabelaPorteResult,
   ListarBeneficiariosParams,
@@ -23,7 +22,6 @@ import type {
   PrestadorItem,
   ProcedimentoItem,
   ProcedimentoValorOperadoraItem,
-  SalvarDeflatorPayload,
   SalvarOperadoraPayload,
   SalvarProcedimentoPayload,
   TabelaItem,
@@ -154,36 +152,6 @@ export class CatalogService {
 
   excluirPrestador(id: string): Observable<void> {
     return this._http.delete(`/api/v1/admin/prestadores/${id}`).pipe(
-      map(() => {
-        return;
-      }),
-    );
-  }
-
-  listarDeflatores(prestadorId: string): Observable<DeflatorItem[]> {
-    return this._http.get<DeflatorItem[]>(`/api/v1/admin/prestadores/${prestadorId}/deflatores`);
-  }
-
-  criarDeflator(prestadorId: string, payload: SalvarDeflatorPayload): Observable<DeflatorItem> {
-    return this._http.post<DeflatorItem>(
-      `/api/v1/admin/prestadores/${prestadorId}/deflatores`,
-      payload,
-    );
-  }
-
-  atualizarDeflator(
-    prestadorId: string,
-    id: string,
-    payload: SalvarDeflatorPayload,
-  ): Observable<DeflatorItem> {
-    return this._http.put<DeflatorItem>(
-      `/api/v1/admin/prestadores/${prestadorId}/deflatores/${id}`,
-      payload,
-    );
-  }
-
-  excluirDeflator(prestadorId: string, id: string): Observable<void> {
-    return this._http.delete(`/api/v1/admin/prestadores/${prestadorId}/deflatores/${id}`).pipe(
       map(() => {
         return;
       }),

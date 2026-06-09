@@ -565,6 +565,25 @@
     }
   }
 
+  &__adicionar-item {
+    margin-top: space(3);
+    padding: 0 space(4);
+    height: 36px;
+    border: 1px solid var(--color-terracota);
+    border-radius: 4px;
+    background-color: transparent;
+    color: var(--color-terracota);
+    cursor: pointer;
+
+    @include text-label;
+    @include transition-fast(background-color);
+
+    &:hover {
+      background-color: var(--color-terracota);
+      color: var(--color-pergaminho-claro);
+    }
+  }
+
   &__itens-table {
     width: 100%;
     border-collapse: collapse;

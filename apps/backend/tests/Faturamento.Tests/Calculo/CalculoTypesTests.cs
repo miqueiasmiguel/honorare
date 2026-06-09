@@ -5,14 +5,13 @@ namespace Faturamento.Tests.Motor;
 public sealed class CalculoTypesTests
 {
     [Fact]
-    public void SituacaoApuracao_PossuiExatamente4Membros()
+    public void SituacaoApuracao_PossuiExatamente3Membros()
     {
         var membros = Enum.GetValues<SituacaoApuracao>();
 
-        Assert.Equal(4, membros.Length);
+        Assert.Equal(3, membros.Length);
         Assert.Contains(SituacaoApuracao.Calculado, membros);
         Assert.Contains(SituacaoApuracao.SemTabela, membros);
-        Assert.Contains(SituacaoApuracao.SemDeflator, membros);
         Assert.Contains(SituacaoApuracao.Indeterminado, membros);
     }
 

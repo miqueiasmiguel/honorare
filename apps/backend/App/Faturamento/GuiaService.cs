@@ -170,6 +170,90 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
         return await ObterDetalheDtoInternalAsync(guia.Id, ct);
     }
 
+    internal async Task<Result<GuiaDetalheDto>> AdicionarItemAsync(
+        Guid guiaId, CriarItemGuiaCommand itemCmd, CancellationToken ct = default)
+    {
+        if (itemCmd.PercentualOrdem < 0.01m || itemCmd.PercentualOrdem > 1.00m)
+        {
+            return Result<GuiaDetalheDto>.Fail(
+                new ValidationError("PercentualOrdem deve estar entre 0.01 e 1.00."));
+        }
+
+        var guia = await _db.Guias.FirstOrDefaultAsync(g => g.Id == guiaId, ct);
+        if (guia is null)
+        {
+            return Result<GuiaDetalheDto>.Fail(new NotFoundError("Guia não encontrada."));
+        }
+
+        var operadora = await _db.Operadoras.FirstOrDefaultAsync(o => o.Id == guia.OperadoraId, ct);
+        if (operadora is null)
+        {
+            return Result<GuiaDetalheDto>.Fail(new NotFoundError("Operadora não encontrada."));
+        }
+
+        if (guia.EhPacote)
+        {
+            if (itemCmd.ValorApurado is null)
+            {
+                return Result<GuiaDetalheDto>.Fail(
+                    new ValidationError("Itens de guia pacote devem ter ValorApurado preenchido."));
+            }
+        }
+        else
+        {
+            var erro = await ValidarCalculoViavelAsync(
+                guia.PrestadorId, guia.OperadoraId, operadora, [itemCmd], _currentUser.TenantId!.Value, ct);
+            if (erro is not null)
+            {
+                return Result<GuiaDetalheDto>.Fail(new ValidationError(erro));
+            }
+        }
+
+        var item = ItemGuia.Create(
+            guia.Id, itemCmd.ProcedimentoId, itemCmd.PosicaoExecutor,
+            itemCmd.PercentualOrdem, itemCmd.ViaAcesso, itemCmd.Acomodacao,
+            itemCmd.EhUrgencia, guia.EhPacote ? itemCmd.ValorApurado : null, itemCmd.TempoAnestesicoMin);
+        _db.ItensGuia.Add(item);
+        await _db.SaveChangesAsync(ct);
+
+        if (!guia.EhPacote && operadora.TipoRuleSet != TipoRuleSet.Nulo)
+        {
+            var ruleSet = _factory.Criar(operadora.TipoRuleSet);
+            var ctx = new ApurarGuiaContext(
+                _currentUser.TenantId!.Value, guia.PrestadorId, guia.OperadoraId,
+                [new ApurarItemInput(
+                    item.Id, item.ProcedimentoId, item.PosicaoExecutor,
+                    item.PercentualOrdem, item.ViaAcesso, item.Acomodacao,
+                    item.EhUrgencia, item.TempoAnestesicoMin)]);
+            var resultado = (await ruleSet.ApurarAsync(ctx, ct))[0];
+
+            if (resultado.Situacao == SituacaoApuracao.Calculado)
+            {
+                item.SetValorApurado(resultado.ValorApurado);
+
+                var calculo = await _db.Calculos.FirstOrDefaultAsync(c => c.GuiaId == guiaId, ct);
+                if (calculo is null)
+                {
+                    calculo = Calculo.Create(_currentUser.TenantId!.Value, guiaId);
+                    _db.Calculos.Add(calculo);
+                }
+
+                var seq = await _db.PassosCalculo
+                    .Where(p => p.CalculoId == calculo.Id)
+                    .Select(p => (int?)p.Sequencia).MaxAsync(ct) ?? 0;
+                foreach (var passo in resultado.Passos)
+                {
+                    _db.PassosCalculo.Add(PassoCalculo.Create(
+                        calculo.Id, item.Id, ++seq, passo.Regra, passo.Fator, passo.ValorResultante));
+                }
+
+                await _db.SaveChangesAsync(ct);
+            }
+        }
+
+        return await ObterDetalheDtoInternalAsync(guiaId, ct);
+    }
+
     internal async Task<ListarGuiasResult> ListarAsync(
         ListarGuiasQuery query, CancellationToken ct = default)
     {
@@ -689,7 +773,7 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
             .Select(g => $"{g.Count()} item(ns) com situação '{g.Key}'")
             .ToList();
         return $"Não é possível criar a guia: {string.Join("; ", situacoes)}. " +
-               "Verifique deflators, tabelas de procedimento e portes anestésicos.";
+               "Verifique tabelas de procedimento e portes anestésicos.";
     }
 
     private async Task<Result<GuiaDetalheDto>> ObterDetalheDtoInternalAsync(

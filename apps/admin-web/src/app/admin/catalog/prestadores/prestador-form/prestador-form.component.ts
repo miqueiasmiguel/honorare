@@ -2,16 +2,6 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CatalogService } from '../../catalog.service';
-import type { DeflatorItem, OperadoraItem, PosicaoExecutor } from '../../catalog.types';
-
-const POSICAO_OPCOES: { value: PosicaoExecutor; label: string }[] = [
-  { value: 'Cirurgiao', label: 'Cirurgião' },
-  { value: 'PrimeiroAuxiliar', label: '1º Auxiliar' },
-  { value: 'SegundoAuxiliar', label: '2º Auxiliar' },
-  { value: 'TerceiroAuxiliar', label: '3º Auxiliar' },
-  { value: 'Anestesista', label: 'Anestesista' },
-  { value: 'ClinicoAssistente', label: 'Clínico Assistente' },
-];
 
 @Component({
   selector: 'app-prestador-form',
@@ -27,11 +17,6 @@ export class PrestadorFormComponent implements OnInit {
   readonly prestadorId = signal<string | null>(null);
   readonly loading = signal(false);
   readonly saving = signal(false);
-  readonly savingDeflator = signal(false);
-  readonly deflatores = signal<DeflatorItem[]>([]);
-  readonly operadoras = signal<OperadoraItem[]>([]);
-  readonly mostrarFormDeflator = signal(false);
-  readonly posicaoOpcoes = POSICAO_OPCOES;
   readonly prestadorEmailAcesso = signal<string | null>(null);
   readonly prestadorTemUsuario = signal(false);
   readonly savingEmailAcesso = signal(false);
@@ -57,25 +42,6 @@ export class PrestadorFormComponent implements OnInit {
     }),
   });
 
-  readonly deflatorForm = new FormGroup({
-    operadoraId: new FormControl('', {
-      nonNullable: true,
-      validators: [(c) => Validators.required(c)],
-    }),
-    posicao: new FormControl<PosicaoExecutor>('Cirurgiao', {
-      nonNullable: true,
-      validators: [(c) => Validators.required(c)],
-    }),
-    percentual: new FormControl(100, {
-      nonNullable: true,
-      validators: [
-        (c) => Validators.required(c),
-        (c) => Validators.min(0.01)(c),
-        (c) => Validators.max(200)(c),
-      ],
-    }),
-  });
-
   get modoEdicao(): boolean {
     return this.prestadorId() !== null;
   }
@@ -85,8 +51,6 @@ export class PrestadorFormComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this._carregarOperadoras();
-
     const id = this._route.snapshot.paramMap.get('id');
     if (id) {
       this.prestadorId.set(id);
@@ -106,7 +70,6 @@ export class PrestadorFormComponent implements OnInit {
           this.loading.set(false);
         },
       });
-      this._recarregarDeflatores();
     }
   }
 
@@ -148,47 +111,6 @@ export class PrestadorFormComponent implements OnInit {
     void this._router.navigate(['/admin/catalog/prestadores']);
   }
 
-  abrirFormDeflator(): void {
-    this.deflatorForm.reset();
-    this.mostrarFormDeflator.set(true);
-  }
-
-  cancelarDeflator(): void {
-    this.mostrarFormDeflator.set(false);
-  }
-
-  salvarDeflator(): void {
-    this.deflatorForm.markAllAsTouched();
-    if (this.deflatorForm.invalid || this.savingDeflator()) {
-      return;
-    }
-
-    const id = this.prestadorId();
-    if (!id) {
-      return;
-    }
-
-    const raw = this.deflatorForm.getRawValue();
-    this.savingDeflator.set(true);
-
-    this._catalogService
-      .criarDeflator(id, {
-        operadoraId: raw.operadoraId,
-        posicao: raw.posicao,
-        percentual: raw.percentual,
-      })
-      .subscribe({
-        next: () => {
-          this.savingDeflator.set(false);
-          this.mostrarFormDeflator.set(false);
-          this._recarregarDeflatores();
-        },
-        error: () => {
-          this.savingDeflator.set(false);
-        },
-      });
-  }
-
   definirEmailAcesso(): void {
     this.emailAcessoForm.markAllAsTouched();
     if (this.emailAcessoForm.invalid || this.savingEmailAcesso()) {
@@ -217,51 +139,5 @@ export class PrestadorFormComponent implements OnInit {
           this.erroEmailAcesso.set('Erro ao definir e-mail. Verifique se já não está em uso.');
         },
       });
-  }
-
-  excluirDeflator(deflatorId: string): void {
-    if (!window.confirm('Excluir deflator?')) {
-      return;
-    }
-    const id = this.prestadorId();
-    if (!id) {
-      return;
-    }
-    this._catalogService.excluirDeflator(id, deflatorId).subscribe({
-      next: () => {
-        this._recarregarDeflatores();
-      },
-      error: () => undefined,
-    });
-  }
-
-  posicaoLabel(posicao: PosicaoExecutor): string {
-    return POSICAO_OPCOES.find((p) => p.value === posicao)?.label ?? posicao;
-  }
-
-  operadoraNome(operadoraId: string): string {
-    return this.operadoras().find((op) => op.id === operadoraId)?.nome ?? operadoraId;
-  }
-
-  private _carregarOperadoras(): void {
-    this._catalogService.listarOperadoras({ pagina: 1, itensPorPagina: 200 }).subscribe({
-      next: (result) => {
-        this.operadoras.set(result.itens);
-      },
-      error: () => undefined,
-    });
-  }
-
-  private _recarregarDeflatores(): void {
-    const id = this.prestadorId();
-    if (!id) {
-      return;
-    }
-    this._catalogService.listarDeflatores(id).subscribe({
-      next: (deflatores) => {
-        this.deflatores.set(deflatores);
-      },
-      error: () => undefined,
-    });
   }
 }

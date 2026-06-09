@@ -35,6 +35,7 @@ internal sealed record GuiaNoRecursoDto(
     SituacaoGuia Situacao,
     string? Observacao,
     string LocalAtendimento,
+    bool EhPacote,
     IReadOnlyList<ItemGuiaNoRecursoDto> Itens);
 
 internal sealed record RecursoDetalheDto(RecursoDto Header, IReadOnlyList<GuiaNoRecursoDto> Guias);
@@ -207,6 +208,7 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser)
                 g.Situacao,
                 g.Observacao,
                 g.LocalAtendimento,
+                g.EhPacote,
                 BeneficiarioNome = (string?)b.Nome,
                 BeneficiarioCarteira = (string?)b.Carteira,
             }).ToListAsync(ct);
@@ -249,7 +251,7 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser)
         var guiaDtos = guiasRaw.Select(g => new GuiaNoRecursoDto(
             g.Id, g.NumeroGuia, g.DataAtendimento,
             g.BeneficiarioNome, g.BeneficiarioCarteira,
-            g.Situacao, g.Observacao, g.LocalAtendimento,
+            g.Situacao, g.Observacao, g.LocalAtendimento, g.EhPacote,
             itensPorGuia.GetValueOrDefault(g.Id, []))).ToList();
 
         return Result<RecursoDetalheDto>.Ok(new RecursoDetalheDto(headerDto, guiaDtos));

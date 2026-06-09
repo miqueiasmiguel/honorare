@@ -35,10 +35,6 @@ public sealed class UnimedPipelineTests(PostgresContainerFixture db)
         await ctx.SaveChangesAsync();
 
         ctx.Add(TabelaProcedimento.Create(tenantId, operadora.Id, proc.Id, 1000m));
-        ctx.Add(DeflatorPrestador.Create(tenantId, prestador.Id, operadora.Id, PosicaoExecutor.Cirurgiao, 100m));
-        ctx.Add(DeflatorPrestador.Create(tenantId, prestador.Id, operadora.Id, PosicaoExecutor.PrimeiroAuxiliar, 100m));
-        ctx.Add(DeflatorPrestador.Create(tenantId, prestador.Id, operadora.Id, PosicaoExecutor.SegundoAuxiliar, 100m));
-        ctx.Add(DeflatorPrestador.Create(tenantId, prestador.Id, operadora.Id, PosicaoExecutor.TerceiroAuxiliar, 100m));
         await ctx.SaveChangesAsync();
 
         return (prestador.Id, operadora.Id, proc.Id);

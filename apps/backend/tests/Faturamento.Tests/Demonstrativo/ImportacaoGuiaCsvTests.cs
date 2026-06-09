@@ -64,9 +64,7 @@ public sealed class ImportacaoGuiaCsvTests(PostgresContainerFixture db)
         await ctx.SaveChangesAsync();
 
         var tabPorte = TabelaPorteAnestesico.Create(tenantId, operadoraId, "A", 500m, 600m);
-        var deflator = DeflatorPrestador.Create(tenantId, prestadorId, operadoraId, PosicaoExecutor.Anestesista, 70m);
         ctx.Add(tabPorte);
-        ctx.Add(deflator);
         await ctx.SaveChangesAsync();
 
         var csv = string.Join("\n",
@@ -109,8 +107,6 @@ public sealed class ImportacaoGuiaCsvTests(PostgresContainerFixture db)
         ctx.AddRange(proc1, proc2, proc3);
         await ctx.SaveChangesAsync();
 
-        var deflator = DeflatorPrestador.Create(tenantId, prestadorId, operadoraId, PosicaoExecutor.Cirurgiao, 70m);
-        ctx.Add(deflator);
         ctx.AddRange(
             TabelaProcedimento.Create(tenantId, operadoraId, proc1.Id, 200m),
             TabelaProcedimento.Create(tenantId, operadoraId, proc2.Id, 100m),
@@ -160,7 +156,6 @@ public sealed class ImportacaoGuiaCsvTests(PostgresContainerFixture db)
         await ctx.SaveChangesAsync();
 
         ctx.Add(TabelaProcedimento.Create(tenantId, operadoraId, proc.Id, 200m));
-        ctx.Add(DeflatorPrestador.Create(tenantId, prestadorId, operadoraId, PosicaoExecutor.Cirurgiao, 100m));
         await ctx.SaveChangesAsync();
 
         var csv = string.Join("\n",
@@ -198,7 +193,6 @@ public sealed class ImportacaoGuiaCsvTests(PostgresContainerFixture db)
         await ctx.SaveChangesAsync();
 
         ctx.Add(TabelaProcedimento.Create(tenantId, operadoraId, proc.Id, 200m));
-        ctx.Add(DeflatorPrestador.Create(tenantId, prestadorId, operadoraId, PosicaoExecutor.Cirurgiao, 100m));
         await ctx.SaveChangesAsync();
 
         var csv = string.Join("\n",
@@ -234,7 +228,6 @@ public sealed class ImportacaoGuiaCsvTests(PostgresContainerFixture db)
         await ctx.SaveChangesAsync();
 
         ctx.Add(TabelaProcedimento.Create(tenantId, operadoraId, proc.Id, 200m));
-        ctx.Add(DeflatorPrestador.Create(tenantId, prestadorId, operadoraId, PosicaoExecutor.Cirurgiao, 100m));
         await ctx.SaveChangesAsync();
 
         var csv = string.Join("\n",
@@ -270,7 +263,6 @@ public sealed class ImportacaoGuiaCsvTests(PostgresContainerFixture db)
         await ctx.SaveChangesAsync();
 
         ctx.Add(TabelaProcedimento.Create(tenantId, operadoraId, proc.Id, 200m));
-        ctx.Add(DeflatorPrestador.Create(tenantId, prestadorId, operadoraId, PosicaoExecutor.Cirurgiao, 100m));
         var guiaExistente = Guia.Create(tenantId, prestadorId, operadoraId, null,
             "34280511", new DateOnly(2025, 1, 1), false, string.Empty);
         ctx.Add(guiaExistente);
@@ -342,7 +334,6 @@ public sealed class ImportacaoGuiaCsvTests(PostgresContainerFixture db)
         await ctx.SaveChangesAsync();
 
         ctx.Add(TabelaProcedimento.Create(tenantId, operadoraId, proc.Id, 200m));
-        ctx.Add(DeflatorPrestador.Create(tenantId, prestadorId, operadoraId, PosicaoExecutor.Cirurgiao, 100m));
         await ctx.SaveChangesAsync();
 
         var csv = string.Join("\n",
@@ -428,8 +419,6 @@ public sealed class ImportacaoGuiaCsvTests(PostgresContainerFixture db)
 
         var proc = Procedimento.Create(tenantId, "31009336", "HERNIORRAFIA", "2", null, false, false);
         ctx.Add(proc);
-        var deflator = DeflatorPrestador.Create(tenantId, prestadorId, operadoraId, PosicaoExecutor.Cirurgiao, 70m);
-        ctx.Add(deflator);
         var tabProc = TabelaProcedimento.Create(tenantId, operadoraId, proc.Id, 1000m);
         ctx.Add(tabProc);
         await ctx.SaveChangesAsync();
@@ -468,7 +457,6 @@ public sealed class ImportacaoGuiaCsvTests(PostgresContainerFixture db)
         await ctx.SaveChangesAsync();
 
         ctx.Add(TabelaProcedimento.Create(tenantId, operadoraId, proc.Id, 200m));
-        ctx.Add(DeflatorPrestador.Create(tenantId, prestadorId, operadoraId, PosicaoExecutor.Cirurgiao, 100m));
         await ctx.SaveChangesAsync();
 
         var csv = string.Join("\n",
@@ -503,7 +491,6 @@ public sealed class ImportacaoGuiaCsvTests(PostgresContainerFixture db)
         await ctx.SaveChangesAsync();
 
         ctx.Add(TabelaProcedimento.Create(tenantId, operadoraId, proc.Id, 200m));
-        ctx.Add(DeflatorPrestador.Create(tenantId, prestadorId, operadoraId, PosicaoExecutor.Cirurgiao, 100m));
         await ctx.SaveChangesAsync();
 
         var csv = string.Join("\n",
@@ -533,7 +520,6 @@ public sealed class ImportacaoGuiaCsvTests(PostgresContainerFixture db)
         await ctx.SaveChangesAsync();
 
         ctx.Add(TabelaProcedimento.Create(tenantId, operadoraId, proc.Id, 200m));
-        ctx.Add(DeflatorPrestador.Create(tenantId, prestadorId, operadoraId, PosicaoExecutor.Cirurgiao, 100m));
         await ctx.SaveChangesAsync();
 
         var csv = string.Join("\n",
@@ -551,33 +537,6 @@ public sealed class ImportacaoGuiaCsvTests(PostgresContainerFixture db)
 
         var resultado2 = await service.ImportarAsync(ToCsvStream(csv), prestadorId, operadoraId, false, CancellationToken.None);
         Assert.True(resultado2.IsSuccess);
-    }
-
-    [Fact]
-    public async Task ImportarCsv_SemDeflator_RejeicaoAsync()
-    {
-        var tenantId = Guid.NewGuid();
-        await using var ctx = db.CreateTenantContext(tenantId);
-        var (prestadorId, operadoraId) = await SeedBaseAsync(ctx, tenantId);
-
-        var proc = Procedimento.Create(tenantId, "31009007", "PROC SEM DEFLATOR", "1", null, false, false);
-        ctx.Add(proc);
-        await ctx.SaveChangesAsync();
-
-        var csv = string.Join("\n",
-            "IO06_NODEFL",
-            CsvHeader,
-            CsvRow("12340010", "0000000000000010", "PACIENTE DEFLAT", "01/01/2025",
-                "31009007", "PROC SEM DEFLATOR", "CIRURGIAO", "DR IO06",
-                "100", "ENFERMARIA", "", "1", "100,00", "0,00", "", "100,00"));
-
-        var (svcCtx, service) = BuildService(tenantId);
-        await using var _ = svcCtx;
-        var resultado = await service.ImportarAsync(ToCsvStream(csv), prestadorId, operadoraId, false, CancellationToken.None);
-
-        Assert.True(resultado.IsFailure);
-        Assert.IsType<ValidationError>(resultado.Error);
-        Assert.Contains("Cirurgiao", resultado.Error!.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -618,7 +577,6 @@ public sealed class ImportacaoGuiaCsvTests(PostgresContainerFixture db)
         await ctx.SaveChangesAsync();
 
         ctx.Add(TabelaProcedimento.Create(tenantId, operadoraId, proc.Id, 200m));
-        ctx.Add(DeflatorPrestador.Create(tenantId, prestadorId, operadoraId, PosicaoExecutor.Cirurgiao, 100m));
         await ctx.SaveChangesAsync();
 
         var csv = string.Join("\n",
@@ -653,7 +611,6 @@ public sealed class ImportacaoGuiaCsvTests(PostgresContainerFixture db)
         await ctx.SaveChangesAsync();
 
         ctx.Add(TabelaProcedimento.Create(tenantId, operadoraId, proc.Id, 200m));
-        ctx.Add(DeflatorPrestador.Create(tenantId, prestadorId, operadoraId, PosicaoExecutor.Cirurgiao, 100m));
         await ctx.SaveChangesAsync();
 
         var csv = string.Join("\n",
@@ -689,7 +646,6 @@ public sealed class ImportacaoGuiaCsvTests(PostgresContainerFixture db)
         await ctx.SaveChangesAsync();
 
         ctx.Add(TabelaProcedimento.Create(tenantId, operadoraId, proc.Id, 200m));
-        ctx.Add(DeflatorPrestador.Create(tenantId, prestadorId, operadoraId, PosicaoExecutor.Cirurgiao, 100m));
         await ctx.SaveChangesAsync();
 
         var csv = string.Join("\n",
@@ -722,7 +678,6 @@ public sealed class ImportacaoGuiaCsvTests(PostgresContainerFixture db)
         var proc = Procedimento.Create(tenantId, "31010002", "PROC BACKFILL", "1", null, false, false);
         ctx.Add(proc);
         ctx.Add(TabelaProcedimento.Create(tenantId, operadoraId, proc.Id, 200m));
-        ctx.Add(DeflatorPrestador.Create(tenantId, prestadorId, operadoraId, PosicaoExecutor.Cirurgiao, 100m));
         var guiaExistente = Guia.Create(tenantId, prestadorId, operadoraId, null,
             "44550022", new DateOnly(2025, 1, 1), false, string.Empty);
         ctx.Add(guiaExistente);
@@ -758,7 +713,6 @@ public sealed class ImportacaoGuiaCsvTests(PostgresContainerFixture db)
         var proc = Procedimento.Create(tenantId, "31010003", "PROC NOSOBRE", "1", null, false, false);
         ctx.Add(proc);
         ctx.Add(TabelaProcedimento.Create(tenantId, operadoraId, proc.Id, 200m));
-        ctx.Add(DeflatorPrestador.Create(tenantId, prestadorId, operadoraId, PosicaoExecutor.Cirurgiao, 100m));
         var guiaExistente = Guia.Create(tenantId, prestadorId, operadoraId, null,
             "44550033", new DateOnly(2025, 1, 1), false, string.Empty, "LOCAL ORIGINAL");
         ctx.Add(guiaExistente);

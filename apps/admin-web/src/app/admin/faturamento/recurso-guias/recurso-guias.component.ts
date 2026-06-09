@@ -4,9 +4,11 @@ import { RecursoService } from '../recurso.service';
 import { GuiaService } from '../guia.service';
 import type { GuiaItem, GuiaOrdenacao, SituacaoGuia } from '../guia.types';
 import type { GuiaNoRecursoDto, RecursoDto } from '../recurso.types';
+import { AdicionarItemModalComponent } from './adicionar-item-modal/adicionar-item-modal.component';
 
 @Component({
   selector: 'app-recurso-guias',
+  imports: [AdicionarItemModalComponent],
   template: `
     <div class="recurso-guias">
       <header class="recurso-guias__header">
@@ -182,6 +184,14 @@ import type { GuiaNoRecursoDto, RecursoDto } from '../recurso.types';
                       }
                     </tbody>
                   </table>
+
+                  <button
+                    type="button"
+                    class="guia-card__adicionar-item"
+                    (click)="abrirModalItem(guia)"
+                  >
+                    + Adicionar item
+                  </button>
                 </div>
               }
             </div>
@@ -372,6 +382,15 @@ import type { GuiaNoRecursoDto, RecursoDto } from '../recurso.types';
       @if (erroValidacao()) {
         <p class="recurso-guias__erro">{{ erroValidacao() }}</p>
       }
+
+      <app-adicionar-item-modal
+        [open]="modalItemAberto()"
+        [guiaId]="guiaParaItem()?.id ?? ''"
+        [operadoraId]="operadoraId()"
+        [ehPacote]="guiaParaItem()?.ehPacote ?? false"
+        (concluido)="onItemAdicionado()"
+        (cancelado)="fecharModalItem()"
+      />
     </div>
   `,
   styleUrl: './recurso-guias.component.scss',
@@ -422,6 +441,8 @@ export class RecursoGuiasComponent implements OnInit {
   readonly candidatasDescendente = signal(true);
 
   readonly guiaExpandida = signal<string | null>(null);
+  readonly modalItemAberto = signal(false);
+  readonly guiaParaItem = signal<GuiaNoRecursoDto | null>(null);
   readonly observacoesEmEdicao = signal<Record<string, string | undefined>>({});
   readonly valoresEmEdicao = signal<Record<string, string | undefined>>({});
   readonly salvandoObservacao = signal<Record<string, boolean>>({});
@@ -431,6 +452,24 @@ export class RecursoGuiasComponent implements OnInit {
     const id = this._route.snapshot.paramMap.get('id');
     if (id) {
       this.recursoId.set(id);
+      this._carregar(id);
+    }
+  }
+
+  abrirModalItem(guia: GuiaNoRecursoDto): void {
+    this.guiaParaItem.set(guia);
+    this.modalItemAberto.set(true);
+  }
+
+  fecharModalItem(): void {
+    this.modalItemAberto.set(false);
+    this.guiaParaItem.set(null);
+  }
+
+  onItemAdicionado(): void {
+    this.fecharModalItem();
+    const id = this.recursoId();
+    if (id) {
       this._carregar(id);
     }
   }

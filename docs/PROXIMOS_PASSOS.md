@@ -195,6 +195,14 @@ O coração do MVP.
 
 **Spec:** `docs/SPEC-local-atendimento-guia.md`
 
+### ADDITEM — Adicionar item à guia pela tela do recurso ✅
+
+**Entregues (TASK-ADDITEM-01 a 05):** Backend: `GuiaService.AdicionarItemAsync` (append-only — cria o item, apura **só** ele e anexa os `PassoCalculo` ao `Calculo` existente; nunca usa `AtualizarAsync`/`RecalcularAsync`) exposto em `POST /api/v1/admin/guias/{id}/itens`; rejeita item `SemTabela`/`Indeterminado` em guia não-pacote e exige `ValorApurado` manual em guia pacote (semântica de D-038); `GuiaNoRecursoDto` ganhou `bool EhPacote`. Suites xUnit cobrindo apuração do item novo, preservação de `ValorLiquidado`/`MotivoGlosa` dos itens existentes, rejeições e caso pacote. Frontend admin-web: `GuiaService.adicionarItem` + `ehPacote` no tipo do recurso; `AdicionarItemModalComponent` (envolve `app-item-guia-form`, backdrop próprio sem CDK); botão "+ Adicionar item" no card expandido da guia em `recurso-guias` que abre o modal e recarrega o recurso ao concluir.
+
+**Decisão registrada:** D-045 (`DECISOES.md`).
+
+**Spec:** `docs/specs/adicionar-item-guia-recurso.md`
+
 ## Fase 4 — Visualização (2-3 semanas)
 
 ### F4.1 ✅ — Portal do médico (PWA)

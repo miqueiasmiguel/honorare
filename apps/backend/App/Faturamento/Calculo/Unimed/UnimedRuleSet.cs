@@ -37,22 +37,12 @@ internal sealed class UnimedRuleSet(AppDbContext db) : IPricingRuleSet
             return new ApuracaoItemResult(item.ItemGuiaId, SituacaoApuracao.SemTabela, null, []);
         }
 
-        var deflator = await db.DeflatoresPrestador
-            .Where(d => d.PrestadorId == ctx.PrestadorId && d.OperadoraId == ctx.OperadoraId && d.Posicao == item.Posicao)
-            .FirstOrDefaultAsync(ct);
-
-        if (deflator is null)
-        {
-            return new ApuracaoItemResult(item.ItemGuiaId, SituacaoApuracao.SemDeflator, null, []);
-        }
-
         var procedimento = await db.Procedimentos
             .Where(p => p.Id == item.ProcedimentoId)
             .FirstOrDefaultAsync(ct);
 
-        var fatorBase = deflator.Percentual / 100m;
-        var valorBase = tabela.Valor * fatorBase;
-        var passos = new List<PassoApuracao> { new("ValorBase", fatorBase, valorBase) };
+        var valorBase = tabela.Valor;
+        var passos = new List<PassoApuracao> { new("ValorBase", 1.0m, valorBase) };
 
         var valorAtual = valorBase;
         valorAtual = AplicarModifier(OrdemProcedimentoModifier.Aplicar(item.PercentualOrdem, valorAtual), passos);
@@ -93,19 +83,8 @@ internal sealed class UnimedRuleSet(AppDbContext db) : IPricingRuleSet
             _ => tabelaPorte.ValorEnfermaria,
         };
 
-        var deflator = await db.DeflatoresPrestador
-            .Where(d => d.PrestadorId == ctx.PrestadorId && d.OperadoraId == ctx.OperadoraId
-                        && d.Posicao == PosicaoExecutor.Anestesista)
-            .FirstOrDefaultAsync(ct);
-
-        if (deflator is null)
-        {
-            return new ApuracaoItemResult(item.ItemGuiaId, SituacaoApuracao.SemDeflator, null, []);
-        }
-
         var (valorFinal, passos) = AnestesiaCalculator.Calcular(
-            valorReferencia, deflator.Percentual,
-            item.PercentualOrdem, item.EhUrgencia, procedimento.EhSadt);
+            valorReferencia, item.PercentualOrdem, item.EhUrgencia, procedimento.EhSadt);
 
         return new ApuracaoItemResult(item.ItemGuiaId, SituacaoApuracao.Calculado, valorFinal, passos);
     }

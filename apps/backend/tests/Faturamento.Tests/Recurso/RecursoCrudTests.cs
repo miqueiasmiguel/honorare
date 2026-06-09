@@ -34,7 +34,6 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         await ctx.SaveChangesAsync();
 
         ctx.Add(TabelaProcedimento.Create(tenantId, operadora.Id, procedimento.Id, 200m));
-        ctx.Add(DeflatorPrestador.Create(tenantId, prestador.Id, operadora.Id, PosicaoExecutor.Cirurgiao, 100m));
         await ctx.SaveChangesAsync();
 
         return (operadora.Id, prestador.Id, procedimento.Id);
@@ -442,7 +441,6 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         await using var _ = ctx;
         var (opId, prestId, procId) = await SeedCatalogAsync(ctx, tenantId);
 
-        ctx.Add(DeflatorPrestador.Create(tenantId, prestId, opId, PosicaoExecutor.PrimeiroAuxiliar, 70m));
         await ctx.SaveChangesAsync();
 
         var service = new RecursoService(ctx, user);
@@ -561,6 +559,33 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         Assert.Equal(
             [new DateOnly(2026, 7, 5), new DateOnly(2026, 7, 12), new DateOnly(2026, 7, 20)],
             result.Value!.Guias.Select(g => g.DataAtendimento).ToArray());
+    }
+
+    [Fact]
+    public async Task ObterPorId_RetornaEhPacoteDaGuiaAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (opId, prestId, procId) = await SeedCatalogAsync(ctx, tenantId);
+        var service = new RecursoService(ctx, user);
+
+        var recursoId = (await service.CriarAsync(
+            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 8, 1), null))).Value!.Id;
+
+        var factory = new PricingRuleSetFactory(ctx);
+        var guiaService = new GuiaService(ctx, user, factory);
+        var guiaId = (await guiaService.CriarAsync(new CriarGuiaCommand(
+            prestId, opId, null, "RE-PKG-" + tenantId.ToString("N")[..4],
+            new DateOnly(2026, 8, 10), true, string.Empty,
+            [new CriarItemGuiaCommand(procId, PosicaoExecutor.Cirurgiao,
+                1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, 500m)]))).Value!.Id;
+        await service.AdicionarGuiaAsync(recursoId, guiaId);
+
+        var result = await service.ObterPorIdAsync(recursoId);
+
+        Assert.True(result.IsSuccess);
+        Assert.True(result.Value!.Guias[0].EhPacote);
     }
 }
 

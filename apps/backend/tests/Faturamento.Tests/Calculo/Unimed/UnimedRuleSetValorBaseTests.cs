@@ -29,14 +29,13 @@ public sealed class UnimedRuleSetValorBaseTests(PostgresContainerFixture db)
     }
 
     [Fact]
-    public async Task ApurarAsync_TabelaEDeflatorPresentes_RetornaCalculadoAsync()
+    public async Task ApurarAsync_TabelaPresente_RetornaCalculadoAsync()
     {
         var tenantId = Guid.NewGuid();
         await using var ctx = db.CreateTenantContext(tenantId);
         var (prestadorId, operadoraId, procedimentoId, _) = await SeedBaseAsync(ctx, tenantId);
 
         ctx.Add(TabelaProcedimento.Create(tenantId, operadoraId, procedimentoId, 100m));
-        ctx.Add(DeflatorPrestador.Create(tenantId, prestadorId, operadoraId, PosicaoExecutor.Cirurgiao, 80m));
         await ctx.SaveChangesAsync();
 
         var itemId = Guid.NewGuid();
@@ -52,11 +51,11 @@ public sealed class UnimedRuleSetValorBaseTests(PostgresContainerFixture db)
         Assert.Single(resultados);
         var r = resultados[0];
         Assert.Equal(SituacaoApuracao.Calculado, r.Situacao);
-        Assert.Equal(80m, r.ValorApurado);
+        Assert.Equal(100m, r.ValorApurado);
         Assert.Single(r.Passos);
         Assert.Equal("ValorBase", r.Passos[0].Regra);
-        Assert.Equal(0.8m, r.Passos[0].Fator);
-        Assert.Equal(80m, r.Passos[0].ValorResultante);
+        Assert.Equal(1.0m, r.Passos[0].Fator);
+        Assert.Equal(100m, r.Passos[0].ValorResultante);
     }
 
     [Fact]
@@ -65,9 +64,6 @@ public sealed class UnimedRuleSetValorBaseTests(PostgresContainerFixture db)
         var tenantId = Guid.NewGuid();
         await using var ctx = db.CreateTenantContext(tenantId);
         var (prestadorId, operadoraId, procedimentoId, _) = await SeedBaseAsync(ctx, tenantId);
-
-        ctx.Add(DeflatorPrestador.Create(tenantId, prestadorId, operadoraId, PosicaoExecutor.Cirurgiao, 80m));
-        await ctx.SaveChangesAsync();
 
         var itemId = Guid.NewGuid();
         var sut = new UnimedRuleSet(ctx);
@@ -85,31 +81,6 @@ public sealed class UnimedRuleSetValorBaseTests(PostgresContainerFixture db)
     }
 
     [Fact]
-    public async Task ApurarAsync_SemDeflator_RetornaSemDeflatorAsync()
-    {
-        var tenantId = Guid.NewGuid();
-        await using var ctx = db.CreateTenantContext(tenantId);
-        var (prestadorId, operadoraId, procedimentoId, _) = await SeedBaseAsync(ctx, tenantId);
-
-        ctx.Add(TabelaProcedimento.Create(tenantId, operadoraId, procedimentoId, 100m));
-        await ctx.SaveChangesAsync();
-
-        var itemId = Guid.NewGuid();
-        var sut = new UnimedRuleSet(ctx);
-        var input = new ApurarGuiaContext(tenantId, prestadorId, operadoraId,
-        [
-            new ApurarItemInput(itemId, procedimentoId, PosicaoExecutor.Cirurgiao,
-                1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false)
-        ]);
-
-        var resultados = await sut.ApurarAsync(input);
-
-        Assert.Single(resultados);
-        Assert.Equal(SituacaoApuracao.SemDeflator, resultados[0].Situacao);
-        Assert.Null(resultados[0].ValorApurado);
-    }
-
-    [Fact]
     public async Task ApurarAsync_Anestesista_RetornaIndeterminadoAsync()
     {
         var tenantId = Guid.NewGuid();
@@ -117,7 +88,6 @@ public sealed class UnimedRuleSetValorBaseTests(PostgresContainerFixture db)
         var (prestadorId, operadoraId, procedimentoId, _) = await SeedBaseAsync(ctx, tenantId);
 
         ctx.Add(TabelaProcedimento.Create(tenantId, operadoraId, procedimentoId, 100m));
-        ctx.Add(DeflatorPrestador.Create(tenantId, prestadorId, operadoraId, PosicaoExecutor.Anestesista, 80m));
         await ctx.SaveChangesAsync();
 
         var itemId = Guid.NewGuid();
@@ -147,7 +117,6 @@ public sealed class UnimedRuleSetValorBaseTests(PostgresContainerFixture db)
         await ctx.SaveChangesAsync();
 
         ctx.Add(TabelaProcedimento.Create(tenantId, operadoraId, procedimentoId, 100m));
-        ctx.Add(DeflatorPrestador.Create(tenantId, prestadorId, operadoraId, PosicaoExecutor.Cirurgiao, 80m));
         await ctx.SaveChangesAsync();
 
         var sut = new UnimedRuleSet(ctx);

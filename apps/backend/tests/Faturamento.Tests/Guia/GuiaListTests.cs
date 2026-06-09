@@ -37,7 +37,6 @@ public sealed class GuiaListTests(PostgresContainerFixture db)
         await ctx.SaveChangesAsync();
 
         ctx.Add(TabelaProcedimento.Create(tenantId, operadora.Id, procedimento.Id, 200m));
-        ctx.Add(DeflatorPrestador.Create(tenantId, prestador.Id, operadora.Id, PosicaoExecutor.Cirurgiao, 100m));
         await ctx.SaveChangesAsync();
 
         return (prestador.Id, operadora.Id, beneficiario.Id, procedimento.Id);
@@ -72,7 +71,6 @@ public sealed class GuiaListTests(PostgresContainerFixture db)
         var prestadorB = Prestador.Create(tenantId, "Dr. B List", null);
         ctx.Add(prestadorB);
         await ctx.SaveChangesAsync();
-        ctx.Add(DeflatorPrestador.Create(tenantId, prestadorB.Id, operadoraId, PosicaoExecutor.Cirurgiao, 100m));
         await ctx.SaveChangesAsync();
 
         var service = new GuiaService(ctx, user, factory);
@@ -187,7 +185,6 @@ public sealed class GuiaListTests(PostgresContainerFixture db)
         ctx.Add(opB);
         await ctx.SaveChangesAsync();
         ctx.Add(TabelaProcedimento.Create(tenantId, opB.Id, procedimentoId, 200m));
-        ctx.Add(DeflatorPrestador.Create(tenantId, prestadorId, opB.Id, PosicaoExecutor.Cirurgiao, 100m));
         await ctx.SaveChangesAsync();
 
         var service = new GuiaService(ctx, user, factory);
@@ -313,7 +310,6 @@ public sealed class GuiaListTests(PostgresContainerFixture db)
         ctx.Add(opB);
         await ctx.SaveChangesAsync();
         ctx.Add(TabelaProcedimento.Create(tenantId, opB.Id, procedimentoId, 200m));
-        ctx.Add(DeflatorPrestador.Create(tenantId, prestadorId, opB.Id, PosicaoExecutor.Cirurgiao, 100m));
         await ctx.SaveChangesAsync();
 
         var service = new GuiaService(ctx, user, factory);
@@ -439,8 +435,6 @@ public sealed class GuiaListTests(PostgresContainerFixture db)
         ctx.Add(aaa);
         ctx.Add(zzz);
         await ctx.SaveChangesAsync();
-        ctx.Add(DeflatorPrestador.Create(tenantId, aaa.Id, operadoraId, PosicaoExecutor.Cirurgiao, 100m));
-        ctx.Add(DeflatorPrestador.Create(tenantId, zzz.Id, operadoraId, PosicaoExecutor.Cirurgiao, 100m));
         await ctx.SaveChangesAsync();
 
         var service = new GuiaService(ctx, user, factory);
@@ -471,8 +465,6 @@ public sealed class GuiaListTests(PostgresContainerFixture db)
         await ctx.SaveChangesAsync();
         ctx.Add(TabelaProcedimento.Create(tenantId, aaa.Id, procedimentoId, 200m));
         ctx.Add(TabelaProcedimento.Create(tenantId, zzz.Id, procedimentoId, 200m));
-        ctx.Add(DeflatorPrestador.Create(tenantId, prestadorId, aaa.Id, PosicaoExecutor.Cirurgiao, 100m));
-        ctx.Add(DeflatorPrestador.Create(tenantId, prestadorId, zzz.Id, PosicaoExecutor.Cirurgiao, 100m));
         await ctx.SaveChangesAsync();
 
         var service = new GuiaService(ctx, user, factory);

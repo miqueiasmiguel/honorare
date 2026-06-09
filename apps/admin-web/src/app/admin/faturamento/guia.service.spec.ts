@@ -4,6 +4,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { GuiaService } from './guia.service';
 import type {
   CriarGuiaPayload,
+  CriarItemGuiaPayload,
   AtualizarGuiaPayload,
   GuiaDetalheItem,
   GuiaItem,
@@ -206,6 +207,28 @@ describe('GuiaService', () => {
     const req = httpMock.expectOne('/api/v1/admin/guias');
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual(CRIAR_PAYLOAD);
+    req.flush(GUIA_DETALHE);
+
+    expect(result?.id).toBe('guia-1');
+  });
+
+  it('adicionarItem_chamaPOSTNaRotaDeItens', () => {
+    const payload: CriarItemGuiaPayload = {
+      procedimentoId: 'proc-1',
+      posicaoExecutor: 'Cirurgiao',
+      percentualOrdem: 1,
+      viaAcesso: 'Convencional',
+      acomodacao: 'Ambulatorial',
+      ehUrgencia: false,
+      valorApurado: null,
+      tempoAnestesicoMin: null,
+    };
+    let result: GuiaDetalheItem | undefined;
+    service.adicionarItem('guia-1', payload).subscribe((v) => (result = v));
+
+    const req = httpMock.expectOne('/api/v1/admin/guias/guia-1/itens');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual(payload);
     req.flush(GUIA_DETALHE);
 
     expect(result?.id).toBe('guia-1');

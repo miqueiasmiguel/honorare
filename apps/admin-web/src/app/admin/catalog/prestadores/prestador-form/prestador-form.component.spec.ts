@@ -3,7 +3,7 @@ import { of } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PrestadorFormComponent } from './prestador-form.component';
 import { CatalogService } from '../../catalog.service';
-import type { DeflatorItem, OperadoraItem, PrestadorItem } from '../../catalog.types';
+import type { PrestadorItem } from '../../catalog.types';
 
 const mockPrestador: PrestadorItem = {
   id: 'prest-1',
@@ -15,37 +15,12 @@ const mockPrestador: PrestadorItem = {
   temUsuario: true,
 };
 
-const mockDeflator: DeflatorItem = {
-  id: 'def-1',
-  prestadorId: 'prest-1',
-  operadoraId: 'op-1',
-  posicao: 'Cirurgiao',
-  percentual: 80,
-};
-
-const mockOperadora: OperadoraItem = {
-  id: 'op-1',
-  nome: 'UNIMED João Pessoa',
-  registroAns: '012345',
-  cnpj: '12345678000195',
-  tipoRuleSet: 'Unimed',
-  ativa: true,
-  criadaEm: '2026-01-01T00:00:00Z',
-};
-
 function setup(prestadorId: string | null = null, prestador: PrestadorItem = mockPrestador) {
   const catalogServiceSpy = {
     obterPrestador: vi.fn().mockReturnValue(of(prestador)),
     criarPrestador: vi.fn().mockReturnValue(of(prestador)),
     atualizarPrestador: vi.fn().mockReturnValue(of(prestador)),
     definirEmailAcesso: vi.fn().mockReturnValue(of(prestador)),
-    listarDeflatores: vi.fn().mockReturnValue(of([mockDeflator])),
-    listarOperadoras: vi
-      .fn()
-      .mockReturnValue(of({ itens: [mockOperadora], total: 1, pagina: 1, itensPorPagina: 200 })),
-    criarDeflator: vi.fn().mockReturnValue(of(mockDeflator)),
-    atualizarDeflator: vi.fn().mockReturnValue(of(mockDeflator)),
-    excluirDeflator: vi.fn().mockReturnValue(of(undefined)),
   };
 
   const routerSpy = {
@@ -138,44 +113,6 @@ describe('PrestadorFormComponent', () => {
         expect.objectContaining({ nome: 'Dr. José Silva' }),
       );
       expect(router.navigate).toHaveBeenCalledWith(['/admin/catalog/prestadores']);
-    });
-
-    it('seção deflatores lista deflatores do prestador', () => {
-      const { el } = setup('prest-1');
-      const items = el.querySelectorAll('.prestador-form__deflator-item');
-      expect(items).toHaveLength(1);
-    });
-
-    it('+ Deflator abre inline form; submit chama POST deflatores', () => {
-      const { el, component, catalogService, fixture } = setup('prest-1');
-
-      const btns = Array.from(el.querySelectorAll('button'));
-      const addBtn = btns.find((b) => b.textContent.trim() === '+ Deflator');
-      addBtn?.click();
-      fixture.detectChanges();
-
-      component.deflatorForm.controls.operadoraId.setValue('op-1');
-      component.deflatorForm.controls.posicao.setValue('Cirurgiao');
-      component.deflatorForm.controls.percentual.setValue(80);
-      component.salvarDeflator();
-
-      expect(catalogService.criarDeflator).toHaveBeenCalledWith('prest-1', {
-        operadoraId: 'op-1',
-        posicao: 'Cirurgiao',
-        percentual: 80,
-      });
-    });
-
-    it('excluir deflator chama DELETE deflatores/{id}', () => {
-      const { el, catalogService, fixture } = setup('prest-1');
-      vi.spyOn(window, 'confirm').mockReturnValue(true);
-
-      const btns = Array.from(el.querySelectorAll('button'));
-      const excluirBtn = btns.find((b) => b.textContent.trim() === 'Excluir');
-      excluirBtn?.click();
-      fixture.detectChanges();
-
-      expect(catalogService.excluirDeflator).toHaveBeenCalledWith('prest-1', 'def-1');
     });
 
     it('modo edição não exibe campo emailAcesso editável', () => {

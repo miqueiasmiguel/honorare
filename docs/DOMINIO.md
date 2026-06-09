@@ -75,15 +75,7 @@
 
 - **TabelaOrdemOperadora:** tabela de progressão de atos múltiplos configurável por operadora. Define o `PercentualOrdem` para cada posição (`NumeroProcedimento` 1, 2, 3…) e tipo de via (`MesmaVia` / `ViaDiferente`). Chave única `(TenantId, OperadoraId, NumeroProcedimento, TipoVia)`. Quando não configurada, o sistema usa defaults embutidos: MesmaVia 100%/50%/40%/30%/20%/10%; ViaDiferente 100%/70%/50%/40%/30%/10% (6+→10% em ambas). Gerenciada via endpoints `GET/PUT/DELETE /api/v1/admin/operadoras/{id}/tabela-ordem`.
 
-- **DeflatorPrestador:** percentual negociado entre um prestador e uma operadora para uma posição de execução específica (`PosicaoExecutor`). Multiplicador aplicado sobre o valor de tabela para obter o `valor_base`.
-
-  Fórmula: `valor_base = TabelaProcedimento.Valor × (DeflatorPrestador.Percentual / 100)`
-
-  A combinação `(PrestadorId, OperadoraId, Posicao)` é única por tenant.
-
-- **PosicaoExecutor:** papel do profissional na execução do procedimento, para fins de deflator. Valores: `Cirurgiao`, `PrimeiroAuxiliar`, `SegundoAuxiliar`, `TerceiroAuxiliar`, `Anestesista`, `ClinicoAssistente`.
-
-- **Deflator:** percentual negociado entre operadora e prestador sobre o valor de tabela. Varia por prestador e por posição de execução. Ver `DeflatorPrestador`.
+- **PosicaoExecutor:** papel do profissional na execução do procedimento. Valores: `Cirurgiao`, `PrimeiroAuxiliar`, `SegundoAuxiliar`, `TerceiroAuxiliar`, `Anestesista`, `ClinicoAssistente`. Os auxiliares aplicam os descontos de posição do `PosicaoExecutorModifier` (1º aux ×0.6 · 2º ×0.4 · 3º ×0.3) sobre o valor apurado.
 
 - **Operadora:** plano de saúde. **Cada Unimed Singular (JPA, Recife, Fortaleza, etc.) é uma operadora separada** — não confundir com "UNIMED" como rede.
 
@@ -93,9 +85,9 @@
 
 ### Valor base
 
-`valor_base = TabelaProcedimento.Valor × (DeflatorPrestador.Percentual / 100)`
+`valor_base = TabelaProcedimento.Valor`
 
-`TabelaProcedimento` armazena o valor negociado do procedimento para a operadora. `DeflatorPrestador` armazena o percentual do prestador naquela operadora e posição. A tabela é específica de cada Unimed Singular.
+`TabelaProcedimento` armazena o valor negociado do procedimento para a operadora — é a fonte direta do `valor_base`. A tabela é específica de cada Unimed Singular. (Ver D-044: o deflator por prestador, sempre 100% na prática, foi removido.)
 
 ### Multiplicador UNIMED sobre CBHPM 2015
 
@@ -147,7 +139,7 @@ Percentuais **CBHPM 2018+** (atualização vs. regra antiga de 30%/20%):
 - 3º auxiliar: **30%** do honorário do cirurgião.
 - Aplica sobre o valor já com todos os outros multiplicadores.
 
-> ⚠️ Confirmar com guias reais (P0.2) — a Singular pode ter deflator diferente negociado em `DeflatorPrestador`.
+> ⚠️ Confirmar com guias reais (P0.2) — os percentuais de auxiliar podem variar por Singular.
 
 ### Urgência/emergência
 
@@ -161,7 +153,7 @@ Percentuais **CBHPM 2018+** (atualização vs. regra antiga de 30%/20%):
 
 A ordem afeta o resultado. **Esta é a ordem implementada no `UnimedRuleSet`, validada por 10 cenários E2E (F3.2).**
 
-1. Valor base: `TabelaProcedimento.Valor × (DeflatorPrestador.Percentual / 100)`
+1. Valor base: `TabelaProcedimento.Valor`
 2. Ordem de procedimento: aplica `ItemGuia.PercentualOrdem` diretamente (ex: 1.0, 0.5, 0.4…) — sem enum, sem switch/case
 3. Videolaparoscopia: `Via=Videolaparoscopia` e `!TemPorteProprioVideo` → ×1.5; senão ×1.0
 4. Acomodação: `Apartamento && Posicao == Cirurgiao` → ×2.0; demais → ×1.0
@@ -170,11 +162,11 @@ A ordem afeta o resultado. **Esta é a ordem implementada no `UnimedRuleSet`, va
 
 Confirmar com guias reais (P0.2) se há variação por Singular. Anestesista usa pipeline próprio — ver seção abaixo.
 
-**Early-exits do pipeline cirúrgico:** `SemTabela` (sem TabelaProcedimento para a operadora), `SemDeflator` (sem DeflatorPrestador para a posição). Assim como na anestesia, estes early-exits bloqueiam a criação da guia. O motor roda em pré-voo — ver D-038.
+**Early-exits do pipeline cirúrgico:** `SemTabela` (sem TabelaProcedimento para a operadora). Assim como na anestesia, este early-exit bloqueia a criação da guia. O motor roda em pré-voo — ver D-038.
 
-**Diagnóstico em guias existentes:** `GET /api/v1/admin/guias/{id}/calculo` sempre re-executa o motor para itens sem `ValorApurado` e retorna a `SituacaoApuracao` real (`SemDeflator`, `SemTabela`, `Indeterminado`), em vez de mostrar um valor genérico. Permite ao admin diagnosticar o que falta no catálogo sem precisar inspecionar o banco.
+**Diagnóstico em guias existentes:** `GET /api/v1/admin/guias/{id}/calculo` sempre re-executa o motor para itens sem `ValorApurado` e retorna a `SituacaoApuracao` real (`SemTabela`, `Indeterminado`), em vez de mostrar um valor genérico. Permite ao admin diagnosticar o que falta no catálogo sem precisar inspecionar o banco.
 
-**Recálculo após correção de catálogo:** `POST /api/v1/admin/guias/{id}/recalcular` descarta o `Calculo` anterior, zera `ValorApurado` e re-apura todos os itens. Usar quando um deflator ou tabela for adicionado após a criação da guia (guias legadas importadas antes da validação obrigatória).
+**Recálculo após correção de catálogo:** `POST /api/v1/admin/guias/{id}/recalcular` descarta o `Calculo` anterior, zera `ValorApurado` e re-apura todos os itens. Usar quando uma tabela for adicionada ou corrigida após a criação da guia (guias legadas importadas antes da validação obrigatória).
 
 ## Anestesia — pipeline próprio
 
@@ -188,11 +180,11 @@ Anestesista tem mecânica separada dos honorários cirúrgicos, implementada em 
 
 **Pipeline (ordem obrigatória):**
 
-1. `ValorBase = valorReferencia × (DeflatorPrestador.Percentual / 100)`
+1. `ValorBase = valorReferencia`
 2. `PercentualOrdem`: aplica `ItemGuia.PercentualOrdem` diretamente (mesmo mecanismo do pipeline cirúrgico)
 3. `Urgencia`: `EhUrgencia && !EhSadt` → ×1.3; senão ×1.0
 
-**Early-exits do motor:** `Indeterminado` (PorteAnestesico nulo no Procedimento), `SemTabela` (sem TabelaPorteAnestesico para o porte), `SemDeflator` (sem DeflatorPrestador para Anestesista).
+**Early-exits do motor:** `Indeterminado` (PorteAnestesico nulo no Procedimento), `SemTabela` (sem TabelaPorteAnestesico para o porte).
 
 **Estes early-exits bloqueiam a criação da guia.** O motor roda em pré-voo antes de persistir qualquer dado. Se qualquer item retornar status diferente de `Calculado`, a operação é rejeitada com erro descritivo. Guias nunca são criadas sem ter `ValorApurado` em todos os itens. Ver D-038.
 
@@ -213,7 +205,6 @@ Cada Unimed Singular (João Pessoa, Recife, BH, Dracena, etc.) é uma operadora 
 
 - Tabela de honorários própria
 - Valores de UCO próprios
-- Deflatores negociados próprios
 - Pode ter ajustes locais nas Instruções Gerais
 
 No modelo de dados, **cada Unimed Singular é uma `Operadora` separada**. A regra geral UNIMED está no `IPricingRuleSet` `UnimedRuleSet`, mas tabelas e valores são por Singular.
@@ -229,6 +220,8 @@ Para cada `ItemGuia` calculado, o sistema gera:
 - `Trace`: passo a passo de qual regra aplicou e como (auditoria/explicabilidade)
 
 **Sem o trace não há auditoria — há chute.** O trace é o que permite ao admin contestar uma glosa fundamentadamente.
+
+A apuração é **independente por item**: cada `ItemGuia` é calculado só com seus próprios atributos + a operadora, sem contexto cruzado entre itens. Por isso o operador pode acrescentar um item esquecido a uma guia já existente (inclusive já `EmRecurso`) e apurar apenas esse item, sem reapurar nem perturbar os demais (ver D-045).
 
 ## Convênios sem apuração de honorários
 

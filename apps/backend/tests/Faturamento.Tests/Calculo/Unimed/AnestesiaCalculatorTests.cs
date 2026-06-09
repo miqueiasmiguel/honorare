@@ -9,7 +9,6 @@ public sealed class AnestesiaCalculatorTests
     {
         var (valor, passos) = AnestesiaCalculator.Calcular(
             valorReferencia: 526.50m,
-            deflatorPercentual: 100m,
             percentualOrdem: 1.0m,
             ehUrgencia: false,
             ehSadt: false);
@@ -21,24 +20,10 @@ public sealed class AnestesiaCalculatorTests
     }
 
     [Fact]
-    public void ComDeflator80()
-    {
-        var (valor, _) = AnestesiaCalculator.Calcular(
-            valorReferencia: 526.50m,
-            deflatorPercentual: 80m,
-            percentualOrdem: 1.0m,
-            ehUrgencia: false,
-            ehSadt: false);
-
-        Assert.Equal(421.20m, valor);
-    }
-
-    [Fact]
     public void ComUrgencia()
     {
         var (valor, _) = AnestesiaCalculator.Calcular(
             valorReferencia: 526.50m,
-            deflatorPercentual: 100m,
             percentualOrdem: 1.0m,
             ehUrgencia: true,
             ehSadt: false);
@@ -51,7 +36,6 @@ public sealed class AnestesiaCalculatorTests
     {
         var (valor, _) = AnestesiaCalculator.Calcular(
             valorReferencia: 526.50m,
-            deflatorPercentual: 100m,
             percentualOrdem: 1.0m,
             ehUrgencia: true,
             ehSadt: true);
@@ -64,7 +48,6 @@ public sealed class AnestesiaCalculatorTests
     {
         var (valor, _) = AnestesiaCalculator.Calcular(
             valorReferencia: 526.50m,
-            deflatorPercentual: 100m,
             percentualOrdem: 0.5m,
             ehUrgencia: false,
             ehSadt: false);
@@ -77,7 +60,6 @@ public sealed class AnestesiaCalculatorTests
     {
         var (valor, _) = AnestesiaCalculator.Calcular(
             valorReferencia: 526.50m,
-            deflatorPercentual: 100m,
             percentualOrdem: 0.7m,
             ehUrgencia: false,
             ehSadt: false);
@@ -90,7 +72,6 @@ public sealed class AnestesiaCalculatorTests
     {
         var (_, passos) = AnestesiaCalculator.Calcular(
             valorReferencia: 526.50m,
-            deflatorPercentual: 80m,
             percentualOrdem: 0.5m,
             ehUrgencia: true,
             ehSadt: false);

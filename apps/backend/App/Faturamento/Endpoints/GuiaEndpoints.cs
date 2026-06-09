@@ -13,6 +13,7 @@ internal static class GuiaEndpoints
         g.MapGet("{id:guid}", ObterGuiaPorIdAsync);
         g.MapGet("{id:guid}/calculo", ObterCalculoAsync);
         g.MapPost("", CriarGuiaAsync);
+        g.MapPost("{id:guid}/itens", AdicionarItemAsync);
         g.MapPost("{id:guid}/recalcular", RecalcularGuiaAsync);
         g.MapPut("{id:guid}", AtualizarGuiaAsync);
         g.MapPatch("{id:guid}/observacao", AtualizarObservacaoAsync);
@@ -105,6 +106,26 @@ internal static class GuiaEndpoints
         }
 
         return Results.Created($"/api/v1/admin/guias/{result.Value!.Id}", result.Value);
+    }
+
+    private static async Task<IResult> AdicionarItemAsync(
+        Guid id, CriarItemGuiaRequest body, GuiaService service, CancellationToken ct)
+    {
+        var cmd = new CriarItemGuiaCommand(
+            body.ProcedimentoId, body.PosicaoExecutor, body.PercentualOrdem,
+            body.ViaAcesso, body.Acomodacao, body.EhUrgencia, body.ValorApurado, body.TempoAnestesicoMin);
+        var result = await service.AdicionarItemAsync(id, cmd, ct);
+        if (result.IsFailure)
+        {
+            var statusCode = result.Error switch
+            {
+                NotFoundError => StatusCodes.Status404NotFound,
+                _ => StatusCodes.Status400BadRequest,
+            };
+            return Results.Problem(statusCode: statusCode, detail: result.Error!.Message);
+        }
+
+        return Results.Ok(result.Value);
     }
 
     private static async Task<IResult> AtualizarGuiaAsync(

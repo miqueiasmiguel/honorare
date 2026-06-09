@@ -2,7 +2,6 @@ export type SituacaoGuia = 'Apresentada' | 'Liquidada' | 'EmRecurso';
 export type SituacaoCalculo =
   | 'Calculado'
   | 'SemTabela'
-  | 'SemDeflator'
   | 'Indeterminado'
   | 'Pacote'
   | 'NaoCalculado';

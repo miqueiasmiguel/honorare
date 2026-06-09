@@ -89,7 +89,6 @@ public sealed class GuiaEndpointTests : IAsyncLifetime
         await ctx.SaveChangesAsync();
 
         ctx.Add(TabelaProcedimento.Create(tenantId, operadora.Id, procedimento.Id, 200m));
-        ctx.Add(DeflatorPrestador.Create(tenantId, prestador.Id, operadora.Id, PosicaoExecutor.Cirurgiao, 100m));
         await ctx.SaveChangesAsync();
 
         return (prestador.Id, operadora.Id, beneficiario.Id, procedimento.Id);

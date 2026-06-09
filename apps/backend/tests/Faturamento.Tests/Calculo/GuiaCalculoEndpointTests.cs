@@ -56,7 +56,6 @@ public sealed class GuiaCalculoEndpointTests(PostgresContainerFixture db)
         var (prestadorId, operadoraId, procedimentoId) = await SeedBaseAsync(ctx, tenantId);
 
         ctx.Add(TabelaProcedimento.Create(tenantId, operadoraId, procedimentoId, 200m));
-        ctx.Add(DeflatorPrestador.Create(tenantId, prestadorId, operadoraId, PosicaoExecutor.Cirurgiao, 100m));
         await ctx.SaveChangesAsync();
 
         var factory = new PricingRuleSetFactory(ctx);
@@ -108,37 +107,6 @@ public sealed class GuiaCalculoEndpointTests(PostgresContainerFixture db)
         Assert.Null(item.ValorApurado);
         Assert.Empty(item.Passos);
         Assert.Equal("SemTabela", item.Situacao);
-    }
-
-    [Fact]
-    public async Task ObterCalculo_GuiaLegadaSemDeflator_RetornaItemSemDeflatorSemPassosAsync()
-    {
-        var tenantId = Guid.NewGuid();
-        var (ctx, user) = BuildTenant(tenantId);
-        await using var _ = ctx;
-        var (prestadorId, operadoraId, procedimentoId) = await SeedBaseAsync(ctx, tenantId);
-
-        // Has tabela but no deflator
-        ctx.Add(TabelaProcedimento.Create(tenantId, operadoraId, procedimentoId, 200m));
-
-        // Create guia directly (bypasses service validation) to simulate a legacy uncalculated guia
-        var guia = Guia.Create(tenantId, prestadorId, operadoraId, null,
-            "SEN-VIS04", new DateOnly(2025, 1, 1), false, string.Empty);
-        ctx.Add(guia);
-        ctx.Add(ItemGuia.Create(guia.Id, procedimentoId, PosicaoExecutor.Cirurgiao,
-            1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null));
-        ctx.Add(Calculo.Create(tenantId, guia.Id));
-        await ctx.SaveChangesAsync();
-
-        var factory = new PricingRuleSetFactory(ctx);
-        var service = new GuiaService(ctx, user, factory);
-        var result = await service.ObterCalculoAsync(guia.Id);
-
-        Assert.True(result.IsSuccess);
-        var item = result.Value!.Itens[0];
-        Assert.Null(item.ValorApurado);
-        Assert.Empty(item.Passos);
-        Assert.Equal("SemDeflator", item.Situacao);
     }
 
     [Fact]
@@ -236,7 +204,6 @@ public sealed class GuiaCalculoHttpTests : IAsyncLifetime
         await ctx.SaveChangesAsync();
 
         ctx.Add(TabelaProcedimento.Create(tenantId, operadora.Id, procedimento.Id, 200m));
-        ctx.Add(DeflatorPrestador.Create(tenantId, prestador.Id, operadora.Id, PosicaoExecutor.Cirurgiao, 100m));
         await ctx.SaveChangesAsync();
 
         return (prestador.Id, operadora.Id, procedimento.Id);

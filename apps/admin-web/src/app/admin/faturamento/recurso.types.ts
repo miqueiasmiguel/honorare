@@ -43,6 +43,7 @@ export interface GuiaNoRecursoDto {
   situacao: string;
   observacao: string | null;
   localAtendimento: string;
+  ehPacote: boolean;
   itens: ItemGuiaNoRecursoDto[];
 }
 

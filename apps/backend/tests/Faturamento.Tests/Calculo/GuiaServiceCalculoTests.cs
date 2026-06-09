@@ -43,7 +43,6 @@ public sealed class GuiaServiceCalculoTests(PostgresContainerFixture db)
         var (prestadorId, operadoraId, procedimentoId) = await SeedBaseAsync(ctx, tenantId);
 
         ctx.Add(TabelaProcedimento.Create(tenantId, operadoraId, procedimentoId, 200m));
-        ctx.Add(DeflatorPrestador.Create(tenantId, prestadorId, operadoraId, PosicaoExecutor.Cirurgiao, 100m));
         await ctx.SaveChangesAsync();
 
         var factory = new PricingRuleSetFactory(ctx);
@@ -121,7 +120,6 @@ public sealed class GuiaServiceCalculoTests(PostgresContainerFixture db)
         var (prestadorId, operadoraId, procedimentoId) = await SeedBaseAsync(ctx, tenantId);
 
         ctx.Add(TabelaProcedimento.Create(tenantId, operadoraId, procedimentoId, 200m));
-        ctx.Add(DeflatorPrestador.Create(tenantId, prestadorId, operadoraId, PosicaoExecutor.Cirurgiao, 100m));
         await ctx.SaveChangesAsync();
 
         var factory = new PricingRuleSetFactory(ctx);
@@ -149,7 +147,7 @@ public sealed class GuiaServiceCalculoTests(PostgresContainerFixture db)
     }
 
     [Fact]
-    public async Task Recalcular_AposAdicionarDeflator_ItemPassaACalculadoAsync()
+    public async Task Recalcular_GuiaLegada_ItemPassaACalculadoAsync()
     {
         var tenantId = Guid.NewGuid();
         var (ctx, user) = BuildTenant(tenantId);
@@ -168,10 +166,6 @@ public sealed class GuiaServiceCalculoTests(PostgresContainerFixture db)
         ctx.Add(item);
         var calculo = Calculo.Create(tenantId, guia.Id);
         ctx.Add(calculo);
-        await ctx.SaveChangesAsync();
-
-        // Add deflator and recalculate
-        ctx.Add(DeflatorPrestador.Create(tenantId, prestadorId, operadoraId, PosicaoExecutor.Cirurgiao, 100m));
         await ctx.SaveChangesAsync();
 
         var factory = new PricingRuleSetFactory(ctx);
