@@ -451,12 +451,30 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser, 
         var codigos = tenant?.CodigosNaoRecorriveis ?? [];
         if (codigos.Count > 0)
         {
-            q = q.Where(g => !_db.ItensGuia.Any(i =>
+            // Bloqueia apenas guias onde TODOS os itens são NR
+            // (guias mistas passam — têm ao menos um item recorrível)
+            q = q.Where(g => _db.ItensGuia.Any(i =>
                 i.GuiaId == g.Id &&
-                _db.Procedimentos.Any(p => p.Id == i.ProcedimentoId && codigos.Contains(p.CodigoTuss))));
+                !_db.Procedimentos.Any(p => p.Id == i.ProcedimentoId && codigos.Contains(p.CodigoTuss))));
         }
 
         var guias = await q.ToListAsync(ct);
+
+        if (codigos.Count > 0 && guias.Count > 0)
+        {
+            var guiaIds = guias.Select(g => g.Id).ToList();
+            var itensNaoRecorriveis = await (
+                from i in _db.ItensGuia
+                join p in _db.Procedimentos on i.ProcedimentoId equals p.Id
+                where guiaIds.Contains(i.GuiaId) && codigos.Contains(p.CodigoTuss)
+                select i
+            ).ToListAsync(ct);
+            foreach (var item in itensNaoRecorriveis)
+            {
+                item.ExcluirDoRecurso();
+            }
+        }
+
         foreach (var guia in guias)
         {
             guia.MarcarEmRecurso(recursoId);
