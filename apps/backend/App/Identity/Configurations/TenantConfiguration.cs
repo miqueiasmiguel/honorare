@@ -12,5 +12,6 @@ internal sealed class TenantConfiguration : IEntityTypeConfiguration<Tenant>
         builder.Property(t => t.Name).HasMaxLength(256).IsRequired();
         builder.Property(t => t.Status).HasConversion<string>().IsRequired();
         builder.Property(t => t.CreatedAt).IsRequired();
+        builder.Property(t => t.LogoKey).HasMaxLength(512);
     }
 }
