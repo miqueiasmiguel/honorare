@@ -40,6 +40,7 @@ function makeItemGuiaNoRecurso(
     ehUrgencia: false,
     valorApurado: null,
     valorLiquidado: null,
+    incluidoNoRecurso: true,
     ...overrides,
   };
 }
@@ -99,6 +100,7 @@ function setup(options: { guias?: GuiaNoRecursoDto[]; candidatas?: GuiaItem[] } 
     adicionarGuiasLote: vi.fn().mockReturnValue(of({ adicionadas: 0 })),
     removerGuia: vi.fn().mockReturnValue(of(undefined)),
     baixarPdf: vi.fn(),
+    alterarInclusaoItem: vi.fn().mockReturnValue(of(undefined)),
   };
   const guiaService = {
     listar: vi.fn().mockReturnValue(of(makeListResult(options.candidatas ?? []))),
@@ -429,5 +431,60 @@ describe('RecursoGuiasComponent', () => {
     expect(component.modalItemAberto()).toBe(false);
     expect(component.guiaParaItem()).toBeNull();
     expect(recursoService.obterPorId).toHaveBeenCalledWith('rec-1');
+  });
+
+  it('excluirItem com confirm aceito chama alterarInclusaoItem com incluido=false', () => {
+    const item = makeItemGuiaNoRecurso({ id: 'item-1', incluidoNoRecurso: true });
+    const guia = makeGuiaNoRecurso({ id: 'guia-1', itens: [item] });
+    const { component, recursoService } = setup({ guias: [guia] });
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    component.excluirItem('guia-1', item);
+
+    expect(recursoService.alterarInclusaoItem).toHaveBeenCalledWith(
+      'rec-1',
+      'guia-1',
+      'item-1',
+      false,
+    );
+  });
+
+  it('excluirItem com confirm recusado NÃO chama o serviço', () => {
+    const item = makeItemGuiaNoRecurso({ id: 'item-1', incluidoNoRecurso: true });
+    const guia = makeGuiaNoRecurso({ id: 'guia-1', itens: [item] });
+    const { component, recursoService } = setup({ guias: [guia] });
+    vi.spyOn(window, 'confirm').mockReturnValue(false);
+
+    component.excluirItem('guia-1', item);
+
+    expect(recursoService.alterarInclusaoItem).not.toHaveBeenCalled();
+  });
+
+  it('reincluirItem chama alterarInclusaoItem com incluido=true', () => {
+    const item = makeItemGuiaNoRecurso({ id: 'item-1', incluidoNoRecurso: false });
+    const guia = makeGuiaNoRecurso({ id: 'guia-1', itens: [item] });
+    const { component, recursoService } = setup({ guias: [guia] });
+
+    component.reincluirItem('guia-1', item);
+
+    expect(recursoService.alterarInclusaoItem).toHaveBeenCalledWith(
+      'rec-1',
+      'guia-1',
+      'item-1',
+      true,
+    );
+  });
+
+  it('erro ao alterar inclusão exibe mensagem', () => {
+    const item = makeItemGuiaNoRecurso({ id: 'item-1', incluidoNoRecurso: true });
+    const guia = makeGuiaNoRecurso({ id: 'guia-1', itens: [item] });
+    const { component, recursoService, fixture } = setup({ guias: [guia] });
+    recursoService.alterarInclusaoItem.mockReturnValue(throwError(() => new Error('err')));
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+
+    component.excluirItem('guia-1', item);
+    fixture.detectChanges();
+
+    expect(component.erroValidacao()).not.toBe('');
   });
 });

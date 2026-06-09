@@ -33,6 +33,7 @@ export interface ItemGuiaNoRecursoDto {
   ehUrgencia: boolean;
   valorApurado: number | null;
   valorLiquidado: number | null;
+  incluidoNoRecurso: boolean;
 }
 
 export interface GuiaNoRecursoDto {

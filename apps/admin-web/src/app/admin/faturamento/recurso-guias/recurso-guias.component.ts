@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { RecursoService } from '../recurso.service';
 import { GuiaService } from '../guia.service';
 import type { GuiaItem, GuiaOrdenacao, SituacaoGuia } from '../guia.types';
-import type { GuiaNoRecursoDto, RecursoDto } from '../recurso.types';
+import type { GuiaNoRecursoDto, ItemGuiaNoRecursoDto, RecursoDto } from '../recurso.types';
 import { AdicionarItemModalComponent } from './adicionar-item-modal/adicionar-item-modal.component';
 
 @Component({
@@ -144,11 +144,12 @@ import { AdicionarItemModalComponent } from './adicionar-item-modal/adicionar-it
                         <th>VL CORRETO</th>
                         <th>PG OPERADORA</th>
                         <th>GLOSA</th>
+                        <th></th>
                       </tr>
                     </thead>
                     <tbody>
                       @for (item of guia.itens; track item.id) {
-                        <tr>
+                        <tr [class.guia-card__item--excluido]="!item.incluidoNoRecurso">
                           <td>{{ item.codigoTuss }}</td>
                           <td>{{ item.descricaoProcedimento }}</td>
                           <td>{{ item.posicaoExecutor }}</td>
@@ -179,6 +180,25 @@ import { AdicionarItemModalComponent } from './adicionar-item-modal/adicionar-it
                                 ? formatarMoeda(item.valorApurado - item.valorLiquidado)
                                 : '—'
                             }}
+                          </td>
+                          <td>
+                            @if (item.incluidoNoRecurso) {
+                              <button
+                                type="button"
+                                class="guia-card__item-excluir"
+                                (click)="excluirItem(guia.id, item)"
+                              >
+                                Excluir
+                              </button>
+                            } @else {
+                              <button
+                                type="button"
+                                class="guia-card__item-reincluir"
+                                (click)="reincluirItem(guia.id, item)"
+                              >
+                                Reincluir
+                              </button>
+                            }
                           </td>
                         </tr>
                       }
@@ -694,6 +714,37 @@ export class RecursoGuiasComponent implements OnInit {
       },
       error: () => {
         this.erroValidacao.set('Erro ao remover guia. Tente novamente.');
+      },
+    });
+  }
+
+  excluirItem(guiaId: string, item: ItemGuiaNoRecursoDto): void {
+    const ok = confirm(
+      `Excluir o item «${item.descricaoProcedimento}» deste recurso? ` +
+        'Ele não aparecerá no PDF, mas permanece na guia.',
+    );
+    if (!ok) {
+      return;
+    }
+    this._alterarInclusaoItem(guiaId, item.id, false);
+  }
+
+  reincluirItem(guiaId: string, item: ItemGuiaNoRecursoDto): void {
+    this._alterarInclusaoItem(guiaId, item.id, true);
+  }
+
+  private _alterarInclusaoItem(guiaId: string, itemId: string, incluido: boolean): void {
+    const id = this.recursoId();
+    if (!id) {
+      return;
+    }
+    this.erroValidacao.set('');
+    this._recursoService.alterarInclusaoItem(id, guiaId, itemId, incluido).subscribe({
+      next: () => {
+        this._carregar(id);
+      },
+      error: () => {
+        this.erroValidacao.set('Erro ao alterar inclusão do item. Tente novamente.');
       },
     });
   }

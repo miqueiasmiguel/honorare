@@ -67,6 +67,19 @@ export class RecursoService {
       .pipe(map(() => undefined));
   }
 
+  alterarInclusaoItem(
+    recursoId: string,
+    guiaId: string,
+    itemId: string,
+    incluido: boolean,
+  ): Observable<void> {
+    return this._http
+      .patch(`/api/v1/admin/recursos/${recursoId}/guias/${guiaId}/itens/${itemId}/inclusao`, {
+        incluido,
+      })
+      .pipe(map(() => undefined));
+  }
+
   baixarPdf(id: string): void {
     this._http.get(`/api/v1/admin/recursos/${id}/pdf`, { responseType: 'blob' }).subscribe({
       next: (blob) => {
