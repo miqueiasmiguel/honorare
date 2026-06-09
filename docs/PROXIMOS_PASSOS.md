@@ -205,6 +205,38 @@ O coração do MVP.
 
 **Spec:** `docs/specs/adicionar-item-guia-recurso.md`
 
+### TCFG ✅ — Configurações do tenant (renomear + logo no PDF)
+
+**Entregues (TASK-TCFG-01 a 06):** Abstração `IFileStorage` com `LocalFileStorage` em disco, volume Docker `honorare_storage` e `StorageOptions` bindadas de `appsettings`. `Tenant` ganhou `Rename(string)`, `SetLogoKey(string)` / `ClearLogoKey()` e `LogoKey string?` com migration `AddTenantLogoKey`. `TenantSettingsService` com `ObterAsync` / `RenomearAsync` / `SalvarLogoAsync` / `ObterLogoAsync` / `RemoverLogoAsync`; endpoints sob `/api/v1/admin/tenant` (policy `TenantAccess`, tenant resolvido por `ICurrentUser`): `GET /settings`, `PUT /settings/nome`, `POST /logo` (upload multipart, magic-number PNG/JPEG, limite 2 MB), `GET /logo`, `DELETE /logo`. Logo renderizada no cabeçalho do PDF do recurso (`RecursoPdfDocument`); sem logo exibe apenas o nome do tenant. Frontend admin-web: `TenantSettingsService` Angular; página `/admin/configuracoes` com formulário de renomeação e seção de logo (preview, upload por input file, remoção); sidebar com item "Configurações" em "Administração".
+
+**Decisão registrada:** D-047 (`DECISOES.md`).
+
+**Spec:** `docs/specs/configuracoes-tenant.md`
+
+### NREC ✅ — Procedimentos não recorríveis
+
+**Entregues (TASK-NREC-01 a 06):** `Tenant.CodigosNaoRecorriveis List<string>` mapeado como `text[]` (migration `AddCodigosNaoRecorriveis`); métodos `AddToNaoRecorriveis` / `RemoveFromNaoRecorriveis`. `GuiaDto.NaoRecorrivel bool` em `GuiaService.ListarAsync`. Endpoint `GET/PUT /api/v1/admin/tenant/codigos-nao-recorriveis` (policy `TenantAccess`). `RecursoService.AdicionarGuiasEmLoteAsync` pula guias com `NaoRecorrivel=true`; o individual `AdicionarGuiaAsync` funciona como escape hatch. Frontend: seção "Procedimentos Não Recorríveis" na página de Configurações com autocomplete do catálogo; badge "Não recorrível" na tabela de candidatas do `recurso-guias`.
+
+**⚠ Refinado por GMIX:** a semântica de `NaoRecorrivel` mudou de "algum item NR" para "todos os itens NR" e foi adicionado `MistaComNaoRecorriveis` para guias com apenas alguns itens NR. Ver GMIX abaixo e D-049.
+
+**Spec:** `docs/specs/procedimentos-nao-recorriveis.md`
+
+### EIR ✅ — Excluir/reincluir itens de recurso
+
+**Entregues (TASK-EIR-01 a 03):** `ItemGuia.IncluidoNoRecurso bool` (default `true`, migration `AddIncluidoNoRecursoItemGuia`); métodos `ExcluirDoRecurso()` / `ReincluirNoRecurso()` com invariante: excluir o último item incluído lança `InvalidOperationException` (→ 409); `Guia.RemoverDoRecurso()` reseta o flag em todos os itens. `RecursoService.AlterarInclusaoItemAsync` exposto em `PATCH /api/v1/admin/recursos/{id}/guias/{guiaId}/itens/{itemId}/inclusao` `{ "incluido": bool }`. `ObterPorIdAsync` expõe `incluidoNoRecurso` por item; `ObterDadosPdfAsync` filtra itens com `IncluidoNoRecurso=false` do PDF. Suites xUnit cobrindo exclusão, reinclussão, invariante do último item e reset ao remover guia. Frontend: item com `incluidoNoRecurso=false` renderiza riscado com botão "Reincluir"; item normal exibe botão "Excluir" com `confirm()`.
+
+**Decisão registrada:** D-048 (`DECISOES.md`).
+
+**Spec:** `docs/specs/excluir-item-recurso.md`
+
+### GMIX ✅ — Guia mista com procedimentos não recorríveis
+
+**Entregues (TASK-GMIX-01 a 03):** `GuiaDto` passa a expor dois flags mutuamente exclusivos: `NaoRecorrivel=true` somente quando **todos** os itens são NR; `MistaComNaoRecorriveis=true` quando **alguns** (não todos) são NR. `GuiaService.ListarAsync` computa `countNrPorGuia` por group-by e deriva os dois conjuntos. `RecursoService.AdicionarGuiasEmLoteAsync` bloqueia apenas guias totalmente NR; guias mistas são adicionadas com seus itens NR automaticamente marcados `IncluidoNoRecurso=false` via `ExcluirDoRecurso()` (invariante garantido pela definição de guia mista). Frontend: badge "Contém não recorrível" (âmbar/neutro) para guias mistas, distinto do badge "Não recorrível" (bloqueante) para guias totalmente NR.
+
+**Decisão registrada:** D-049 (`DECISOES.md`).
+
+**Spec:** `docs/specs/guia-mista-nao-recorrivel.md`
+
 ## Fase 4 — Visualização (2-3 semanas)
 
 ### F4.1 ✅ — Portal do médico (PWA)

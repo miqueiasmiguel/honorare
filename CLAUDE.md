@@ -625,7 +625,7 @@ These are firm decisions (see `docs/DECISOES.md` for full rationale):
 
 - **No CQRS, MediatR, Repository pattern, or AutoMapper.** A direct service → `AppDbContext` flow is preferred.
 - **Single `AppDbContext`** with EF Core configurations organized per bounded context.
-- **No speculative interfaces** — the only interfaces are `IPricingRuleSet` (multiple operators planned) and `IGatewayPagamento` (future payment gateway integration).
+- **No speculative interfaces** — the only interfaces are `IPricingRuleSet` (multiple operators planned), `IGatewayPagamento` (future payment gateway integration), and `IFileStorage` (disk-local now, S3/Supabase later — see D-047).
 - **Calculation engine must trace every step.** Every invoice calculation stores a complete audit trail — this is what enables physicians to dispute underpayments.
 - **UNIMED rules validated against real invoices.** The test suite in `Faturamento/Tests/` targets 15–20 real paid UNIMED invoices as ground truth. Do not modify calculation logic without a corresponding test case from a real document.
 - **Guias cannot be created uncalculated.** `GuiaService.CriarAsync` and `AtualizarAsync` run a pre-flight motor execution before persisting anything. If any item returns `SemTabela` or `Indeterminado`, the operation is rejected with a descriptive error. Exceptions: `EhPacote = true` (manual value) and `TipoRuleSet.Nulo` operadoras. `DeflatorPrestador` was removed (always 100% in practice; `valor_base = TabelaProcedimento.Valor`) — deflator is no longer a creation/import prerequisite. See D-038 and D-044.

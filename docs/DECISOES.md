@@ -382,6 +382,29 @@ A implementação inicial (`LocalFileStorage`) usa disco local para desenvolvime
 
 **Restrições:** o domínio guarda apenas uma **chave opaca** (`LogoKey`) — nunca os bytes. O `content-type` é derivado da extensão da chave. Path traversal é rejeitado na implementação concreta (não no contrato), pois é um detalhe de infra.
 
+### D-048: `IncluidoNoRecurso` — exclusão não-destrutiva de itens de recurso
+
+O operador pode remover um item de uma guia do recurso sem destruí-lo. A flag `ItemGuia.IncluidoNoRecurso bool` (default `true`) controla a visibilidade no PDF e na tela, deixando o item intacto no restante do sistema (faturamento, cálculo, portal do médico). A operação é reversível via `PATCH /api/v1/admin/recursos/{id}/guias/{guiaId}/itens/{itemId}/inclusao` com `{ "incluido": bool }`.
+
+**Invariante:** excluir o último item incluído de uma guia no recurso lança `InvalidOperationException` (→ 409) — uma guia no recurso deve ter ao menos um item visível no PDF.
+
+**Reset automático:** ao remover a guia do recurso (`RemoverGuiaAsync`), `ItemGuia.RemoverDoRecurso()` reseta `IncluidoNoRecurso = true` em todos os itens da guia, sem efeito colateral em outras guias.
+
+**Por que não deletar o item:** o item pode ter `ValorLiquidado`/`MotivoGlosa` preenchidos por importação CSV e pode aparecer no portal do médico. Destruí-lo causaria perda de dados auditáveis. A flag preserva a rastreabilidade enquanto permite controle fino do conteúdo do recurso.
+
+### D-049: `CodigosNaoRecorriveis` + guia mista — comportamento do lote de recurso
+
+O tenant mantém `CodigosNaoRecorriveis List<string>` (`text[]` no Postgres) — lista de códigos TUSS que o cliente não quer ver em recursos automáticos (ex: consultas). Dois flags derivados em `GuiaDto`:
+
+- `NaoRecorrivel = true` — **todos** os itens da guia têm código NR. O lote pula a guia; o `AdicionarGuiaAsync` individual ainda funciona (escape hatch).
+- `MistaComNaoRecorriveis = true` — **alguns** (não todos) itens são NR. O lote inclui a guia, mas chama `ExcluirDoRecurso()` nos itens NR automaticamente. O invariante de "ao menos um item incluído" é garantido pela própria definição de guia mista.
+
+Os dois flags são mutuamente exclusivos. A distinção veio em duas etapas: NREC criou `NaoRecorrivel` para "algum item NR"; GMIX refinou para "todos os itens NR" e adicionou `MistaComNaoRecorriveis` — a versão GMIX é o estado atual.
+
+**Por que a granularidade é na guia e não no item:** na prática, consultas são sempre guias isoladas (nenhuma guia mistura consulta com cirurgia nos dados reais do cliente). O caso de guia mista surgiu como exceção descoberta após a entrega de NREC, não como caso planejado.
+
+**Revisitar:** se um tenant configurar códigos que ocorram misturados com procedimentos recorríveis em muitas guias, a exclusão automática de itens NR via lote pode surpreender. A tela já mostra o badge "Contém não recorrível" como sinal visual.
+
 ### D-023: CLAUDE.md em três níveis
 
 - Raiz: regras gerais do monorepo

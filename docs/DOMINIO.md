@@ -6,7 +6,7 @@
 
 - **Guia:** documento de cobrança apresentado pelo prestador (médico/clínica) à operadora. Tipos principais: Consulta, SP/SADT (serviços profissionais e SADT), Internação, Honorários. Uma guia tem múltiplos itens. `NumeroGuia string?` armazena o número TISS da guia (preenchido na importação via CSV; opcional em guias criadas manualmente). `LocalAtendimento string` (varchar 200, NOT NULL default `''`) é um campo de texto livre informativo — preenchido na importação CSV (coluna `LOCAL ATENDIMENTO`) ou editado no formulário; exibido na listagem, no detalhe da guia e por-guia no recurso/PDF. **Não é usado no cálculo** (o motor usa `Acomodacao`). Ver D-043.
 
-- **ItemGuia:** uma linha da guia. Representa **um procedimento executado por um profissional num papel**. Se o cirurgião teve 2 auxiliares e 1 anestesista, a mesma cirurgia gera 4 itens (cirurgião, 1º aux, 2º aux, anestesista).
+- **ItemGuia:** uma linha da guia. Representa **um procedimento executado por um profissional num papel**. Se o cirurgião teve 2 auxiliares e 1 anestesista, a mesma cirurgia gera 4 itens (cirurgião, 1º aux, 2º aux, anestesista). `IncluidoNoRecurso bool` (default `true`): quando `false`, o item é ocultado do PDF do recurso sem ser destruído — a operação é reversível. Invariante: excluir o último item incluído de uma guia lança 409. Ao remover a guia do recurso, todos os itens voltam a `true`. Ver D-048.
 
 - **Procedimento:** entrada do Rol de Procedimentos da ANS, identificada por código TUSS (Terminologia Unificada da Saúde Suplementar). Cada procedimento tem porte, porte anestésico, etc.
 
@@ -40,6 +40,12 @@
 - **VL CORRETO:** label usado no PDF do recurso para o valor apurado por procedimento. Internamente o campo chama `ValorApurado`. "Apuração de honorários" é o processo padrão do setor; "valor apurado" é o resultado.
 
 - **RESTA PAGAR:** label usado no PDF do recurso para a diferença por guia: `sum(ValorApurado) − sum(ValorLiquidado)`. É o valor que o admin reivindica no recurso.
+
+- **Guia não recorrível:** guia em que **todos** os itens têm código TUSS presente em `Tenant.CodigosNaoRecorriveis`. `GuiaDto.NaoRecorrivel = true`. Exibida com badge "Não recorrível" na seleção de candidatas do recurso; o lote ("Adicionar todas") a pula automaticamente. O operador ainda pode adicioná-la individualmente via `AdicionarGuiaAsync` (escape hatch). Ver D-049.
+
+- **Guia mista:** guia que tem **ao menos um** item com código NR e **ao menos um** item recorrível. `GuiaDto.MistaComNaoRecorriveis = true`. Incluída pelo lote, mas os itens NR recebem `IncluidoNoRecurso=false` automaticamente ao ser adicionada. Exibida com badge "Contém não recorrível". Os dois flags são mutuamente exclusivos; nenhuma guia tem ambos `true`. Ver D-049.
+
+- **CodigosNaoRecorriveis:** lista de códigos TUSS configurada por tenant (`Tenant.CodigosNaoRecorriveis List<string>`, mapeada como `text[]` no Postgres). Define quais procedimentos o tenant não quer que entrem num recurso automaticamente (ex: consultas). Gerenciada na tela de Configurações do tenant.
 
 ### Atributos que afetam preço
 
@@ -78,6 +84,8 @@
 - **PosicaoExecutor:** papel do profissional na execução do procedimento. Valores: `Cirurgiao`, `PrimeiroAuxiliar`, `SegundoAuxiliar`, `TerceiroAuxiliar`, `Anestesista`, `ClinicoAssistente`. Os auxiliares aplicam os descontos de posição do `PosicaoExecutorModifier` (1º aux ×0.6 · 2º ×0.4 · 3º ×0.3) sobre o valor apurado.
 
 - **Operadora:** plano de saúde. **Cada Unimed Singular (JPA, Recife, Fortaleza, etc.) é uma operadora separada** — não confundir com "UNIMED" como rede.
+
+- **Tenant (configurações):** além dos dados operacionais, o tenant tem `Nome` (renomeável pelo `TenantAdmin`) e `LogoKey string?` — chave opaca apontando para o arquivo de logo armazenado via `IFileStorage` (nunca os bytes em banco). A logo (PNG ou JPEG, max 2 MB, validado por magic number) é renderizada no cabeçalho do PDF do recurso. Ver D-047.
 
 ## Regras de cálculo UNIMED
 
