@@ -216,7 +216,7 @@ Nota: `apps/backend/App/Identity/Migrations/.editorconfig` JÁ existe (suprime I
 
 ### TASK-TCFG-03 — `TenantSettingsService` + endpoints: obter settings + renomear
 
-- [ ] pendente
+- [x] concluída
 
 **Objetivo:** criar o service de configurações do tenant (escopado por `ICurrentUser.TenantId`) com
 `GetSettingsAsync` e `RenameAsync`, e expor os endpoints `GET`/`PATCH` em `/api/v1/admin/tenant`.
@@ -625,7 +625,7 @@ export interface TenantSettings {
 
 - [x] TASK-TCFG-01 — IFileStorage + LocalFileStorage + infra
 - [x] TASK-TCFG-02 — Tenant rename + LogoKey + migration
-- [ ] TASK-TCFG-03 — TenantSettingsService + endpoints (obter/renomear)
+- [x] TASK-TCFG-03 — TenantSettingsService + endpoints (obter/renomear)
 - [ ] TASK-TCFG-04 — upload/download/remoção da logo
 - [ ] TASK-TCFG-05 — logo no PDF do recurso
 - [ ] TASK-TCFG-06 — frontend: página de configurações

@@ -47,6 +47,7 @@ builder.Services.AddScoped<PricingRuleSetFactory>();
 builder.Services.AddScoped<GuiaService>();
 builder.Services.AddScoped<ImportacaoGuiaCsvService>();
 builder.Services.AddScoped<RecursoService>();
+builder.Services.AddScoped<TenantSettingsService>();
 builder.Services.Configure<StorageOptions>(builder.Configuration.GetSection(StorageOptions.SectionName));
 builder.Services.AddSingleton<IFileStorage, LocalFileStorage>();
 
@@ -201,6 +202,7 @@ app.UseAuthorization();
 app.MapAuthEndpoints();
 app.MapSaasEndpoints();
 app.MapAdminEndpoints();
+app.MapTenantSettingsEndpoints();
 app.MapCatalogEndpoints();
 app.MapGuiaEndpoints();
 app.MapRecursoEndpoints();
