@@ -443,7 +443,7 @@ atualizarCodigosNaoRecorriveis(codigos: string[]): Observable<TenantSettings> {
 
 ### TASK-NREC-06 — Selo "Não recorrível" na seleção de guias do recurso
 
-- [ ] pendente
+- [x] concluída
 
 **Objetivo:** na tabela de candidatas do `recurso-guias`, marcar visualmente as guias não
 recorríveis (o backend já as devolve com `naoRecorrivel=true` e já as exclui do lote).
@@ -516,4 +516,4 @@ export interface GuiaItem {
 - [x] TASK-NREC-03 — flag na listagem de guias
 - [x] TASK-NREC-04 — lote pula não recorríveis
 - [x] TASK-NREC-05 — UI de configuração (autocomplete catálogo)
-- [ ] TASK-NREC-06 — selo na seleção de guias do recurso
+- [x] TASK-NREC-06 — selo na seleção de guias do recurso

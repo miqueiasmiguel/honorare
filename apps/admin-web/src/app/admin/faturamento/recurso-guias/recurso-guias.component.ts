@@ -340,7 +340,12 @@ import { AdicionarItemModalComponent } from './adicionar-item-modal/adicionar-it
               <tbody>
                 @for (candidata of candidatas(); track candidata.id) {
                   <tr class="recurso-guias__linha-candidata">
-                    <td>{{ candidata.numeroGuia }}</td>
+                    <td>
+                      {{ candidata.numeroGuia }}
+                      @if (candidata.naoRecorrivel) {
+                        <span class="recurso-guias__badge-nao-recorrivel">Não recorrível</span>
+                      }
+                    </td>
                     <td>{{ formatarData(candidata.dataAtendimento) }}</td>
                     <td>{{ candidata.beneficiarioNome }}</td>
                     <td>

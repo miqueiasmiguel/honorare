@@ -79,6 +79,7 @@ function makeGuiaItem(overrides: Partial<GuiaItem> = {}): GuiaItem {
     totalItens: 1,
     criadoEm: '2026-01-11T00:00:00Z',
     atualizadoEm: '2026-01-11T00:00:00Z',
+    naoRecorrivel: false,
     ...overrides,
   };
 }
@@ -389,6 +390,22 @@ describe('RecursoGuiasComponent', () => {
     el.querySelector<HTMLElement>('.guia-card__header')?.click();
     fixture.detectChanges();
     expect(el.querySelector('.guia-card__glosa')).toBeNull();
+  });
+
+  it('deve exibir selo "Não recorrível" quando candidata.naoRecorrivel é true', () => {
+    const candidatas = [makeGuiaItem({ id: 'g-nr', naoRecorrivel: true })];
+    const { el, fixture } = setup({ candidatas });
+    el.querySelector<HTMLButtonElement>('.recurso-guias__btn-filtrar')?.click();
+    fixture.detectChanges();
+    expect(el.querySelector('.recurso-guias__badge-nao-recorrivel')).not.toBeNull();
+  });
+
+  it('não deve exibir selo quando naoRecorrivel é false', () => {
+    const candidatas = [makeGuiaItem({ id: 'g-ok', naoRecorrivel: false })];
+    const { el, fixture } = setup({ candidatas });
+    el.querySelector<HTMLButtonElement>('.recurso-guias__btn-filtrar')?.click();
+    fixture.detectChanges();
+    expect(el.querySelector('.recurso-guias__badge-nao-recorrivel')).toBeNull();
   });
 
   it('abrirModalItem seta guiaParaItem e abre o modal', () => {

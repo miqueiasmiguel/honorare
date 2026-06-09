@@ -53,6 +53,7 @@ export interface GuiaItem {
   totalItens: number;
   criadoEm: string;
   atualizadoEm: string;
+  naoRecorrivel?: boolean;
 }
 
 export interface GuiaDetalheItem extends GuiaItem {
