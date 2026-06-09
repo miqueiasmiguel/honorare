@@ -364,6 +364,8 @@ import { AdicionarItemModalComponent } from './adicionar-item-modal/adicionar-it
                       {{ candidata.numeroGuia }}
                       @if (candidata.naoRecorrivel) {
                         <span class="recurso-guias__badge-nao-recorrivel">Não recorrível</span>
+                      } @else if (candidata.mistaComNaoRecorriveis) {
+                        <span class="recurso-guias__badge-mista">Contém não recorrível</span>
                       }
                     </td>
                     <td>{{ formatarData(candidata.dataAtendimento) }}</td>

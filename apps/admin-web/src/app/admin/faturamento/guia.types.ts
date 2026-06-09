@@ -54,6 +54,7 @@ export interface GuiaItem {
   criadoEm: string;
   atualizadoEm: string;
   naoRecorrivel?: boolean;
+  mistaComNaoRecorriveis?: boolean;
 }
 
 export interface GuiaDetalheItem extends GuiaItem {

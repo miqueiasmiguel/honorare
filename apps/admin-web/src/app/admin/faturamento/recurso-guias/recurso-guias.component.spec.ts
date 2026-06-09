@@ -395,7 +395,9 @@ describe('RecursoGuiasComponent', () => {
   });
 
   it('deve exibir selo "Não recorrível" quando candidata.naoRecorrivel é true', () => {
-    const candidatas = [makeGuiaItem({ id: 'g-nr', naoRecorrivel: true })];
+    const candidatas = [
+      makeGuiaItem({ id: 'g-nr', naoRecorrivel: true, mistaComNaoRecorriveis: false }),
+    ];
     const { el, fixture } = setup({ candidatas });
     el.querySelector<HTMLButtonElement>('.recurso-guias__btn-filtrar')?.click();
     fixture.detectChanges();
@@ -403,11 +405,47 @@ describe('RecursoGuiasComponent', () => {
   });
 
   it('não deve exibir selo quando naoRecorrivel é false', () => {
-    const candidatas = [makeGuiaItem({ id: 'g-ok', naoRecorrivel: false })];
+    const candidatas = [
+      makeGuiaItem({ id: 'g-ok', naoRecorrivel: false, mistaComNaoRecorriveis: false }),
+    ];
     const { el, fixture } = setup({ candidatas });
     el.querySelector<HTMLButtonElement>('.recurso-guias__btn-filtrar')?.click();
     fixture.detectChanges();
     expect(el.querySelector('.recurso-guias__badge-nao-recorrivel')).toBeNull();
+  });
+
+  it('deve exibir badge "Contém não recorrível" quando candidata.mistaComNaoRecorriveis é true', () => {
+    const candidatas = [
+      makeGuiaItem({ id: 'g-mista', naoRecorrivel: false, mistaComNaoRecorriveis: true }),
+    ];
+    const { el, fixture } = setup({ candidatas });
+    el.querySelector<HTMLButtonElement>('.recurso-guias__btn-filtrar')?.click();
+    fixture.detectChanges();
+    const badge = el.querySelector('.recurso-guias__badge-mista');
+    expect(badge).not.toBeNull();
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    expect(badge.textContent?.trim()).toBe('Contém não recorrível');
+  });
+
+  it('não deve exibir badge mista quando mistaComNaoRecorriveis é false', () => {
+    const candidatas = [
+      makeGuiaItem({ id: 'g-ok', naoRecorrivel: false, mistaComNaoRecorriveis: false }),
+    ];
+    const { el, fixture } = setup({ candidatas });
+    el.querySelector<HTMLButtonElement>('.recurso-guias__btn-filtrar')?.click();
+    fixture.detectChanges();
+    expect(el.querySelector('.recurso-guias__badge-mista')).toBeNull();
+  });
+
+  it('deve exibir badge "Não recorrível" (e não badge mista) quando naoRecorrivel é true', () => {
+    const candidatas = [
+      makeGuiaItem({ id: 'g-nr', naoRecorrivel: true, mistaComNaoRecorriveis: false }),
+    ];
+    const { el, fixture } = setup({ candidatas });
+    el.querySelector<HTMLButtonElement>('.recurso-guias__btn-filtrar')?.click();
+    fixture.detectChanges();
+    expect(el.querySelector('.recurso-guias__badge-nao-recorrivel')).not.toBeNull();
+    expect(el.querySelector('.recurso-guias__badge-mista')).toBeNull();
   });
 
   it('abrirModalItem seta guiaParaItem e abre o modal', () => {

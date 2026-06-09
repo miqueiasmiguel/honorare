@@ -366,6 +366,18 @@
     background-color: var(--color-ferrugem-claro);
   }
 
+  // ── Guia mista badge ─────────────────────────────────────────────────────
+  &__badge-mista {
+    @include text-label;
+
+    display: inline-block;
+    margin-left: space(2);
+    padding: space(1) space(2);
+    border-radius: space(1);
+    color: var(--color-ambar);
+    background-color: var(--color-ambar-claro);
+  }
+
   // ── Situação badge ────────────────────────────────────────────────────────
 
   &__situacao-badge {
