@@ -292,7 +292,7 @@ var guiaDtos = guiasRaw.Select(g => new GuiaNoRecursoDto(
 
 ### TASK-ADDITEM-03 — Frontend: método `adicionarItem` no GuiaService + `ehPacote` no tipo
 
-- [ ] pendente
+- [x] concluída
 
 **Objetivo:** camada de wiring TS — método HTTP para o endpoint da TASK-01 e o campo `ehPacote` no
 tipo de guia do recurso (TASK-02).
@@ -332,9 +332,9 @@ adicionarItem(guiaId: string, payload: CriarItemGuiaPayload): Observable<GuiaDet
 
 **Aceite:**
 
-- [ ] `pnpm -F admin-web lint` (--max-warnings 0) limpo
-- [ ] `pnpm -F admin-web test:ci` verde
-- [ ] `adicionarItem` tipado `Observable<GuiaDetalheItem>`
+- [x] `pnpm -F admin-web lint` (--max-warnings 0) limpo
+- [x] `pnpm -F admin-web test:ci` verde
+- [x] `adicionarItem` tipado `Observable<GuiaDetalheItem>`
 
 **Commit:** `feat(admin-web): adicionarItem no GuiaService e ehPacote no tipo do recurso (TASK-ADDITEM-03)`
 
@@ -342,7 +342,7 @@ adicionarItem(guiaId: string, payload: CriarItemGuiaPayload): Observable<GuiaDet
 
 ### TASK-ADDITEM-04 — Frontend: `AdicionarItemModalComponent`
 
-- [ ] pendente
+- [x] concluída
 
 **Objetivo:** criar o modal que envolve `app-item-guia-form`, chama `GuiaService.adicionarItem` ao
 salvar, e emite `concluido`/`cancelado`. Segue o padrão de modal `importar-modal` (backdrop próprio,
@@ -459,9 +459,9 @@ container centralizado. Espelhe `importar-modal.component.scss` se precisar de r
 
 **Aceite:**
 
-- [ ] `pnpm -F admin-web lint` e `pnpm -F admin-web stylelint` limpos (--max-warnings 0)
-- [ ] `pnpm -F admin-web test:ci` verde
-- [ ] modal não usa `| currency`/`| number`/`| date` (NG0701) nem `[value]` em `<select>` (MEMORY)
+- [x] `pnpm -F admin-web lint` e `pnpm -F admin-web stylelint` limpos (--max-warnings 0)
+- [x] `pnpm -F admin-web test:ci` verde
+- [x] modal não usa `| currency`/`| number`/`| date` (NG0701) nem `[value]` em `<select>` (MEMORY)
 
 **Commit:** `feat(admin-web): modal para adicionar item à guia (TASK-ADDITEM-04)`
 
@@ -554,6 +554,6 @@ recarrega o recurso.
 
 - [x] TASK-ADDITEM-01 — Backend: `AdicionarItemAsync` + endpoint
 - [x] TASK-ADDITEM-02 — Backend: `EhPacote` no `GuiaNoRecursoDto`
-- [ ] TASK-ADDITEM-03 — Frontend: `adicionarItem` + tipo `ehPacote`
-- [ ] TASK-ADDITEM-04 — Frontend: `AdicionarItemModalComponent`
+- [x] TASK-ADDITEM-03 — Frontend: `adicionarItem` + tipo `ehPacote`
+- [x] TASK-ADDITEM-04 — Frontend: `AdicionarItemModalComponent`
 - [ ] TASK-ADDITEM-05 — Frontend: integração na `recurso-guias`
