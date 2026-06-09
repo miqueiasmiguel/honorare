@@ -28,4 +28,10 @@ export class TenantService {
   deleteLogo(): Observable<unknown> {
     return this._http.delete('/api/v1/admin/tenant/logo');
   }
+
+  atualizarCodigosNaoRecorriveis(codigos: string[]): Observable<TenantSettings> {
+    return this._http.put<TenantSettings>('/api/v1/admin/tenant/codigos-nao-recorriveis', {
+      codigos,
+    });
+  }
 }

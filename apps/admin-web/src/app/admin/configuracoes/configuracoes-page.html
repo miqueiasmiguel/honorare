@@ -76,4 +76,75 @@
       />
     </label>
   </div>
+
+  <div class="configuracoes__nao-recorriveis">
+    <h2 class="configuracoes__section-title">Procedimentos não recorríveis</h2>
+    <p class="configuracoes__nao-recorriveis-hint">
+      Guias com estes procedimentos não são incluídas automaticamente no lote de recurso. O operador
+      pode adicioná-las manualmente.
+    </p>
+
+    <div class="configuracoes__nao-recorriveis-busca">
+      <input
+        type="text"
+        class="configuracoes__input"
+        [value]="buscaNaoRecorrivel()"
+        (input)="buscarProcedimentos($any($event.target).value)"
+        placeholder="Buscar procedimento por código ou descrição"
+        autocomplete="off"
+      />
+      @if (resultadosBusca().length > 0) {
+        <ul class="configuracoes__nao-recorriveis-resultados">
+          @for (proc of resultadosBusca(); track proc.codigoTuss) {
+            <li
+              class="configuracoes__nao-recorriveis-resultado"
+              tabindex="0"
+              (click)="adicionarNaoRecorrivel(proc)"
+              (keyup.enter)="adicionarNaoRecorrivel(proc)"
+            >
+              <span class="configuracoes__nao-recorriveis-codigo">{{ proc.codigoTuss }}</span>
+              <span class="configuracoes__nao-recorriveis-descricao">{{ proc.descricao }}</span>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+
+    @if (naoRecorriveis().length > 0) {
+      <ul class="configuracoes__nao-recorriveis-lista">
+        @for (item of naoRecorriveis(); track item.codigoTuss) {
+          <li class="configuracoes__nao-recorriveis-item">
+            <span class="configuracoes__nao-recorriveis-codigo">{{ item.codigoTuss }}</span>
+            <span class="configuracoes__nao-recorriveis-descricao">{{ item.descricao }}</span>
+            <button
+              type="button"
+              class="configuracoes__btn-remove-codigo"
+              (click)="removerNaoRecorrivel(item.codigoTuss)"
+            >
+              Remover
+            </button>
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="configuracoes__nao-recorriveis-vazio">Nenhum procedimento cadastrado.</p>
+    }
+
+    <div class="configuracoes__nao-recorriveis-acoes">
+      <button
+        type="button"
+        class="configuracoes__btn-save"
+        [disabled]="salvandoNaoRecorriveis()"
+        (click)="salvarNaoRecorriveis()"
+      >
+        {{ salvandoNaoRecorriveis() ? 'Salvando…' : 'Salvar lista' }}
+      </button>
+    </div>
+  </div>
+
+  <app-recortar-logo-modal
+    [arquivo]="arquivoParaRecorte()"
+    (recortado)="aoRecortar($event)"
+    (cancelado)="aoCancelarRecorte()"
+  />
 </section>
