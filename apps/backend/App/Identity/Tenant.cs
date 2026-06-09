@@ -35,7 +35,19 @@ internal sealed class Tenant
         Name = trimmed;
     }
 
+    public List<string> CodigosNaoRecorriveis { get; private set; } = [];
+
     public void SetLogoKey(string key) => LogoKey = key;
 
     public void ClearLogoKey() => LogoKey = null;
+
+    public void DefinirCodigosNaoRecorriveis(IEnumerable<string> codigos)
+    {
+        CodigosNaoRecorriveis = codigos
+            .Select(c => c.Trim())
+            .Where(c => c.Length > 0)
+            .Distinct()
+            .OrderBy(c => c, StringComparer.Ordinal)
+            .ToList();
+    }
 }

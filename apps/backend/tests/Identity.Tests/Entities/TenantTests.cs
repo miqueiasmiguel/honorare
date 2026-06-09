@@ -114,4 +114,35 @@ public sealed class TenantTests
         tenant.ClearLogoKey();
         Assert.Null(tenant.LogoKey);
     }
+
+    [Fact]
+    public void Create_DeveIniciarComListaVazia()
+    {
+        var tenant = Tenant.Create("Clínica ABC");
+        Assert.Empty(tenant.CodigosNaoRecorriveis);
+    }
+
+    [Fact]
+    public void DefinirCodigosNaoRecorriveis_DeveArmazenarLista()
+    {
+        var tenant = Tenant.Create("Clínica ABC");
+        tenant.DefinirCodigosNaoRecorriveis(["10101012", "20202024"]);
+        Assert.Equal(["10101012", "20202024"], tenant.CodigosNaoRecorriveis);
+    }
+
+    [Fact]
+    public void DefinirCodigosNaoRecorriveis_DeveRemoverDuplicatasEEspacos()
+    {
+        var tenant = Tenant.Create("Clínica ABC");
+        tenant.DefinirCodigosNaoRecorriveis([" 10101012 ", "10101012"]);
+        Assert.Equal(["10101012"], tenant.CodigosNaoRecorriveis);
+    }
+
+    [Fact]
+    public void DefinirCodigosNaoRecorriveis_DeveIgnorarVazios()
+    {
+        var tenant = Tenant.Create("Clínica ABC");
+        tenant.DefinirCodigosNaoRecorriveis(["", "  "]);
+        Assert.Empty(tenant.CodigosNaoRecorriveis);
+    }
 }
