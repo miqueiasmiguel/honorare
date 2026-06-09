@@ -408,6 +408,16 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser, 
                     b.Nome.Contains(cmd.Beneficiario)));
         }
 
+        var tenant = await _db.Tenants
+            .FirstOrDefaultAsync(t => t.Id == _currentUser.TenantId!.Value, ct);
+        var codigos = tenant?.CodigosNaoRecorriveis ?? [];
+        if (codigos.Count > 0)
+        {
+            q = q.Where(g => !_db.ItensGuia.Any(i =>
+                i.GuiaId == g.Id &&
+                _db.Procedimentos.Any(p => p.Id == i.ProcedimentoId && codigos.Contains(p.CodigoTuss))));
+        }
+
         var guias = await q.ToListAsync(ct);
         foreach (var guia in guias)
         {

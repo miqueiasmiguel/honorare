@@ -556,6 +556,116 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
     }
 
     [Fact]
+    public async Task AdicionarEmLote_DevePularGuiaComCodigoNaoRecorrivelAsync()
+    {
+        await using var adminCtx = db.CreateContext();
+        const string CodigoConsulta = "10101012";
+        var tenant = Tenant.Create("Clínica NR " + Guid.NewGuid().ToString("N")[..4]);
+        tenant.DefinirCodigosNaoRecorriveis([CodigoConsulta]);
+        adminCtx.Tenants.Add(tenant);
+        await adminCtx.SaveChangesAsync();
+
+        var tenantId = tenant.Id;
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var pfx = tenantId.ToString("N")[..4];
+
+        var prestador = Prestador.Create(tenantId, "Dr. NR " + pfx, null);
+        var operadora = Operadora.Create(tenantId, "UNIMED NR " + pfx, null, null, TipoRuleSet.Unimed);
+        var procNormal = Procedimento.Create(tenantId, tenantId.ToString("N")[..8], "Proc Normal NR", "1", null, false, false);
+        var procConsulta = Procedimento.Create(tenantId, CodigoConsulta, "Consulta NR", "1", null, false, false);
+        ctx.Add(prestador);
+        ctx.Add(operadora);
+        ctx.Add(procNormal);
+        ctx.Add(procConsulta);
+        await ctx.SaveChangesAsync();
+
+        ctx.Add(TabelaProcedimento.Create(tenantId, operadora.Id, procNormal.Id, 200m));
+        ctx.Add(TabelaProcedimento.Create(tenantId, operadora.Id, procConsulta.Id, 100m));
+        await ctx.SaveChangesAsync();
+
+        var service = new RecursoService(ctx, user, _noopStorage);
+        var recursoId = (await service.CriarAsync(
+            new CriarRecursoCommand(operadora.Id, prestador.Id, new DateOnly(2026, 1, 1), null, "202512"))).Value!.Id;
+
+        var guiaNormalId = await CriarGuiaAsync(ctx, user, prestador.Id, operadora.Id, procNormal.Id, $"NR-N-{pfx}");
+        await CriarGuiaAsync(ctx, user, prestador.Id, operadora.Id, procConsulta.Id, $"NR-C-{pfx}");
+
+        var cmd = new AdicionarGuiasEmLoteCommand(prestador.Id, operadora.Id, null, null, null, null, null, null);
+        var result = await service.AdicionarGuiasEmLoteAsync(recursoId, cmd);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(1, result.Value);
+        await using var verifyCtx = db.CreateContext();
+        var guiaVinculada = await verifyCtx.Guias.FirstOrDefaultAsync(g => g.RecursoId == recursoId);
+        Assert.NotNull(guiaVinculada);
+        Assert.Equal(guiaNormalId, guiaVinculada.Id);
+    }
+
+    [Fact]
+    public async Task AdicionarEmLote_DeveVincularTodas_QuandoListaVaziaAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (opId, prestId, procId) = await SeedCatalogAsync(ctx, tenantId);
+        var service = new RecursoService(ctx, user, _noopStorage);
+        var pfx = tenantId.ToString("N")[..4];
+
+        var recursoId = (await service.CriarAsync(
+            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 1, 1), null, "202512"))).Value!.Id;
+
+        await CriarGuiaAsync(ctx, user, prestId, opId, procId, $"LV-A-{pfx}");
+        await CriarGuiaAsync(ctx, user, prestId, opId, procId, $"LV-B-{pfx}", new DateOnly(2026, 1, 11));
+
+        var cmd = new AdicionarGuiasEmLoteCommand(prestId, opId, null, null, null, null, null, null);
+        var result = await service.AdicionarGuiasEmLoteAsync(recursoId, cmd);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(2, result.Value);
+    }
+
+    [Fact]
+    public async Task AdicionarGuia_DeveVincularGuiaNaoRecorrivel_QuandoIndividualAsync()
+    {
+        await using var adminCtx = db.CreateContext();
+        const string CodigoConsulta = "20202020";
+        var tenant = Tenant.Create("Clínica ESC " + Guid.NewGuid().ToString("N")[..4]);
+        tenant.DefinirCodigosNaoRecorriveis([CodigoConsulta]);
+        adminCtx.Tenants.Add(tenant);
+        await adminCtx.SaveChangesAsync();
+
+        var tenantId = tenant.Id;
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var pfx = tenantId.ToString("N")[..4];
+
+        var prestador = Prestador.Create(tenantId, "Dr. ESC " + pfx, null);
+        var operadora = Operadora.Create(tenantId, "UNIMED ESC " + pfx, null, null, TipoRuleSet.Unimed);
+        var procConsulta = Procedimento.Create(tenantId, CodigoConsulta, "Consulta ESC", "1", null, false, false);
+        ctx.Add(prestador);
+        ctx.Add(operadora);
+        ctx.Add(procConsulta);
+        await ctx.SaveChangesAsync();
+
+        ctx.Add(TabelaProcedimento.Create(tenantId, operadora.Id, procConsulta.Id, 100m));
+        await ctx.SaveChangesAsync();
+
+        var service = new RecursoService(ctx, user, _noopStorage);
+        var recursoId = (await service.CriarAsync(
+            new CriarRecursoCommand(operadora.Id, prestador.Id, new DateOnly(2026, 1, 1), null, "202512"))).Value!.Id;
+
+        var guiaId = await CriarGuiaAsync(ctx, user, prestador.Id, operadora.Id, procConsulta.Id, $"ESC-{pfx}");
+        await service.AdicionarGuiaAsync(recursoId, guiaId);
+
+        await using var verifyCtx = db.CreateContext();
+        var guia = await verifyCtx.Guias.FirstOrDefaultAsync(g => g.Id == guiaId);
+        Assert.NotNull(guia);
+        Assert.Equal(recursoId, guia.RecursoId);
+        Assert.Equal(SituacaoGuia.EmRecurso, guia.Situacao);
+    }
+
+    [Fact]
     public async Task ObterPorId_RetornaGuiasComLocalAtendimentoAsync()
     {
         var tenantId = Guid.NewGuid();

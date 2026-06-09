@@ -295,7 +295,7 @@ E na projeção `new GuiaDto(...)` acrescente o último argumento:
 
 ### TASK-NREC-04 — Lote "Adicionar todas" pula guias não recorríveis
 
-- [ ] pendente
+- [x] concluída
 
 **Objetivo:** `RecursoService.AdicionarGuiasEmLoteAsync` deixa de vincular guias que tenham
 algum item com código TUSS na lista do tenant. **Único ponto que filtra de fato.**
@@ -514,6 +514,6 @@ export interface GuiaItem {
 - [x] TASK-NREC-01 — campo no Tenant + migration
 - [x] TASK-NREC-02 — service + endpoint
 - [x] TASK-NREC-03 — flag na listagem de guias
-- [ ] TASK-NREC-04 — lote pula não recorríveis
+- [x] TASK-NREC-04 — lote pula não recorríveis
 - [ ] TASK-NREC-05 — UI de configuração (autocomplete catálogo)
 - [ ] TASK-NREC-06 — selo na seleção de guias do recurso
