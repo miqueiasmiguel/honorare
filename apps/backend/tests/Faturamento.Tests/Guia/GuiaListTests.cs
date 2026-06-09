@@ -605,6 +605,137 @@ public sealed class GuiaListTests(PostgresContainerFixture db)
         Assert.Contains(result.Itens, g => g.Id == guiaNrId);
         Assert.True(result.Itens.First(g => g.Id == guiaNrId).NaoRecorrivel);
     }
+
+    [Fact]
+    public async Task ListarAsync_DeveMarcarNaoRecorrivel_QuandoTodosOsItensEstaoNaListaAsync()
+    {
+        var tenant = Tenant.Create("Tenant NR Todos");
+        var tenantId = tenant.Id;
+        var (ctx, user, factory) = BuildTenant(tenantId);
+        await using var _ = ctx;
+
+        ctx.Tenants.Add(tenant);
+        await ctx.SaveChangesAsync();
+
+        var (prestadorId, operadoraId, beneficiarioId, procedimentoId) = await SeedCatalogAsync(ctx, tenantId);
+        var uid = tenantId.ToString("N")[..8].ToUpperInvariant();
+
+        tenant.DefinirCodigosNaoRecorriveis([uid]);
+        await ctx.SaveChangesAsync();
+
+        var service = new GuiaService(ctx, user, factory);
+        await CriarGuiaAsync(service, prestadorId, operadoraId, beneficiarioId, procedimentoId, "SFNRT01", new DateOnly(2025, 6, 1));
+
+        var result = await service.ListarAsync(new ListarGuiasQuery(null, null, null, null, null, null, null, null, null, 1, 20));
+
+        Assert.Equal(1, result.Total);
+        Assert.True(result.Itens[0].NaoRecorrivel);
+        Assert.False(result.Itens[0].MistaComNaoRecorriveis);
+    }
+
+    [Fact]
+    public async Task ListarAsync_DeveMarcarMista_QuandoApenasAlgumItemEstaNaListaAsync()
+    {
+        var tenant = Tenant.Create("Tenant NR Mista");
+        var tenantId = tenant.Id;
+        var (ctx, user, factory) = BuildTenant(tenantId);
+        await using var _ = ctx;
+
+        ctx.Tenants.Add(tenant);
+        await ctx.SaveChangesAsync();
+
+        var (prestadorId, operadoraId, beneficiarioId, procedimentoId) = await SeedCatalogAsync(ctx, tenantId);
+        var uid = tenantId.ToString("N")[..8].ToUpperInvariant();
+
+        var codigoRecorrivel = uid[..7] + "X";
+        var procRecorrivel = Procedimento.Create(tenantId, codigoRecorrivel, "Proc Recorrivel", "1", null, false, false);
+        ctx.Add(procRecorrivel);
+        await ctx.SaveChangesAsync();
+        ctx.Add(TabelaProcedimento.Create(tenantId, operadoraId, procRecorrivel.Id, 200m));
+        await ctx.SaveChangesAsync();
+
+        tenant.DefinirCodigosNaoRecorriveis([uid]);
+        await ctx.SaveChangesAsync();
+
+        var service = new GuiaService(ctx, user, factory);
+        var cmd = new CriarGuiaCommand(
+            prestadorId, operadoraId, beneficiarioId,
+            "SFMISTA01", new DateOnly(2025, 6, 1), false, string.Empty,
+            [ItemPadrao(procedimentoId), ItemPadrao(procRecorrivel.Id)]);
+        var criarResult = await service.CriarAsync(cmd);
+        Assert.True(criarResult.IsSuccess);
+
+        var result = await service.ListarAsync(new ListarGuiasQuery(null, null, null, null, null, null, null, null, null, 1, 20));
+
+        Assert.Equal(1, result.Total);
+        Assert.False(result.Itens[0].NaoRecorrivel);
+        Assert.True(result.Itens[0].MistaComNaoRecorriveis);
+    }
+
+    [Fact]
+    public async Task ListarAsync_NaoDeveMarcarNada_QuandoNenhumItemEstaNaListaAsync()
+    {
+        var tenant = Tenant.Create("Tenant NR Nada");
+        var tenantId = tenant.Id;
+        var (ctx, user, factory) = BuildTenant(tenantId);
+        await using var _ = ctx;
+
+        ctx.Tenants.Add(tenant);
+        await ctx.SaveChangesAsync();
+
+        var (prestadorId, operadoraId, beneficiarioId, procedimentoId) = await SeedCatalogAsync(ctx, tenantId);
+
+        tenant.DefinirCodigosNaoRecorriveis(["99999999"]);
+        await ctx.SaveChangesAsync();
+
+        var service = new GuiaService(ctx, user, factory);
+        await CriarGuiaAsync(service, prestadorId, operadoraId, beneficiarioId, procedimentoId, "SFNADA01", new DateOnly(2025, 6, 1));
+
+        var result = await service.ListarAsync(new ListarGuiasQuery(null, null, null, null, null, null, null, null, null, 1, 20));
+
+        Assert.Equal(1, result.Total);
+        Assert.False(result.Itens[0].NaoRecorrivel);
+        Assert.False(result.Itens[0].MistaComNaoRecorriveis);
+    }
+
+    [Fact]
+    public async Task ListarAsync_NaoDeveExcluirGuiaMista_MesmoSendoMistaAsync()
+    {
+        var tenant = Tenant.Create("Tenant NR Mista Keep");
+        var tenantId = tenant.Id;
+        var (ctx, user, factory) = BuildTenant(tenantId);
+        await using var _ = ctx;
+
+        ctx.Tenants.Add(tenant);
+        await ctx.SaveChangesAsync();
+
+        var (prestadorId, operadoraId, beneficiarioId, procedimentoId) = await SeedCatalogAsync(ctx, tenantId);
+        var uid = tenantId.ToString("N")[..8].ToUpperInvariant();
+
+        var codigoRecorrivel = uid[..7] + "Y";
+        var procRecorrivel = Procedimento.Create(tenantId, codigoRecorrivel, "Proc Recorrivel Keep", "1", null, false, false);
+        ctx.Add(procRecorrivel);
+        await ctx.SaveChangesAsync();
+        ctx.Add(TabelaProcedimento.Create(tenantId, operadoraId, procRecorrivel.Id, 200m));
+        await ctx.SaveChangesAsync();
+
+        tenant.DefinirCodigosNaoRecorriveis([uid]);
+        await ctx.SaveChangesAsync();
+
+        var service = new GuiaService(ctx, user, factory);
+        var cmd = new CriarGuiaCommand(
+            prestadorId, operadoraId, beneficiarioId,
+            "SFMISTAEX", new DateOnly(2025, 6, 1), false, string.Empty,
+            [ItemPadrao(procedimentoId), ItemPadrao(procRecorrivel.Id)]);
+        var criarResult = await service.CriarAsync(cmd);
+        Assert.True(criarResult.IsSuccess);
+        var guiaId = criarResult.Value!.Id;
+
+        var result = await service.ListarAsync(new ListarGuiasQuery(null, null, null, null, null, null, null, null, null, 1, 20));
+
+        Assert.Contains(result.Itens, g => g.Id == guiaId);
+        Assert.True(result.Itens.First(g => g.Id == guiaId).MistaComNaoRecorriveis);
+    }
 }
 
 file sealed class FakeListTenantUser(Guid tenantId) : ICurrentUser

@@ -50,7 +50,7 @@ internal sealed record GuiaDto(
     DateOnly DataAtendimento, SituacaoGuia Situacao, bool EhPacote,
     string Observacao, string LocalAtendimento, int TotalItens,
     DateTimeOffset CriadoEm, DateTimeOffset AtualizadoEm,
-    bool NaoRecorrivel);
+    bool NaoRecorrivel, bool MistaComNaoRecorriveis);
 
 internal sealed record ItemGuiaDto(
     Guid Id, Guid ProcedimentoId, string CodigoTuss, string DescricaoProcedimento,
@@ -378,12 +378,23 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
         var tenant = await _db.Tenants
             .FirstOrDefaultAsync(t => t.Id == _currentUser.TenantId!.Value, ct);
         var codigos = tenant?.CodigosNaoRecorriveis ?? [];
-        var naoRecorriveis = codigos.Count == 0
-            ? new HashSet<Guid>()
-            : (await (from i in _db.ItensGuia
-                      join p in _db.Procedimentos on i.ProcedimentoId equals p.Id
-                      where ids.Contains(i.GuiaId) && codigos.Contains(p.CodigoTuss)
-                      select i.GuiaId).Distinct().ToListAsync(ct)).ToHashSet();
+
+        var countNrPorGuia = codigos.Count == 0
+            ? new Dictionary<Guid, int>()
+            : await (from i in _db.ItensGuia
+                     join p in _db.Procedimentos on i.ProcedimentoId equals p.Id
+                     where ids.Contains(i.GuiaId) && codigos.Contains(p.CodigoTuss)
+                     group i by i.GuiaId into g
+                     select new { GuiaId = g.Key, Qtd = g.Count() })
+                    .ToDictionaryAsync(x => x.GuiaId, x => x.Qtd, ct);
+
+        var totalmenteNaoRecorrivelIds = countNrPorGuia.Keys
+            .Where(id => countNrPorGuia[id] == counts.GetValueOrDefault(id, 0))
+            .ToHashSet();
+
+        var mistaIds = countNrPorGuia.Keys
+            .Except(totalmenteNaoRecorrivelIds)
+            .ToHashSet();
 
         var itens = pagina.Select(x => new GuiaDto(
             x.Id, x.PrestadorId, x.PrestadorNome,
@@ -393,7 +404,8 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
             x.Observacao, x.LocalAtendimento,
             counts.GetValueOrDefault(x.Id, 0),
             x.CriadoEm, x.AtualizadoEm,
-            naoRecorriveis.Contains(x.Id))).ToList();
+            totalmenteNaoRecorrivelIds.Contains(x.Id),
+            mistaIds.Contains(x.Id))).ToList();
 
         return new ListarGuiasResult(itens, total, query.Pagina, query.ItensPorPagina);
     }
