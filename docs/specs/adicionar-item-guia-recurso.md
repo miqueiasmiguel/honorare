@@ -469,7 +469,7 @@ container centralizado. Espelhe `importar-modal.component.scss` se precisar de r
 
 ### TASK-ADDITEM-05 — Frontend: integrar o modal na tela `recurso-guias`
 
-- [ ] pendente
+- [x] concluída
 
 **Objetivo:** botão "+ Adicionar item" no card expandido da guia; abre o modal; ao concluir,
 recarrega o recurso.
@@ -556,4 +556,4 @@ recarrega o recurso.
 - [x] TASK-ADDITEM-02 — Backend: `EhPacote` no `GuiaNoRecursoDto`
 - [x] TASK-ADDITEM-03 — Frontend: `adicionarItem` + tipo `ehPacote`
 - [x] TASK-ADDITEM-04 — Frontend: `AdicionarItemModalComponent`
-- [ ] TASK-ADDITEM-05 — Frontend: integração na `recurso-guias`
+- [x] TASK-ADDITEM-05 — Frontend: integração na `recurso-guias`

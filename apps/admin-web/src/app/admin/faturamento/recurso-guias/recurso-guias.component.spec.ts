@@ -390,4 +390,27 @@ describe('RecursoGuiasComponent', () => {
     fixture.detectChanges();
     expect(el.querySelector('.guia-card__glosa')).toBeNull();
   });
+
+  it('abrirModalItem seta guiaParaItem e abre o modal', () => {
+    const guia = makeGuiaNoRecurso({ id: 'guia-1', ehPacote: true });
+    const { component } = setup({ guias: [guia] });
+
+    component.abrirModalItem(guia);
+
+    expect(component.modalItemAberto()).toBe(true);
+    expect(component.guiaParaItem()).toBe(guia);
+  });
+
+  it('onItemAdicionado fecha o modal e recarrega o recurso', () => {
+    const guia = makeGuiaNoRecurso({ id: 'guia-1' });
+    const { component, recursoService } = setup({ guias: [guia] });
+    component.abrirModalItem(guia);
+    recursoService.obterPorId.mockClear();
+
+    component.onItemAdicionado();
+
+    expect(component.modalItemAberto()).toBe(false);
+    expect(component.guiaParaItem()).toBeNull();
+    expect(recursoService.obterPorId).toHaveBeenCalledWith('rec-1');
+  });
 });
