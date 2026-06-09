@@ -343,6 +343,23 @@ A entidade `DeflatorPrestador` (percentual negociado por prestador/operadora/pos
 
 **Revisitar:** se a UNIMED passar a negociar deflatores por prestador ≠ 100% — reintroduzir como multiplicador sobre `valor_base`.
 
+### D-045: Adicionar item à guia é append-only e apura só o item novo
+
+O operador pode acrescentar um item a uma guia já existente — inclusive uma já `EmRecurso` — pela tela de guias do recurso (`recurso-guias`), via endpoint granular `POST /api/v1/admin/guias/{id}/itens` (`GuiaService.AdicionarItemAsync`). A operação é **append-only**: cria o item, apura **apenas ele** e **nunca** toca nos itens preexistentes nem em seus `ValorLiquidado`/`MotivoGlosa`/`ValorApurado` corrigido manualmente (D-041).
+
+**Por que é seguro apurar só um item:** o motor (`UnimedRuleSet.ApurarItemAsync`) calcula cada item usando **somente os atributos do próprio item + a operadora** — não há contexto cruzado entre itens. Logo, apurar o item novo isoladamente produz o mesmo resultado que apurar a guia inteira, sem efeito colateral sobre os demais.
+
+**Métodos proibidos dentro de `AdicionarItemAsync`** — ambos são destrutivos para uma guia que já carrega dados de recurso:
+
+- `AtualizarAsync` faz `ExecuteDeleteAsync` em todos os `ItensGuia` e os recria do zero → perde `ValorLiquidado`/`MotivoGlosa`.
+- `RecalcularAsync` chama `SetValorApurado(null)` em todos os itens → apaga as correções manuais de `ValorApurado` (D-041).
+
+`AdicionarItemAsync` em vez disso adiciona o item, apura-o e **anexa** os `PassoCalculo` ao `Calculo` existente (criando-o se ainda não houver), continuando a numeração de `Sequencia`.
+
+**Semântica de criação herdada de D-038:** item não-precificável em guia não-pacote (`SemTabela`/`Indeterminado`) é rejeitado com `ValidationError`; guia **pacote** (`EhPacote = true`) exige `ValorApurado` manual e não invoca o motor. Por isso `EhPacote` é exposto no `GuiaNoRecursoDto`, para o frontend mostrar o campo de valor manual no modal.
+
+**Revisitar:** se algum dia uma regra UNIMED passar a depender de contexto cruzado entre itens (hoje não existe) — aí adicionar um item exigiria reapurar a guia inteira e esta decisão cairia.
+
 ### D-023: CLAUDE.md em três níveis
 
 - Raiz: regras gerais do monorepo

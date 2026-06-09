@@ -221,6 +221,8 @@ Para cada `ItemGuia` calculado, o sistema gera:
 
 **Sem o trace não há auditoria — há chute.** O trace é o que permite ao admin contestar uma glosa fundamentadamente.
 
+A apuração é **independente por item**: cada `ItemGuia` é calculado só com seus próprios atributos + a operadora, sem contexto cruzado entre itens. Por isso o operador pode acrescentar um item esquecido a uma guia já existente (inclusive já `EmRecurso`) e apurar apenas esse item, sem reapurar nem perturbar os demais (ver D-045).
+
 ## Convênios sem apuração de honorários
 
 Para operadoras sem tabela de honorários negociada (convênios diversos, pequenos), o sistema opera em modo simplificado via `NullRuleSet` (`TipoRuleSet.Nulo`):
