@@ -351,7 +351,7 @@ if (codigos.Count > 0)
 
 ### TASK-NREC-05 — Tela de Configurações: gerenciar códigos não recorríveis
 
-- [ ] pendente
+- [x] concluída
 
 **Objetivo:** seção nova na página de Configurações para adicionar/remover procedimentos
 não recorríveis, escolhendo via busca no catálogo (autocomplete) e salvando via PUT.
@@ -515,5 +515,5 @@ export interface GuiaItem {
 - [x] TASK-NREC-02 — service + endpoint
 - [x] TASK-NREC-03 — flag na listagem de guias
 - [x] TASK-NREC-04 — lote pula não recorríveis
-- [ ] TASK-NREC-05 — UI de configuração (autocomplete catálogo)
+- [x] TASK-NREC-05 — UI de configuração (autocomplete catálogo)
 - [ ] TASK-NREC-06 — selo na seleção de guias do recurso
