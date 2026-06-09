@@ -43,11 +43,17 @@ internal static class RecursoEndpoints
     private static async Task<IResult> CriarRecursoAsync(
         CriarRecursoRequest body, RecursoService service, CancellationToken ct)
     {
-        var cmd = new CriarRecursoCommand(body.OperadoraId, body.PrestadorId, body.DataEmissao, body.Observacao);
+        var cmd = new CriarRecursoCommand(body.OperadoraId, body.PrestadorId, body.DataEmissao, body.Observacao, body.Numero);
         var result = await service.CriarAsync(cmd, ct);
         if (result.IsFailure)
         {
-            return Results.Problem(statusCode: StatusCodes.Status404NotFound, detail: result.Error!.Message);
+            var statusCode = result.Error switch
+            {
+                ValidationError => StatusCodes.Status422UnprocessableEntity,
+                NotFoundError => StatusCodes.Status404NotFound,
+                _ => StatusCodes.Status400BadRequest,
+            };
+            return Results.Problem(statusCode: statusCode, detail: result.Error!.Message);
         }
 
         return Results.Created($"/api/v1/admin/recursos/{result.Value!.Id}", result.Value);
@@ -56,11 +62,17 @@ internal static class RecursoEndpoints
     private static async Task<IResult> AtualizarRecursoAsync(
         Guid id, AtualizarRecursoRequest body, RecursoService service, CancellationToken ct)
     {
-        var cmd = new AtualizarRecursoCommand(body.OperadoraId, body.PrestadorId, body.DataEmissao, body.Observacao);
+        var cmd = new AtualizarRecursoCommand(body.OperadoraId, body.PrestadorId, body.DataEmissao, body.Observacao, body.Numero);
         var result = await service.AtualizarAsync(id, cmd, ct);
         if (result.IsFailure)
         {
-            return Results.Problem(statusCode: StatusCodes.Status404NotFound, detail: result.Error!.Message);
+            var statusCode = result.Error switch
+            {
+                ValidationError => StatusCodes.Status422UnprocessableEntity,
+                NotFoundError => StatusCodes.Status404NotFound,
+                _ => StatusCodes.Status400BadRequest,
+            };
+            return Results.Problem(statusCode: statusCode, detail: result.Error!.Message);
         }
 
         return Results.Ok(result.Value);
@@ -131,10 +143,10 @@ internal sealed record ListarRecursosRequest(
     int ItensPorPagina = 20);
 
 internal sealed record CriarRecursoRequest(
-    Guid OperadoraId, Guid PrestadorId, DateOnly DataEmissao, string? Observacao);
+    Guid OperadoraId, Guid PrestadorId, DateOnly DataEmissao, string? Observacao, string Numero);
 
 internal sealed record AtualizarRecursoRequest(
-    Guid OperadoraId, Guid PrestadorId, DateOnly DataEmissao, string? Observacao);
+    Guid OperadoraId, Guid PrestadorId, DateOnly DataEmissao, string? Observacao, string Numero);
 
 internal sealed record AdicionarGuiasEmLoteRequest(
     Guid PrestadorId, Guid OperadoraId,

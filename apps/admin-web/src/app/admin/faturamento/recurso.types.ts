@@ -4,6 +4,7 @@ export interface RecursoForm {
   operadoraId: string;
   prestadorId: string;
   dataEmissao: string;
+  numero: string;
   observacao: string | null;
 }
 

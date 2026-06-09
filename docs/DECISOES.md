@@ -360,6 +360,20 @@ O operador pode acrescentar um item a uma guia já existente — inclusive uma j
 
 **Revisitar:** se algum dia uma regra UNIMED passar a depender de contexto cruzado entre itens (hoje não existe) — aí adicionar um item exigiria reapurar a guia inteira e esta decisão cairia.
 
+### D-046: Número do recurso é manual (dígitos), pré-preenchido com o mês anterior à emissão (2026-06-09)
+
+O `Recurso.Numero` deixou de ser gerado automaticamente a partir da data de emissão (`DataEmissao.ToString("yyyyMM")`, comportamento original da entrega F4.1) e passou a ser **informado pelo operador**. Regras:
+
+- Campo de **texto somente-dígitos**, `varchar(20)` (antes `varchar(6)` — migration `AumentaRecursoNumeroParaVinteCaracteres`). É **string, não inteiro**, porque zeros à esquerda são significativos e devem ser preservados (ex.: `00042`).
+- **Obrigatório**, validado no servidor em `RecursoService.CriarAsync`/`AtualizarAsync` → `ValidationError` → HTTP 422, no mesmo padrão de validação do `CatalogService`. A entidade `Recurso` apenas persiste o valor (trimmed); **não há mais derivação de número no backend**.
+- **Pré-preenchido** no `RecursoFormComponent` com o `AAAAMM` do **mês anterior** à data de emissão (ex.: emissão `2026-01-15` → `202512`), acompanhando a data enquanto o operador não editar o campo manualmente. É apenas sugestão de UX — a regra do "mês anterior" vive só no frontend, não no backend.
+
+**Por que mês anterior:** o recurso é montado no mês corrente sobre competências do mês fechado anterior; o número reflete a competência contestada, não a data de emissão.
+
+**Por que validar no servidor e não só no formulário:** o `Numero` compõe o nome do PDF (`RECURSO_{Numero}_{Operadora}.pdf`) enviado à operadora. Um número vazio — ou inventado por um default de backend — seria o oposto de "manual e obrigatório". Por isso a derivação `yyyyMM` foi removida da entidade em vez de mantida como fallback.
+
+**Frontend — armadilha do `[value]` + signal:** o input filtra não-dígitos no handler; quando o usuário digita uma letra após dígitos válidos, o valor saneado é igual ao do signal e `signal.set()` é no-op → o Angular não repinta o DOM e o caractere inválido fica visível. O handler reescreve `input.value` explicitamente para forçar o repaint (primo da regra do `[value]` em `<select>` no CLAUDE.md).
+
 ### D-023: CLAUDE.md em três níveis
 
 - Raiz: regras gerais do monorepo

@@ -52,7 +52,7 @@ public sealed class RecursoPdfDataTests(PostgresContainerFixture db)
     {
         var svc = new RecursoService(ctx, user);
         var result = await svc.CriarAsync(
-            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 3, 1), null));
+            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 3, 1), null, "202512"));
         return result.Value!.Id;
     }
 

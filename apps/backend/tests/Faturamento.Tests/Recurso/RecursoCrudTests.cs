@@ -75,12 +75,12 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         var service = new RecursoService(ctx, user);
 
         var result = await service.CriarAsync(
-            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 2, 1), "Obs teste"));
+            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 2, 1), "Obs teste", "00250"));
 
         Assert.True(result.IsSuccess);
         Assert.Equal(opId, result.Value!.OperadoraId);
         Assert.Equal(prestId, result.Value.PrestadorId);
-        Assert.Equal("202602", result.Value.Numero);
+        Assert.Equal("00250", result.Value.Numero);
         Assert.Equal("Obs teste", result.Value.Observacao);
     }
 
@@ -97,9 +97,9 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         await ctx.SaveChangesAsync();
 
         var service = new RecursoService(ctx, user);
-        await service.CriarAsync(new CriarRecursoCommand(op1Id, prestId, new DateOnly(2026, 1, 1), null));
-        await service.CriarAsync(new CriarRecursoCommand(op1Id, prestId, new DateOnly(2026, 2, 1), null));
-        await service.CriarAsync(new CriarRecursoCommand(op2.Id, prestId, new DateOnly(2026, 3, 1), null));
+        await service.CriarAsync(new CriarRecursoCommand(op1Id, prestId, new DateOnly(2026, 1, 1), null, "202512"));
+        await service.CriarAsync(new CriarRecursoCommand(op1Id, prestId, new DateOnly(2026, 2, 1), null, "202512"));
+        await service.CriarAsync(new CriarRecursoCommand(op2.Id, prestId, new DateOnly(2026, 3, 1), null, "202512"));
 
         var result = await service.ListarAsync(new ListarRecursosQuery(op1Id, null, 1, 10));
 
@@ -120,8 +120,8 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         await ctx.SaveChangesAsync();
 
         var service = new RecursoService(ctx, user);
-        await service.CriarAsync(new CriarRecursoCommand(opId, prest1Id, new DateOnly(2026, 1, 1), null));
-        await service.CriarAsync(new CriarRecursoCommand(opId, prest2.Id, new DateOnly(2026, 2, 1), null));
+        await service.CriarAsync(new CriarRecursoCommand(opId, prest1Id, new DateOnly(2026, 1, 1), null, "202512"));
+        await service.CriarAsync(new CriarRecursoCommand(opId, prest2.Id, new DateOnly(2026, 2, 1), null, "202512"));
 
         var result = await service.ListarAsync(new ListarRecursosQuery(null, prest1Id, 1, 10));
 
@@ -140,7 +140,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
 
         for (var i = 1; i <= 5; i++)
         {
-            await service.CriarAsync(new CriarRecursoCommand(opId, prestId, new DateOnly(2026, i, 1), null));
+            await service.CriarAsync(new CriarRecursoCommand(opId, prestId, new DateOnly(2026, i, 1), null, "202512"));
         }
 
         var pagina1 = await service.ListarAsync(new ListarRecursosQuery(null, null, 1, 2));
@@ -152,7 +152,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
     }
 
     [Fact]
-    public async Task Atualizar_CamposAtualizados_NumeroRecalculadoAsync()
+    public async Task Atualizar_CamposAtualizados_NumeroManualPersistidoAsync()
     {
         var tenantId = Guid.NewGuid();
         var (ctx, user) = BuildTenant(tenantId);
@@ -161,15 +161,63 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         var service = new RecursoService(ctx, user);
 
         var criado = await service.CriarAsync(
-            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 1, 1), "Original"));
+            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 1, 1), "Original", "202512"));
         Assert.True(criado.IsSuccess);
 
         var updated = await service.AtualizarAsync(criado.Value!.Id,
-            new AtualizarRecursoCommand(opId, prestId, new DateOnly(2026, 6, 15), "Atualizado"));
+            new AtualizarRecursoCommand(opId, prestId, new DateOnly(2026, 6, 15), "Atualizado", "00099"));
 
         Assert.True(updated.IsSuccess);
-        Assert.Equal("202606", updated.Value!.Numero);
+        Assert.Equal("00099", updated.Value!.Numero);
         Assert.Equal("Atualizado", updated.Value.Observacao);
+    }
+
+    [Fact]
+    public async Task Criar_NumeroVazio_FalhaValidacaoAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (opId, prestId, _) = await SeedCatalogAsync(ctx, tenantId);
+        var service = new RecursoService(ctx, user);
+
+        var result = await service.CriarAsync(
+            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 2, 1), null, "   "));
+
+        Assert.True(result.IsFailure);
+        Assert.IsType<ValidationError>(result.Error);
+    }
+
+    [Fact]
+    public async Task Criar_NumeroNaoNumerico_FalhaValidacaoAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (opId, prestId, _) = await SeedCatalogAsync(ctx, tenantId);
+        var service = new RecursoService(ctx, user);
+
+        var result = await service.CriarAsync(
+            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 2, 1), null, "202601-001"));
+
+        Assert.True(result.IsFailure);
+        Assert.IsType<ValidationError>(result.Error);
+    }
+
+    [Fact]
+    public async Task Criar_NumeroAcimaDe20Digitos_FalhaValidacaoAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (opId, prestId, _) = await SeedCatalogAsync(ctx, tenantId);
+        var service = new RecursoService(ctx, user);
+
+        var result = await service.CriarAsync(
+            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 2, 1), null, new string('1', 21)));
+
+        Assert.True(result.IsFailure);
+        Assert.IsType<ValidationError>(result.Error);
     }
 
     [Fact]
@@ -182,7 +230,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         var service = new RecursoService(ctx, user);
 
         var criado = await service.CriarAsync(
-            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 1, 1), null));
+            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 1, 1), null, "202512"));
         Assert.True(criado.IsSuccess);
         var recursoId = criado.Value!.Id;
 
@@ -203,7 +251,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         var service = new RecursoService(ctx, user);
 
         var criado = await service.CriarAsync(
-            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 1, 1), null));
+            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 1, 1), null, "202512"));
         var recursoId = criado.Value!.Id;
 
         var guiaId = await CriarGuiaAsync(ctx, user, prestId, opId, procId,
@@ -224,7 +272,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         var service = new RecursoService(ctx, user);
 
         var criado = await service.CriarAsync(
-            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 1, 1), null));
+            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 1, 1), null, "202512"));
         var recursoId = criado.Value!.Id;
 
         var guiaId = await CriarGuiaAsync(ctx, user, prestId, opId, procId,
@@ -248,9 +296,9 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         var service = new RecursoService(ctx, user);
 
         var rec1Id = (await service.CriarAsync(
-            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 1, 1), null))).Value!.Id;
+            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 1, 1), null, "202512"))).Value!.Id;
         var rec2Id = (await service.CriarAsync(
-            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 2, 1), null))).Value!.Id;
+            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 2, 1), null, "202512"))).Value!.Id;
 
         var guiaId = await CriarGuiaAsync(ctx, user, prestId, opId, procId,
             "RE-DUP-" + tenantId.ToString("N")[..4]);
@@ -270,7 +318,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         var service = new RecursoService(ctx, user);
 
         var recursoId = (await service.CriarAsync(
-            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 1, 1), null))).Value!.Id;
+            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 1, 1), null, "202512"))).Value!.Id;
 
         var guiaId = await CriarGuiaAsync(ctx, user, prestId, opId, procId,
             "RE-REM-" + tenantId.ToString("N")[..4]);
@@ -294,7 +342,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         var service = new RecursoService(ctx, user);
 
         var recursoId = (await service.CriarAsync(
-            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 1, 1), null))).Value!.Id;
+            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 1, 1), null, "202512"))).Value!.Id;
 
         var guiaId = await CriarGuiaAsync(ctx, user, prestId, opId, procId,
             "RE-LIQ-" + tenantId.ToString("N")[..4]);
@@ -328,7 +376,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         var pfx = tenantId.ToString("N")[..4];
 
         var recursoId = (await service.CriarAsync(
-            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 3, 1), null))).Value!.Id;
+            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 3, 1), null, "202512"))).Value!.Id;
 
         await CriarGuiaAsync(ctx, user, prestId, opId, procId, $"LA-{pfx}", new DateOnly(2026, 3, 1));
         await CriarGuiaAsync(ctx, user, prestId, opId, procId, $"LB-{pfx}", new DateOnly(2026, 3, 15));
@@ -336,7 +384,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         await CriarGuiaAsync(ctx, user, prestId, opId, procId, $"LD-{pfx}", new DateOnly(2026, 2, 28));
 
         var rec2Id = (await service.CriarAsync(
-            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 4, 1), null))).Value!.Id;
+            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 4, 1), null, "202512"))).Value!.Id;
         var guia5Id = await CriarGuiaAsync(ctx, user, prestId, opId, procId, $"LE-{pfx}", new DateOnly(2026, 3, 10));
         await service.AdicionarGuiaAsync(rec2Id, guia5Id);
 
@@ -362,7 +410,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         var pfx = tenantId.ToString("N")[..4];
 
         var recursoId = (await service.CriarAsync(
-            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 2, 1), null))).Value!.Id;
+            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 2, 1), null, "202512"))).Value!.Id;
 
         var guia1Id = await CriarGuiaAsync(ctx, user, prestId, opId, procId, $"LM-A-{pfx}", new DateOnly(2026, 2, 5));
         await service.AdicionarGuiaAsync(recursoId, guia1Id);
@@ -404,7 +452,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         var pfx = tenantId.ToString("N")[..4];
 
         var recursoId = (await service.CriarAsync(
-            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 5, 1), null))).Value!.Id;
+            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 5, 1), null, "202512"))).Value!.Id;
 
         var guiaAId = await CriarGuiaAsync(ctx, user, prestId, opId, procId, $"LG-A-{pfx}", new DateOnly(2026, 5, 5));
         var itemA = await ctx.ItensGuia.FirstAsync(i => i.GuiaId == guiaAId);
@@ -447,7 +495,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         var pfx = tenantId.ToString("N")[..4];
 
         var recursoId = (await service.CriarAsync(
-            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 3, 1), null))).Value!.Id;
+            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 3, 1), null, "202512"))).Value!.Id;
 
         var factory = new PricingRuleSetFactory(ctx);
         var guiaSvc = new GuiaService(ctx, user, factory);
@@ -488,7 +536,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         var pfx = tenantId.ToString("N")[..4];
 
         var recursoId = (await service.CriarAsync(
-            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 4, 1), null))).Value!.Id;
+            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 4, 1), null, "202512"))).Value!.Id;
 
         var factory = new PricingRuleSetFactory(ctx);
         var guiaSvc = new GuiaService(ctx, user, factory);
@@ -516,7 +564,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         var pfx = tenantId.ToString("N")[..4];
 
         var recursoId = (await service.CriarAsync(
-            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 5, 1), null))).Value!.Id;
+            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 5, 1), null, "202512"))).Value!.Id;
 
         var factory = new PricingRuleSetFactory(ctx);
         var guiaSvc = new GuiaService(ctx, user, factory);
@@ -543,7 +591,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         var pfx = tenantId.ToString("N")[..4];
 
         var recursoId = (await service.CriarAsync(
-            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 7, 1), null))).Value!.Id;
+            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 7, 1), null, "202512"))).Value!.Id;
 
         // criadas fora de ordem cronológica
         var g3 = await CriarGuiaAsync(ctx, user, prestId, opId, procId, $"OV-C-{pfx}", new DateOnly(2026, 7, 20));
@@ -571,7 +619,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         var service = new RecursoService(ctx, user);
 
         var recursoId = (await service.CriarAsync(
-            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 8, 1), null))).Value!.Id;
+            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 8, 1), null, "202512"))).Value!.Id;
 
         var factory = new PricingRuleSetFactory(ctx);
         var guiaService = new GuiaService(ctx, user, factory);

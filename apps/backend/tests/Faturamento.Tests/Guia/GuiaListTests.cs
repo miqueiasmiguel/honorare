@@ -253,7 +253,7 @@ public sealed class GuiaListTests(PostgresContainerFixture db)
         await CriarGuiaAsync(service, prestadorId, operadoraId, beneficiarioId, procedimentoId, "SFREC002", new DateOnly(2025, 6, 2));
         await CriarGuiaAsync(service, prestadorId, operadoraId, beneficiarioId, procedimentoId, "SFREC003", new DateOnly(2025, 6, 3));
 
-        var recurso = Recurso.Create(tenantId, operadoraId, prestadorId, new DateOnly(2025, 6, 1), null);
+        var recurso = Recurso.Create(tenantId, operadoraId, prestadorId, new DateOnly(2025, 6, 1), null, "202505");
         ctx.Add(recurso);
         var g1 = await ctx.Guias.FirstAsync(g => g.Id == g1Id);
         g1.MarcarEmRecurso(recurso.Id);
@@ -318,7 +318,7 @@ public sealed class GuiaListTests(PostgresContainerFixture db)
         await CriarGuiaAsync(service, prestadorId, opB.Id, beneficiarioId, procedimentoId, "SFCOMB03", new DateOnly(2025, 6, 3));
         await CriarGuiaAsync(service, prestadorId, opB.Id, beneficiarioId, procedimentoId, "SFCOMB04", new DateOnly(2025, 6, 4));
 
-        var recurso = Recurso.Create(tenantId, operadoraA, prestadorId, new DateOnly(2025, 6, 1), null);
+        var recurso = Recurso.Create(tenantId, operadoraA, prestadorId, new DateOnly(2025, 6, 1), null, "202505");
         ctx.Add(recurso);
         var g2 = await ctx.Guias.FirstAsync(g => g.Id == g2Id);
         g2.MarcarEmRecurso(recurso.Id);
@@ -492,7 +492,7 @@ public sealed class GuiaListTests(PostgresContainerFixture db)
         var apresentadaId = await CriarGuiaAsync(service, prestadorId, operadoraId, beneficiarioId, procedimentoId, "SFSO01", new DateOnly(2025, 1, 1));
         var emRecursoId = await CriarGuiaAsync(service, prestadorId, operadoraId, beneficiarioId, procedimentoId, "SFSO02", new DateOnly(2025, 1, 2));
 
-        var recurso = Recurso.Create(tenantId, operadoraId, prestadorId, new DateOnly(2025, 1, 1), null);
+        var recurso = Recurso.Create(tenantId, operadoraId, prestadorId, new DateOnly(2025, 1, 1), null, "202412");
         ctx.Add(recurso);
         var emRecurso = await ctx.Guias.FirstAsync(g => g.Id == emRecursoId);
         emRecurso.MarcarEmRecurso(recurso.Id);

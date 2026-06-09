@@ -78,14 +78,22 @@
     }
   }
 
-  &__numero {
-    @include text-mono-value;
-
-    color: var(--color-tinta);
-    padding: space(2) space(3);
+  &__input--numero {
+    height: 40px;
+    width: 100%;
+    padding: 0 space(3);
+    border: 1px solid var(--color-borda-media);
+    border-radius: space(1);
     background-color: var(--color-pergaminho-claro);
-    border: 1px solid var(--color-borda-discreta);
-    border-radius: 4px;
+    color: var(--color-tinta);
+
+    @include text-mono-value;
+    @include transition(border-color);
+
+    &:focus {
+      outline: none;
+      border-color: var(--color-terracota);
+    }
   }
 
   &__erro-validacao {

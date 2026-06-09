@@ -35,7 +35,7 @@
 
   Fluxo normal: `Apresentada` → `Liquidada` (automaticamente quando todos os `ItemGuia` têm `ValorLiquidado` preenchido). Fluxo de divergência: `Apresentada` → `EmRecurso`.
 
-- **Recurso (entidade):** representa um conjunto de guias com divergência agrupadas num envio formal à operadora. Tem número próprio no formato `AAAAMM` + sequencial (ex: `202512` = primeiro recurso de dezembro/2025). O título do documento gerado é `[Nome do médico] CRM [número] — RECURSO [número]`. Guias incluídas em um recurso têm situação `EmRecurso` com referência ao número.
+- **Recurso (entidade):** representa um conjunto de guias com divergência agrupadas num envio formal à operadora. Tem número próprio (`Numero`, `varchar(20)`) **informado manualmente pelo operador** — campo somente-dígitos, com zeros à esquerda preservados (ex: `202512`, `00042`). O formulário pré-preenche o número com o `AAAAMM` do **mês anterior** à data de emissão (a competência contestada), mas o operador pode sobrescrever; é obrigatório e validado no servidor. Ver D-046. O título do documento gerado é `[Nome do médico] CRM [número] — RECURSO [número]`. Guias incluídas em um recurso têm situação `EmRecurso` com referência ao número.
 
 - **VL CORRETO:** label usado no PDF do recurso para o valor apurado por procedimento. Internamente o campo chama `ValorApurado`. "Apuração de honorários" é o processo padrão do setor; "valor apurado" é o resultado.
 

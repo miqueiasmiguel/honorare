@@ -1,4 +1,3 @@
-using System.Globalization;
 using App.Identity;
 
 namespace App.Faturamento;
@@ -21,7 +20,8 @@ internal sealed class Recurso : ITenantEntity
         Guid operadoraId,
         Guid prestadorId,
         DateOnly dataEmissao,
-        string? observacao)
+        string? observacao,
+        string numero)
     {
         return new Recurso
         {
@@ -29,7 +29,7 @@ internal sealed class Recurso : ITenantEntity
             TenantId = tenantId,
             OperadoraId = operadoraId,
             PrestadorId = prestadorId,
-            Numero = dataEmissao.ToString("yyyyMM", CultureInfo.InvariantCulture),
+            Numero = numero.Trim(),
             DataEmissao = dataEmissao,
             Observacao = observacao?.Trim(),
             CriadoEm = DateTimeOffset.UtcNow,
@@ -40,12 +40,13 @@ internal sealed class Recurso : ITenantEntity
         Guid operadoraId,
         Guid prestadorId,
         DateOnly dataEmissao,
-        string? observacao)
+        string? observacao,
+        string numero)
     {
         OperadoraId = operadoraId;
         PrestadorId = prestadorId;
         DataEmissao = dataEmissao;
-        Numero = dataEmissao.ToString("yyyyMM", CultureInfo.InvariantCulture);
+        Numero = numero.Trim();
         Observacao = observacao?.Trim();
     }
 }

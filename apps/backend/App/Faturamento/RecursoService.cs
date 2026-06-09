@@ -6,10 +6,10 @@ using Microsoft.EntityFrameworkCore;
 namespace App.Faturamento;
 
 internal sealed record CriarRecursoCommand(
-    Guid OperadoraId, Guid PrestadorId, DateOnly DataEmissao, string? Observacao);
+    Guid OperadoraId, Guid PrestadorId, DateOnly DataEmissao, string? Observacao, string Numero);
 
 internal sealed record AtualizarRecursoCommand(
-    Guid OperadoraId, Guid PrestadorId, DateOnly DataEmissao, string? Observacao);
+    Guid OperadoraId, Guid PrestadorId, DateOnly DataEmissao, string? Observacao, string Numero);
 
 internal sealed record RecursoDto(
     Guid Id, Guid OperadoraId, string OperadoraNome,
@@ -87,6 +87,12 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser)
     {
         var tenantId = _currentUser.TenantId!.Value;
 
+        var numeroErro = ValidarNumero(cmd.Numero);
+        if (numeroErro is not null)
+        {
+            return Result<RecursoDto>.Fail(numeroErro);
+        }
+
         var operadora = await _db.Operadoras.FirstOrDefaultAsync(o => o.Id == cmd.OperadoraId, ct);
         if (operadora is null)
         {
@@ -99,7 +105,7 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser)
             return Result<RecursoDto>.Fail(new NotFoundError("Prestador não encontrado."));
         }
 
-        var recurso = Recurso.Create(tenantId, cmd.OperadoraId, cmd.PrestadorId, cmd.DataEmissao, cmd.Observacao);
+        var recurso = Recurso.Create(tenantId, cmd.OperadoraId, cmd.PrestadorId, cmd.DataEmissao, cmd.Observacao, cmd.Numero);
         _db.Recursos.Add(recurso);
         await _db.SaveChangesAsync(ct);
 
@@ -266,6 +272,12 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser)
             return Result<RecursoDto>.Fail(new NotFoundError("Recurso não encontrado."));
         }
 
+        var numeroErro = ValidarNumero(cmd.Numero);
+        if (numeroErro is not null)
+        {
+            return Result<RecursoDto>.Fail(numeroErro);
+        }
+
         var operadora = await _db.Operadoras.FirstOrDefaultAsync(o => o.Id == cmd.OperadoraId, ct);
         if (operadora is null)
         {
@@ -278,7 +290,7 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser)
             return Result<RecursoDto>.Fail(new NotFoundError("Prestador não encontrado."));
         }
 
-        recurso.Atualizar(cmd.OperadoraId, cmd.PrestadorId, cmd.DataEmissao, cmd.Observacao);
+        recurso.Atualizar(cmd.OperadoraId, cmd.PrestadorId, cmd.DataEmissao, cmd.Observacao, cmd.Numero);
         await _db.SaveChangesAsync(ct);
 
         var totalGuias = await _db.Guias.CountAsync(g => g.RecursoId == id, ct);
@@ -510,6 +522,27 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser)
             prestador.RegistroProfissional,
             recurso.Numero,
             guiaDtos));
+    }
+
+    private static ValidationError? ValidarNumero(string numero)
+    {
+        var valor = (numero ?? string.Empty).Trim();
+        if (valor.Length == 0)
+        {
+            return new ValidationError("Número é obrigatório.");
+        }
+
+        if (valor.Length > 20)
+        {
+            return new ValidationError("Número deve ter no máximo 20 dígitos.");
+        }
+
+        if (!valor.All(char.IsAsciiDigit))
+        {
+            return new ValidationError("Número deve conter apenas dígitos.");
+        }
+
+        return null;
     }
 
     private static string CalcularFatorEfetivo(IEnumerable<decimal> fatores)
