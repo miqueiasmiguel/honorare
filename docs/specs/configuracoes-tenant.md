@@ -506,7 +506,7 @@ antes do nome do tenant. QuestPDF (raster, PNG/JPEG): `col.Item().Height(50).Ima
 
 ### TASK-TCFG-06 — Frontend: página de Configurações (renomear + upload de logo)
 
-- [ ] pendente
+- [x] concluída
 
 **Objetivo:** criar a seção "Configurações" no admin-web: service, tipos, página com formulário de renomear
 e upload/preview/remoção de logo, rota e link na sidebar.
@@ -628,4 +628,4 @@ export interface TenantSettings {
 - [x] TASK-TCFG-03 — TenantSettingsService + endpoints (obter/renomear)
 - [x] TASK-TCFG-04 — upload/download/remoção da logo
 - [x] TASK-TCFG-05 — logo no PDF do recurso
-- [ ] TASK-TCFG-06 — frontend: página de configurações
+- [x] TASK-TCFG-06 — frontend: página de configurações
