@@ -17,6 +17,7 @@ internal sealed class ItemGuia
     public decimal? ValorLiquidado { get; private set; }
     public string? MotivoGlosa { get; private set; }
     public DateTimeOffset CriadoEm { get; private set; }
+    public bool IncluidoNoRecurso { get; private set; }
 
     private ItemGuia() { }
 
@@ -27,6 +28,10 @@ internal sealed class ItemGuia
     internal void SetMotivoGlosa(string? valor) => MotivoGlosa = valor?.Trim();
 
     internal void SetTempoAnestesicoMin(int? valor) => TempoAnestesicoMin = valor;
+
+    internal void ExcluirDoRecurso() => IncluidoNoRecurso = false;
+
+    internal void ReincluirNoRecurso() => IncluidoNoRecurso = true;
 
     internal void Atualizar(decimal percentualOrdem, Acomodacao acomodacao, bool ehUrgencia)
     {
@@ -60,6 +65,7 @@ internal sealed class ItemGuia
             ValorApurado = valorApurado,
             ValorLiquidado = null,
             CriadoEm = DateTimeOffset.UtcNow,
+            IncluidoNoRecurso = true,
         };
     }
 }
