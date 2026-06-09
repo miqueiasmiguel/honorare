@@ -280,7 +280,7 @@ Cenários:
 
 ### TASK-EIR-03 — Frontend: botões Excluir/Reincluir no card, item riscado, serviço e tipos
 
-- [ ] pendente
+- [x] concluída
 
 **Objetivo:** na tabela de itens do card (`recurso-guias`), botão "Excluir" (com `confirm()`) por
 item incluído e "Reincluir" por item excluído; item excluído renderizado riscado/esmaecido.
@@ -431,4 +431,4 @@ imite `&__remover` / `&__adicionar-item` já presentes. NÃO use `font-size`/`co
 
 - [x] TASK-EIR-01 — flag `IncluidoNoRecurso` (entidade + config + migration)
 - [x] TASK-EIR-02 — serviço + endpoint + PDF + reset (backend)
-- [ ] TASK-EIR-03 — frontend (card, botões, item riscado, serviço, tipos)
+- [x] TASK-EIR-03 — frontend (card, botões, item riscado, serviço, tipos)
