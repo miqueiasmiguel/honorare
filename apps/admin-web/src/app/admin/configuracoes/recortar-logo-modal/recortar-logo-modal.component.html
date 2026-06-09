@@ -1,0 +1,47 @@
+@if (arquivo(); as file) {
+  <div class="recortar-logo-modal__backdrop">
+    <div class="recortar-logo-modal">
+      <header class="recortar-logo-modal__header">
+        <h2 class="recortar-logo-modal__title">Recortar logo</h2>
+      </header>
+
+      <p class="recortar-logo-modal__hint">
+        Ajuste o enquadramento da logo. A proporção é fixa para manter o cabeçalho dos PDFs
+        consistente.
+      </p>
+
+      @if (erro(); as msg) {
+        <p class="recortar-logo-modal__erro">{{ msg }}</p>
+      }
+
+      <div class="recortar-logo-modal__cropper">
+        <image-cropper
+          [imageFile]="file"
+          [maintainAspectRatio]="true"
+          [aspectRatio]="aspectRatio"
+          [resizeToWidth]="resizeToWidth"
+          output="blob"
+          format="png"
+          (imageCropped)="aoRecortar($event)"
+        />
+      </div>
+
+      <footer class="recortar-logo-modal__actions">
+        <button
+          type="button"
+          class="recortar-logo-modal__btn recortar-logo-modal__btn--ghost"
+          (click)="cancelar()"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          class="recortar-logo-modal__btn recortar-logo-modal__btn--primary"
+          (click)="confirmar()"
+        >
+          Confirmar recorte
+        </button>
+      </footer>
+    </div>
+  </div>
+}

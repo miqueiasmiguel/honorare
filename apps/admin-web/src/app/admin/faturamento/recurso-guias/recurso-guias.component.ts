@@ -721,13 +721,6 @@ export class RecursoGuiasComponent implements OnInit {
   }
 
   excluirItem(guiaId: string, item: ItemGuiaNoRecursoDto): void {
-    const ok = confirm(
-      `Excluir o item «${item.descricaoProcedimento}» deste recurso? ` +
-        'Ele não aparecerá no PDF, mas permanece na guia.',
-    );
-    if (!ok) {
-      return;
-    }
     this._alterarInclusaoItem(guiaId, item.id, false);
   }
 

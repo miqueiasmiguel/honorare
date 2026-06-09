@@ -471,11 +471,10 @@ describe('RecursoGuiasComponent', () => {
     expect(recursoService.obterPorId).toHaveBeenCalledWith('rec-1');
   });
 
-  it('excluirItem com confirm aceito chama alterarInclusaoItem com incluido=false', () => {
+  it('excluirItem chama alterarInclusaoItem com incluido=false', () => {
     const item = makeItemGuiaNoRecurso({ id: 'item-1', incluidoNoRecurso: true });
     const guia = makeGuiaNoRecurso({ id: 'guia-1', itens: [item] });
     const { component, recursoService } = setup({ guias: [guia] });
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     component.excluirItem('guia-1', item);
 
@@ -485,17 +484,6 @@ describe('RecursoGuiasComponent', () => {
       'item-1',
       false,
     );
-  });
-
-  it('excluirItem com confirm recusado NÃO chama o serviço', () => {
-    const item = makeItemGuiaNoRecurso({ id: 'item-1', incluidoNoRecurso: true });
-    const guia = makeGuiaNoRecurso({ id: 'guia-1', itens: [item] });
-    const { component, recursoService } = setup({ guias: [guia] });
-    vi.spyOn(window, 'confirm').mockReturnValue(false);
-
-    component.excluirItem('guia-1', item);
-
-    expect(recursoService.alterarInclusaoItem).not.toHaveBeenCalled();
   });
 
   it('reincluirItem chama alterarInclusaoItem com incluido=true', () => {
@@ -518,7 +506,6 @@ describe('RecursoGuiasComponent', () => {
     const guia = makeGuiaNoRecurso({ id: 'guia-1', itens: [item] });
     const { component, recursoService, fixture } = setup({ guias: [guia] });
     recursoService.alterarInclusaoItem.mockReturnValue(throwError(() => new Error('err')));
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     component.excluirItem('guia-1', item);
     fixture.detectChanges();
