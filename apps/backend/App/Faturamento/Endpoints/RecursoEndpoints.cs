@@ -16,6 +16,7 @@ internal static class RecursoEndpoints
         g.MapPost("{id:guid}/guias/lote", AdicionarGuiasEmLoteAsync);
         g.MapPost("{id:guid}/guias/{guiaId:guid}", AdicionarGuiaAsync);
         g.MapDelete("{id:guid}/guias/{guiaId:guid}", RemoverGuiaAsync);
+        g.MapPatch("{id:guid}/guias/{guiaId:guid}/itens/{itemId:guid}/inclusao", AlterarInclusaoItemAsync);
         g.MapGet("{id:guid}/pdf", GerarPdfAsync);
     }
 
@@ -120,6 +121,14 @@ internal static class RecursoEndpoints
         return Results.NoContent();
     }
 
+    private static async Task<IResult> AlterarInclusaoItemAsync(
+        Guid id, Guid guiaId, Guid itemId, AlterarInclusaoItemRequest body,
+        RecursoService service, CancellationToken ct)
+    {
+        await service.AlterarInclusaoItemAsync(id, guiaId, itemId, body.Incluido, ct);
+        return Results.NoContent();
+    }
+
     private static async Task<IResult> GerarPdfAsync(
         Guid id, RecursoService service, CancellationToken ct)
     {
@@ -153,3 +162,5 @@ internal sealed record AdicionarGuiasEmLoteRequest(
     DateOnly? DataInicio = null, DateOnly? DataFim = null,
     SituacaoGuia? Situacao = null, string? NumeroGuia = null,
     string? Beneficiario = null, bool? SomenteComGlosa = null);
+
+internal sealed record AlterarInclusaoItemRequest(bool Incluido);

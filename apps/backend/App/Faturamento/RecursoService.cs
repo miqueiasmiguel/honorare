@@ -28,7 +28,8 @@ internal sealed record ItemGuiaNoRecursoDto(
     Acomodacao Acomodacao,
     bool EhUrgencia,
     decimal? ValorApurado,
-    decimal? ValorLiquidado);
+    decimal? ValorLiquidado,
+    bool IncluidoNoRecurso);
 
 internal sealed record GuiaNoRecursoDto(
     Guid Id, string NumeroGuia, DateOnly DataAtendimento,
@@ -240,6 +241,7 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser, 
                 i.EhUrgencia,
                 i.ValorApurado,
                 i.ValorLiquidado,
+                i.IncluidoNoRecurso,
             }).ToListAsync(ct);
 
         var itensPorGuia = itens.GroupBy(i => i.GuiaId)
@@ -248,7 +250,7 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser, 
                     i.Id, i.CodigoTuss, i.DescricaoProcedimento,
                     i.PosicaoExecutor, i.PercentualOrdem,
                     i.ViaAcesso, i.Acomodacao, i.EhUrgencia,
-                    i.ValorApurado, i.ValorLiquidado))
+                    i.ValorApurado, i.ValorLiquidado, i.IncluidoNoRecurso))
                 .ToList());
 
         var headerDto = new RecursoDto(
@@ -355,7 +357,43 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser, 
             .Where(i => i.GuiaId == guiaId)
             .AllAsync(i => i.ValorLiquidado.HasValue, ct);
 
+        var itensDaGuia = await _db.ItensGuia.Where(i => i.GuiaId == guiaId).ToListAsync(ct);
+        foreach (var item in itensDaGuia)
+        {
+            item.ReincluirNoRecurso();
+        }
+
         guia.RemoverDoRecurso(todosLiquidados);
+        await _db.SaveChangesAsync(ct);
+    }
+
+    internal async Task AlterarInclusaoItemAsync(
+        Guid recursoId, Guid guiaId, Guid itemId, bool incluido, CancellationToken ct = default)
+    {
+        if (!await _db.Guias.AnyAsync(g => g.Id == guiaId && g.RecursoId == recursoId, ct))
+        {
+            throw new InvalidOperationException("Guia não encontrada neste recurso.");
+        }
+
+        var item = await _db.ItensGuia
+            .FirstOrDefaultAsync(i => i.Id == itemId && i.GuiaId == guiaId, ct)
+            ?? throw new InvalidOperationException("Item não encontrado nesta guia.");
+
+        if (!incluido)
+        {
+            var incluidos = await _db.ItensGuia.CountAsync(i => i.GuiaId == guiaId && i.IncluidoNoRecurso, ct);
+            if (incluidos <= 1)
+            {
+                throw new InvalidOperationException("A guia ficaria sem itens no recurso.");
+            }
+
+            item.ExcluirDoRecurso();
+        }
+        else
+        {
+            item.ReincluirNoRecurso();
+        }
+
         await _db.SaveChangesAsync(ct);
     }
 
@@ -469,7 +507,7 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser, 
 
         var itensRaw = await (
             from i in _db.ItensGuia
-            where guiaIds.Contains(i.GuiaId)
+            where guiaIds.Contains(i.GuiaId) && i.IncluidoNoRecurso
             join p in _db.Procedimentos on i.ProcedimentoId equals p.Id
             orderby i.PercentualOrdem descending
             select new
