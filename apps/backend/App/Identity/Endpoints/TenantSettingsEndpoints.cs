@@ -7,6 +7,7 @@ internal static class TenantSettingsEndpoints
         var g = app.MapGroup("/api/v1/admin/tenant").RequireAuthorization("TenantAccess");
         g.MapGet("/", GetSettingsAsync);
         g.MapPatch("/", RenameAsync);
+        g.MapPut("/codigos-nao-recorriveis", AtualizarCodigosNaoRecorriveisAsync);
         g.MapPost("/logo", UploadLogoAsync).DisableAntiforgery();
         g.MapGet("/logo", GetLogoAsync);
         g.MapDelete("/logo", DeleteLogoAsync);
@@ -91,6 +92,25 @@ internal static class TenantSettingsEndpoints
 
         return Results.NoContent();
     }
+
+    private static async Task<IResult> AtualizarCodigosNaoRecorriveisAsync(
+        AtualizarCodigosNaoRecorriveisRequest body, TenantSettingsService svc, CancellationToken ct)
+    {
+        var result = await svc.AtualizarCodigosNaoRecorriveisAsync(body.Codigos, ct);
+        if (result.IsFailure)
+        {
+            var statusCode = result.Error switch
+            {
+                NotFoundError => StatusCodes.Status404NotFound,
+                ValidationError => StatusCodes.Status422UnprocessableEntity,
+                _ => StatusCodes.Status400BadRequest,
+            };
+            return Results.Problem(statusCode: statusCode, detail: result.Error!.Message);
+        }
+
+        return Results.Ok(result.Value);
+    }
 }
 
 internal sealed record RenameTenantRequest(string Name);
+internal sealed record AtualizarCodigosNaoRecorriveisRequest(IReadOnlyList<string> Codigos);

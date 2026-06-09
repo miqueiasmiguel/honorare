@@ -219,6 +219,63 @@ public sealed class TenantSettingsServiceTests(PostgresContainerFixture db)
         Assert.Null(updated!.LogoKey);
         Assert.False(storage.Contains($"tenants/{tenant.Id}/logo.png"));
     }
+
+    // ── Novos testes: códigos não recorríveis ─────────────────────────────
+
+    [Fact]
+    public async Task AtualizarCodigosNaoRecorriveisAsync_DeveSalvarListaNoTenantAsync()
+    {
+        await using var seedCtx = BuildContext(new FakeTenantUser(Guid.NewGuid(), Guid.NewGuid()));
+        var tenant = await SeedTenantAsync(seedCtx);
+
+        var currentUser = new FakeTenantUser(Guid.NewGuid(), tenant.Id);
+        await using var ctx = BuildContext(currentUser);
+        var service = new TenantSettingsService(ctx, currentUser, new FakeFileStorage());
+
+        var result = await service.AtualizarCodigosNaoRecorriveisAsync(["10101012", "20202020"]);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(["10101012", "20202020"], result.Value!.CodigosNaoRecorriveis);
+
+        await using var verifyCtx = BuildContext(currentUser);
+        var updated = await verifyCtx.Tenants.FindAsync([tenant.Id]);
+        Assert.Equal(["10101012", "20202020"], updated!.CodigosNaoRecorriveis);
+    }
+
+    [Fact]
+    public async Task AtualizarCodigosNaoRecorriveisAsync_DeveRejeitarCodigoNaoNumericoAsync()
+    {
+        await using var seedCtx = BuildContext(new FakeTenantUser(Guid.NewGuid(), Guid.NewGuid()));
+        var tenant = await SeedTenantAsync(seedCtx);
+
+        var currentUser = new FakeTenantUser(Guid.NewGuid(), tenant.Id);
+        await using var ctx = BuildContext(currentUser);
+        var service = new TenantSettingsService(ctx, currentUser, new FakeFileStorage());
+
+        var result = await service.AtualizarCodigosNaoRecorriveisAsync(["abc"]);
+
+        Assert.True(result.IsFailure);
+        Assert.IsType<ValidationError>(result.Error);
+    }
+
+    [Fact]
+    public async Task GetSettingsAsync_DeveRetornarCodigosNaoRecorriveisAsync()
+    {
+        await using var seedCtx = BuildContext(new FakeTenantUser(Guid.NewGuid(), Guid.NewGuid()));
+        var tenant = await SeedTenantAsync(seedCtx);
+
+        var currentUser = new FakeTenantUser(Guid.NewGuid(), tenant.Id);
+        await using var saveCtx = BuildContext(currentUser);
+        var saveService = new TenantSettingsService(saveCtx, currentUser, new FakeFileStorage());
+        await saveService.AtualizarCodigosNaoRecorriveisAsync(["30303030"]);
+
+        await using var ctx = BuildContext(currentUser);
+        var service = new TenantSettingsService(ctx, currentUser, new FakeFileStorage());
+        var result = await service.GetSettingsAsync();
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(["30303030"], result.Value!.CodigosNaoRecorriveis);
+    }
 }
 
 file sealed class FakeTenantUser(Guid userId, Guid tenantId) : ICurrentUser

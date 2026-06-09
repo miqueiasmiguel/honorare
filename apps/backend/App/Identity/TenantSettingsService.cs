@@ -3,7 +3,7 @@ using App.Storage;
 
 namespace App.Identity;
 
-internal sealed record TenantSettings(Guid Id, string Name, bool HasLogo);
+internal sealed record TenantSettings(Guid Id, string Name, bool HasLogo, IReadOnlyList<string> CodigosNaoRecorriveis);
 
 internal sealed class TenantSettingsService(AppDbContext db, ICurrentUser currentUser, IFileStorage storage)
 {
@@ -36,7 +36,7 @@ internal sealed class TenantSettingsService(AppDbContext db, ICurrentUser curren
             return Result<TenantSettings>.Fail(new NotFoundError("Tenant não encontrado."));
         }
 
-        return Result<TenantSettings>.Ok(new TenantSettings(tenant.Id, tenant.Name, tenant.LogoKey is not null));
+        return Result<TenantSettings>.Ok(new TenantSettings(tenant.Id, tenant.Name, tenant.LogoKey is not null, tenant.CodigosNaoRecorriveis));
     }
 
     internal async Task<Result<TenantSettings>> RenameAsync(string name, CancellationToken ct = default)
@@ -60,7 +60,7 @@ internal sealed class TenantSettingsService(AppDbContext db, ICurrentUser curren
         tenant.Rename(name);
         await _db.SaveChangesAsync(ct);
 
-        return Result<TenantSettings>.Ok(new TenantSettings(tenant.Id, tenant.Name, tenant.LogoKey is not null));
+        return Result<TenantSettings>.Ok(new TenantSettings(tenant.Id, tenant.Name, tenant.LogoKey is not null, tenant.CodigosNaoRecorriveis));
     }
 
     internal async Task<Result<TenantSettings>> UploadLogoAsync(byte[] content, CancellationToken ct = default)
@@ -99,7 +99,7 @@ internal sealed class TenantSettingsService(AppDbContext db, ICurrentUser curren
         tenant.SetLogoKey(key);
         await _db.SaveChangesAsync(ct);
 
-        return Result<TenantSettings>.Ok(new TenantSettings(tenant.Id, tenant.Name, true));
+        return Result<TenantSettings>.Ok(new TenantSettings(tenant.Id, tenant.Name, true, tenant.CodigosNaoRecorriveis));
     }
 
     internal async Task<Result<FileStorageObject>> GetLogoAsync(CancellationToken ct = default)
@@ -140,5 +140,28 @@ internal sealed class TenantSettingsService(AppDbContext db, ICurrentUser curren
         }
 
         return Result.Ok();
+    }
+
+    internal async Task<Result<TenantSettings>> AtualizarCodigosNaoRecorriveisAsync(
+        IReadOnlyList<string> codigos, CancellationToken ct = default)
+    {
+        var normalizados = codigos.Select(c => (c ?? string.Empty).Trim())
+            .Where(c => c.Length > 0).ToList();
+        if (normalizados.Any(c => !c.All(char.IsAsciiDigit)))
+        {
+            return Result<TenantSettings>.Fail(
+                new ValidationError("Código TUSS deve conter apenas dígitos."));
+        }
+
+        var tenant = await _db.Tenants.FindAsync([_currentUser.TenantId!.Value], ct);
+        if (tenant is null)
+        {
+            return Result<TenantSettings>.Fail(new NotFoundError("Tenant não encontrado."));
+        }
+
+        tenant.DefinirCodigosNaoRecorriveis(normalizados);
+        await _db.SaveChangesAsync(ct);
+        return Result<TenantSettings>.Ok(new TenantSettings(
+            tenant.Id, tenant.Name, tenant.LogoKey is not null, tenant.CodigosNaoRecorriveis));
     }
 }

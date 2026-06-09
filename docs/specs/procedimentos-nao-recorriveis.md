@@ -112,7 +112,7 @@ Confira que o `AddColumn` gerado usa `type: "text[]"`, `nullable: false` e
 
 ### TASK-NREC-02 — Expor e atualizar a lista via TenantSettings (service + endpoint)
 
-- [ ] pendente
+- [x] concluída
 
 **Objetivo:** `GET /api/v1/admin/tenant` passa a devolver `codigosNaoRecorriveis`; novo
 `PUT /api/v1/admin/tenant/codigos-nao-recorriveis` salva a lista (validando: só dígitos).
@@ -512,7 +512,7 @@ export interface GuiaItem {
 ## Checklist final
 
 - [x] TASK-NREC-01 — campo no Tenant + migration
-- [ ] TASK-NREC-02 — service + endpoint
+- [x] TASK-NREC-02 — service + endpoint
 - [ ] TASK-NREC-03 — flag na listagem de guias
 - [ ] TASK-NREC-04 — lote pula não recorríveis
 - [ ] TASK-NREC-05 — UI de configuração (autocomplete catálogo)
