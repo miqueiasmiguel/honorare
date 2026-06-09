@@ -303,7 +303,7 @@ Handlers: `GetSettingsAsync` → `Results.Ok` ou `Results.Problem(404)`; `Rename
 
 ### TASK-TCFG-04 — Upload, download e remoção da logo
 
-- [ ] pendente
+- [x] concluída
 
 **Objetivo:** adicionar ao `TenantSettingsService` o upload da logo (validação por magic bytes + tamanho,
 gravação via `IFileStorage`, atualização de `LogoKey`), a obtenção dos bytes e a remoção; expor os endpoints
@@ -626,6 +626,6 @@ export interface TenantSettings {
 - [x] TASK-TCFG-01 — IFileStorage + LocalFileStorage + infra
 - [x] TASK-TCFG-02 — Tenant rename + LogoKey + migration
 - [x] TASK-TCFG-03 — TenantSettingsService + endpoints (obter/renomear)
-- [ ] TASK-TCFG-04 — upload/download/remoção da logo
+- [x] TASK-TCFG-04 — upload/download/remoção da logo
 - [ ] TASK-TCFG-05 — logo no PDF do recurso
 - [ ] TASK-TCFG-06 — frontend: página de configurações
