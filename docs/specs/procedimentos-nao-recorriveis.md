@@ -221,7 +221,7 @@ internal sealed record AtualizarCodigosNaoRecorriveisRequest(IReadOnlyList<strin
 
 ### TASK-NREC-03 — Flag `naoRecorrivel` na listagem de guias
 
-- [ ] pendente
+- [x] concluída
 
 **Objetivo:** `GuiaService.ListarAsync` passa a marcar cada guia com `NaoRecorrivel = true`
 quando ela tem algum item cujo `Procedimento.CodigoTuss` está na lista do tenant. **Não
@@ -513,7 +513,7 @@ export interface GuiaItem {
 
 - [x] TASK-NREC-01 — campo no Tenant + migration
 - [x] TASK-NREC-02 — service + endpoint
-- [ ] TASK-NREC-03 — flag na listagem de guias
+- [x] TASK-NREC-03 — flag na listagem de guias
 - [ ] TASK-NREC-04 — lote pula não recorríveis
 - [ ] TASK-NREC-05 — UI de configuração (autocomplete catálogo)
 - [ ] TASK-NREC-06 — selo na seleção de guias do recurso
