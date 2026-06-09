@@ -408,7 +408,7 @@ g.MapDelete("/logo", DeleteLogoAsync);
 
 ### TASK-TCFG-05 — Renderizar a logo no PDF do recurso
 
-- [ ] pendente
+- [x] concluída
 
 **Objetivo:** carregar os bytes da logo do tenant via `IFileStorage` em `RecursoService.ObterDadosPdfAsync`,
 adicionar campo nullable em `RecursoPdfData`, e renderizar a logo condicionalmente no cabeçalho do PDF.
@@ -627,5 +627,5 @@ export interface TenantSettings {
 - [x] TASK-TCFG-02 — Tenant rename + LogoKey + migration
 - [x] TASK-TCFG-03 — TenantSettingsService + endpoints (obter/renomear)
 - [x] TASK-TCFG-04 — upload/download/remoção da logo
-- [ ] TASK-TCFG-05 — logo no PDF do recurso
+- [x] TASK-TCFG-05 — logo no PDF do recurso
 - [ ] TASK-TCFG-06 — frontend: página de configurações

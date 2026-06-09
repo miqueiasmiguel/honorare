@@ -3,6 +3,7 @@ using App.Data;
 using App.Faturamento;
 using App.Faturamento.Motor;
 using App.Identity;
+using App.Storage;
 using Faturamento.Tests.Fixtures;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,6 +12,7 @@ namespace Faturamento.Tests.Pagamento;
 [Collection(nameof(PostgresCollection))]
 public sealed class GuiaPagamentoTests(PostgresContainerFixture db)
 {
+    private static readonly IFileStorage _noopStorage = new GuiaPagamentoNoopFileStorage();
     private (AppDbContext ctx, ICurrentUser user, PricingRuleSetFactory factory) BuildTenant(Guid tenantId)
     {
         var user = new FakeTenantUserPgt(tenantId);
@@ -94,7 +96,7 @@ public sealed class GuiaPagamentoTests(PostgresContainerFixture db)
         var (guiaId, itemId) = await SeedGuiaAsync(ctx, service, tenantId);
 
         var guiaEntity = await ctx.Guias.FirstAsync(g => g.Id == guiaId);
-        var recursoService = new RecursoService(ctx, user);
+        var recursoService = new RecursoService(ctx, user, _noopStorage);
         var recursoResult = await recursoService.CriarAsync(
             new CriarRecursoCommand(guiaEntity.OperadoraId, guiaEntity.PrestadorId, new DateOnly(2026, 1, 1), null, "202512"));
         var recursoId = recursoResult.Value!.Id;
@@ -141,4 +143,16 @@ file sealed class FakeTenantUserPgt(Guid tenantId) : ICurrentUser
     public bool IsSaasAdmin => false;
     public bool IsImpersonating => false;
     public bool IsAuthenticated => true;
+}
+
+file sealed class GuiaPagamentoNoopFileStorage : IFileStorage
+{
+    public Task SaveAsync(string key, byte[] content, string contentType, CancellationToken ct = default) =>
+        Task.CompletedTask;
+
+    public Task<FileStorageObject?> GetAsync(string key, CancellationToken ct = default) =>
+        Task.FromResult<FileStorageObject?>(null);
+
+    public Task DeleteAsync(string key, CancellationToken ct = default) =>
+        Task.CompletedTask;
 }

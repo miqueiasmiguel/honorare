@@ -1,6 +1,7 @@
 using App.Catalog;
 using App.Data;
 using App.Identity;
+using App.Storage;
 using Microsoft.EntityFrameworkCore;
 
 namespace App.Faturamento;
@@ -55,6 +56,7 @@ internal sealed record RecursoPdfData(
     string PrestadorNome,
     string? PrestadorRegistroProfissional,
     string Numero,
+    byte[]? TenantLogo,
     IReadOnlyList<GuiaPdfData> Guias);
 
 internal sealed record GuiaPdfData(
@@ -77,10 +79,11 @@ internal sealed record ItemPdfData(
 internal sealed record ListarRecursosResult(
     IReadOnlyList<RecursoDto> Itens, int Total, int Pagina, int ItensPorPagina);
 
-internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser)
+internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser, IFileStorage storage)
 {
     private readonly AppDbContext _db = db;
     private readonly ICurrentUser _currentUser = currentUser;
+    private readonly IFileStorage _storage = storage;
 
     internal async Task<Result<RecursoDto>> CriarAsync(
         CriarRecursoCommand cmd, CancellationToken ct = default)
@@ -428,6 +431,13 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser)
         var operadora = await _db.Operadoras.FirstAsync(o => o.Id == recurso.OperadoraId, ct);
         var prestador = await _db.Prestadores.FirstAsync(p => p.Id == recurso.PrestadorId, ct);
 
+        byte[]? logoBytes = null;
+        if (tenant?.LogoKey is not null)
+        {
+            var obj = await _storage.GetAsync(tenant.LogoKey, ct);
+            logoBytes = obj?.Content;
+        }
+
         var guiasRaw = await (
             from g in _db.Guias
             where g.RecursoId == id
@@ -521,6 +531,7 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser)
             prestador.Nome,
             prestador.RegistroProfissional,
             recurso.Numero,
+            logoBytes,
             guiaDtos));
     }
 

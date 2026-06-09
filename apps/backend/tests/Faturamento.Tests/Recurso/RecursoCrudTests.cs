@@ -4,6 +4,7 @@ using App.Data;
 using App.Faturamento;
 using App.Faturamento.Motor;
 using App.Identity;
+using App.Storage;
 using Faturamento.Tests.Fixtures;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,6 +13,7 @@ namespace Faturamento.Tests.Service;
 [Collection(nameof(PostgresCollection))]
 public sealed class RecursoCrudTests(PostgresContainerFixture db)
 {
+    private static readonly IFileStorage _noopStorage = new RecursoCrudNoopFileStorage();
     private (AppDbContext ctx, ICurrentUser user) BuildTenant(Guid tenantId)
     {
         var currentUser = new FakeRecursoTenantUser(tenantId);
@@ -72,7 +74,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         var (ctx, user) = BuildTenant(tenantId);
         await using var _ = ctx;
         var (opId, prestId, _) = await SeedCatalogAsync(ctx, tenantId);
-        var service = new RecursoService(ctx, user);
+        var service = new RecursoService(ctx, user, _noopStorage);
 
         var result = await service.CriarAsync(
             new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 2, 1), "Obs teste", "00250"));
@@ -96,7 +98,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         ctx.Add(op2);
         await ctx.SaveChangesAsync();
 
-        var service = new RecursoService(ctx, user);
+        var service = new RecursoService(ctx, user, _noopStorage);
         await service.CriarAsync(new CriarRecursoCommand(op1Id, prestId, new DateOnly(2026, 1, 1), null, "202512"));
         await service.CriarAsync(new CriarRecursoCommand(op1Id, prestId, new DateOnly(2026, 2, 1), null, "202512"));
         await service.CriarAsync(new CriarRecursoCommand(op2.Id, prestId, new DateOnly(2026, 3, 1), null, "202512"));
@@ -119,7 +121,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         ctx.Add(prest2);
         await ctx.SaveChangesAsync();
 
-        var service = new RecursoService(ctx, user);
+        var service = new RecursoService(ctx, user, _noopStorage);
         await service.CriarAsync(new CriarRecursoCommand(opId, prest1Id, new DateOnly(2026, 1, 1), null, "202512"));
         await service.CriarAsync(new CriarRecursoCommand(opId, prest2.Id, new DateOnly(2026, 2, 1), null, "202512"));
 
@@ -136,7 +138,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         var (ctx, user) = BuildTenant(tenantId);
         await using var _ = ctx;
         var (opId, prestId, _) = await SeedCatalogAsync(ctx, tenantId);
-        var service = new RecursoService(ctx, user);
+        var service = new RecursoService(ctx, user, _noopStorage);
 
         for (var i = 1; i <= 5; i++)
         {
@@ -158,7 +160,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         var (ctx, user) = BuildTenant(tenantId);
         await using var _ = ctx;
         var (opId, prestId, _) = await SeedCatalogAsync(ctx, tenantId);
-        var service = new RecursoService(ctx, user);
+        var service = new RecursoService(ctx, user, _noopStorage);
 
         var criado = await service.CriarAsync(
             new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 1, 1), "Original", "202512"));
@@ -179,7 +181,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         var (ctx, user) = BuildTenant(tenantId);
         await using var _ = ctx;
         var (opId, prestId, _) = await SeedCatalogAsync(ctx, tenantId);
-        var service = new RecursoService(ctx, user);
+        var service = new RecursoService(ctx, user, _noopStorage);
 
         var result = await service.CriarAsync(
             new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 2, 1), null, "   "));
@@ -195,7 +197,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         var (ctx, user) = BuildTenant(tenantId);
         await using var _ = ctx;
         var (opId, prestId, _) = await SeedCatalogAsync(ctx, tenantId);
-        var service = new RecursoService(ctx, user);
+        var service = new RecursoService(ctx, user, _noopStorage);
 
         var result = await service.CriarAsync(
             new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 2, 1), null, "202601-001"));
@@ -211,7 +213,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         var (ctx, user) = BuildTenant(tenantId);
         await using var _ = ctx;
         var (opId, prestId, _) = await SeedCatalogAsync(ctx, tenantId);
-        var service = new RecursoService(ctx, user);
+        var service = new RecursoService(ctx, user, _noopStorage);
 
         var result = await service.CriarAsync(
             new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 2, 1), null, new string('1', 21)));
@@ -227,7 +229,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         var (ctx, user) = BuildTenant(tenantId);
         await using var _ = ctx;
         var (opId, prestId, _) = await SeedCatalogAsync(ctx, tenantId);
-        var service = new RecursoService(ctx, user);
+        var service = new RecursoService(ctx, user, _noopStorage);
 
         var criado = await service.CriarAsync(
             new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 1, 1), null, "202512"));
@@ -248,7 +250,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         var (ctx, user) = BuildTenant(tenantId);
         await using var _ = ctx;
         var (opId, prestId, procId) = await SeedCatalogAsync(ctx, tenantId);
-        var service = new RecursoService(ctx, user);
+        var service = new RecursoService(ctx, user, _noopStorage);
 
         var criado = await service.CriarAsync(
             new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 1, 1), null, "202512"));
@@ -269,7 +271,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         var (ctx, user) = BuildTenant(tenantId);
         await using var _ = ctx;
         var (opId, prestId, procId) = await SeedCatalogAsync(ctx, tenantId);
-        var service = new RecursoService(ctx, user);
+        var service = new RecursoService(ctx, user, _noopStorage);
 
         var criado = await service.CriarAsync(
             new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 1, 1), null, "202512"));
@@ -293,7 +295,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         var (ctx, user) = BuildTenant(tenantId);
         await using var _ = ctx;
         var (opId, prestId, procId) = await SeedCatalogAsync(ctx, tenantId);
-        var service = new RecursoService(ctx, user);
+        var service = new RecursoService(ctx, user, _noopStorage);
 
         var rec1Id = (await service.CriarAsync(
             new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 1, 1), null, "202512"))).Value!.Id;
@@ -315,7 +317,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         var (ctx, user) = BuildTenant(tenantId);
         await using var _ = ctx;
         var (opId, prestId, procId) = await SeedCatalogAsync(ctx, tenantId);
-        var service = new RecursoService(ctx, user);
+        var service = new RecursoService(ctx, user, _noopStorage);
 
         var recursoId = (await service.CriarAsync(
             new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 1, 1), null, "202512"))).Value!.Id;
@@ -339,7 +341,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         var (ctx, user) = BuildTenant(tenantId);
         await using var _ = ctx;
         var (opId, prestId, procId) = await SeedCatalogAsync(ctx, tenantId);
-        var service = new RecursoService(ctx, user);
+        var service = new RecursoService(ctx, user, _noopStorage);
 
         var recursoId = (await service.CriarAsync(
             new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 1, 1), null, "202512"))).Value!.Id;
@@ -372,7 +374,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         var (ctx, user) = BuildTenant(tenantId);
         await using var _ = ctx;
         var (opId, prestId, procId) = await SeedCatalogAsync(ctx, tenantId);
-        var service = new RecursoService(ctx, user);
+        var service = new RecursoService(ctx, user, _noopStorage);
         var pfx = tenantId.ToString("N")[..4];
 
         var recursoId = (await service.CriarAsync(
@@ -406,7 +408,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         var (ctx, user) = BuildTenant(tenantId);
         await using var _ = ctx;
         var (opId, prestId, procId) = await SeedCatalogAsync(ctx, tenantId);
-        var service = new RecursoService(ctx, user);
+        var service = new RecursoService(ctx, user, _noopStorage);
         var pfx = tenantId.ToString("N")[..4];
 
         var recursoId = (await service.CriarAsync(
@@ -432,7 +434,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         var (ctx, user) = BuildTenant(tenantId);
         await using var _ = ctx;
         var (opId, prestId, _) = await SeedCatalogAsync(ctx, tenantId);
-        var service = new RecursoService(ctx, user);
+        var service = new RecursoService(ctx, user, _noopStorage);
 
         var cmd = new AdicionarGuiasEmLoteCommand(prestId, opId, null, null, null, null, null, null);
         var result = await service.AdicionarGuiasEmLoteAsync(Guid.NewGuid(), cmd);
@@ -448,7 +450,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         var (ctx, user) = BuildTenant(tenantId);
         await using var _ = ctx;
         var (opId, prestId, procId) = await SeedCatalogAsync(ctx, tenantId);
-        var service = new RecursoService(ctx, user);
+        var service = new RecursoService(ctx, user, _noopStorage);
         var pfx = tenantId.ToString("N")[..4];
 
         var recursoId = (await service.CriarAsync(
@@ -491,7 +493,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
 
         await ctx.SaveChangesAsync();
 
-        var service = new RecursoService(ctx, user);
+        var service = new RecursoService(ctx, user, _noopStorage);
         var pfx = tenantId.ToString("N")[..4];
 
         var recursoId = (await service.CriarAsync(
@@ -532,7 +534,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         var (ctx, user) = BuildTenant(tenantId);
         await using var _ = ctx;
         var (opId, prestId, procId) = await SeedCatalogAsync(ctx, tenantId);
-        var service = new RecursoService(ctx, user);
+        var service = new RecursoService(ctx, user, _noopStorage);
         var pfx = tenantId.ToString("N")[..4];
 
         var recursoId = (await service.CriarAsync(
@@ -560,7 +562,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         var (ctx, user) = BuildTenant(tenantId);
         await using var _ = ctx;
         var (opId, prestId, procId) = await SeedCatalogAsync(ctx, tenantId);
-        var service = new RecursoService(ctx, user);
+        var service = new RecursoService(ctx, user, _noopStorage);
         var pfx = tenantId.ToString("N")[..4];
 
         var recursoId = (await service.CriarAsync(
@@ -587,7 +589,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         var (ctx, user) = BuildTenant(tenantId);
         await using var _ = ctx;
         var (opId, prestId, procId) = await SeedCatalogAsync(ctx, tenantId);
-        var service = new RecursoService(ctx, user);
+        var service = new RecursoService(ctx, user, _noopStorage);
         var pfx = tenantId.ToString("N")[..4];
 
         var recursoId = (await service.CriarAsync(
@@ -616,7 +618,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         var (ctx, user) = BuildTenant(tenantId);
         await using var _ = ctx;
         var (opId, prestId, procId) = await SeedCatalogAsync(ctx, tenantId);
-        var service = new RecursoService(ctx, user);
+        var service = new RecursoService(ctx, user, _noopStorage);
 
         var recursoId = (await service.CriarAsync(
             new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 8, 1), null, "202512"))).Value!.Id;
@@ -645,4 +647,16 @@ file sealed class FakeRecursoTenantUser(Guid tenantId) : ICurrentUser
     public bool IsSaasAdmin => false;
     public bool IsImpersonating => false;
     public bool IsAuthenticated => true;
+}
+
+file sealed class RecursoCrudNoopFileStorage : IFileStorage
+{
+    public Task SaveAsync(string key, byte[] content, string contentType, CancellationToken ct = default) =>
+        Task.CompletedTask;
+
+    public Task<FileStorageObject?> GetAsync(string key, CancellationToken ct = default) =>
+        Task.FromResult<FileStorageObject?>(null);
+
+    public Task DeleteAsync(string key, CancellationToken ct = default) =>
+        Task.CompletedTask;
 }
