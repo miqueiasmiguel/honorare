@@ -22,6 +22,7 @@ internal sealed class ItemGuiaConfiguration : IEntityTypeConfiguration<ItemGuia>
         builder.Property(i => i.ValorLiquidado).HasColumnType("decimal(12,2)");
         builder.Property(i => i.MotivoGlosa).HasColumnName("motivo_glosa").HasMaxLength(200);
         builder.Property(i => i.CriadoEm).IsRequired();
+        builder.Property(i => i.IncluidoNoRecurso).IsRequired().HasDefaultValue(true);
 
         builder.HasOne<Guia>().WithMany()
             .HasForeignKey(i => i.GuiaId).OnDelete(DeleteBehavior.Cascade);

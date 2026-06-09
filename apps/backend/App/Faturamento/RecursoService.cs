@@ -1,15 +1,16 @@
 using App.Catalog;
 using App.Data;
 using App.Identity;
+using App.Storage;
 using Microsoft.EntityFrameworkCore;
 
 namespace App.Faturamento;
 
 internal sealed record CriarRecursoCommand(
-    Guid OperadoraId, Guid PrestadorId, DateOnly DataEmissao, string? Observacao);
+    Guid OperadoraId, Guid PrestadorId, DateOnly DataEmissao, string? Observacao, string Numero);
 
 internal sealed record AtualizarRecursoCommand(
-    Guid OperadoraId, Guid PrestadorId, DateOnly DataEmissao, string? Observacao);
+    Guid OperadoraId, Guid PrestadorId, DateOnly DataEmissao, string? Observacao, string Numero);
 
 internal sealed record RecursoDto(
     Guid Id, Guid OperadoraId, string OperadoraNome,
@@ -27,7 +28,8 @@ internal sealed record ItemGuiaNoRecursoDto(
     Acomodacao Acomodacao,
     bool EhUrgencia,
     decimal? ValorApurado,
-    decimal? ValorLiquidado);
+    decimal? ValorLiquidado,
+    bool IncluidoNoRecurso);
 
 internal sealed record GuiaNoRecursoDto(
     Guid Id, string NumeroGuia, DateOnly DataAtendimento,
@@ -55,6 +57,7 @@ internal sealed record RecursoPdfData(
     string PrestadorNome,
     string? PrestadorRegistroProfissional,
     string Numero,
+    byte[]? TenantLogo,
     IReadOnlyList<GuiaPdfData> Guias);
 
 internal sealed record GuiaPdfData(
@@ -77,15 +80,22 @@ internal sealed record ItemPdfData(
 internal sealed record ListarRecursosResult(
     IReadOnlyList<RecursoDto> Itens, int Total, int Pagina, int ItensPorPagina);
 
-internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser)
+internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser, IFileStorage storage)
 {
     private readonly AppDbContext _db = db;
     private readonly ICurrentUser _currentUser = currentUser;
+    private readonly IFileStorage _storage = storage;
 
     internal async Task<Result<RecursoDto>> CriarAsync(
         CriarRecursoCommand cmd, CancellationToken ct = default)
     {
         var tenantId = _currentUser.TenantId!.Value;
+
+        var numeroErro = ValidarNumero(cmd.Numero);
+        if (numeroErro is not null)
+        {
+            return Result<RecursoDto>.Fail(numeroErro);
+        }
 
         var operadora = await _db.Operadoras.FirstOrDefaultAsync(o => o.Id == cmd.OperadoraId, ct);
         if (operadora is null)
@@ -99,7 +109,7 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser)
             return Result<RecursoDto>.Fail(new NotFoundError("Prestador não encontrado."));
         }
 
-        var recurso = Recurso.Create(tenantId, cmd.OperadoraId, cmd.PrestadorId, cmd.DataEmissao, cmd.Observacao);
+        var recurso = Recurso.Create(tenantId, cmd.OperadoraId, cmd.PrestadorId, cmd.DataEmissao, cmd.Observacao, cmd.Numero);
         _db.Recursos.Add(recurso);
         await _db.SaveChangesAsync(ct);
 
@@ -231,6 +241,7 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser)
                 i.EhUrgencia,
                 i.ValorApurado,
                 i.ValorLiquidado,
+                i.IncluidoNoRecurso,
             }).ToListAsync(ct);
 
         var itensPorGuia = itens.GroupBy(i => i.GuiaId)
@@ -239,7 +250,7 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser)
                     i.Id, i.CodigoTuss, i.DescricaoProcedimento,
                     i.PosicaoExecutor, i.PercentualOrdem,
                     i.ViaAcesso, i.Acomodacao, i.EhUrgencia,
-                    i.ValorApurado, i.ValorLiquidado))
+                    i.ValorApurado, i.ValorLiquidado, i.IncluidoNoRecurso))
                 .ToList());
 
         var headerDto = new RecursoDto(
@@ -266,6 +277,12 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser)
             return Result<RecursoDto>.Fail(new NotFoundError("Recurso não encontrado."));
         }
 
+        var numeroErro = ValidarNumero(cmd.Numero);
+        if (numeroErro is not null)
+        {
+            return Result<RecursoDto>.Fail(numeroErro);
+        }
+
         var operadora = await _db.Operadoras.FirstOrDefaultAsync(o => o.Id == cmd.OperadoraId, ct);
         if (operadora is null)
         {
@@ -278,7 +295,7 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser)
             return Result<RecursoDto>.Fail(new NotFoundError("Prestador não encontrado."));
         }
 
-        recurso.Atualizar(cmd.OperadoraId, cmd.PrestadorId, cmd.DataEmissao, cmd.Observacao);
+        recurso.Atualizar(cmd.OperadoraId, cmd.PrestadorId, cmd.DataEmissao, cmd.Observacao, cmd.Numero);
         await _db.SaveChangesAsync(ct);
 
         var totalGuias = await _db.Guias.CountAsync(g => g.RecursoId == id, ct);
@@ -340,7 +357,43 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser)
             .Where(i => i.GuiaId == guiaId)
             .AllAsync(i => i.ValorLiquidado.HasValue, ct);
 
+        var itensDaGuia = await _db.ItensGuia.Where(i => i.GuiaId == guiaId).ToListAsync(ct);
+        foreach (var item in itensDaGuia)
+        {
+            item.ReincluirNoRecurso();
+        }
+
         guia.RemoverDoRecurso(todosLiquidados);
+        await _db.SaveChangesAsync(ct);
+    }
+
+    internal async Task AlterarInclusaoItemAsync(
+        Guid recursoId, Guid guiaId, Guid itemId, bool incluido, CancellationToken ct = default)
+    {
+        if (!await _db.Guias.AnyAsync(g => g.Id == guiaId && g.RecursoId == recursoId, ct))
+        {
+            throw new InvalidOperationException("Guia não encontrada neste recurso.");
+        }
+
+        var item = await _db.ItensGuia
+            .FirstOrDefaultAsync(i => i.Id == itemId && i.GuiaId == guiaId, ct)
+            ?? throw new InvalidOperationException("Item não encontrado nesta guia.");
+
+        if (!incluido)
+        {
+            var incluidos = await _db.ItensGuia.CountAsync(i => i.GuiaId == guiaId && i.IncluidoNoRecurso, ct);
+            if (incluidos <= 1)
+            {
+                throw new InvalidOperationException("A guia ficaria sem itens no recurso.");
+            }
+
+            item.ExcluirDoRecurso();
+        }
+        else
+        {
+            item.ReincluirNoRecurso();
+        }
+
         await _db.SaveChangesAsync(ct);
     }
 
@@ -393,7 +446,35 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser)
                     b.Nome.Contains(cmd.Beneficiario)));
         }
 
+        var tenant = await _db.Tenants
+            .FirstOrDefaultAsync(t => t.Id == _currentUser.TenantId!.Value, ct);
+        var codigos = tenant?.CodigosNaoRecorriveis ?? [];
+        if (codigos.Count > 0)
+        {
+            // Bloqueia apenas guias onde TODOS os itens são NR
+            // (guias mistas passam — têm ao menos um item recorrível)
+            q = q.Where(g => _db.ItensGuia.Any(i =>
+                i.GuiaId == g.Id &&
+                !_db.Procedimentos.Any(p => p.Id == i.ProcedimentoId && codigos.Contains(p.CodigoTuss))));
+        }
+
         var guias = await q.ToListAsync(ct);
+
+        if (codigos.Count > 0 && guias.Count > 0)
+        {
+            var guiaIds = guias.Select(g => g.Id).ToList();
+            var itensNaoRecorriveis = await (
+                from i in _db.ItensGuia
+                join p in _db.Procedimentos on i.ProcedimentoId equals p.Id
+                where guiaIds.Contains(i.GuiaId) && codigos.Contains(p.CodigoTuss)
+                select i
+            ).ToListAsync(ct);
+            foreach (var item in itensNaoRecorriveis)
+            {
+                item.ExcluirDoRecurso();
+            }
+        }
+
         foreach (var guia in guias)
         {
             guia.MarcarEmRecurso(recursoId);
@@ -416,6 +497,13 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser)
         var operadora = await _db.Operadoras.FirstAsync(o => o.Id == recurso.OperadoraId, ct);
         var prestador = await _db.Prestadores.FirstAsync(p => p.Id == recurso.PrestadorId, ct);
 
+        byte[]? logoBytes = null;
+        if (tenant?.LogoKey is not null)
+        {
+            var obj = await _storage.GetAsync(tenant.LogoKey, ct);
+            logoBytes = obj?.Content;
+        }
+
         var guiasRaw = await (
             from g in _db.Guias
             where g.RecursoId == id
@@ -437,7 +525,7 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser)
 
         var itensRaw = await (
             from i in _db.ItensGuia
-            where guiaIds.Contains(i.GuiaId)
+            where guiaIds.Contains(i.GuiaId) && i.IncluidoNoRecurso
             join p in _db.Procedimentos on i.ProcedimentoId equals p.Id
             orderby i.PercentualOrdem descending
             select new
@@ -509,7 +597,29 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser)
             prestador.Nome,
             prestador.RegistroProfissional,
             recurso.Numero,
+            logoBytes,
             guiaDtos));
+    }
+
+    private static ValidationError? ValidarNumero(string numero)
+    {
+        var valor = (numero ?? string.Empty).Trim();
+        if (valor.Length == 0)
+        {
+            return new ValidationError("Número é obrigatório.");
+        }
+
+        if (valor.Length > 20)
+        {
+            return new ValidationError("Número deve ter no máximo 20 dígitos.");
+        }
+
+        if (!valor.All(char.IsAsciiDigit))
+        {
+            return new ValidationError("Número deve conter apenas dígitos.");
+        }
+
+        return null;
     }
 
     private static string CalcularFatorEfetivo(IEnumerable<decimal> fatores)

@@ -13,7 +13,7 @@ const RECURSO: RecursoDto = {
   prestadorId: 'prest-1',
   prestadorNome: 'Dr. João',
   prestadorRegistroProfissional: null,
-  numero: '202601-001',
+  numero: '202512',
   dataEmissao: '2026-01-15',
   observacao: 'obs teste',
   totalGuias: 0,
@@ -21,6 +21,10 @@ const RECURSO: RecursoDto = {
 };
 
 const DETALHE: RecursoDetalheDto = { header: RECURSO, guias: [] };
+
+function fakeInputEvent(value: string): Event {
+  return { target: { value } } as unknown as Event;
+}
 
 function makeRecursoServiceSpy() {
   return {
@@ -80,12 +84,28 @@ describe('RecursoFormComponent', () => {
 
     component.operadoraId.set('op-1');
     component.prestadorId.set('prest-1');
-    component.dataEmissao.set('2026-01-15');
+    component.onDataEmissaoInput('2026-01-15');
 
     el.querySelector<HTMLButtonElement>('.recurso-form__btn-salvar')?.click();
 
-    expect(recursoService.criar).toHaveBeenCalled();
+    expect(recursoService.criar).toHaveBeenCalledWith(
+      expect.objectContaining({ numero: '202512' }),
+    );
     expect(router.navigate).toHaveBeenCalledWith(['/admin/recursos', 'rec-1', 'guias']);
+  });
+
+  it('form bloqueia criação sem número', () => {
+    const { component, el, recursoService } = setup();
+
+    component.operadoraId.set('op-1');
+    component.prestadorId.set('prest-1');
+    component.dataEmissao.set('2026-01-15');
+    // número permanece vazio (dataEmissao setada direto, sem disparar a sugestão)
+
+    el.querySelector<HTMLButtonElement>('.recurso-form__btn-salvar')?.click();
+
+    expect(recursoService.criar).not.toHaveBeenCalled();
+    expect(component.erroValidacao()).toBe('Informe o número do recurso.');
   });
 
   it('form carrega recurso existente e preenche campos', () => {
@@ -95,17 +115,45 @@ describe('RecursoFormComponent', () => {
     expect(component.operadoraId()).toBe('op-1');
     expect(component.prestadorId()).toBe('prest-1');
     expect(component.dataEmissao()).toBe('2026-01-15');
+    expect(component.numero()).toBe('202512');
     expect(component.observacao()).toBe('obs teste');
   });
 
-  it('form exibe numero calculado da dataEmissao', () => {
-    const { component, fixture, el } = setup();
+  it('pré-preenche o número com o mês anterior à data de emissão', () => {
+    const { component } = setup();
 
-    component.dataEmissao.set('2026-01-15');
-    fixture.detectChanges();
+    component.onDataEmissaoInput('2026-01-15');
 
-    const numeroEl = el.querySelector('.recurso-form__numero');
-    expect(numeroEl).not.toBeNull();
-    expect(numeroEl?.textContent).toContain('202601');
+    expect(component.numero()).toBe('202512');
+  });
+
+  it('número aceita apenas dígitos, preservando zeros à esquerda', () => {
+    const { component } = setup();
+
+    component.onNumeroInput(fakeInputEvent('00a12-3b'));
+
+    expect(component.numero()).toBe('00123');
+  });
+
+  it('input do número descarta caracteres não numéricos no DOM', () => {
+    const { el } = setup();
+
+    const input = el.querySelector<HTMLInputElement>('.recurso-form__input--numero');
+    if (!input) {
+      throw new Error('campo de número não encontrado');
+    }
+    input.value = '12a3';
+    input.dispatchEvent(new Event('input'));
+
+    expect(input.value).toBe('123');
+  });
+
+  it('número editado manualmente não é sobrescrito pela data', () => {
+    const { component } = setup();
+
+    component.onNumeroInput(fakeInputEvent('007'));
+    component.onDataEmissaoInput('2026-01-15');
+
+    expect(component.numero()).toBe('007');
   });
 });

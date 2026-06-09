@@ -52,6 +52,9 @@ importers:
       "@angular/router":
         specifier: ^20.2.0
         version: 20.3.19(@angular/common@20.3.19(@angular/core@20.3.19(@angular/compiler@20.3.19)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.3.19(@angular/compiler@20.3.19)(rxjs@7.8.2)(zone.js@0.15.1))(@angular/platform-browser@20.3.19(@angular/common@20.3.19(@angular/core@20.3.19(@angular/compiler@20.3.19)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.3.19(@angular/compiler@20.3.19)(rxjs@7.8.2)(zone.js@0.15.1)))(rxjs@7.8.2)
+      ngx-image-cropper:
+        specifier: ^9.1.6
+        version: 9.1.6(@angular/common@20.3.19(@angular/core@20.3.19(@angular/compiler@20.3.19)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.3.19(@angular/compiler@20.3.19)(rxjs@7.8.2)(zone.js@0.15.1))
       rxjs:
         specifier: ~7.8.0
         version: 7.8.2
@@ -4417,6 +4420,13 @@ packages:
     resolution:
       { integrity: sha512-8Ofs/AUQh8MaEcrlq5xOX0CQ9ypTF5dl78mjlMNfOK08fzpgTHQRQPBxcPlEtIw0yRpws+Zo/3r+5WRby7u3Gg== }
     engines: { node: ">= 0.6" }
+
+  ngx-image-cropper@9.1.6:
+    resolution:
+      { integrity: sha512-b250YJ+jZovfqIj8vdEOrpEFay34be5f1Hpvg6Db68VMlvdyyuzboJdR0gCupbXtVcG6qQ86L7YG+SYxXJwApw== }
+    peerDependencies:
+      "@angular/common": ">=17.3.0"
+      "@angular/core": ">=17.3.0"
 
   node-addon-api@6.1.0:
     resolution:
@@ -9320,6 +9330,12 @@ snapshots:
     optional: true
 
   negotiator@1.0.0: {}
+
+  ngx-image-cropper@9.1.6(@angular/common@20.3.19(@angular/core@20.3.19(@angular/compiler@20.3.19)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2))(@angular/core@20.3.19(@angular/compiler@20.3.19)(rxjs@7.8.2)(zone.js@0.15.1)):
+    dependencies:
+      "@angular/common": 20.3.19(@angular/core@20.3.19(@angular/compiler@20.3.19)(rxjs@7.8.2)(zone.js@0.15.1))(rxjs@7.8.2)
+      "@angular/core": 20.3.19(@angular/compiler@20.3.19)(rxjs@7.8.2)(zone.js@0.15.1)
+      tslib: 2.8.1
 
   node-addon-api@6.1.0:
     optional: true

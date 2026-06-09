@@ -16,6 +16,7 @@ internal static class RecursoEndpoints
         g.MapPost("{id:guid}/guias/lote", AdicionarGuiasEmLoteAsync);
         g.MapPost("{id:guid}/guias/{guiaId:guid}", AdicionarGuiaAsync);
         g.MapDelete("{id:guid}/guias/{guiaId:guid}", RemoverGuiaAsync);
+        g.MapPatch("{id:guid}/guias/{guiaId:guid}/itens/{itemId:guid}/inclusao", AlterarInclusaoItemAsync);
         g.MapGet("{id:guid}/pdf", GerarPdfAsync);
     }
 
@@ -43,11 +44,17 @@ internal static class RecursoEndpoints
     private static async Task<IResult> CriarRecursoAsync(
         CriarRecursoRequest body, RecursoService service, CancellationToken ct)
     {
-        var cmd = new CriarRecursoCommand(body.OperadoraId, body.PrestadorId, body.DataEmissao, body.Observacao);
+        var cmd = new CriarRecursoCommand(body.OperadoraId, body.PrestadorId, body.DataEmissao, body.Observacao, body.Numero);
         var result = await service.CriarAsync(cmd, ct);
         if (result.IsFailure)
         {
-            return Results.Problem(statusCode: StatusCodes.Status404NotFound, detail: result.Error!.Message);
+            var statusCode = result.Error switch
+            {
+                ValidationError => StatusCodes.Status422UnprocessableEntity,
+                NotFoundError => StatusCodes.Status404NotFound,
+                _ => StatusCodes.Status400BadRequest,
+            };
+            return Results.Problem(statusCode: statusCode, detail: result.Error!.Message);
         }
 
         return Results.Created($"/api/v1/admin/recursos/{result.Value!.Id}", result.Value);
@@ -56,11 +63,17 @@ internal static class RecursoEndpoints
     private static async Task<IResult> AtualizarRecursoAsync(
         Guid id, AtualizarRecursoRequest body, RecursoService service, CancellationToken ct)
     {
-        var cmd = new AtualizarRecursoCommand(body.OperadoraId, body.PrestadorId, body.DataEmissao, body.Observacao);
+        var cmd = new AtualizarRecursoCommand(body.OperadoraId, body.PrestadorId, body.DataEmissao, body.Observacao, body.Numero);
         var result = await service.AtualizarAsync(id, cmd, ct);
         if (result.IsFailure)
         {
-            return Results.Problem(statusCode: StatusCodes.Status404NotFound, detail: result.Error!.Message);
+            var statusCode = result.Error switch
+            {
+                ValidationError => StatusCodes.Status422UnprocessableEntity,
+                NotFoundError => StatusCodes.Status404NotFound,
+                _ => StatusCodes.Status400BadRequest,
+            };
+            return Results.Problem(statusCode: statusCode, detail: result.Error!.Message);
         }
 
         return Results.Ok(result.Value);
@@ -108,6 +121,14 @@ internal static class RecursoEndpoints
         return Results.NoContent();
     }
 
+    private static async Task<IResult> AlterarInclusaoItemAsync(
+        Guid id, Guid guiaId, Guid itemId, AlterarInclusaoItemRequest body,
+        RecursoService service, CancellationToken ct)
+    {
+        await service.AlterarInclusaoItemAsync(id, guiaId, itemId, body.Incluido, ct);
+        return Results.NoContent();
+    }
+
     private static async Task<IResult> GerarPdfAsync(
         Guid id, RecursoService service, CancellationToken ct)
     {
@@ -131,13 +152,15 @@ internal sealed record ListarRecursosRequest(
     int ItensPorPagina = 20);
 
 internal sealed record CriarRecursoRequest(
-    Guid OperadoraId, Guid PrestadorId, DateOnly DataEmissao, string? Observacao);
+    Guid OperadoraId, Guid PrestadorId, DateOnly DataEmissao, string? Observacao, string Numero);
 
 internal sealed record AtualizarRecursoRequest(
-    Guid OperadoraId, Guid PrestadorId, DateOnly DataEmissao, string? Observacao);
+    Guid OperadoraId, Guid PrestadorId, DateOnly DataEmissao, string? Observacao, string Numero);
 
 internal sealed record AdicionarGuiasEmLoteRequest(
     Guid PrestadorId, Guid OperadoraId,
     DateOnly? DataInicio = null, DateOnly? DataFim = null,
     SituacaoGuia? Situacao = null, string? NumeroGuia = null,
     string? Beneficiario = null, bool? SomenteComGlosa = null);
+
+internal sealed record AlterarInclusaoItemRequest(bool Incluido);

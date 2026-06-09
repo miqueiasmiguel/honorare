@@ -11,6 +11,14 @@ import { fileURLToPath } from 'node:url';
 // Required because @angular/build removed the Vite plugin in 20.3.x — there is
 // no build-time template compilation pipeline for Vitest. We read HTML templates
 // from disk; styles return empty string (not needed for behaviour tests).
+// jsdom não implementa URL.createObjectURL/revokeObjectURL. Algumas libs (ex.:
+// ngx-image-cropper) os chamam em tempo de avaliação de módulo, antes de qualquer
+// beforeAll, então o polyfill precisa existir já no carregamento do setup.
+if (typeof URL.createObjectURL !== 'function') {
+  URL.createObjectURL = (): string => 'blob:test';
+  URL.revokeObjectURL = (): void => undefined;
+}
+
 const setupDir = dirname(fileURLToPath(import.meta.url));
 
 function collectHtmlFiles(dir: string, map = new Map<string, string>()): Map<string, string> {

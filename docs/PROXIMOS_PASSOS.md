@@ -145,6 +145,8 @@ O coração do MVP.
 
 **Entregues:** Entidade `Recurso` (ITenantEntity, FKs `OperadoraId` e `PrestadorId` Restrict) com número automático `Numero = DataEmissao.ToString("yyyyMM")` (informativo, não único), configuração EF Core e migration `AddRecurso`. `Guia` recebeu `RecursoId Guid?` e métodos `MarcarEmRecurso(Guid)` / `RemoverDoRecurso(bool)` — reversão automática para `Liquidada` ou `Apresentada` conforme presença de `ValorLiquidado`. `RecursoService` com CRUD completo (`CriarAsync`, `ListarAsync`, `ObterPorIdAsync`, `AtualizarAsync`, `ExcluirAsync`), `AdicionarGuiaAsync` (409 se guia já está em outro recurso), `RemoverGuiaAsync` e `ObterDadosPdfAsync` (JOIN completo Recurso → Operadora, Prestador, Tenant, Guias → Beneficiário, ItemGuia → Procedimento, Cálculo/PassoCalculo). `RecursoPdfDocument` (QuestPDF Community, `IDocument`) gerando PDF estruturado: cabeçalho com logo e nome do tenant; título `[Prestador] - CRM [registro] - RECURSO [Operadora] [AAAAMM]`; por guia — linha de resumo (data, senha, carteira, paciente, executor), tabela de itens com colunas Cód. TUSS / Descrição / % / PAGO / CORRETO, subtotais **RESTA PAGAR** em negrito, observação em vermelho (`#CC0000`); totais finais ao final do documento. Fator efetivo por item = produto dos `PassoCalculo.Fator` excluindo `ValorBase` (exibe "—" para pacotes ou sem passos). Endpoints REST em `/api/v1/admin/recursos` (`POST`, `GET` lista paginada, `GET /{id}` com guias, `PUT /{id}`, `DELETE /{id}` com guard 409, `POST /{id}/guias`, `DELETE /{id}/guias/{guiaId}`, `GET /{id}/pdf` retorna `application/pdf`). Suites xUnit (`RecursoSchemaTests`, `RecursoCrudTests`, `RecursoPdfDataTests`) cobrindo 20 casos. Telas Angular: `RecursoListComponent` (tabela paginada, filtros por operadora e prestador com debounce 400 ms, badge de guias, botão "Gerenciar guias", botão "PDF", botão excluir), `RecursoFormComponent` (criar/editar, número calculado no template), `RecursoGuiasComponent` (guias vinculadas com remoção, busca inline por senha filtrada por `Apresentada/Liquidada`, adição via POST, download de PDF via blob URL); sidebar atualizado com "Recursos" em "Faturamento".
 
+**⚠ Emenda (D-046):** o número do recurso deixou de ser automático (`DataEmissao.ToString("yyyyMM")`) e passou a ser **manual** — campo somente-dígitos, `varchar(20)`, obrigatório e validado no servidor, pré-preenchido no formulário com o `AAAAMM` do mês anterior à data de emissão. Migration `AumentaRecursoNumeroParaVinteCaracteres`. Ver D-046 em `DECISOES.md`.
+
 ### F3.6 — Porte Anestésico por Letra (UNIMED) + dobra por posição
 
 **Entregues (PA-01 a PA-09):** Nova entidade `TabelaPorteAnestesico` (ITenantEntity, unique `(TenantId, OperadoraId, PorteLetra)`) com par fixo `(ValorEnfermaria, ValorApartamento)` e opcional `ValorAmbulatorial`; migration `AddTabelaPorteAnestesico`; importação CSV no formato UNIMED JPA (separador vírgula, 8 linhas de header, decimal com vírgula entre aspas) via `CatalogService.ImportarTabelaUnimedAnestesistaAsync`; endpoints `POST /api/v1/admin/tabelas-porte-anestesico/importar-unimed-csv` e `GET /api/v1/admin/tabelas-porte-anestesico` com policy `TenantAccess`. `Procedimento.PorteAnestesico` migrado de `int?` (1–8) para `string?` (varchar(2), regex `^[A-NP-Z]$` — A–Z exceto O). `AnestesiaCalculator` reescrito sem `UnimedAN×1,1719` e sem `TempoExtra`: pipeline `ValorBase → OrdemProcedimento → Urgencia` consumindo `valorReferencia` selecionado por acomodação (Apartamento → `ValorApartamento`; Ambulatorial → `ValorAmbulatorial ?? ValorEnfermaria`; demais → `ValorEnfermaria`); early-exits `Indeterminado` / `SemTabela` / `SemDeflator` em `UnimedRuleSet.ApurarAnestesistaAsync`. `AcomodacaoModifier` agora recebe `PosicaoExecutor` e aplica `×2.0` **apenas para `Cirurgiao` em Apartamento** — auxiliares, clínico assistente e anestesista recebem `×1.0` (corrige bug onde 1º auxiliar em apto recebia 1,2× o valor correto). Frontend admin-web: signal `porteAnestesico` em `procedimento-form` migrado para `string` com input texto maxlength 1 + regex; novo modal `tabela-porte-anestesico-csv-modal` integrado em `tabela-list` (botão "Importar Tabela Anestesista" condicional à operadora selecionada). Cobertura ≥ 80% nos dois lados.
@@ -202,6 +204,38 @@ O coração do MVP.
 **Decisão registrada:** D-045 (`DECISOES.md`).
 
 **Spec:** `docs/specs/adicionar-item-guia-recurso.md`
+
+### TCFG ✅ — Configurações do tenant (renomear + logo no PDF)
+
+**Entregues (TASK-TCFG-01 a 06):** Abstração `IFileStorage` com `LocalFileStorage` em disco, volume Docker `honorare_storage` e `StorageOptions` bindadas de `appsettings`. `Tenant` ganhou `Rename(string)`, `SetLogoKey(string)` / `ClearLogoKey()` e `LogoKey string?` com migration `AddTenantLogoKey`. `TenantSettingsService` com `ObterAsync` / `RenomearAsync` / `SalvarLogoAsync` / `ObterLogoAsync` / `RemoverLogoAsync`; endpoints sob `/api/v1/admin/tenant` (policy `TenantAccess`, tenant resolvido por `ICurrentUser`): `GET /settings`, `PUT /settings/nome`, `POST /logo` (upload multipart, magic-number PNG/JPEG, limite 2 MB), `GET /logo`, `DELETE /logo`. Logo renderizada no cabeçalho do PDF do recurso (`RecursoPdfDocument`); sem logo exibe apenas o nome do tenant. Frontend admin-web: `TenantSettingsService` Angular; página `/admin/configuracoes` com formulário de renomeação e seção de logo (preview, upload por input file, remoção); sidebar com item "Configurações" em "Administração".
+
+**Decisão registrada:** D-047 (`DECISOES.md`).
+
+**Spec:** `docs/specs/configuracoes-tenant.md`
+
+### NREC ✅ — Procedimentos não recorríveis
+
+**Entregues (TASK-NREC-01 a 06):** `Tenant.CodigosNaoRecorriveis List<string>` mapeado como `text[]` (migration `AddCodigosNaoRecorriveis`); métodos `AddToNaoRecorriveis` / `RemoveFromNaoRecorriveis`. `GuiaDto.NaoRecorrivel bool` em `GuiaService.ListarAsync`. Endpoint `GET/PUT /api/v1/admin/tenant/codigos-nao-recorriveis` (policy `TenantAccess`). `RecursoService.AdicionarGuiasEmLoteAsync` pula guias com `NaoRecorrivel=true`; o individual `AdicionarGuiaAsync` funciona como escape hatch. Frontend: seção "Procedimentos Não Recorríveis" na página de Configurações com autocomplete do catálogo; badge "Não recorrível" na tabela de candidatas do `recurso-guias`.
+
+**⚠ Refinado por GMIX:** a semântica de `NaoRecorrivel` mudou de "algum item NR" para "todos os itens NR" e foi adicionado `MistaComNaoRecorriveis` para guias com apenas alguns itens NR. Ver GMIX abaixo e D-049.
+
+**Spec:** `docs/specs/procedimentos-nao-recorriveis.md`
+
+### EIR ✅ — Excluir/reincluir itens de recurso
+
+**Entregues (TASK-EIR-01 a 03):** `ItemGuia.IncluidoNoRecurso bool` (default `true`, migration `AddIncluidoNoRecursoItemGuia`); métodos `ExcluirDoRecurso()` / `ReincluirNoRecurso()` com invariante: excluir o último item incluído lança `InvalidOperationException` (→ 409); `Guia.RemoverDoRecurso()` reseta o flag em todos os itens. `RecursoService.AlterarInclusaoItemAsync` exposto em `PATCH /api/v1/admin/recursos/{id}/guias/{guiaId}/itens/{itemId}/inclusao` `{ "incluido": bool }`. `ObterPorIdAsync` expõe `incluidoNoRecurso` por item; `ObterDadosPdfAsync` filtra itens com `IncluidoNoRecurso=false` do PDF. Suites xUnit cobrindo exclusão, reinclussão, invariante do último item e reset ao remover guia. Frontend: item com `incluidoNoRecurso=false` renderiza riscado com botão "Reincluir"; item normal exibe botão "Excluir" com `confirm()`.
+
+**Decisão registrada:** D-048 (`DECISOES.md`).
+
+**Spec:** `docs/specs/excluir-item-recurso.md`
+
+### GMIX ✅ — Guia mista com procedimentos não recorríveis
+
+**Entregues (TASK-GMIX-01 a 03):** `GuiaDto` passa a expor dois flags mutuamente exclusivos: `NaoRecorrivel=true` somente quando **todos** os itens são NR; `MistaComNaoRecorriveis=true` quando **alguns** (não todos) são NR. `GuiaService.ListarAsync` computa `countNrPorGuia` por group-by e deriva os dois conjuntos. `RecursoService.AdicionarGuiasEmLoteAsync` bloqueia apenas guias totalmente NR; guias mistas são adicionadas com seus itens NR automaticamente marcados `IncluidoNoRecurso=false` via `ExcluirDoRecurso()` (invariante garantido pela definição de guia mista). Frontend: badge "Contém não recorrível" (âmbar/neutro) para guias mistas, distinto do badge "Não recorrível" (bloqueante) para guias totalmente NR.
+
+**Decisão registrada:** D-049 (`DECISOES.md`).
+
+**Spec:** `docs/specs/guia-mista-nao-recorrivel.md`
 
 ## Fase 4 — Visualização (2-3 semanas)
 

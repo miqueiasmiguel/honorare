@@ -40,6 +40,7 @@ function makeItemGuiaNoRecurso(
     ehUrgencia: false,
     valorApurado: null,
     valorLiquidado: null,
+    incluidoNoRecurso: true,
     ...overrides,
   };
 }
@@ -79,6 +80,7 @@ function makeGuiaItem(overrides: Partial<GuiaItem> = {}): GuiaItem {
     totalItens: 1,
     criadoEm: '2026-01-11T00:00:00Z',
     atualizadoEm: '2026-01-11T00:00:00Z',
+    naoRecorrivel: false,
     ...overrides,
   };
 }
@@ -98,6 +100,7 @@ function setup(options: { guias?: GuiaNoRecursoDto[]; candidatas?: GuiaItem[] } 
     adicionarGuiasLote: vi.fn().mockReturnValue(of({ adicionadas: 0 })),
     removerGuia: vi.fn().mockReturnValue(of(undefined)),
     baixarPdf: vi.fn(),
+    alterarInclusaoItem: vi.fn().mockReturnValue(of(undefined)),
   };
   const guiaService = {
     listar: vi.fn().mockReturnValue(of(makeListResult(options.candidatas ?? []))),
@@ -391,6 +394,60 @@ describe('RecursoGuiasComponent', () => {
     expect(el.querySelector('.guia-card__glosa')).toBeNull();
   });
 
+  it('deve exibir selo "Não recorrível" quando candidata.naoRecorrivel é true', () => {
+    const candidatas = [
+      makeGuiaItem({ id: 'g-nr', naoRecorrivel: true, mistaComNaoRecorriveis: false }),
+    ];
+    const { el, fixture } = setup({ candidatas });
+    el.querySelector<HTMLButtonElement>('.recurso-guias__btn-filtrar')?.click();
+    fixture.detectChanges();
+    expect(el.querySelector('.recurso-guias__badge-nao-recorrivel')).not.toBeNull();
+  });
+
+  it('não deve exibir selo quando naoRecorrivel é false', () => {
+    const candidatas = [
+      makeGuiaItem({ id: 'g-ok', naoRecorrivel: false, mistaComNaoRecorriveis: false }),
+    ];
+    const { el, fixture } = setup({ candidatas });
+    el.querySelector<HTMLButtonElement>('.recurso-guias__btn-filtrar')?.click();
+    fixture.detectChanges();
+    expect(el.querySelector('.recurso-guias__badge-nao-recorrivel')).toBeNull();
+  });
+
+  it('deve exibir badge "Contém não recorrível" quando candidata.mistaComNaoRecorriveis é true', () => {
+    const candidatas = [
+      makeGuiaItem({ id: 'g-mista', naoRecorrivel: false, mistaComNaoRecorriveis: true }),
+    ];
+    const { el, fixture } = setup({ candidatas });
+    el.querySelector<HTMLButtonElement>('.recurso-guias__btn-filtrar')?.click();
+    fixture.detectChanges();
+    const badge = el.querySelector('.recurso-guias__badge-mista');
+    expect(badge).not.toBeNull();
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    expect(badge.textContent?.trim()).toBe('Contém não recorrível');
+  });
+
+  it('não deve exibir badge mista quando mistaComNaoRecorriveis é false', () => {
+    const candidatas = [
+      makeGuiaItem({ id: 'g-ok', naoRecorrivel: false, mistaComNaoRecorriveis: false }),
+    ];
+    const { el, fixture } = setup({ candidatas });
+    el.querySelector<HTMLButtonElement>('.recurso-guias__btn-filtrar')?.click();
+    fixture.detectChanges();
+    expect(el.querySelector('.recurso-guias__badge-mista')).toBeNull();
+  });
+
+  it('deve exibir badge "Não recorrível" (e não badge mista) quando naoRecorrivel é true', () => {
+    const candidatas = [
+      makeGuiaItem({ id: 'g-nr', naoRecorrivel: true, mistaComNaoRecorriveis: false }),
+    ];
+    const { el, fixture } = setup({ candidatas });
+    el.querySelector<HTMLButtonElement>('.recurso-guias__btn-filtrar')?.click();
+    fixture.detectChanges();
+    expect(el.querySelector('.recurso-guias__badge-nao-recorrivel')).not.toBeNull();
+    expect(el.querySelector('.recurso-guias__badge-mista')).toBeNull();
+  });
+
   it('abrirModalItem seta guiaParaItem e abre o modal', () => {
     const guia = makeGuiaNoRecurso({ id: 'guia-1', ehPacote: true });
     const { component } = setup({ guias: [guia] });
@@ -412,5 +469,47 @@ describe('RecursoGuiasComponent', () => {
     expect(component.modalItemAberto()).toBe(false);
     expect(component.guiaParaItem()).toBeNull();
     expect(recursoService.obterPorId).toHaveBeenCalledWith('rec-1');
+  });
+
+  it('excluirItem chama alterarInclusaoItem com incluido=false', () => {
+    const item = makeItemGuiaNoRecurso({ id: 'item-1', incluidoNoRecurso: true });
+    const guia = makeGuiaNoRecurso({ id: 'guia-1', itens: [item] });
+    const { component, recursoService } = setup({ guias: [guia] });
+
+    component.excluirItem('guia-1', item);
+
+    expect(recursoService.alterarInclusaoItem).toHaveBeenCalledWith(
+      'rec-1',
+      'guia-1',
+      'item-1',
+      false,
+    );
+  });
+
+  it('reincluirItem chama alterarInclusaoItem com incluido=true', () => {
+    const item = makeItemGuiaNoRecurso({ id: 'item-1', incluidoNoRecurso: false });
+    const guia = makeGuiaNoRecurso({ id: 'guia-1', itens: [item] });
+    const { component, recursoService } = setup({ guias: [guia] });
+
+    component.reincluirItem('guia-1', item);
+
+    expect(recursoService.alterarInclusaoItem).toHaveBeenCalledWith(
+      'rec-1',
+      'guia-1',
+      'item-1',
+      true,
+    );
+  });
+
+  it('erro ao alterar inclusão exibe mensagem', () => {
+    const item = makeItemGuiaNoRecurso({ id: 'item-1', incluidoNoRecurso: true });
+    const guia = makeGuiaNoRecurso({ id: 'guia-1', itens: [item] });
+    const { component, recursoService, fixture } = setup({ guias: [guia] });
+    recursoService.alterarInclusaoItem.mockReturnValue(throwError(() => new Error('err')));
+
+    component.excluirItem('guia-1', item);
+    fixture.detectChanges();
+
+    expect(component.erroValidacao()).not.toBe('');
   });
 });

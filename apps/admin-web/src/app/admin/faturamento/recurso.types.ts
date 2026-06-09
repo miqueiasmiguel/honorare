@@ -4,6 +4,7 @@ export interface RecursoForm {
   operadoraId: string;
   prestadorId: string;
   dataEmissao: string;
+  numero: string;
   observacao: string | null;
 }
 
@@ -32,6 +33,7 @@ export interface ItemGuiaNoRecursoDto {
   ehUrgencia: boolean;
   valorApurado: number | null;
   valorLiquidado: number | null;
+  incluidoNoRecurso: boolean;
 }
 
 export interface GuiaNoRecursoDto {

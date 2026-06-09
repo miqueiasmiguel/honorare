@@ -29,7 +29,7 @@ public sealed class RecursoSchemaTests(PostgresContainerFixture db)
         {
             var (operadoraId, prestadorId) = await SeedBaseAsync(ctx, tenantId);
             var recurso = Recurso.Create(tenantId, operadoraId, prestadorId,
-                new DateOnly(2026, 2, 15), "Obs recurso");
+                new DateOnly(2026, 2, 15), "Obs recurso", "202601");
             ctx.Add(recurso);
             await ctx.SaveChangesAsync();
             recursoId = recurso.Id;
@@ -39,13 +39,13 @@ public sealed class RecursoSchemaTests(PostgresContainerFixture db)
         var salvo = await adminCtx.Recursos.Where(r => r.Id == recursoId).SingleOrDefaultAsync();
 
         Assert.NotNull(salvo);
-        Assert.Equal("202602", salvo.Numero);
+        Assert.Equal("202601", salvo.Numero);
         Assert.Equal(new DateOnly(2026, 2, 15), salvo.DataEmissao);
         Assert.Equal("Obs recurso", salvo.Observacao);
     }
 
     [Fact]
-    public async Task Recurso_Numero_GeradoDaDataEmissaoAsync()
+    public async Task Recurso_Numero_PreservaZerosAEsquerdaAsync()
     {
         var tenantId = Guid.NewGuid();
         Guid recursoId;
@@ -54,7 +54,7 @@ public sealed class RecursoSchemaTests(PostgresContainerFixture db)
         {
             var (operadoraId, prestadorId) = await SeedBaseAsync(ctx, tenantId);
             var recurso = Recurso.Create(tenantId, operadoraId, prestadorId,
-                new DateOnly(2026, 2, 15), null);
+                new DateOnly(2026, 2, 15), null, "00042");
             ctx.Add(recurso);
             await ctx.SaveChangesAsync();
             recursoId = recurso.Id;
@@ -64,7 +64,7 @@ public sealed class RecursoSchemaTests(PostgresContainerFixture db)
         var salvo = await adminCtx.Recursos.Where(r => r.Id == recursoId).SingleOrDefaultAsync();
 
         Assert.NotNull(salvo);
-        Assert.Equal("202602", salvo.Numero);
+        Assert.Equal("00042", salvo.Numero);
     }
 
     [Fact]
@@ -79,7 +79,7 @@ public sealed class RecursoSchemaTests(PostgresContainerFixture db)
             var (operadoraId, prestadorId) = await SeedBaseAsync(ctx, tenantId);
 
             var recurso = Recurso.Create(tenantId, operadoraId, prestadorId,
-                new DateOnly(2026, 1, 10), null);
+                new DateOnly(2026, 1, 10), null, "202512");
             ctx.Add(recurso);
 
             var guia = Guia.Create(tenantId, prestadorId, operadoraId, null,
@@ -113,7 +113,7 @@ public sealed class RecursoSchemaTests(PostgresContainerFixture db)
             var (operadoraId, prestadorId) = await SeedBaseAsync(ctx, tenantId);
 
             var recurso = Recurso.Create(tenantId, operadoraId, prestadorId,
-                new DateOnly(2026, 1, 10), null);
+                new DateOnly(2026, 1, 10), null, "202512");
             ctx.Add(recurso);
 
             var guia = Guia.Create(tenantId, prestadorId, operadoraId, null,
@@ -149,7 +149,7 @@ public sealed class RecursoSchemaTests(PostgresContainerFixture db)
             var (operadoraId, prestadorId) = await SeedBaseAsync(ctx, tenantId);
 
             var recurso = Recurso.Create(tenantId, operadoraId, prestadorId,
-                new DateOnly(2026, 1, 10), null);
+                new DateOnly(2026, 1, 10), null, "202512");
             ctx.Add(recurso);
 
             var guia = Guia.Create(tenantId, prestadorId, operadoraId, null,
@@ -185,7 +185,7 @@ public sealed class RecursoSchemaTests(PostgresContainerFixture db)
             var (operadoraId, prestadorId) = await SeedBaseAsync(ctx, tenantId);
 
             var recurso = Recurso.Create(tenantId, operadoraId, prestadorId,
-                new DateOnly(2026, 3, 1), null);
+                new DateOnly(2026, 3, 1), null, "202602");
             ctx.Add(recurso);
 
             var guia = Guia.Create(tenantId, prestadorId, operadoraId, null,

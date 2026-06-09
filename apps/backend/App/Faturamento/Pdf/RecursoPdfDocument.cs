@@ -43,6 +43,11 @@ internal sealed class RecursoPdfDocument(RecursoPdfData data) : IDocument
     {
         c.Column(col =>
         {
+            if (data.TenantLogo is not null)
+            {
+                col.Item().Height(50).Image(data.TenantLogo).FitHeight();
+            }
+
             col.Item().Text(t =>
             {
                 t.DefaultTextStyle(s => s.Bold().FontSize(12));

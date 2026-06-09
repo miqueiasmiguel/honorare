@@ -1,6 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { DatePipe } from '@angular/common';
 import type { OperadoraItem, PrestadorItem } from '../../catalog/catalog.types';
 import { CatalogService } from '../../catalog/catalog.service';
 import { RecursoService } from '../recurso.service';
@@ -46,13 +45,21 @@ import { RecursoService } from '../recurso.service';
           id="data-emissao"
           class="recurso-form__input--data-emissao"
           [value]="dataEmissao()"
-          (input)="dataEmissao.set($any($event.target).value)"
+          (input)="onDataEmissaoInput($any($event.target).value)"
         />
       </div>
 
       <div class="recurso-form__field">
-        <p class="recurso-form__label">Número</p>
-        <span class="recurso-form__numero">{{ dataEmissao() | date: 'yyyyMM' }}</span>
+        <label class="recurso-form__label" for="numero">Número</label>
+        <input
+          type="text"
+          inputmode="numeric"
+          id="numero"
+          class="recurso-form__input--numero"
+          maxlength="20"
+          [value]="numero()"
+          (input)="onNumeroInput($event)"
+        />
       </div>
 
       <div class="recurso-form__field">
@@ -80,7 +87,6 @@ import { RecursoService } from '../recurso.service';
     </form>
   `,
   styleUrl: './recurso-form.component.scss',
-  imports: [DatePipe],
 })
 export class RecursoFormComponent implements OnInit {
   private readonly _recursoService = inject(RecursoService);
@@ -98,7 +104,12 @@ export class RecursoFormComponent implements OnInit {
   readonly operadoraId = signal('');
   readonly prestadorId = signal('');
   readonly dataEmissao = signal('');
+  readonly numero = signal('');
   readonly observacao = signal('');
+
+  /** Marca se o operador editou o número manualmente; enquanto false, o número
+   * acompanha a sugestão (mês anterior à data de emissão). */
+  private _numeroEditado = false;
 
   ngOnInit(): void {
     this._carregarOperadoras();
@@ -114,6 +125,38 @@ export class RecursoFormComponent implements OnInit {
 
   cancelar(): void {
     void this._router.navigate(['/admin/recursos']);
+  }
+
+  onDataEmissaoInput(value: string): void {
+    this.dataEmissao.set(value);
+    if (!this._numeroEditado) {
+      this.numero.set(this._numeroSugerido(value));
+    }
+  }
+
+  onNumeroInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const numeros = input.value.replace(/\D/g, '').slice(0, 20);
+    this._numeroEditado = true;
+    this.numero.set(numeros);
+    // Reescreve o DOM mesmo quando o signal não muda (ex.: digitou uma letra
+    // após dígitos válidos) — sem isso, o caractere inválido fica visível.
+    input.value = numeros;
+  }
+
+  /** Sugestão de número: yyyyMM do mês anterior à data de emissão. */
+  private _numeroSugerido(dataEmissao: string): string {
+    const [ano, mes] = dataEmissao.split('-').map(Number);
+    if (!ano || !mes) {
+      return '';
+    }
+    let anoSugerido = ano;
+    let mesSugerido = mes - 1;
+    if (mesSugerido === 0) {
+      mesSugerido = 12;
+      anoSugerido -= 1;
+    }
+    return `${String(anoSugerido)}${String(mesSugerido).padStart(2, '0')}`;
   }
 
   onSubmit(event: Event): void {
@@ -132,11 +175,16 @@ export class RecursoFormComponent implements OnInit {
       this.erroValidacao.set('Informe a data de emissão.');
       return;
     }
+    if (!this.numero()) {
+      this.erroValidacao.set('Informe o número do recurso.');
+      return;
+    }
 
     const payload = {
       operadoraId: this.operadoraId(),
       prestadorId: this.prestadorId(),
       dataEmissao: this.dataEmissao(),
+      numero: this.numero(),
       observacao: this.observacao() || null,
     };
 
@@ -189,6 +237,8 @@ export class RecursoFormComponent implements OnInit {
         this.operadoraId.set(h.operadoraId);
         this.prestadorId.set(h.prestadorId);
         this.dataEmissao.set(h.dataEmissao);
+        this._numeroEditado = true;
+        this.numero.set(h.numero);
         this.observacao.set(h.observacao ?? '');
       },
       error: () => {

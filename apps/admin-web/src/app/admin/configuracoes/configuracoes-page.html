@@ -1,0 +1,150 @@
+<section class="configuracoes">
+  <h1 class="configuracoes__title">Configurações</h1>
+
+  @if (erroValidacao(); as erro) {
+    <p class="configuracoes__error-banner">{{ erro }}</p>
+  }
+
+  <form class="configuracoes__form" (ngSubmit)="submit()" [formGroup]="form">
+    <h2 class="configuracoes__section-title">Dados da empresa</h2>
+
+    <div class="configuracoes__field">
+      <label class="configuracoes__field-label" for="nome">Nome da empresa</label>
+      <input
+        id="nome"
+        type="text"
+        class="configuracoes__input"
+        [class.configuracoes__input--invalid]="
+          form.controls.nome.touched && form.controls.nome.invalid
+        "
+        formControlName="nome"
+        maxlength="256"
+        autocomplete="organization"
+        placeholder="Nome da clínica ou empresa"
+      />
+      @if (form.controls.nome.touched && form.controls.nome.hasError('required')) {
+        <span class="configuracoes__field-error">Nome é obrigatório.</span>
+      }
+      @if (form.controls.nome.touched && form.controls.nome.hasError('maxlength')) {
+        <span class="configuracoes__field-error">Nome deve ter no máximo 256 caracteres.</span>
+      }
+    </div>
+
+    <div class="configuracoes__actions">
+      <button type="submit" class="configuracoes__btn-save" [disabled]="saving()">
+        {{ saving() ? 'Salvando…' : 'Salvar alterações' }}
+      </button>
+      @if (saved()) {
+        <span class="configuracoes__success">Configurações salvas com sucesso.</span>
+      }
+    </div>
+  </form>
+
+  <div class="configuracoes__logo-section">
+    <h2 class="configuracoes__section-title">Logo da empresa</h2>
+    <p class="configuracoes__logo-hint">
+      A logo é exibida no cabeçalho dos PDFs de recurso. Formatos aceitos: PNG ou JPEG, máximo 2 MB.
+    </p>
+
+    @if (logoUrl(); as url) {
+      <div class="configuracoes__logo-preview">
+        <img class="configuracoes__logo-img" [src]="url" alt="Logo da empresa" />
+        <button
+          type="button"
+          class="configuracoes__btn-remove"
+          [disabled]="uploadingLogo()"
+          (click)="removerLogo()"
+        >
+          Remover logo
+        </button>
+      </div>
+    } @else {
+      <p class="configuracoes__logo-empty">Nenhuma logo cadastrada.</p>
+    }
+
+    <label
+      class="configuracoes__btn-upload"
+      [class.configuracoes__btn-upload--loading]="uploadingLogo()"
+    >
+      {{ uploadingLogo() ? 'Enviando…' : 'Enviar nova logo' }}
+      <input
+        type="file"
+        class="configuracoes__file-input"
+        accept="image/png,image/jpeg"
+        [disabled]="uploadingLogo()"
+        (change)="selecionarArquivo($event)"
+      />
+    </label>
+  </div>
+
+  <div class="configuracoes__nao-recorriveis">
+    <h2 class="configuracoes__section-title">Procedimentos não recorríveis</h2>
+    <p class="configuracoes__nao-recorriveis-hint">
+      Guias com estes procedimentos não são incluídas automaticamente no lote de recurso. O operador
+      pode adicioná-las manualmente.
+    </p>
+
+    <div class="configuracoes__nao-recorriveis-busca">
+      <input
+        type="text"
+        class="configuracoes__input"
+        [value]="buscaNaoRecorrivel()"
+        (input)="buscarProcedimentos($any($event.target).value)"
+        placeholder="Buscar procedimento por código ou descrição"
+        autocomplete="off"
+      />
+      @if (resultadosBusca().length > 0) {
+        <ul class="configuracoes__nao-recorriveis-resultados">
+          @for (proc of resultadosBusca(); track proc.codigoTuss) {
+            <li
+              class="configuracoes__nao-recorriveis-resultado"
+              tabindex="0"
+              (click)="adicionarNaoRecorrivel(proc)"
+              (keyup.enter)="adicionarNaoRecorrivel(proc)"
+            >
+              <span class="configuracoes__nao-recorriveis-codigo">{{ proc.codigoTuss }}</span>
+              <span class="configuracoes__nao-recorriveis-descricao">{{ proc.descricao }}</span>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+
+    @if (naoRecorriveis().length > 0) {
+      <ul class="configuracoes__nao-recorriveis-lista">
+        @for (item of naoRecorriveis(); track item.codigoTuss) {
+          <li class="configuracoes__nao-recorriveis-item">
+            <span class="configuracoes__nao-recorriveis-codigo">{{ item.codigoTuss }}</span>
+            <span class="configuracoes__nao-recorriveis-descricao">{{ item.descricao }}</span>
+            <button
+              type="button"
+              class="configuracoes__btn-remove-codigo"
+              (click)="removerNaoRecorrivel(item.codigoTuss)"
+            >
+              Remover
+            </button>
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="configuracoes__nao-recorriveis-vazio">Nenhum procedimento cadastrado.</p>
+    }
+
+    <div class="configuracoes__nao-recorriveis-acoes">
+      <button
+        type="button"
+        class="configuracoes__btn-save"
+        [disabled]="salvandoNaoRecorriveis()"
+        (click)="salvarNaoRecorriveis()"
+      >
+        {{ salvandoNaoRecorriveis() ? 'Salvando…' : 'Salvar lista' }}
+      </button>
+    </div>
+  </div>
+
+  <app-recortar-logo-modal
+    [arquivo]="arquivoParaRecorte()"
+    (recortado)="aoRecortar($event)"
+    (cancelado)="aoCancelarRecorte()"
+  />
+</section>

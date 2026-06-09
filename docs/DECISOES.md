@@ -360,6 +360,51 @@ O operador pode acrescentar um item a uma guia já existente — inclusive uma j
 
 **Revisitar:** se algum dia uma regra UNIMED passar a depender de contexto cruzado entre itens (hoje não existe) — aí adicionar um item exigiria reapurar a guia inteira e esta decisão cairia.
 
+### D-046: Número do recurso é manual (dígitos), pré-preenchido com o mês anterior à emissão (2026-06-09)
+
+O `Recurso.Numero` deixou de ser gerado automaticamente a partir da data de emissão (`DataEmissao.ToString("yyyyMM")`, comportamento original da entrega F4.1) e passou a ser **informado pelo operador**. Regras:
+
+- Campo de **texto somente-dígitos**, `varchar(20)` (antes `varchar(6)` — migration `AumentaRecursoNumeroParaVinteCaracteres`). É **string, não inteiro**, porque zeros à esquerda são significativos e devem ser preservados (ex.: `00042`).
+- **Obrigatório**, validado no servidor em `RecursoService.CriarAsync`/`AtualizarAsync` → `ValidationError` → HTTP 422, no mesmo padrão de validação do `CatalogService`. A entidade `Recurso` apenas persiste o valor (trimmed); **não há mais derivação de número no backend**.
+- **Pré-preenchido** no `RecursoFormComponent` com o `AAAAMM` do **mês anterior** à data de emissão (ex.: emissão `2026-01-15` → `202512`), acompanhando a data enquanto o operador não editar o campo manualmente. É apenas sugestão de UX — a regra do "mês anterior" vive só no frontend, não no backend.
+
+**Por que mês anterior:** o recurso é montado no mês corrente sobre competências do mês fechado anterior; o número reflete a competência contestada, não a data de emissão.
+
+**Por que validar no servidor e não só no formulário:** o `Numero` compõe o nome do PDF (`RECURSO_{Numero}_{Operadora}.pdf`) enviado à operadora. Um número vazio — ou inventado por um default de backend — seria o oposto de "manual e obrigatório". Por isso a derivação `yyyyMM` foi removida da entidade em vez de mantida como fallback.
+
+**Frontend — armadilha do `[value]` + signal:** o input filtra não-dígitos no handler; quando o usuário digita uma letra após dígitos válidos, o valor saneado é igual ao do signal e `signal.set()` é no-op → o Angular não repinta o DOM e o caractere inválido fica visível. O handler reescreve `input.value` explicitamente para forçar o repaint (primo da regra do `[value]` em `<select>` no CLAUDE.md).
+
+### D-047: `IFileStorage` é a terceira interface especulativa sancionada
+
+A regra geral do CLAUDE.md é "no speculative interfaces". `IFileStorage` é a terceira exceção declarada, junto com `IPricingRuleSet` e `IGatewayPagamento`. Justificativa: a troca de disco local por S3/Supabase é uma necessidade futura concreta (multi-cloud, SaaS escalável) e não hipotética. O custo de abstrair **agora** é mínimo; o custo de refatorar depois (com dados em produção e vários callers dependendo da impl concreta) é alto.
+
+A implementação inicial (`LocalFileStorage`) usa disco local para desenvolvimento e Docker Compose. Em produção, basta trocar o registro no DI (`AddSingleton<IFileStorage, S3FileStorage>()`) sem tocar em nenhum service de domínio.
+
+**Restrições:** o domínio guarda apenas uma **chave opaca** (`LogoKey`) — nunca os bytes. O `content-type` é derivado da extensão da chave. Path traversal é rejeitado na implementação concreta (não no contrato), pois é um detalhe de infra.
+
+### D-048: `IncluidoNoRecurso` — exclusão não-destrutiva de itens de recurso
+
+O operador pode remover um item de uma guia do recurso sem destruí-lo. A flag `ItemGuia.IncluidoNoRecurso bool` (default `true`) controla a visibilidade no PDF e na tela, deixando o item intacto no restante do sistema (faturamento, cálculo, portal do médico). A operação é reversível via `PATCH /api/v1/admin/recursos/{id}/guias/{guiaId}/itens/{itemId}/inclusao` com `{ "incluido": bool }`.
+
+**Invariante:** excluir o último item incluído de uma guia no recurso lança `InvalidOperationException` (→ 409) — uma guia no recurso deve ter ao menos um item visível no PDF.
+
+**Reset automático:** ao remover a guia do recurso (`RemoverGuiaAsync`), `ItemGuia.RemoverDoRecurso()` reseta `IncluidoNoRecurso = true` em todos os itens da guia, sem efeito colateral em outras guias.
+
+**Por que não deletar o item:** o item pode ter `ValorLiquidado`/`MotivoGlosa` preenchidos por importação CSV e pode aparecer no portal do médico. Destruí-lo causaria perda de dados auditáveis. A flag preserva a rastreabilidade enquanto permite controle fino do conteúdo do recurso.
+
+### D-049: `CodigosNaoRecorriveis` + guia mista — comportamento do lote de recurso
+
+O tenant mantém `CodigosNaoRecorriveis List<string>` (`text[]` no Postgres) — lista de códigos TUSS que o cliente não quer ver em recursos automáticos (ex: consultas). Dois flags derivados em `GuiaDto`:
+
+- `NaoRecorrivel = true` — **todos** os itens da guia têm código NR. O lote pula a guia; o `AdicionarGuiaAsync` individual ainda funciona (escape hatch).
+- `MistaComNaoRecorriveis = true` — **alguns** (não todos) itens são NR. O lote inclui a guia, mas chama `ExcluirDoRecurso()` nos itens NR automaticamente. O invariante de "ao menos um item incluído" é garantido pela própria definição de guia mista.
+
+Os dois flags são mutuamente exclusivos. A distinção veio em duas etapas: NREC criou `NaoRecorrivel` para "algum item NR"; GMIX refinou para "todos os itens NR" e adicionou `MistaComNaoRecorriveis` — a versão GMIX é o estado atual.
+
+**Por que a granularidade é na guia e não no item:** na prática, consultas são sempre guias isoladas (nenhuma guia mistura consulta com cirurgia nos dados reais do cliente). O caso de guia mista surgiu como exceção descoberta após a entrega de NREC, não como caso planejado.
+
+**Revisitar:** se um tenant configurar códigos que ocorram misturados com procedimentos recorríveis em muitas guias, a exclusão automática de itens NR via lote pode surpreender. A tela já mostra o badge "Contém não recorrível" como sinal visual.
+
 ### D-023: CLAUDE.md em três níveis
 
 - Raiz: regras gerais do monorepo

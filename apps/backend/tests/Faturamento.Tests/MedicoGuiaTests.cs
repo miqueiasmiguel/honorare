@@ -184,7 +184,7 @@ public sealed class MedicoGuiaTests : IAsyncLifetime
         await SeedGuiaAsync(ctx, tenantId, medicoId, operadoraId, beneficiarioId, procedimentoId, "APRES-MED-01", new DateOnly(2025, 3, 1));
         var emRecId = await SeedGuiaAsync(ctx, tenantId, medicoId, operadoraId, beneficiarioId, procedimentoId, "EMREC-MED-01", new DateOnly(2025, 3, 2));
 
-        var recurso = Recurso.Create(tenantId, operadoraId, medicoId, new DateOnly(2025, 3, 1), null);
+        var recurso = Recurso.Create(tenantId, operadoraId, medicoId, new DateOnly(2025, 3, 1), null, "202502");
         ctx.Recursos.Add(recurso);
         await ctx.SaveChangesAsync();
 

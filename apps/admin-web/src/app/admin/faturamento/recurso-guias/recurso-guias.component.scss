@@ -353,6 +353,31 @@
     }
   }
 
+  // ── Não recorrível badge ─────────────────────────────────────────────────
+
+  &__badge-nao-recorrivel {
+    @include text-label;
+
+    display: inline-block;
+    margin-left: space(2);
+    padding: space(1) space(2);
+    border-radius: space(1);
+    color: var(--color-ferrugem);
+    background-color: var(--color-ferrugem-claro);
+  }
+
+  // ── Guia mista badge ─────────────────────────────────────────────────────
+  &__badge-mista {
+    @include text-label;
+
+    display: inline-block;
+    margin-left: space(2);
+    padding: space(1) space(2);
+    border-radius: space(1);
+    color: var(--color-ambar);
+    background-color: var(--color-ambar-claro);
+  }
+
   // ── Situação badge ────────────────────────────────────────────────────────
 
   &__situacao-badge {
@@ -641,5 +666,42 @@
 
     color: var(--color-ferrugem);
     font-weight: 600;
+  }
+
+  &__item--excluido {
+    opacity: 0.5;
+    text-decoration: line-through;
+  }
+
+  &__item-excluir,
+  &__item-reincluir {
+    padding: space(1) space(3);
+    border-radius: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+
+    @include text-label;
+    @include transition-fast(background-color, border-color);
+  }
+
+  &__item-excluir {
+    border: 1px solid var(--color-borda-media);
+    background-color: transparent;
+    color: var(--color-ferrugem);
+
+    &:hover {
+      background-color: var(--color-ferrugem-claro);
+      border-color: var(--color-ferrugem);
+    }
+  }
+
+  &__item-reincluir {
+    border: 1px solid var(--color-terracota);
+    background-color: transparent;
+    color: var(--color-terracota);
+
+    &:hover {
+      background-color: var(--color-pergaminho-claro);
+    }
   }
 }

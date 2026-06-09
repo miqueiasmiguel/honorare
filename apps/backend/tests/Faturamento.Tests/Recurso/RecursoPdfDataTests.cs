@@ -4,6 +4,7 @@ using App.Faturamento;
 using App.Faturamento.Motor;
 using App.Faturamento.Pdf;
 using App.Identity;
+using App.Storage;
 using Faturamento.Tests.Fixtures;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,6 +13,9 @@ namespace Faturamento.Tests.Service;
 [Collection(nameof(PostgresCollection))]
 public sealed class RecursoPdfDataTests(PostgresContainerFixture db)
 {
+    private static readonly IFileStorage _noopStorage = new NoopFileStorage();
+
+
     private (AppDbContext ctx, ICurrentUser user) BuildTenant(Guid tenantId)
     {
         var user = new FakePdfTenantUser(tenantId);
@@ -50,9 +54,9 @@ public sealed class RecursoPdfDataTests(PostgresContainerFixture db)
     private static async Task<Guid> CriarRecursoAsync(
         AppDbContext ctx, ICurrentUser user, Guid opId, Guid prestId)
     {
-        var svc = new RecursoService(ctx, user);
+        var svc = new RecursoService(ctx, user, _noopStorage);
         var result = await svc.CriarAsync(
-            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 3, 1), null));
+            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 3, 1), null, "202512"));
         return result.Value!.Id;
     }
 
@@ -68,7 +72,7 @@ public sealed class RecursoPdfDataTests(PostgresContainerFixture db)
                 procId, PosicaoExecutor.Cirurgiao, 1.0m,
                 ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null)]);
         var guiaResult = await guiaSvc.CriarAsync(cmd);
-        var recursoSvc = new RecursoService(ctx, user);
+        var recursoSvc = new RecursoService(ctx, user, _noopStorage);
         await recursoSvc.AdicionarGuiaAsync(recursoId, guiaResult.Value!.Id);
     }
 
@@ -81,7 +85,7 @@ public sealed class RecursoPdfDataTests(PostgresContainerFixture db)
         await using var _ = ctx;
         var (opId, prestId, _) = await SeedCatalogAsync(ctx, tenantId);
         var recursoId = await CriarRecursoAsync(ctx, user, opId, prestId);
-        var svc = new RecursoService(ctx, user);
+        var svc = new RecursoService(ctx, user, _noopStorage);
 
         var result = await svc.ObterDadosPdfAsync(recursoId);
 
@@ -121,7 +125,7 @@ public sealed class RecursoPdfDataTests(PostgresContainerFixture db)
         var guiaResult = await guiaSvc.CriarAsync(cmd);
         Assert.True(guiaResult.IsSuccess);
 
-        var recursoSvc = new RecursoService(ctx, user);
+        var recursoSvc = new RecursoService(ctx, user, _noopStorage);
         await recursoSvc.AdicionarGuiaAsync(recursoId, guiaResult.Value!.Id);
 
         var result = await recursoSvc.ObterDadosPdfAsync(recursoId);
@@ -154,7 +158,7 @@ public sealed class RecursoPdfDataTests(PostgresContainerFixture db)
         var guiaResult = await guiaSvc.CriarAsync(cmd);
         Assert.True(guiaResult.IsSuccess);
 
-        var recursoSvc = new RecursoService(ctx, user);
+        var recursoSvc = new RecursoService(ctx, user, _noopStorage);
         await recursoSvc.AdicionarGuiaAsync(recursoId, guiaResult.Value!.Id);
 
         var result = await recursoSvc.ObterDadosPdfAsync(recursoId);
@@ -174,7 +178,7 @@ public sealed class RecursoPdfDataTests(PostgresContainerFixture db)
         await CriarGuiaEVincularAsync(ctx, user, prestId, opId, procId,
             "PDF-NUL-" + tenantId.ToString("N")[..4], recursoId);
 
-        var result = await new RecursoService(ctx, user).ObterDadosPdfAsync(recursoId);
+        var result = await new RecursoService(ctx, user, _noopStorage).ObterDadosPdfAsync(recursoId);
 
         Assert.True(result.IsSuccess);
         Assert.All(result.Value!.Guias[0].Itens, i => Assert.Equal(0m, i.ValorPago));
@@ -200,7 +204,7 @@ public sealed class RecursoPdfDataTests(PostgresContainerFixture db)
         var guiaResult = await guiaSvc.CriarAsync(cmd);
         Assert.True(guiaResult.IsSuccess);
 
-        var recursoSvc = new RecursoService(ctx, user);
+        var recursoSvc = new RecursoService(ctx, user, _noopStorage);
         await recursoSvc.AdicionarGuiaAsync(recursoId, guiaResult.Value!.Id);
 
         var result = await recursoSvc.ObterDadosPdfAsync(recursoId);
@@ -231,7 +235,7 @@ public sealed class RecursoPdfDataTests(PostgresContainerFixture db)
         ctx.PassosCalculo.Add(PassoCalculo.Create(calculo.Id, item.Id, 3, "Urgência", 0.5m, 35m));
         await ctx.SaveChangesAsync();
 
-        var recursoSvc = new RecursoService(ctx, user);
+        var recursoSvc = new RecursoService(ctx, user, _noopStorage);
         await recursoSvc.AdicionarGuiaAsync(recursoId, guia.Id);
 
         var result = await recursoSvc.ObterDadosPdfAsync(recursoId);
@@ -251,7 +255,7 @@ public sealed class RecursoPdfDataTests(PostgresContainerFixture db)
         await CriarGuiaEVincularAsync(ctx, user, prestId, opId, procId,
             "PDF-RND-" + tenantId.ToString("N")[..4], recursoId);
 
-        var dados = await new RecursoService(ctx, user).ObterDadosPdfAsync(recursoId);
+        var dados = await new RecursoService(ctx, user, _noopStorage).ObterDadosPdfAsync(recursoId);
         Assert.True(dados.IsSuccess);
 
         var doc = new RecursoPdfDocument(dados.Value!);
@@ -273,9 +277,48 @@ public sealed class RecursoPdfDataTests(PostgresContainerFixture db)
         var (ctx2, user2) = BuildTenant(tenantId2);
         await using var __ = ctx2;
 
-        var result = await new RecursoService(ctx2, user2).ObterDadosPdfAsync(recursoId);
+        var result = await new RecursoService(ctx2, user2, _noopStorage).ObterDadosPdfAsync(recursoId);
 
         Assert.True(result.IsFailure);
+    }
+
+    [Fact]
+    public async Task ObterDadosPdf_QuandoTenantTemLogoKey_PopulaTenantLogoAsync()
+    {
+        var logoBytes = new byte[] { 1, 2, 3, 4, 5 };
+        var storage = new FakePdfFileStorage(logoBytes, "image/png");
+
+        await using var adminCtx = db.CreateContext();
+        var tenant = Tenant.Create("Logo Tenant " + Guid.NewGuid().ToString("N")[..4]);
+        tenant.SetLogoKey("logos/test-logo.png");
+        adminCtx.Tenants.Add(tenant);
+        await adminCtx.SaveChangesAsync();
+
+        var tenantId = tenant.Id;
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (opId, prestId, _) = await SeedCatalogAsync(ctx, tenantId);
+        var recursoId = await CriarRecursoAsync(ctx, user, opId, prestId);
+
+        var result = await new RecursoService(ctx, user, storage).ObterDadosPdfAsync(recursoId);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(logoBytes, result.Value!.TenantLogo);
+    }
+
+    [Fact]
+    public async Task ObterDadosPdf_QuandoTenantNaoTemLogo_TenantLogoNullAsync()
+    {
+        var tenantId = await SeedTenantAsync("Sem Logo " + Guid.NewGuid().ToString("N")[..4]);
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (opId, prestId, _) = await SeedCatalogAsync(ctx, tenantId);
+        var recursoId = await CriarRecursoAsync(ctx, user, opId, prestId);
+
+        var result = await new RecursoService(ctx, user, _noopStorage).ObterDadosPdfAsync(recursoId);
+
+        Assert.True(result.IsSuccess);
+        Assert.Null(result.Value!.TenantLogo);
     }
 }
 
@@ -287,4 +330,28 @@ file sealed class FakePdfTenantUser(Guid tenantId) : ICurrentUser
     public bool IsSaasAdmin => false;
     public bool IsImpersonating => false;
     public bool IsAuthenticated => true;
+}
+
+file sealed class NoopFileStorage : IFileStorage
+{
+    public Task SaveAsync(string key, byte[] content, string contentType, CancellationToken ct = default) =>
+        Task.CompletedTask;
+
+    public Task<FileStorageObject?> GetAsync(string key, CancellationToken ct = default) =>
+        Task.FromResult<FileStorageObject?>(null);
+
+    public Task DeleteAsync(string key, CancellationToken ct = default) =>
+        Task.CompletedTask;
+}
+
+file sealed class FakePdfFileStorage(byte[] bytes, string contentType) : IFileStorage
+{
+    public Task SaveAsync(string key, byte[] content, string ct2, CancellationToken ct = default) =>
+        Task.CompletedTask;
+
+    public Task<FileStorageObject?> GetAsync(string key, CancellationToken ct = default) =>
+        Task.FromResult<FileStorageObject?>(new FileStorageObject(bytes, contentType));
+
+    public Task DeleteAsync(string key, CancellationToken ct = default) =>
+        Task.CompletedTask;
 }
