@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using App;
 using App.Catalog;
+using App.Storage;
 using App.Catalog.Endpoints;
 using App.Data;
 using App.Faturamento;
@@ -46,6 +47,8 @@ builder.Services.AddScoped<PricingRuleSetFactory>();
 builder.Services.AddScoped<GuiaService>();
 builder.Services.AddScoped<ImportacaoGuiaCsvService>();
 builder.Services.AddScoped<RecursoService>();
+builder.Services.Configure<StorageOptions>(builder.Configuration.GetSection(StorageOptions.SectionName));
+builder.Services.AddSingleton<IFileStorage, LocalFileStorage>();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));

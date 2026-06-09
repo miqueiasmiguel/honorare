@@ -374,6 +374,14 @@ O `Recurso.Numero` deixou de ser gerado automaticamente a partir da data de emis
 
 **Frontend — armadilha do `[value]` + signal:** o input filtra não-dígitos no handler; quando o usuário digita uma letra após dígitos válidos, o valor saneado é igual ao do signal e `signal.set()` é no-op → o Angular não repinta o DOM e o caractere inválido fica visível. O handler reescreve `input.value` explicitamente para forçar o repaint (primo da regra do `[value]` em `<select>` no CLAUDE.md).
 
+### D-047: `IFileStorage` é a terceira interface especulativa sancionada
+
+A regra geral do CLAUDE.md é "no speculative interfaces". `IFileStorage` é a terceira exceção declarada, junto com `IPricingRuleSet` e `IGatewayPagamento`. Justificativa: a troca de disco local por S3/Supabase é uma necessidade futura concreta (multi-cloud, SaaS escalável) e não hipotética. O custo de abstrair **agora** é mínimo; o custo de refatorar depois (com dados em produção e vários callers dependendo da impl concreta) é alto.
+
+A implementação inicial (`LocalFileStorage`) usa disco local para desenvolvimento e Docker Compose. Em produção, basta trocar o registro no DI (`AddSingleton<IFileStorage, S3FileStorage>()`) sem tocar em nenhum service de domínio.
+
+**Restrições:** o domínio guarda apenas uma **chave opaca** (`LogoKey`) — nunca os bytes. O `content-type` é derivado da extensão da chave. Path traversal é rejeitado na implementação concreta (não no contrato), pois é um detalhe de infra.
+
 ### D-023: CLAUDE.md em três níveis
 
 - Raiz: regras gerais do monorepo

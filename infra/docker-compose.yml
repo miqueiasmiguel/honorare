@@ -88,6 +88,9 @@ services:
       Otlp__Endpoint: "http://otel-collector:4317"
       Google__ClientId: ${GOOGLE_CLIENT_ID:-}
       Google__ClientSecret: ${GOOGLE_CLIENT_SECRET:-}
+      Storage__BasePath: "/var/lib/honorare/storage"
+    volumes:
+      - honorare_storage:/var/lib/honorare/storage
     ports:
       - "5000:8080"
     depends_on:
@@ -130,3 +133,4 @@ volumes:
   prometheus_data:
   loki_data:
   grafana_data:
+  honorare_storage:
