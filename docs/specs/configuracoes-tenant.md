@@ -138,7 +138,7 @@ builder.Services.AddSingleton<IFileStorage, LocalFileStorage>();
 
 ### TASK-TCFG-02 — `Tenant`: rename + LogoKey + migration
 
-- [ ] pendente
+- [x] concluída
 
 **Objetivo:** adicionar comportamento de domínio (`Rename`, `SetLogoKey`, `ClearLogoKey`) e a coluna
 `LogoKey` ao `Tenant`, com a migration EF correspondente.
@@ -624,7 +624,7 @@ export interface TenantSettings {
 ## Checklist final
 
 - [x] TASK-TCFG-01 — IFileStorage + LocalFileStorage + infra
-- [ ] TASK-TCFG-02 — Tenant rename + LogoKey + migration
+- [x] TASK-TCFG-02 — Tenant rename + LogoKey + migration
 - [ ] TASK-TCFG-03 — TenantSettingsService + endpoints (obter/renomear)
 - [ ] TASK-TCFG-04 — upload/download/remoção da logo
 - [ ] TASK-TCFG-05 — logo no PDF do recurso
