@@ -194,22 +194,26 @@ import { ItemGuiaFormComponent } from './item-guia-form/item-guia-form.component
               </button>
             </div>
 
-            <div class="guia-form__item-meta">
-              <span class="guia-form__badge">{{ POSICAO_LABELS[item.posicaoExecutor] }}</span>
-              <span class="guia-form__badge">{{
-                formatarPercentualOrdem(item.percentualOrdem)
-              }}</span>
-              <span class="guia-form__badge">{{ VIA_LABELS[item.viaAcesso] }}</span>
-              <span class="guia-form__badge">{{ ACOMODACAO_LABELS[item.acomodacao] }}</span>
-              @if (item.ehUrgencia) {
-                <span class="guia-form__badge guia-form__badge--alerta">Urgência</span>
-              }
-              @if (item.posicaoExecutor === 'Anestesista' && item.tempoAnestesicoMin) {
-                <span class="guia-form__badge">{{ item.tempoAnestesicoMin }} min</span>
-              }
-            </div>
+            @if (!operadoraSemCalculo()) {
+              <div class="guia-form__item-meta">
+                <span class="guia-form__badge">{{ POSICAO_LABELS[item.posicaoExecutor] }}</span>
+                <span class="guia-form__badge">{{
+                  formatarPercentualOrdem(item.percentualOrdem)
+                }}</span>
+                <span class="guia-form__badge">{{ VIA_LABELS[item.viaAcesso] }}</span>
+                <span class="guia-form__badge">{{ ACOMODACAO_LABELS[item.acomodacao] }}</span>
+                @if (item.ehUrgencia) {
+                  <span class="guia-form__badge guia-form__badge--alerta">Urgência</span>
+                }
+                @if (item.posicaoExecutor === 'Anestesista' && item.tempoAnestesicoMin) {
+                  <span class="guia-form__badge">{{ item.tempoAnestesicoMin }} min</span>
+                }
+              </div>
+            }
 
-            @if (item.valorApurado !== null || (modoEditar() && item.id)) {
+            @if (
+              !operadoraSemCalculo() && (item.valorApurado !== null || (modoEditar() && item.id))
+            ) {
               <div class="guia-form__item-financeiro">
                 @if (item.valorApurado !== null) {
                   <div class="guia-form__item-valor-grupo">
@@ -263,6 +267,7 @@ import { ItemGuiaFormComponent } from './item-guia-form/item-guia-form.component
         @if (adicionandoItem()) {
           <app-item-guia-form
             [ehPacote]="ehPacote()"
+            [semCalculo]="operadoraSemCalculo()"
             [operadoraId]="operadoraId()"
             (itemChange)="onItemChange($event)"
           />
@@ -324,6 +329,9 @@ export class GuiaFormComponent implements OnInit {
 
   readonly prestadores = signal<PrestadorItem[]>([]);
   readonly operadoras = signal<OperadoraItem[]>([]);
+  readonly operadoraSemCalculo = computed(
+    () => this.operadoras().find((o) => o.id === this.operadoraId())?.tipoRuleSet === 'Nulo',
+  );
 
   readonly prestadorId = signal('');
   readonly operadoraId = signal('');

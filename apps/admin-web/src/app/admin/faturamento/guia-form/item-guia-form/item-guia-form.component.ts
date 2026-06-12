@@ -114,116 +114,125 @@ function opcoesDeTabela(items: TabelaOrdemOperadoraItem[]): OrdemOpcao[] {
         }
       </div>
 
-      <div class="item-guia-form__field">
-        <label class="item-guia-form__label" for="posicao-executor">Posição do Executor</label>
-        <select
-          id="posicao-executor"
-          class="item-guia-form__select--posicao"
-          (change)="onPosicaoChange($any($event.target).value)"
-        >
-          <option value="Cirurgiao" [selected]="posicaoExecutor() === 'Cirurgiao'">
-            Cirurgião
-          </option>
-          <option value="PrimeiroAuxiliar" [selected]="posicaoExecutor() === 'PrimeiroAuxiliar'">
-            1º Auxiliar
-          </option>
-          <option value="SegundoAuxiliar" [selected]="posicaoExecutor() === 'SegundoAuxiliar'">
-            2º Auxiliar
-          </option>
-          <option value="TerceiroAuxiliar" [selected]="posicaoExecutor() === 'TerceiroAuxiliar'">
-            3º Auxiliar
-          </option>
-          <option value="Anestesista" [selected]="posicaoExecutor() === 'Anestesista'">
-            Anestesista
-          </option>
-          <option value="ClinicoAssistente" [selected]="posicaoExecutor() === 'ClinicoAssistente'">
-            Clínico Assistente
-          </option>
-        </select>
-      </div>
-
-      <div class="item-guia-form__field">
-        <label class="item-guia-form__label" for="ordem-procedimento">Ordem</label>
-        <select
-          id="ordem-procedimento"
-          class="item-guia-form__select--ordem"
-          (change)="onOrdemChange($any($event.target).value)"
-        >
-          @for (op of ordemOpcoes(); track op.label) {
-            <option [value]="op.percentual" [selected]="op.percentual === percentualOrdem()">
-              {{ op.label }}
-            </option>
-          }
-        </select>
-        <span class="item-guia-form__percentual-info">
-          Percentual: {{ formatarPercentual(percentualOrdem()) }}
-        </span>
-      </div>
-
-      <div class="item-guia-form__field">
-        <label class="item-guia-form__label" for="via-acesso">Via de Acesso</label>
-        <select
-          id="via-acesso"
-          class="item-guia-form__select--via"
-          (change)="onViaChange($any($event.target).value)"
-        >
-          <option value="Convencional" [selected]="viaAcesso() === 'Convencional'">
-            Convencional
-          </option>
-          <option value="Videolaparoscopia" [selected]="viaAcesso() === 'Videolaparoscopia'">
-            Videolaparoscopia
-          </option>
-          <option value="Endoscopica" [selected]="viaAcesso() === 'Endoscopica'">
-            Endoscópica
-          </option>
-          <option value="Percutanea" [selected]="viaAcesso() === 'Percutanea'">Percutânea</option>
-          <option value="NaoAplicavel" [selected]="viaAcesso() === 'NaoAplicavel'">
-            Não Aplicável
-          </option>
-        </select>
-      </div>
-
-      <div class="item-guia-form__field">
-        <label class="item-guia-form__label" for="acomodacao">Acomodação</label>
-        <select
-          id="acomodacao"
-          class="item-guia-form__select--acomodacao"
-          (change)="onAcomodacaoChange($any($event.target).value)"
-        >
-          <option value="Enfermaria" [selected]="acomodacao() === 'Enfermaria'">Enfermaria</option>
-          <option value="Apartamento" [selected]="acomodacao() === 'Apartamento'">
-            Apartamento
-          </option>
-          <option value="Ambulatorial" [selected]="acomodacao() === 'Ambulatorial'">
-            Ambulatorial
-          </option>
-        </select>
-      </div>
-
-      <div class="item-guia-form__field item-guia-form__field--checkbox">
-        <input
-          type="checkbox"
-          id="eh-urgencia"
-          class="item-guia-form__checkbox--urgencia"
-          [checked]="ehUrgencia()"
-          (change)="onUrgenciaChange($any($event.target).checked)"
-        />
-        <label class="item-guia-form__label" for="eh-urgencia">Urgência</label>
-      </div>
-
-      @if (posicaoExecutor() === 'Anestesista') {
+      @if (!semCalculo()) {
         <div class="item-guia-form__field">
-          <label class="item-guia-form__label" for="tempo-anestesico">Tempo anestésico (min)</label>
-          <input
-            type="number"
-            id="tempo-anestesico"
-            data-testid="tempo-anestesico"
-            class="item-guia-form__input--tempo-anestesico"
-            min="0"
-            [value]="tempoAnestesicoMin() ?? ''"
-            (input)="onTempoAnestesicoChange($any($event.target).value)"
-          />
+          <label class="item-guia-form__label" for="posicao-executor">Posição do Executor</label>
+          <select
+            id="posicao-executor"
+            class="item-guia-form__select--posicao"
+            (change)="onPosicaoChange($any($event.target).value)"
+          >
+            <option value="Cirurgiao" [selected]="posicaoExecutor() === 'Cirurgiao'">
+              Cirurgião
+            </option>
+            <option value="PrimeiroAuxiliar" [selected]="posicaoExecutor() === 'PrimeiroAuxiliar'">
+              1º Auxiliar
+            </option>
+            <option value="SegundoAuxiliar" [selected]="posicaoExecutor() === 'SegundoAuxiliar'">
+              2º Auxiliar
+            </option>
+            <option value="TerceiroAuxiliar" [selected]="posicaoExecutor() === 'TerceiroAuxiliar'">
+              3º Auxiliar
+            </option>
+            <option value="Anestesista" [selected]="posicaoExecutor() === 'Anestesista'">
+              Anestesista
+            </option>
+            <option
+              value="ClinicoAssistente"
+              [selected]="posicaoExecutor() === 'ClinicoAssistente'"
+            >
+              Clínico Assistente
+            </option>
+          </select>
         </div>
+
+        <div class="item-guia-form__field">
+          <label class="item-guia-form__label" for="ordem-procedimento">Ordem</label>
+          <select
+            id="ordem-procedimento"
+            class="item-guia-form__select--ordem"
+            (change)="onOrdemChange($any($event.target).value)"
+          >
+            @for (op of ordemOpcoes(); track op.label) {
+              <option [value]="op.percentual" [selected]="op.percentual === percentualOrdem()">
+                {{ op.label }}
+              </option>
+            }
+          </select>
+          <span class="item-guia-form__percentual-info">
+            Percentual: {{ formatarPercentual(percentualOrdem()) }}
+          </span>
+        </div>
+
+        <div class="item-guia-form__field">
+          <label class="item-guia-form__label" for="via-acesso">Via de Acesso</label>
+          <select
+            id="via-acesso"
+            class="item-guia-form__select--via"
+            (change)="onViaChange($any($event.target).value)"
+          >
+            <option value="Convencional" [selected]="viaAcesso() === 'Convencional'">
+              Convencional
+            </option>
+            <option value="Videolaparoscopia" [selected]="viaAcesso() === 'Videolaparoscopia'">
+              Videolaparoscopia
+            </option>
+            <option value="Endoscopica" [selected]="viaAcesso() === 'Endoscopica'">
+              Endoscópica
+            </option>
+            <option value="Percutanea" [selected]="viaAcesso() === 'Percutanea'">Percutânea</option>
+            <option value="NaoAplicavel" [selected]="viaAcesso() === 'NaoAplicavel'">
+              Não Aplicável
+            </option>
+          </select>
+        </div>
+
+        <div class="item-guia-form__field">
+          <label class="item-guia-form__label" for="acomodacao">Acomodação</label>
+          <select
+            id="acomodacao"
+            class="item-guia-form__select--acomodacao"
+            (change)="onAcomodacaoChange($any($event.target).value)"
+          >
+            <option value="Enfermaria" [selected]="acomodacao() === 'Enfermaria'">
+              Enfermaria
+            </option>
+            <option value="Apartamento" [selected]="acomodacao() === 'Apartamento'">
+              Apartamento
+            </option>
+            <option value="Ambulatorial" [selected]="acomodacao() === 'Ambulatorial'">
+              Ambulatorial
+            </option>
+          </select>
+        </div>
+
+        <div class="item-guia-form__field item-guia-form__field--checkbox">
+          <input
+            type="checkbox"
+            id="eh-urgencia"
+            class="item-guia-form__checkbox--urgencia"
+            [checked]="ehUrgencia()"
+            (change)="onUrgenciaChange($any($event.target).checked)"
+          />
+          <label class="item-guia-form__label" for="eh-urgencia">Urgência</label>
+        </div>
+
+        @if (posicaoExecutor() === 'Anestesista') {
+          <div class="item-guia-form__field">
+            <label class="item-guia-form__label" for="tempo-anestesico"
+              >Tempo anestésico (min)</label
+            >
+            <input
+              type="number"
+              id="tempo-anestesico"
+              data-testid="tempo-anestesico"
+              class="item-guia-form__input--tempo-anestesico"
+              min="0"
+              [value]="tempoAnestesicoMin() ?? ''"
+              (input)="onTempoAnestesicoChange($any($event.target).value)"
+            />
+          </div>
+        }
       }
 
       @if (ehPacote()) {
@@ -258,6 +267,7 @@ export class ItemGuiaFormComponent implements OnInit, OnChanges {
   private readonly _busca$ = new Subject<string>();
 
   readonly ehPacote = input<boolean>(false);
+  readonly semCalculo = input<boolean>(false);
   readonly item = input<ItemGuiaDisplay | null>(null);
   readonly operadoraId = input<string>('');
   readonly itemChange = output<ItemGuiaDisplay | null>();

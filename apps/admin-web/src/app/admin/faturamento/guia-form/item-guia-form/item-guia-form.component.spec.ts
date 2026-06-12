@@ -289,4 +289,35 @@ describe('ItemGuiaFormComponent', () => {
 
     expect(catalogService.listarTabelaOrdem).toHaveBeenCalledWith('op-x');
   });
+
+  it('Não deve exibir campos de cálculo quando operadora é Nulo', () => {
+    const catalogService = makeServiceSpy();
+    TestBed.configureTestingModule({
+      imports: [ItemGuiaFormComponent],
+      providers: [{ provide: CatalogService, useValue: catalogService }],
+    });
+    const fixture = TestBed.createComponent(ItemGuiaFormComponent);
+    Object.assign(fixture.componentInstance, { semCalculo: signal(true) });
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.item-guia-form__select--posicao')).toBeNull();
+    expect(el.querySelector('.item-guia-form__select--ordem')).toBeNull();
+    expect(el.querySelector('.item-guia-form__select--via')).toBeNull();
+    expect(el.querySelector('.item-guia-form__select--acomodacao')).toBeNull();
+    expect(el.querySelector('.item-guia-form__checkbox--urgencia')).toBeNull();
+    expect(el.querySelector('[data-testid="tempo-anestesico"]')).toBeNull();
+    // busca procedimento deve continuar visível
+    expect(el.querySelector('.item-guia-form__input--busca-procedimento')).not.toBeNull();
+  });
+
+  it('Deve exibir campos de cálculo quando operadora é Unimed', () => {
+    const { el } = setup();
+    // semCalculo false por default — campos devem aparecer
+    expect(el.querySelector('.item-guia-form__select--posicao')).not.toBeNull();
+    expect(el.querySelector('.item-guia-form__select--ordem')).not.toBeNull();
+    expect(el.querySelector('.item-guia-form__select--via')).not.toBeNull();
+    expect(el.querySelector('.item-guia-form__select--acomodacao')).not.toBeNull();
+    expect(el.querySelector('.item-guia-form__checkbox--urgencia')).not.toBeNull();
+  });
 });
