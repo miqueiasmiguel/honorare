@@ -52,7 +52,7 @@ internal sealed record AdicionarGuiasEmLoteCommand(
     Guid PrestadorId, Guid OperadoraId,
     DateOnly? DataInicio, DateOnly? DataFim,
     SituacaoGuia? Situacao, string? NumeroGuia, string? Beneficiario,
-    bool? SomenteComGlosa);
+    bool? SomenteComGlosa, bool? SomenteNuncaPago = null);
 
 internal sealed record RecursoPdfData(
     string TenantName,
@@ -453,6 +453,13 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser, 
                 i.GuiaId == g.Id &&
                 i.ValorApurado.HasValue && i.ValorLiquidado.HasValue &&
                 i.ValorApurado > i.ValorLiquidado));
+        }
+
+        if (cmd.SomenteNuncaPago == true)
+        {
+            q = q.Where(g => _db.ItensGuia.Any(i =>
+                i.GuiaId == g.Id &&
+                (!i.ValorLiquidado.HasValue || i.ValorLiquidado == 0m)));
         }
 
         if (!string.IsNullOrWhiteSpace(cmd.Beneficiario))

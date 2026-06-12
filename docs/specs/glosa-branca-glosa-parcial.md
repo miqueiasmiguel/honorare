@@ -158,7 +158,7 @@ if (cmd.Tipo == TipoRecurso.GlosaParcial && operadora.TipoRuleSet == TipoRuleSet
 
 ### TASK-GLOSA-03 — Filtro "somente nunca pagos" no lote (glosa branca)
 
-- [ ] pendente
+- [x] concluída
 
 **Objetivo:** o lote de adição de guias ganha um filtro `SomenteNuncaPago` (itens com `ValorLiquidado` nulo ou zero), análogo ao `SomenteComGlosa` existente, para alimentar recursos de glosa branca.
 
@@ -391,7 +391,7 @@ POST /api/v1/admin/recursos/{id}/guias/lote  body inclui  somenteNuncaPago?: boo
 
 - [x] TASK-GLOSA-01 — Recurso.Tipo + migration
 - [x] TASK-GLOSA-02 — service/endpoint propagam Tipo + validação Nulo×Parcial
-- [ ] TASK-GLOSA-03 — filtro somente-nunca-pago no lote
+- [x] TASK-GLOSA-03 — filtro somente-nunca-pago no lote
 - [ ] TASK-GLOSA-04 — template PDF glosa branca
 - [ ] TASK-GLOSA-05 — rótulo "Sem cálculo"
 - [ ] TASK-GLOSA-06 — seletor/badge de tipo no recurso (frontend)
