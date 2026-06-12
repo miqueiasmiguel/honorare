@@ -61,7 +61,8 @@ internal sealed record RecursoPdfData(
     string? PrestadorRegistroProfissional,
     string Numero,
     byte[]? TenantLogo,
-    IReadOnlyList<GuiaPdfData> Guias);
+    IReadOnlyList<GuiaPdfData> Guias,
+    TipoRecurso Tipo = TipoRecurso.GlosaParcial);
 
 internal sealed record GuiaPdfData(
     DateOnly DataAtendimento,
@@ -622,7 +623,8 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser, 
             prestador.RegistroProfissional,
             recurso.Numero,
             logoBytes,
-            guiaDtos));
+            guiaDtos,
+            recurso.Tipo));
     }
 
     private static ValidationError? ValidarNumero(string numero)
