@@ -267,7 +267,7 @@ private static readonly string[] _colunasBranca = ["Código", "Descrição"];
 
 ### TASK-GLOSA-05 — Renomear rótulo "Sem apuração" → "Sem cálculo"
 
-- [ ] pendente
+- [x] concluída
 
 **Objetivo:** rótulo da operadora `Nulo` fica mais claro na UI admin. Apenas frontend, sem mudança de valor (`'Nulo'` continua no backend/types).
 
@@ -393,7 +393,7 @@ POST /api/v1/admin/recursos/{id}/guias/lote  body inclui  somenteNuncaPago?: boo
 - [x] TASK-GLOSA-02 — service/endpoint propagam Tipo + validação Nulo×Parcial
 - [x] TASK-GLOSA-03 — filtro somente-nunca-pago no lote
 - [x] TASK-GLOSA-04 — template PDF glosa branca
-- [ ] TASK-GLOSA-05 — rótulo "Sem cálculo"
+- [x] TASK-GLOSA-05 — rótulo "Sem cálculo"
 - [ ] TASK-GLOSA-06 — seletor/badge de tipo no recurso (frontend)
 - [ ] TASK-GLOSA-07 — formulário de guia enxuto sem cálculo
 
