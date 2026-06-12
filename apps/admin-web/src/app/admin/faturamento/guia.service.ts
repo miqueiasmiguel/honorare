@@ -62,6 +62,9 @@ export class GuiaService {
     if (params.somenteComGlosa !== undefined) {
       httpParams = httpParams.set('somenteComGlosa', params.somenteComGlosa.toString());
     }
+    if (params.somenteNuncaPago !== undefined) {
+      httpParams = httpParams.set('somenteNuncaPago', params.somenteNuncaPago.toString());
+    }
     if (params.ordenarPor) {
       httpParams = httpParams.set('ordenarPor', ORDENACAO_BACKEND[params.ordenarPor]);
     }
