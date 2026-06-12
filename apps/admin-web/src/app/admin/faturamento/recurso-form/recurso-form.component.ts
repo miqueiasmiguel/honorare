@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import type { OperadoraItem, PrestadorItem } from '../../catalog/catalog.types';
 import { CatalogService } from '../../catalog/catalog.service';
 import { RecursoService } from '../recurso.service';
+import type { TipoRecurso } from '../recurso.types';
 
 @Component({
   selector: 'app-recurso-form',
@@ -63,6 +64,18 @@ import { RecursoService } from '../recurso.service';
       </div>
 
       <div class="recurso-form__field">
+        <label class="recurso-form__label" for="tipo">Tipo de Recurso</label>
+        <select
+          id="tipo"
+          class="recurso-form__select--tipo"
+          (change)="tipo.set($any($event.target).value)"
+        >
+          <option value="GlosaParcial" [selected]="tipo() === 'GlosaParcial'">Glosa Parcial</option>
+          <option value="GlosaBranca" [selected]="tipo() === 'GlosaBranca'">Glosa Branca</option>
+        </select>
+      </div>
+
+      <div class="recurso-form__field">
         <label class="recurso-form__label" for="observacao">Observação</label>
         <textarea
           id="observacao"
@@ -106,6 +119,7 @@ export class RecursoFormComponent implements OnInit {
   readonly dataEmissao = signal('');
   readonly numero = signal('');
   readonly observacao = signal('');
+  readonly tipo = signal<TipoRecurso>('GlosaParcial');
 
   /** Marca se o operador editou o número manualmente; enquanto false, o número
    * acompanha a sugestão (mês anterior à data de emissão). */
@@ -186,6 +200,7 @@ export class RecursoFormComponent implements OnInit {
       dataEmissao: this.dataEmissao(),
       numero: this.numero(),
       observacao: this.observacao() || null,
+      tipo: this.tipo(),
     };
 
     const editId = this.recursoId();
@@ -240,6 +255,7 @@ export class RecursoFormComponent implements OnInit {
         this._numeroEditado = true;
         this.numero.set(h.numero);
         this.observacao.set(h.observacao ?? '');
+        this.tipo.set(h.tipo);
       },
       error: () => {
         this.erroValidacao.set('Erro ao carregar recurso.');

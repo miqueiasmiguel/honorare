@@ -132,6 +132,44 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
     }
 
     [Fact]
+    public async Task Deve_PersistirERelerRecursoComTipoGlosaBrancaAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (opId, prestId, _) = await SeedCatalogAsync(ctx, tenantId);
+        var service = new RecursoService(ctx, user, _noopStorage);
+
+        var result = await service.CriarAsync(
+            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 5, 1), null, "20260501",
+                TipoRecurso.GlosaBranca));
+
+        Assert.True(result.IsSuccess);
+        var dto = result.Value!;
+        Assert.Equal(TipoRecurso.GlosaBranca, dto.Tipo);
+
+        var relido = await service.ObterPorIdAsync(dto.Id);
+        Assert.True(relido.IsSuccess);
+        Assert.Equal(TipoRecurso.GlosaBranca, relido.Value!.Header.Tipo);
+    }
+
+    [Fact]
+    public async Task Deve_UsarGlosaParcialComoDefaultQuandoTipoNaoEhInformadoAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (opId, prestId, _) = await SeedCatalogAsync(ctx, tenantId);
+        var service = new RecursoService(ctx, user, _noopStorage);
+
+        var result = await service.CriarAsync(
+            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 5, 1), null, "20260502"));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(TipoRecurso.GlosaParcial, result.Value!.Tipo);
+    }
+
+    [Fact]
     public async Task Listar_PaginacaoFuncionaAsync()
     {
         var tenantId = Guid.NewGuid();
@@ -917,6 +955,126 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         Assert.Equal(
             [new DateOnly(2026, 7, 5), new DateOnly(2026, 7, 12), new DateOnly(2026, 7, 20)],
             result.Value!.Guias.Select(g => g.DataAtendimento).ToArray());
+    }
+
+    [Fact]
+    public async Task Deve_CriarRecursoGlosaBrancaParaOperadoraNuloAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var prestador = Prestador.Create(tenantId, "Dr. NL " + tenantId.ToString("N")[..4], null);
+        var operadoraNulo = Operadora.Create(tenantId, "Op Nulo " + tenantId.ToString("N")[..4], null, null, TipoRuleSet.Nulo);
+        ctx.Add(prestador);
+        ctx.Add(operadoraNulo);
+        await ctx.SaveChangesAsync();
+        var service = new RecursoService(ctx, user, _noopStorage);
+
+        var result = await service.CriarAsync(
+            new CriarRecursoCommand(operadoraNulo.Id, prestador.Id, new DateOnly(2026, 6, 1), null, "20260601",
+                TipoRecurso.GlosaBranca));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(TipoRecurso.GlosaBranca, result.Value!.Tipo);
+    }
+
+    [Fact]
+    public async Task Deve_RejeitarRecursoGlosaParcialParaOperadoraNuloAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var prestador = Prestador.Create(tenantId, "Dr. NL2 " + tenantId.ToString("N")[..4], null);
+        var operadoraNulo = Operadora.Create(tenantId, "Op Nulo2 " + tenantId.ToString("N")[..4], null, null, TipoRuleSet.Nulo);
+        ctx.Add(prestador);
+        ctx.Add(operadoraNulo);
+        await ctx.SaveChangesAsync();
+        var service = new RecursoService(ctx, user, _noopStorage);
+
+        var result = await service.CriarAsync(
+            new CriarRecursoCommand(operadoraNulo.Id, prestador.Id, new DateOnly(2026, 6, 1), null, "20260602",
+                TipoRecurso.GlosaParcial));
+
+        Assert.True(result.IsFailure);
+        Assert.IsType<ValidationError>(result.Error);
+    }
+
+    [Fact]
+    public async Task Deve_RetornarTipoNoRecursoDtoAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (opId, prestId, _) = await SeedCatalogAsync(ctx, tenantId);
+        var service = new RecursoService(ctx, user, _noopStorage);
+
+        await service.CriarAsync(
+            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 6, 1), null, "20260603",
+                TipoRecurso.GlosaBranca));
+
+        var lista = await service.ListarAsync(new ListarRecursosQuery(opId, prestId, 1, 10));
+
+        var branca = lista.Itens.FirstOrDefault(r => r.Numero == "20260603");
+        Assert.NotNull(branca);
+        Assert.Equal(TipoRecurso.GlosaBranca, branca.Tipo);
+    }
+
+    [Fact]
+    public async Task AdicionarEmLote_SomenteNuncaPago_IncluiGuiaComItemSemLiquidarAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (opId, prestId, procId) = await SeedCatalogAsync(ctx, tenantId);
+        var service = new RecursoService(ctx, user, _noopStorage);
+        var pfx = tenantId.ToString("N")[..4];
+
+        var recursoId = (await service.CriarAsync(
+            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 6, 1), null, "202512"))).Value!.Id;
+
+        // guia sem liquidar (ValorLiquidado null) → deve entrar
+        var guiaNuncaPagaId = await CriarGuiaAsync(ctx, user, prestId, opId, procId, $"NP-A-{pfx}", new DateOnly(2026, 6, 5));
+
+        // guia liquidada (ValorLiquidado > 0) → deve ser excluída
+        var guiaLiquidadaId = await CriarGuiaAsync(ctx, user, prestId, opId, procId, $"NP-B-{pfx}", new DateOnly(2026, 6, 6));
+        var itemLiquidado = await ctx.ItensGuia.FirstAsync(i => i.GuiaId == guiaLiquidadaId);
+        itemLiquidado.SetValorLiquidado(100m);
+        await ctx.SaveChangesAsync();
+
+        var cmd = new AdicionarGuiasEmLoteCommand(prestId, opId, null, null, null, null, null, null, true);
+        var result = await service.AdicionarGuiasEmLoteAsync(recursoId, cmd);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(1, result.Value);
+        await using var adminCtx = db.CreateContext();
+        var guiaVinculada = await adminCtx.Guias.FirstOrDefaultAsync(g => g.RecursoId == recursoId);
+        Assert.NotNull(guiaVinculada);
+        Assert.Equal(guiaNuncaPagaId, guiaVinculada.Id);
+    }
+
+    [Fact]
+    public async Task AdicionarEmLote_SomenteNuncaPago_ExcluiGuiaTotalmenteLiquidadaAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (opId, prestId, procId) = await SeedCatalogAsync(ctx, tenantId);
+        var service = new RecursoService(ctx, user, _noopStorage);
+        var pfx = tenantId.ToString("N")[..4];
+
+        var recursoId = (await service.CriarAsync(
+            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 6, 1), null, "202512"))).Value!.Id;
+
+        var guiaLiquidadaId = await CriarGuiaAsync(ctx, user, prestId, opId, procId, $"NP-C-{pfx}", new DateOnly(2026, 6, 10));
+        var item = await ctx.ItensGuia.FirstAsync(i => i.GuiaId == guiaLiquidadaId);
+        item.SetValorLiquidado(200m);
+        await ctx.SaveChangesAsync();
+
+        var cmd = new AdicionarGuiasEmLoteCommand(prestId, opId, null, null, null, null, null, null, true);
+        var result = await service.AdicionarGuiasEmLoteAsync(recursoId, cmd);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(0, result.Value);
     }
 
     [Fact]

@@ -1,11 +1,14 @@
 import type { SituacaoGuia } from './guia.types';
 
+export type TipoRecurso = 'GlosaParcial' | 'GlosaBranca';
+
 export interface RecursoForm {
   operadoraId: string;
   prestadorId: string;
   dataEmissao: string;
   numero: string;
   observacao: string | null;
+  tipo: TipoRecurso;
 }
 
 export interface RecursoDto {
@@ -20,6 +23,7 @@ export interface RecursoDto {
   observacao: string | null;
   totalGuias: number;
   criadoEm: string;
+  tipo: TipoRecurso;
 }
 
 export interface ItemGuiaNoRecursoDto {
@@ -77,4 +81,5 @@ export interface AdicionarGuiasLoteParams {
   numeroGuia?: string;
   beneficiario?: string;
   somenteComGlosa?: boolean;
+  somenteNuncaPago?: boolean;
 }

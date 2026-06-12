@@ -265,6 +265,51 @@ public sealed class RecursoPdfDataTests(PostgresContainerFixture db)
     }
 
     [Fact]
+    public async Task RecursoPdfData_DeveTerTipoGlosaBrancaAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (opId, prestId, _) = await SeedCatalogAsync(ctx, tenantId);
+
+        var svc = new RecursoService(ctx, user, _noopStorage);
+        var result = await svc.CriarAsync(
+            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 3, 1), null, "202601",
+                TipoRecurso.GlosaBranca));
+        var recursoId = result.Value!.Id;
+
+        var dados = await svc.ObterDadosPdfAsync(recursoId);
+
+        Assert.True(dados.IsSuccess);
+        Assert.Equal(TipoRecurso.GlosaBranca, dados.Value!.Tipo);
+    }
+
+    [Fact]
+    public async Task GerarPdf_GlosaBranca_NaoLancaExcecaoAsync()
+    {
+        var tenantId = await SeedTenantAsync("Tenant Branca " + Guid.NewGuid().ToString("N")[..4]);
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (opId, prestId, procId) = await SeedCatalogAsync(ctx, tenantId);
+
+        var svc = new RecursoService(ctx, user, _noopStorage);
+        var createResult = await svc.CriarAsync(
+            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 3, 1), null, "202602",
+                TipoRecurso.GlosaBranca));
+        var recursoId = createResult.Value!.Id;
+        await CriarGuiaEVincularAsync(ctx, user, prestId, opId, procId,
+            "PDF-BRN-" + tenantId.ToString("N")[..4], recursoId);
+
+        var dados = await svc.ObterDadosPdfAsync(recursoId);
+        Assert.True(dados.IsSuccess);
+
+        var doc = new RecursoPdfDocument(dados.Value!);
+        var bytes = doc.GeneratePdf();
+
+        Assert.True(bytes.Length > 0);
+    }
+
+    [Fact]
     public async Task ObterDadosPdf_RecursoDeOutroTenant_NotFoundAsync()
     {
         var tenantId1 = Guid.NewGuid();

@@ -3,8 +3,9 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { CatalogService } from '../../catalog/catalog.service';
+import type { OperadoraItem } from '../../catalog/catalog.types';
 import { GuiaService } from '../guia.service';
-import type { GuiaCalculoResult, GuiaDetalheItem } from '../guia.types';
+import type { GuiaCalculoResult, GuiaDetalheItem, ItemGuiaDisplay } from '../guia.types';
 import { GuiaFormComponent } from './guia-form.component';
 
 const mockGuia: GuiaDetalheItem = {
@@ -402,5 +403,61 @@ describe('GuiaFormComponent', () => {
 
     const msgErro = el.querySelector('.guia-form__erro-validacao');
     expect(msgErro?.textContent).toContain('SemTabela');
+  });
+
+  const mockOperadoraNulo: OperadoraItem = {
+    id: 'op-nulo',
+    nome: 'Sem Cálculo',
+    registroAns: null,
+    cnpj: null,
+    tipoRuleSet: 'Nulo',
+    ativa: true,
+    criadaEm: '2025-01-01',
+  };
+
+  const mockOperadoraUnimed: OperadoraItem = {
+    id: 'op-unimed',
+    nome: 'UNIMED',
+    registroAns: null,
+    cnpj: null,
+    tipoRuleSet: 'Unimed',
+    ativa: true,
+    criadaEm: '2025-01-01',
+  };
+
+  const mockItemGuia: ItemGuiaDisplay = {
+    procedimentoId: 'proc-1',
+    codigoTuss: '4030501',
+    descricaoProcedimento: 'Colecistectomia',
+    posicaoExecutor: 'Cirurgiao',
+    percentualOrdem: 1.0,
+    viaAcesso: 'Convencional',
+    acomodacao: 'Enfermaria',
+    ehUrgencia: false,
+    valorApurado: null,
+  };
+
+  it('Não deve exibir campos de cálculo quando operadora é Nulo', () => {
+    const { component, fixture, el } = setup();
+
+    component.operadoras.set([mockOperadoraNulo]);
+    component.operadoraId.set('op-nulo');
+    component.itens.set([mockItemGuia]);
+    fixture.detectChanges();
+
+    expect(component.operadoraSemCalculo()).toBe(true);
+    expect(el.querySelector('.guia-form__item-meta')).toBeNull();
+  });
+
+  it('Deve exibir campos de cálculo quando operadora é Unimed', () => {
+    const { component, fixture, el } = setup();
+
+    component.operadoras.set([mockOperadoraUnimed]);
+    component.operadoraId.set('op-unimed');
+    component.itens.set([mockItemGuia]);
+    fixture.detectChanges();
+
+    expect(component.operadoraSemCalculo()).toBe(false);
+    expect(el.querySelector('.guia-form__item-meta')).not.toBeNull();
   });
 });

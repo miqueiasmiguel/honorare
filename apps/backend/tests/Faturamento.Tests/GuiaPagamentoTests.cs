@@ -98,7 +98,8 @@ public sealed class GuiaPagamentoTests(PostgresContainerFixture db)
         var guiaEntity = await ctx.Guias.FirstAsync(g => g.Id == guiaId);
         var recursoService = new RecursoService(ctx, user, _noopStorage);
         var recursoResult = await recursoService.CriarAsync(
-            new CriarRecursoCommand(guiaEntity.OperadoraId, guiaEntity.PrestadorId, new DateOnly(2026, 1, 1), null, "202512"));
+            new CriarRecursoCommand(guiaEntity.OperadoraId, guiaEntity.PrestadorId, new DateOnly(2026, 1, 1), null, "202512",
+                TipoRecurso.GlosaBranca));
         var recursoId = recursoResult.Value!.Id;
         await recursoService.AdicionarGuiaAsync(recursoId, guiaId);
 

@@ -85,7 +85,7 @@ export class OperadoraListComponent implements OnInit {
   }
 
   tipoLabel(tipo: TipoRuleSet): string {
-    return tipo === 'Unimed' ? 'UNIMED' : 'Sem apuração';
+    return tipo === 'Unimed' ? 'UNIMED' : 'Sem cálculo';
   }
 
   formatarCnpj(cnpj: string | null): string {

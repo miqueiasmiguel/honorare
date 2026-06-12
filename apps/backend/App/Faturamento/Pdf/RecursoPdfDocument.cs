@@ -15,8 +15,10 @@ internal static class QuestPdfLicense
 
 internal sealed class RecursoPdfDocument(RecursoPdfData data) : IDocument
 {
-    private static readonly string[] _columnHeaders =
+    private static readonly string[] _colunasParcial =
         ["Código", "Descrição", "Fator", "PG UNIMED", "VL CORRETO"];
+
+    private static readonly string[] _colunasBranca = ["Código", "Descrição"];
 
     internal byte[] GeneratePdf()
     {
@@ -69,15 +71,18 @@ internal sealed class RecursoPdfDocument(RecursoPdfData data) : IDocument
         {
             foreach (var guia in data.Guias)
             {
-                col.Item().Element(ct => ComposeGuia(ct, guia));
+                col.Item().Element(ct => ComposeGuia(ct, guia, data.Tipo));
                 col.Item().PaddingVertical(4);
             }
 
-            col.Item().Element(ComposeTotaisFinais);
+            if (data.Tipo == TipoRecurso.GlosaParcial)
+            {
+                col.Item().Element(ComposeTotaisFinais);
+            }
         });
     }
 
-    private static void ComposeGuia(IContainer c, GuiaPdfData guia)
+    private static void ComposeGuia(IContainer c, GuiaPdfData guia, TipoRecurso tipo)
     {
         c.Column(col =>
         {
@@ -96,44 +101,76 @@ internal sealed class RecursoPdfDocument(RecursoPdfData data) : IDocument
                 });
             }
 
-            col.Item().Element(ct => ComposeItensTable(ct, guia));
+            col.Item().Element(ct => ComposeItensTable(ct, guia, tipo));
         });
     }
 
-    private static void ComposeItensTable(IContainer c, GuiaPdfData guia)
+    private static void ComposeItensTable(IContainer c, GuiaPdfData guia, TipoRecurso tipo)
     {
-        c.Table(table =>
+        if (tipo == TipoRecurso.GlosaBranca)
         {
-            table.ColumnsDefinition(cols =>
+            c.Table(table =>
             {
-                cols.RelativeColumn(3);
-                cols.RelativeColumn(8);
-                cols.RelativeColumn(2);
-                cols.RelativeColumn(2);
-                cols.RelativeColumn(2);
-            });
-
-            table.Header(h =>
-            {
-                foreach (var label in _columnHeaders)
+                table.ColumnsDefinition(cols =>
                 {
-                    h.Cell().Border(0.5f).Padding(2).Text(t =>
+                    cols.RelativeColumn(3);
+                    cols.RelativeColumn(8);
+                });
+
+                table.Header(h =>
+                {
+                    foreach (var label in _colunasBranca)
                     {
-                        t.DefaultTextStyle(s => s.Bold());
-                        t.Span(label);
-                    });
+                        h.Cell().Border(0.5f).Padding(2).Text(t =>
+                        {
+                            t.DefaultTextStyle(s => s.Bold());
+                            t.Span(label);
+                        });
+                    }
+                });
+
+                foreach (var item in guia.Itens)
+                {
+                    table.Cell().Border(0.5f).Padding(2).Text(item.CodigoTuss);
+                    table.Cell().Border(0.5f).Padding(2).Text(item.Descricao);
                 }
             });
-
-            foreach (var item in guia.Itens)
+        }
+        else
+        {
+            c.Table(table =>
             {
-                table.Cell().Border(0.5f).Padding(2).Text(item.CodigoTuss);
-                table.Cell().Border(0.5f).Padding(2).Text(item.Descricao);
-                table.Cell().Border(0.5f).Padding(2).Text(item.FatorEfetivo);
-                table.Cell().Border(0.5f).Padding(2).Text(item.ValorPago.ToString("N2", CultureInfo.CurrentCulture));
-                table.Cell().Border(0.5f).Padding(2).Text(item.ValorApurado.ToString("N2", CultureInfo.CurrentCulture));
-            }
-        });
+                table.ColumnsDefinition(cols =>
+                {
+                    cols.RelativeColumn(3);
+                    cols.RelativeColumn(8);
+                    cols.RelativeColumn(2);
+                    cols.RelativeColumn(2);
+                    cols.RelativeColumn(2);
+                });
+
+                table.Header(h =>
+                {
+                    foreach (var label in _colunasParcial)
+                    {
+                        h.Cell().Border(0.5f).Padding(2).Text(t =>
+                        {
+                            t.DefaultTextStyle(s => s.Bold());
+                            t.Span(label);
+                        });
+                    }
+                });
+
+                foreach (var item in guia.Itens)
+                {
+                    table.Cell().Border(0.5f).Padding(2).Text(item.CodigoTuss);
+                    table.Cell().Border(0.5f).Padding(2).Text(item.Descricao);
+                    table.Cell().Border(0.5f).Padding(2).Text(item.FatorEfetivo);
+                    table.Cell().Border(0.5f).Padding(2).Text(item.ValorPago.ToString("N2", CultureInfo.CurrentCulture));
+                    table.Cell().Border(0.5f).Padding(2).Text(item.ValorApurado.ToString("N2", CultureInfo.CurrentCulture));
+                }
+            });
+        }
     }
 
     private void ComposeTotaisFinais(IContainer c)

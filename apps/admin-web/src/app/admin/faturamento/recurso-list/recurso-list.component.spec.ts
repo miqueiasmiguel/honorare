@@ -19,6 +19,7 @@ function makeRecurso(overrides: Partial<RecursoDto> = {}): RecursoDto {
     observacao: null,
     totalGuias: 3,
     criadoEm: '2026-01-15T00:00:00Z',
+    tipo: 'GlosaParcial',
     ...overrides,
   };
 }
@@ -79,7 +80,7 @@ describe('RecursoListComponent', () => {
     const rows = el.querySelectorAll('.recurso-list__row');
     expect(rows).toHaveLength(2);
 
-    const badge = el.querySelector('.recurso-list__badge');
+    const badge = el.querySelector('.recurso-list__badge--guias');
     expect(badge).not.toBeNull();
     expect(badge?.textContent).toContain('5');
   });

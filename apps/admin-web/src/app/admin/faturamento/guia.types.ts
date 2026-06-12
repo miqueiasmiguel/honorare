@@ -71,6 +71,7 @@ export interface ListarGuiasParams {
   beneficiario?: string;
   semRecurso?: boolean;
   somenteComGlosa?: boolean;
+  somenteNuncaPago?: boolean;
   ordenarPor?: GuiaOrdenacao;
   descendente?: boolean;
   pagina: number;

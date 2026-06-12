@@ -18,6 +18,7 @@ const RECURSO: RecursoDto = {
   observacao: 'obs teste',
   totalGuias: 0,
   criadoEm: '2026-01-15T00:00:00Z',
+  tipo: 'GlosaParcial',
 };
 
 const DETALHE: RecursoDetalheDto = { header: RECURSO, guias: [] };
@@ -155,5 +156,26 @@ describe('RecursoFormComponent', () => {
     component.onDataEmissaoInput('2026-01-15');
 
     expect(component.numero()).toBe('007');
+  });
+
+  it('Deve usar GlosaParcial como padrão', () => {
+    const { component } = setup();
+
+    expect(component.tipo()).toBe('GlosaParcial');
+  });
+
+  it('Deve enviar tipo GlosaBranca no payload quando selecionado', () => {
+    const { component, el, recursoService } = setup();
+
+    component.tipo.set('GlosaBranca');
+    component.operadoraId.set('op-1');
+    component.prestadorId.set('prest-1');
+    component.onDataEmissaoInput('2026-01-15');
+
+    el.querySelector<HTMLButtonElement>('.recurso-form__btn-salvar')?.click();
+
+    expect(recursoService.criar).toHaveBeenCalledWith(
+      expect.objectContaining({ tipo: 'GlosaBranca' }),
+    );
   });
 });

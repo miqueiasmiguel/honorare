@@ -44,7 +44,7 @@ internal static class RecursoEndpoints
     private static async Task<IResult> CriarRecursoAsync(
         CriarRecursoRequest body, RecursoService service, CancellationToken ct)
     {
-        var cmd = new CriarRecursoCommand(body.OperadoraId, body.PrestadorId, body.DataEmissao, body.Observacao, body.Numero);
+        var cmd = new CriarRecursoCommand(body.OperadoraId, body.PrestadorId, body.DataEmissao, body.Observacao, body.Numero, body.Tipo);
         var result = await service.CriarAsync(cmd, ct);
         if (result.IsFailure)
         {
@@ -63,7 +63,7 @@ internal static class RecursoEndpoints
     private static async Task<IResult> AtualizarRecursoAsync(
         Guid id, AtualizarRecursoRequest body, RecursoService service, CancellationToken ct)
     {
-        var cmd = new AtualizarRecursoCommand(body.OperadoraId, body.PrestadorId, body.DataEmissao, body.Observacao, body.Numero);
+        var cmd = new AtualizarRecursoCommand(body.OperadoraId, body.PrestadorId, body.DataEmissao, body.Observacao, body.Numero, body.Tipo);
         var result = await service.AtualizarAsync(id, cmd, ct);
         if (result.IsFailure)
         {
@@ -97,7 +97,7 @@ internal static class RecursoEndpoints
         var cmd = new AdicionarGuiasEmLoteCommand(
             body.PrestadorId, body.OperadoraId,
             body.DataInicio, body.DataFim,
-            body.Situacao, body.NumeroGuia, body.Beneficiario, body.SomenteComGlosa);
+            body.Situacao, body.NumeroGuia, body.Beneficiario, body.SomenteComGlosa, body.SomenteNuncaPago);
         var result = await service.AdicionarGuiasEmLoteAsync(id, cmd, ct);
         if (result.IsFailure)
         {
@@ -152,15 +152,18 @@ internal sealed record ListarRecursosRequest(
     int ItensPorPagina = 20);
 
 internal sealed record CriarRecursoRequest(
-    Guid OperadoraId, Guid PrestadorId, DateOnly DataEmissao, string? Observacao, string Numero);
+    Guid OperadoraId, Guid PrestadorId, DateOnly DataEmissao, string? Observacao, string Numero,
+    TipoRecurso Tipo = TipoRecurso.GlosaParcial);
 
 internal sealed record AtualizarRecursoRequest(
-    Guid OperadoraId, Guid PrestadorId, DateOnly DataEmissao, string? Observacao, string Numero);
+    Guid OperadoraId, Guid PrestadorId, DateOnly DataEmissao, string? Observacao, string Numero,
+    TipoRecurso Tipo = TipoRecurso.GlosaParcial);
 
 internal sealed record AdicionarGuiasEmLoteRequest(
     Guid PrestadorId, Guid OperadoraId,
     DateOnly? DataInicio = null, DateOnly? DataFim = null,
     SituacaoGuia? Situacao = null, string? NumeroGuia = null,
-    string? Beneficiario = null, bool? SomenteComGlosa = null);
+    string? Beneficiario = null, bool? SomenteComGlosa = null,
+    bool? SomenteNuncaPago = null);
 
 internal sealed record AlterarInclusaoItemRequest(bool Incluido);
