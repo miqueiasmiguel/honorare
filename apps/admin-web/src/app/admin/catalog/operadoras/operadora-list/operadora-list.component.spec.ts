@@ -134,4 +134,16 @@ describe('OperadoraListComponent', () => {
 
     expect(catalogService.excluirOperadora).not.toHaveBeenCalled();
   });
+
+  it('exibe "Sem cálculo" no badge da operadora Nulo', () => {
+    const { el } = setup();
+    const badge = el.querySelector('.badge--nulo');
+    const text = badge?.textContent ?? '';
+    expect(text.trim()).toBe('Sem cálculo');
+  });
+
+  it('não exibe "Sem apuração" para nenhuma operadora', () => {
+    const { el } = setup();
+    expect(el.textContent).not.toContain('Sem apuração');
+  });
 });

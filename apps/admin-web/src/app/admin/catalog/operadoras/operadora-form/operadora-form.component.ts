@@ -8,7 +8,7 @@ import { TabelaAtosMultiplosComponent } from './tabela-atos-multiplos.component'
 
 const TIPO_RULESET_OPCOES: { value: TipoRuleSet; label: string }[] = [
   { value: 'Unimed', label: 'UNIMED' },
-  { value: 'Nulo', label: 'Sem apuração' },
+  { value: 'Nulo', label: 'Sem cálculo' },
 ];
 
 @Component({

@@ -148,4 +148,18 @@ describe('OperadoraFormComponent', () => {
       expect(secao).not.toBeNull();
     });
   });
+
+  describe('rótulo do tipo de rule set', () => {
+    it('exibe opção "Sem cálculo" para o tipo Nulo no select', () => {
+      const { el } = setup(null);
+      const nulo = el.querySelector<HTMLOptionElement>('option[value="Nulo"]');
+      const text = nulo?.textContent ?? '';
+      expect(text.trim()).toBe('Sem cálculo');
+    });
+
+    it('não exibe "Sem apuração" em nenhum lugar do formulário', () => {
+      const { el } = setup(null);
+      expect(el.textContent).not.toContain('Sem apuração');
+    });
+  });
 });
