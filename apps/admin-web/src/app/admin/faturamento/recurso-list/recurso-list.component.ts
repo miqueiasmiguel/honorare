@@ -44,6 +44,7 @@ import type { OperadoraItem, PrestadorItem } from '../../catalog/catalog.types';
         <thead>
           <tr class="recurso-list__head-row">
             <th class="recurso-list__th">Número</th>
+            <th class="recurso-list__th">Tipo</th>
             <th class="recurso-list__th">Operadora</th>
             <th class="recurso-list__th">Prestador</th>
             <th class="recurso-list__th">Data Emissão</th>
@@ -55,11 +56,20 @@ import type { OperadoraItem, PrestadorItem } from '../../catalog/catalog.types';
           @for (r of recursos(); track r.id) {
             <tr class="recurso-list__row">
               <td class="recurso-list__cell">{{ r.numero }}</td>
+              <td class="recurso-list__cell">
+                <span
+                  class="recurso-list__badge recurso-list__badge--tipo"
+                  [class.recurso-list__badge--branca]="r.tipo === 'GlosaBranca'"
+                  >{{ r.tipo === 'GlosaBranca' ? 'Branca' : 'Parcial' }}</span
+                >
+              </td>
               <td class="recurso-list__cell">{{ r.operadoraNome }}</td>
               <td class="recurso-list__cell">{{ r.prestadorNome }}</td>
               <td class="recurso-list__cell">{{ r.dataEmissao | date: 'dd/MM/yyyy' }}</td>
               <td class="recurso-list__cell">
-                <span class="recurso-list__badge">{{ r.totalGuias }}</span>
+                <span class="recurso-list__badge recurso-list__badge--guias">{{
+                  r.totalGuias
+                }}</span>
               </td>
               <td class="recurso-list__cell recurso-list__cell--acoes">
                 <div class="recurso-list__menu">
@@ -93,7 +103,7 @@ import type { OperadoraItem, PrestadorItem } from '../../catalog/catalog.types';
             </tr>
           } @empty {
             <tr>
-              <td class="recurso-list__empty" colspan="6">Nenhum recurso encontrado.</td>
+              <td class="recurso-list__empty" colspan="7">Nenhum recurso encontrado.</td>
             </tr>
           }
         </tbody>

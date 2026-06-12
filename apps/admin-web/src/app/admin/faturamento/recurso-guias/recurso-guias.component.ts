@@ -262,6 +262,14 @@ import { AdicionarItemModalComponent } from './adicionar-item-modal/adicionar-it
                 />
                 Só com glosa
               </label>
+              <label class="recurso-guias__filtro-toggle">
+                <input
+                  type="checkbox"
+                  [checked]="filtroSomenteNuncaPago()"
+                  (change)="filtroSomenteNuncaPago.set($any($event.target).checked)"
+                />
+                Somente nunca pagos
+              </label>
             </div>
             <div class="recurso-guias__filtros-linha">
               <div class="recurso-guias__date-range">
@@ -441,6 +449,7 @@ export class RecursoGuiasComponent implements OnInit {
   readonly filtroDataFim = signal('');
   readonly filtroSituacao = signal<SituacaoGuia | ''>('');
   readonly filtroSomenteGlosa = signal(false);
+  readonly filtroSomenteNuncaPago = signal(false);
 
   readonly candidatas = signal<GuiaItem[]>([]);
   readonly totalCandidatas = signal(0);
@@ -639,6 +648,7 @@ export class RecursoGuiasComponent implements OnInit {
         dataFim: this.filtroDataFim() || undefined,
         situacao: situacao !== '' ? situacao : undefined,
         somenteComGlosa: this.filtroSomenteGlosa() || undefined,
+        somenteNuncaPago: this.filtroSomenteNuncaPago() || undefined,
         ordenarPor: this.candidatasOrdenarPor(),
         descendente: this.candidatasDescendente(),
         pagina: 1,
@@ -675,6 +685,7 @@ export class RecursoGuiasComponent implements OnInit {
         numeroGuia: this.filtroNumeroGuia() || undefined,
         beneficiario: this.filtroBeneficiario() || undefined,
         somenteComGlosa: this.filtroSomenteGlosa() || undefined,
+        somenteNuncaPago: this.filtroSomenteNuncaPago() || undefined,
       })
       .subscribe({
         next: () => {
