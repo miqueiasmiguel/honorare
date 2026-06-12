@@ -96,7 +96,7 @@ builder.Property(r => r.Tipo).HasConversion<string>().IsRequired();
 
 ### TASK-GLOSA-02 — Service + endpoint propagam `Tipo` na criação/edição do recurso
 
-- [ ] pendente
+- [x] concluída
 
 **Objetivo:** `Tipo` flui de ponta a ponta no CRUD do recurso (request → command → service → dto). Validação: recurso `GlosaParcial` **não** pode usar operadora `TipoRuleSet.Nulo` (sem valor a disputar); `GlosaBranca` é permitido para qualquer operadora.
 
@@ -390,7 +390,7 @@ POST /api/v1/admin/recursos/{id}/guias/lote  body inclui  somenteNuncaPago?: boo
 ## Checklist final
 
 - [x] TASK-GLOSA-01 — Recurso.Tipo + migration
-- [ ] TASK-GLOSA-02 — service/endpoint propagam Tipo + validação Nulo×Parcial
+- [x] TASK-GLOSA-02 — service/endpoint propagam Tipo + validação Nulo×Parcial
 - [ ] TASK-GLOSA-03 — filtro somente-nunca-pago no lote
 - [ ] TASK-GLOSA-04 — template PDF glosa branca
 - [ ] TASK-GLOSA-05 — rótulo "Sem cálculo"

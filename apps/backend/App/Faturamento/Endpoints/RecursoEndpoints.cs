@@ -44,7 +44,7 @@ internal static class RecursoEndpoints
     private static async Task<IResult> CriarRecursoAsync(
         CriarRecursoRequest body, RecursoService service, CancellationToken ct)
     {
-        var cmd = new CriarRecursoCommand(body.OperadoraId, body.PrestadorId, body.DataEmissao, body.Observacao, body.Numero);
+        var cmd = new CriarRecursoCommand(body.OperadoraId, body.PrestadorId, body.DataEmissao, body.Observacao, body.Numero, body.Tipo);
         var result = await service.CriarAsync(cmd, ct);
         if (result.IsFailure)
         {
@@ -63,7 +63,7 @@ internal static class RecursoEndpoints
     private static async Task<IResult> AtualizarRecursoAsync(
         Guid id, AtualizarRecursoRequest body, RecursoService service, CancellationToken ct)
     {
-        var cmd = new AtualizarRecursoCommand(body.OperadoraId, body.PrestadorId, body.DataEmissao, body.Observacao, body.Numero);
+        var cmd = new AtualizarRecursoCommand(body.OperadoraId, body.PrestadorId, body.DataEmissao, body.Observacao, body.Numero, body.Tipo);
         var result = await service.AtualizarAsync(id, cmd, ct);
         if (result.IsFailure)
         {
@@ -152,10 +152,12 @@ internal sealed record ListarRecursosRequest(
     int ItensPorPagina = 20);
 
 internal sealed record CriarRecursoRequest(
-    Guid OperadoraId, Guid PrestadorId, DateOnly DataEmissao, string? Observacao, string Numero);
+    Guid OperadoraId, Guid PrestadorId, DateOnly DataEmissao, string? Observacao, string Numero,
+    TipoRecurso Tipo = TipoRecurso.GlosaParcial);
 
 internal sealed record AtualizarRecursoRequest(
-    Guid OperadoraId, Guid PrestadorId, DateOnly DataEmissao, string? Observacao, string Numero);
+    Guid OperadoraId, Guid PrestadorId, DateOnly DataEmissao, string? Observacao, string Numero,
+    TipoRecurso Tipo = TipoRecurso.GlosaParcial);
 
 internal sealed record AdicionarGuiasEmLoteRequest(
     Guid PrestadorId, Guid OperadoraId,

@@ -958,6 +958,68 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
     }
 
     [Fact]
+    public async Task Deve_CriarRecursoGlosaBrancaParaOperadoraNuloAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var prestador = Prestador.Create(tenantId, "Dr. NL " + tenantId.ToString("N")[..4], null);
+        var operadoraNulo = Operadora.Create(tenantId, "Op Nulo " + tenantId.ToString("N")[..4], null, null, TipoRuleSet.Nulo);
+        ctx.Add(prestador);
+        ctx.Add(operadoraNulo);
+        await ctx.SaveChangesAsync();
+        var service = new RecursoService(ctx, user, _noopStorage);
+
+        var result = await service.CriarAsync(
+            new CriarRecursoCommand(operadoraNulo.Id, prestador.Id, new DateOnly(2026, 6, 1), null, "20260601",
+                TipoRecurso.GlosaBranca));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(TipoRecurso.GlosaBranca, result.Value!.Tipo);
+    }
+
+    [Fact]
+    public async Task Deve_RejeitarRecursoGlosaParcialParaOperadoraNuloAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var prestador = Prestador.Create(tenantId, "Dr. NL2 " + tenantId.ToString("N")[..4], null);
+        var operadoraNulo = Operadora.Create(tenantId, "Op Nulo2 " + tenantId.ToString("N")[..4], null, null, TipoRuleSet.Nulo);
+        ctx.Add(prestador);
+        ctx.Add(operadoraNulo);
+        await ctx.SaveChangesAsync();
+        var service = new RecursoService(ctx, user, _noopStorage);
+
+        var result = await service.CriarAsync(
+            new CriarRecursoCommand(operadoraNulo.Id, prestador.Id, new DateOnly(2026, 6, 1), null, "20260602",
+                TipoRecurso.GlosaParcial));
+
+        Assert.True(result.IsFailure);
+        Assert.IsType<ValidationError>(result.Error);
+    }
+
+    [Fact]
+    public async Task Deve_RetornarTipoNoRecursoDtoAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (opId, prestId, _) = await SeedCatalogAsync(ctx, tenantId);
+        var service = new RecursoService(ctx, user, _noopStorage);
+
+        await service.CriarAsync(
+            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 6, 1), null, "20260603",
+                TipoRecurso.GlosaBranca));
+
+        var lista = await service.ListarAsync(new ListarRecursosQuery(opId, prestId, 1, 10));
+
+        var branca = lista.Itens.FirstOrDefault(r => r.Numero == "20260603");
+        Assert.NotNull(branca);
+        Assert.Equal(TipoRecurso.GlosaBranca, branca.Tipo);
+    }
+
+    [Fact]
     public async Task ObterPorId_RetornaEhPacoteDaGuiaAsync()
     {
         var tenantId = Guid.NewGuid();

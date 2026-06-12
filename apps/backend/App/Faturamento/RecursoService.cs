@@ -11,7 +11,8 @@ internal sealed record CriarRecursoCommand(
     TipoRecurso Tipo = TipoRecurso.GlosaParcial);
 
 internal sealed record AtualizarRecursoCommand(
-    Guid OperadoraId, Guid PrestadorId, DateOnly DataEmissao, string? Observacao, string Numero);
+    Guid OperadoraId, Guid PrestadorId, DateOnly DataEmissao, string? Observacao, string Numero,
+    TipoRecurso Tipo = TipoRecurso.GlosaParcial);
 
 internal sealed record RecursoDto(
     Guid Id, Guid OperadoraId, string OperadoraNome,
@@ -105,6 +106,12 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser, 
             return Result<RecursoDto>.Fail(new NotFoundError("Operadora não encontrada."));
         }
 
+        if (cmd.Tipo == TipoRecurso.GlosaParcial && operadora.TipoRuleSet == TipoRuleSet.Nulo)
+        {
+            return Result<RecursoDto>.Fail(new ValidationError(
+                "Operadora sem cálculo só permite recurso de glosa branca."));
+        }
+
         var prestador = await _db.Prestadores.FirstOrDefaultAsync(p => p.Id == cmd.PrestadorId, ct);
         if (prestador is null)
         {
@@ -140,6 +147,7 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser, 
                     r.DataEmissao,
                     r.Observacao,
                     r.CriadoEm,
+                    r.Tipo,
                 };
 
         if (query.OperadoraId.HasValue)
@@ -174,7 +182,7 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser, 
             x.PrestadorId, x.PrestadorNome, x.PrestadorRegistroProfissional,
             x.Numero, x.DataEmissao, x.Observacao,
             guiaCounts.GetValueOrDefault(x.Id, 0),
-            x.CriadoEm)).ToList();
+            x.CriadoEm, x.Tipo)).ToList();
 
         return new ListarRecursosResult(itens, total, query.Pagina, query.ItensPorPagina);
     }
@@ -292,13 +300,19 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser, 
             return Result<RecursoDto>.Fail(new NotFoundError("Operadora não encontrada."));
         }
 
+        if (cmd.Tipo == TipoRecurso.GlosaParcial && operadora.TipoRuleSet == TipoRuleSet.Nulo)
+        {
+            return Result<RecursoDto>.Fail(new ValidationError(
+                "Operadora sem cálculo só permite recurso de glosa branca."));
+        }
+
         var prestador = await _db.Prestadores.FirstOrDefaultAsync(p => p.Id == cmd.PrestadorId, ct);
         if (prestador is null)
         {
             return Result<RecursoDto>.Fail(new NotFoundError("Prestador não encontrado."));
         }
 
-        recurso.Atualizar(cmd.OperadoraId, cmd.PrestadorId, cmd.DataEmissao, cmd.Observacao, cmd.Numero);
+        recurso.Atualizar(cmd.OperadoraId, cmd.PrestadorId, cmd.DataEmissao, cmd.Observacao, cmd.Numero, cmd.Tipo);
         await _db.SaveChangesAsync(ct);
 
         var totalGuias = await _db.Guias.CountAsync(g => g.RecursoId == id, ct);
@@ -307,7 +321,7 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser, 
             recurso.Id, recurso.OperadoraId, operadora.Nome,
             recurso.PrestadorId, prestador.Nome, prestador.RegistroProfissional,
             recurso.Numero, recurso.DataEmissao, recurso.Observacao,
-            totalGuias, recurso.CriadoEm));
+            totalGuias, recurso.CriadoEm, recurso.Tipo));
     }
 
     internal async Task<Result> ExcluirAsync(Guid id, CancellationToken ct = default)
