@@ -297,7 +297,7 @@ private static readonly string[] _colunasBranca = ["Código", "Descrição"];
 
 ### TASK-GLOSA-06 — Recurso form/list: seletor e badge de Tipo + filtro de lote
 
-- [ ] pendente
+- [x] concluída
 
 **Objetivo:** operador escolhe o tipo (Glosa Parcial / Glosa Branca) ao criar o recurso; a lista mostra um badge do tipo; o filtro de lote expõe "somente nunca pagos".
 
@@ -394,7 +394,7 @@ POST /api/v1/admin/recursos/{id}/guias/lote  body inclui  somenteNuncaPago?: boo
 - [x] TASK-GLOSA-03 — filtro somente-nunca-pago no lote
 - [x] TASK-GLOSA-04 — template PDF glosa branca
 - [x] TASK-GLOSA-05 — rótulo "Sem cálculo"
-- [ ] TASK-GLOSA-06 — seletor/badge de tipo no recurso (frontend)
+- [x] TASK-GLOSA-06 — seletor/badge de tipo no recurso (frontend)
 - [ ] TASK-GLOSA-07 — formulário de guia enxuto sem cálculo
 
 ## Fora de escopo (decisões registradas)
