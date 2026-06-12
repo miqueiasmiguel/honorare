@@ -351,7 +351,7 @@ POST /api/v1/admin/recursos/{id}/guias/lote  body inclui  somenteNuncaPago?: boo
 
 ### TASK-GLOSA-07 — Formulário de guia enxuto para operadora sem cálculo
 
-- [ ] pendente
+- [x] concluída
 
 **Objetivo:** quando a operadora selecionada na guia é `Nulo` (sem cálculo), o formulário não pede campos que só servem ao motor (posição/ordem/via/acomodação/urgência/tempo anestésico) — só código TUSS + descrição do procedimento. Os badges de cálculo e o bloco financeiro de "Apurado" somem da listagem de itens. Os valores default (`Cirurgiao`, `1.0`, `Convencional`, `Enfermaria`, `false`) continuam sendo emitidos — o backend os ignora para operadora Nulo.
 
@@ -395,7 +395,7 @@ POST /api/v1/admin/recursos/{id}/guias/lote  body inclui  somenteNuncaPago?: boo
 - [x] TASK-GLOSA-04 — template PDF glosa branca
 - [x] TASK-GLOSA-05 — rótulo "Sem cálculo"
 - [x] TASK-GLOSA-06 — seletor/badge de tipo no recurso (frontend)
-- [ ] TASK-GLOSA-07 — formulário de guia enxuto sem cálculo
+- [x] TASK-GLOSA-07 — formulário de guia enxuto sem cálculo
 
 ## Fora de escopo (decisões registradas)
 
