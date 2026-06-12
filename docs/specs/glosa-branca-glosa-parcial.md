@@ -214,7 +214,7 @@ if (cmd.SomenteNuncaPago == true)
 
 ### TASK-GLOSA-04 — PDF: template de glosa branca (sem valores)
 
-- [ ] pendente
+- [x] concluída
 
 **Objetivo:** o PDF do recurso respeita `Recurso.Tipo`. Para `GlosaBranca`, o documento lista **só** Código + Descrição por item (sem colunas `Fator`/`PG UNIMED`/`VL CORRETO`) e **sem** o bloco de totais financeiros. `GlosaParcial` mantém o layout atual.
 
@@ -392,7 +392,7 @@ POST /api/v1/admin/recursos/{id}/guias/lote  body inclui  somenteNuncaPago?: boo
 - [x] TASK-GLOSA-01 — Recurso.Tipo + migration
 - [x] TASK-GLOSA-02 — service/endpoint propagam Tipo + validação Nulo×Parcial
 - [x] TASK-GLOSA-03 — filtro somente-nunca-pago no lote
-- [ ] TASK-GLOSA-04 — template PDF glosa branca
+- [x] TASK-GLOSA-04 — template PDF glosa branca
 - [ ] TASK-GLOSA-05 — rótulo "Sem cálculo"
 - [ ] TASK-GLOSA-06 — seletor/badge de tipo no recurso (frontend)
 - [ ] TASK-GLOSA-07 — formulário de guia enxuto sem cálculo
