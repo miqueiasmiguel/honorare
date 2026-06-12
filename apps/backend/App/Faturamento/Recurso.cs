@@ -12,6 +12,7 @@ internal sealed class Recurso : ITenantEntity
     public DateOnly DataEmissao { get; private set; }
     public string? Observacao { get; private set; }
     public DateTimeOffset CriadoEm { get; private set; }
+    public TipoRecurso Tipo { get; private set; }
 
     private Recurso() { }
 
@@ -21,7 +22,8 @@ internal sealed class Recurso : ITenantEntity
         Guid prestadorId,
         DateOnly dataEmissao,
         string? observacao,
-        string numero)
+        string numero,
+        TipoRecurso tipo = TipoRecurso.GlosaParcial)
     {
         return new Recurso
         {
@@ -33,6 +35,7 @@ internal sealed class Recurso : ITenantEntity
             DataEmissao = dataEmissao,
             Observacao = observacao?.Trim(),
             CriadoEm = DateTimeOffset.UtcNow,
+            Tipo = tipo,
         };
     }
 
@@ -41,12 +44,14 @@ internal sealed class Recurso : ITenantEntity
         Guid prestadorId,
         DateOnly dataEmissao,
         string? observacao,
-        string numero)
+        string numero,
+        TipoRecurso tipo = TipoRecurso.GlosaParcial)
     {
         OperadoraId = operadoraId;
         PrestadorId = prestadorId;
         DataEmissao = dataEmissao;
         Numero = numero.Trim();
         Observacao = observacao?.Trim();
+        Tipo = tipo;
     }
 }

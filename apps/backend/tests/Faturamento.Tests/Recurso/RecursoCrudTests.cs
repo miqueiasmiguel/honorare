@@ -132,6 +132,44 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
     }
 
     [Fact]
+    public async Task Deve_PersistirERelerRecursoComTipoGlosaBrancaAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (opId, prestId, _) = await SeedCatalogAsync(ctx, tenantId);
+        var service = new RecursoService(ctx, user, _noopStorage);
+
+        var result = await service.CriarAsync(
+            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 5, 1), null, "20260501",
+                TipoRecurso.GlosaBranca));
+
+        Assert.True(result.IsSuccess);
+        var dto = result.Value!;
+        Assert.Equal(TipoRecurso.GlosaBranca, dto.Tipo);
+
+        var relido = await service.ObterPorIdAsync(dto.Id);
+        Assert.True(relido.IsSuccess);
+        Assert.Equal(TipoRecurso.GlosaBranca, relido.Value!.Header.Tipo);
+    }
+
+    [Fact]
+    public async Task Deve_UsarGlosaParcialComoDefaultQuandoTipoNaoEhInformadoAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (opId, prestId, _) = await SeedCatalogAsync(ctx, tenantId);
+        var service = new RecursoService(ctx, user, _noopStorage);
+
+        var result = await service.CriarAsync(
+            new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 5, 1), null, "20260502"));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(TipoRecurso.GlosaParcial, result.Value!.Tipo);
+    }
+
+    [Fact]
     public async Task Listar_PaginacaoFuncionaAsync()
     {
         var tenantId = Guid.NewGuid();
