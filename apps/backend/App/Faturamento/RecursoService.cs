@@ -77,7 +77,7 @@ internal sealed record GuiaPdfData(
 internal sealed record ItemPdfData(
     string CodigoTuss,
     string Descricao,
-    string FatorEfetivo,
+    string PercentualViaLabel,
     decimal ValorPago,
     decimal ValorApurado);
 
@@ -560,28 +560,13 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser, 
                 p.CodigoTuss,
                 p.Descricao,
                 i.PosicaoExecutor,
+                i.PercentualOrdem,
                 i.ValorLiquidado,
                 i.ValorApurado,
             }).ToListAsync(ct);
 
-        var calculosRaw = await _db.Calculos
-            .Where(c => guiaIds.Contains(c.GuiaId))
-            .Select(c => new { c.Id, c.GuiaId })
-            .ToListAsync(ct);
-
-        var calculoIds = calculosRaw.Select(c => c.Id).ToList();
-
-        var passosRaw = await _db.PassosCalculo
-            .Where(p => calculoIds.Contains(p.CalculoId))
-            .Select(p => new { p.ItemGuiaId, p.Regra, p.Fator })
-            .ToListAsync(ct);
-
         var itensPorGuia = itensRaw
             .GroupBy(i => i.GuiaId)
-            .ToDictionary(g => g.Key, g => g.ToList());
-
-        var passosPorItem = passosRaw
-            .GroupBy(p => p.ItemGuiaId)
             .ToDictionary(g => g.Key, g => g.ToList());
 
         var guiaDtos = guiasRaw.Select(g =>
@@ -591,19 +576,12 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser, 
                 ? guiaItens[0].PosicaoExecutor
                 : PosicaoExecutor.Cirurgiao;
 
-            var itemDtos = guiaItens.Select(i =>
-            {
-                var itemPassos = passosPorItem.GetValueOrDefault(i.Id, []);
-                var fatoresNaoBase = itemPassos
-                    .Where(p => p.Regra != "ValorBase")
-                    .Select(p => p.Fator);
-                return new ItemPdfData(
-                    i.CodigoTuss,
-                    i.Descricao,
-                    CalcularFatorEfetivo(fatoresNaoBase),
-                    i.ValorLiquidado ?? 0m,
-                    i.ValorApurado ?? 0m);
-            }).ToList();
+            var itemDtos = guiaItens.Select(i => new ItemPdfData(
+                i.CodigoTuss,
+                i.Descricao,
+                FormatarPercentualVia(i.PercentualOrdem),
+                i.ValorLiquidado ?? 0m,
+                i.ValorApurado ?? 0m)).ToList();
 
             return new GuiaPdfData(
                 g.DataAtendimento,
@@ -648,16 +626,10 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser, 
         return null;
     }
 
-    private static string CalcularFatorEfetivo(IEnumerable<decimal> fatores)
+    private static string FormatarPercentualVia(decimal percentualOrdem)
     {
-        var lista = fatores.ToList();
-        if (lista.Count == 0)
-        {
-            return "—";
-        }
-
-        var produto = lista.Aggregate(1m, (acc, f) => acc * f);
-        return $"{(produto * 100).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)}%";
+        var pct = (percentualOrdem * 100).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+        return $"{pct}%";
     }
 
     private static string PosicaoLabel(PosicaoExecutor p) => p switch

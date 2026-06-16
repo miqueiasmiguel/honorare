@@ -22,17 +22,30 @@ pnpm generate-api-client            # Regenerate TS client from OpenAPI spec
 
 # ── Backend (.NET) ─────────────────────────────────────────────────────────────
 # NOTE: solution file is Honorare.slnx (not .sln)
-dotnet build apps/backend/Honorare.slnx           # Build (warnings = errors)
-dotnet run --project apps/backend/App             # Run in development
-dotnet test apps/backend/Honorare.slnx            # Run all xUnit tests + coverage
+#
+# PREFER `make` for backend tasks. The Makefile derives the SDK version from
+# .tool-versions and exports DOTNET_ROOT + PATH, so it works in ANY shell —
+# including non-interactive ones (make recipes, CI, the Claude Code Bash tool)
+# where asdf is never initialised and bare `dotnet` is NOT on PATH.
+make build                          # Compile backend (= dotnet build Honorare.slnx)
+make test                           # All xUnit tests + coverage
+make test-backend-unit              # Unit tests only (skips Testcontainers)
+make test-filter FILTER=ClassName   # Run a filtered subset (--filter passthrough)
+
+# Raw `dotnet`/`dotnet run` work only in an interactive shell where asdf shims
+# are on PATH. In a non-interactive shell, prefix once (version-agnostic):
+#   export DOTNET_ROOT="$HOME/.asdf/installs/dotnet/$(awk '/^dotnet/{print $2}' .tool-versions)"
+#   export PATH="$HOME/.asdf/shims:$DOTNET_ROOT:$HOME/.dotnet/tools:$PATH"
+dotnet run --project apps/backend/App             # Run in development (interactive shell)
 
 # ── EF Core migrations ─────────────────────────────────────────────────────────
-# dotnet-ef is a global tool at ~/.dotnet/tools/ — requires DOTNET_ROOT + PATH.
-# Add to ~/.zshrc (asdf manages the runtime at a non-standard path):
+# dotnet-ef is a global tool at ~/.dotnet/tools/ — needs DOTNET_ROOT + PATH set.
+# In an interactive shell, add to your shell rc (asdf manages the runtime):
 #
 #   export DOTNET_ROOT="$(asdf where dotnet 2>/dev/null)"
 #   export PATH="$HOME/.dotnet/tools:$PATH"
 #
+# In a non-interactive shell, use the version-agnostic prefix shown above.
 # Run migrations from INSIDE the App project directory (--output-dir is relative to it):
 #
 #   cd apps/backend/App

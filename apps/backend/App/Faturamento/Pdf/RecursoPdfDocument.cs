@@ -16,7 +16,7 @@ internal static class QuestPdfLicense
 internal sealed class RecursoPdfDocument(RecursoPdfData data) : IDocument
 {
     private static readonly string[] _colunasParcial =
-        ["Código", "Descrição", "Fator", "PG UNIMED", "VL CORRETO"];
+        ["Código", "Descrição", "% VIA", "PG UNIMED", "VL CORRETO"];
 
     private static readonly string[] _colunasBranca = ["Código", "Descrição"];
 
@@ -102,6 +102,19 @@ internal sealed class RecursoPdfDocument(RecursoPdfData data) : IDocument
             }
 
             col.Item().Element(ct => ComposeItensTable(ct, guia, tipo));
+
+            if (tipo == TipoRecurso.GlosaParcial)
+            {
+                var totalPagoGuia = guia.Itens.Sum(i => i.ValorPago);
+                var totalApuradoGuia = guia.Itens.Sum(i => i.ValorApurado);
+                var restaPagarGuia = totalApuradoGuia - totalPagoGuia;
+                col.Item().PaddingTop(2).AlignRight().Text(t =>
+                {
+                    t.Span($"PG UNIMED: {totalPagoGuia.ToString("N2", CultureInfo.CurrentCulture)}");
+                    t.Span("   |   ");
+                    t.Span($"Resta pagar: {restaPagarGuia.ToString("N2", CultureInfo.CurrentCulture)}").Bold();
+                });
+            }
         });
     }
 
@@ -142,9 +155,9 @@ internal sealed class RecursoPdfDocument(RecursoPdfData data) : IDocument
             {
                 table.ColumnsDefinition(cols =>
                 {
-                    cols.RelativeColumn(3);
-                    cols.RelativeColumn(8);
                     cols.RelativeColumn(2);
+                    cols.RelativeColumn(6);
+                    cols.RelativeColumn(3);
                     cols.RelativeColumn(2);
                     cols.RelativeColumn(2);
                 });
@@ -165,7 +178,7 @@ internal sealed class RecursoPdfDocument(RecursoPdfData data) : IDocument
                 {
                     table.Cell().Border(0.5f).Padding(2).Text(item.CodigoTuss);
                     table.Cell().Border(0.5f).Padding(2).Text(item.Descricao);
-                    table.Cell().Border(0.5f).Padding(2).Text(item.FatorEfetivo);
+                    table.Cell().Border(0.5f).Padding(2).Text(item.PercentualViaLabel);
                     table.Cell().Border(0.5f).Padding(2).Text(item.ValorPago.ToString("N2", CultureInfo.CurrentCulture));
                     table.Cell().Border(0.5f).Padding(2).Text(item.ValorApurado.ToString("N2", CultureInfo.CurrentCulture));
                 }
