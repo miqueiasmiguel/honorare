@@ -1,5 +1,12 @@
 .DEFAULT_GOAL := help
 
+# asdf shims aren't on PATH in non-interactive shells (make, CI without shell login).
+# Read dotnet version from .tool-versions and export DOTNET_ROOT so dotnet-ef finds the SDK.
+DOTNET_VERSION := $(shell grep '^dotnet' .tool-versions | awk '{print $$2}')
+export ASDF_DIR  := $(HOME)/.asdf
+export DOTNET_ROOT := $(HOME)/.asdf/installs/dotnet/$(DOTNET_VERSION)
+export PATH := $(HOME)/.asdf/shims:$(HOME)/.asdf/bin:$(HOME)/.dotnet/tools:$(PATH)
+
 COMPOSE      := docker compose -f infra/docker-compose.yml
 BACKEND_SLN  := apps/backend/Honorare.slnx
 BACKEND_APP  := apps/backend/App
@@ -145,6 +152,10 @@ test-watch: ## Roda testes em modo watch
 .PHONY: test-backend-unit
 test-backend-unit: ## Roda apenas testes unitários (sem Testcontainers)
 	dotnet test $(BACKEND_SLN) --filter "Category!=Integration"
+
+.PHONY: test-filter
+test-filter: ## Roda testes filtrados — uso: make test-filter FILTER=NomeDaClasse
+	dotnet test $(BACKEND_SLN) --filter "$(FILTER)"
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Frontend — admin-web

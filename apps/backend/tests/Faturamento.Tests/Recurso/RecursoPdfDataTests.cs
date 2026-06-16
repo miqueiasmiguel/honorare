@@ -185,7 +185,7 @@ public sealed class RecursoPdfDataTests(PostgresContainerFixture db)
     }
 
     [Fact]
-    public async Task ObterDadosPdf_FatorEfetivo_SemPassos_RetornaDashAsync()
+    public async Task ObterDadosPdf_PercentualVia_ItemPrincipal_Exibe100Async()
     {
         var tenantId = Guid.NewGuid();
         var (ctx, user) = BuildTenant(tenantId);
@@ -200,7 +200,7 @@ public sealed class RecursoPdfDataTests(PostgresContainerFixture db)
             new DateOnly(2026, 3, 5), true, string.Empty,
             [new CriarItemGuiaCommand(
                 procId, PosicaoExecutor.Cirurgiao, 1.0m,
-                ViaAcesso.Convencional, Acomodacao.Enfermaria, false, 50m)]);
+                ViaAcesso.NaoAplicavel, Acomodacao.Enfermaria, false, 50m)]);
         var guiaResult = await guiaSvc.CriarAsync(cmd);
         Assert.True(guiaResult.IsSuccess);
 
@@ -210,11 +210,11 @@ public sealed class RecursoPdfDataTests(PostgresContainerFixture db)
         var result = await recursoSvc.ObterDadosPdfAsync(recursoId);
 
         Assert.True(result.IsSuccess);
-        Assert.All(result.Value!.Guias[0].Itens, i => Assert.Equal("—", i.FatorEfetivo));
+        Assert.All(result.Value!.Guias[0].Itens, i => Assert.Equal("100%", i.PercentualViaLabel));
     }
 
     [Fact]
-    public async Task ObterDadosPdf_FatorEfetivo_ComPassos_RetornaProdutoAsync()
+    public async Task ObterDadosPdf_PercentualVia_ItemSecundario_ExibePercentualReduzidoAsync()
     {
         var tenantId = Guid.NewGuid();
         var (ctx, user) = BuildTenant(tenantId);
@@ -226,13 +226,8 @@ public sealed class RecursoPdfDataTests(PostgresContainerFixture db)
             "PDF-FAT-" + tenantId.ToString("N")[..4], new DateOnly(2026, 3, 5), false, string.Empty);
         ctx.Guias.Add(guia);
         var item = ItemGuia.Create(guia.Id, procId, PosicaoExecutor.Cirurgiao,
-            1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, 35m);
+            0.5m, ViaAcesso.NaoAplicavel, Acomodacao.Enfermaria, false, 35m);
         ctx.ItensGuia.Add(item);
-        var calculo = Calculo.Create(tenantId, guia.Id);
-        ctx.Calculos.Add(calculo);
-        ctx.PassosCalculo.Add(PassoCalculo.Create(calculo.Id, item.Id, 1, "ValorBase", 100m, 100m));
-        ctx.PassosCalculo.Add(PassoCalculo.Create(calculo.Id, item.Id, 2, "Deflator", 0.7m, 70m));
-        ctx.PassosCalculo.Add(PassoCalculo.Create(calculo.Id, item.Id, 3, "Urgência", 0.5m, 35m));
         await ctx.SaveChangesAsync();
 
         var recursoSvc = new RecursoService(ctx, user, _noopStorage);
@@ -241,7 +236,33 @@ public sealed class RecursoPdfDataTests(PostgresContainerFixture db)
         var result = await recursoSvc.ObterDadosPdfAsync(recursoId);
 
         Assert.True(result.IsSuccess);
-        Assert.Equal("35%", result.Value!.Guias[0].Itens[0].FatorEfetivo);
+        Assert.Equal("50%", result.Value!.Guias[0].Itens[0].PercentualViaLabel);
+    }
+
+    [Fact]
+    public async Task ObterDadosPdf_PercentualVia_ViaDiferente_Exibe70Async()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (opId, prestId, procId) = await SeedCatalogAsync(ctx, tenantId);
+        var recursoId = await CriarRecursoAsync(ctx, user, opId, prestId);
+
+        var guia = Guia.Create(tenantId, prestId, opId, null,
+            "PDF-VID-" + tenantId.ToString("N")[..4], new DateOnly(2026, 3, 5), false, string.Empty);
+        ctx.Guias.Add(guia);
+        var item = ItemGuia.Create(guia.Id, procId, PosicaoExecutor.Cirurgiao,
+            0.7m, ViaAcesso.NaoAplicavel, Acomodacao.Enfermaria, false, null);
+        ctx.ItensGuia.Add(item);
+        await ctx.SaveChangesAsync();
+
+        var recursoSvc = new RecursoService(ctx, user, _noopStorage);
+        await recursoSvc.AdicionarGuiaAsync(recursoId, guia.Id);
+
+        var result = await recursoSvc.ObterDadosPdfAsync(recursoId);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("70%", result.Value!.Guias[0].Itens[0].PercentualViaLabel);
     }
 
     [Fact]
