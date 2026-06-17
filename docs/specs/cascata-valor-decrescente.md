@@ -265,7 +265,7 @@ de ser obrigatória; o percentual derivado é gravado no item; a apuração roda
 
 ### TASK-CASCATA-04 — Recurso de glosa parcial: ordenar por posição → valor → percentual
 
-- [ ] pendente
+- [x] concluída
 
 **Objetivo:** No recurso (PDF e detalhe), ordenar os itens de cada guia por **posição de executor**, depois
 **valor apurado** desc, depois **percentual** desc. Hoje o PDF ordena só por `PercentualOrdem desc`.
@@ -452,7 +452,7 @@ Os erros de compilação TS resultantes guiam o resto da remoção.
 - [x] TASK-CASCATA-01 — Motor calcula a cascata por valor base decrescente
 - [x] TASK-CASCATA-02 — GuiaService persiste % derivado e remove entrada manual
 - [x] TASK-CASCATA-03 — Importação deriva % e torna `% VIA` opcional
-- [ ] TASK-CASCATA-04 — Recurso ordena por posição → valor → percentual
+- [x] TASK-CASCATA-04 — Recurso ordena por posição → valor → percentual
 - [ ] TASK-CASCATA-05 — Abolir `TabelaOrdemOperadora` (backend + migração)
 - [ ] TASK-CASCATA-06 — Frontend remove % VIA / atos múltiplos + regenera client
 - [ ] TASK-CASCATA-07 — Documentação (DOMINIO.md + DECISOES.md)
