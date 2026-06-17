@@ -314,7 +314,7 @@ de ser obrigatória; o percentual derivado é gravado no item; a apuração roda
 
 ### TASK-CASCATA-05 — Abolir `TabelaOrdemOperadora` (backend + migração)
 
-- [ ] pendente
+- [x] concluída
 
 **Objetivo:** Remover por completo a tabela de progressão configurável: entidade, configuração, DbSet,
 métodos de serviço, endpoints, enum `TipoViaOrdem`, testes e a tabela no banco (migração de drop).
@@ -453,6 +453,6 @@ Os erros de compilação TS resultantes guiam o resto da remoção.
 - [x] TASK-CASCATA-02 — GuiaService persiste % derivado e remove entrada manual
 - [x] TASK-CASCATA-03 — Importação deriva % e torna `% VIA` opcional
 - [x] TASK-CASCATA-04 — Recurso ordena por posição → valor → percentual
-- [ ] TASK-CASCATA-05 — Abolir `TabelaOrdemOperadora` (backend + migração)
+- [x] TASK-CASCATA-05 — Abolir `TabelaOrdemOperadora` (backend + migração)
 - [ ] TASK-CASCATA-06 — Frontend remove % VIA / atos múltiplos + regenera client
 - [ ] TASK-CASCATA-07 — Documentação (DOMINIO.md + DECISOES.md)
