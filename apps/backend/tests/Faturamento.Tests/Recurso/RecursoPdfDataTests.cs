@@ -253,7 +253,7 @@ public sealed class RecursoPdfDataTests(PostgresContainerFixture db)
             "PDF-VID-" + tenantId.ToString("N")[..4], new DateOnly(2026, 3, 5), false, string.Empty);
         ctx.Guias.Add(guia);
         var item = ItemGuia.Create(guia.Id, procId, PosicaoExecutor.Cirurgiao,
-            ViaAcesso.NaoAplicavel, Acomodacao.Enfermaria, false, null);
+            ViaAcesso.NaoAplicavel, Acomodacao.Enfermaria, false, 35m);
         item.SetPercentualOrdem(0.7m);
         ctx.ItensGuia.Add(item);
         await ctx.SaveChangesAsync();
@@ -265,6 +265,36 @@ public sealed class RecursoPdfDataTests(PostgresContainerFixture db)
 
         Assert.True(result.IsSuccess);
         Assert.Equal("70%", result.Value!.Guias[0].Itens[0].PercentualViaLabel);
+    }
+
+    [Fact]
+    public async Task ObterDadosPdf_ItemNaoApurado_ExibeTracoNoPercentualViaAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (opId, prestId, procId) = await SeedCatalogAsync(ctx, tenantId);
+        var recursoId = await CriarRecursoAsync(ctx, user, opId, prestId);
+
+        var guia = Guia.Create(tenantId, prestId, opId, null,
+            "PDF-NAP-" + tenantId.ToString("N")[..4], new DateOnly(2026, 3, 5), false, string.Empty);
+        ctx.Guias.Add(guia);
+        // Item que o motor não conseguiu apurar (ex.: anestesia sem porte anestésico).
+        // PercentualOrdem fica no default 1.0, mas não houve cascata — não deve exibir "100%".
+        var item = ItemGuia.Create(guia.Id, procId, PosicaoExecutor.Anestesista,
+            ViaAcesso.NaoAplicavel, Acomodacao.Enfermaria, false, null);
+        ctx.ItensGuia.Add(item);
+        await ctx.SaveChangesAsync();
+
+        var recursoSvc = new RecursoService(ctx, user, _noopStorage);
+        await recursoSvc.AdicionarGuiaAsync(recursoId, guia.Id);
+
+        var result = await recursoSvc.ObterDadosPdfAsync(recursoId);
+
+        Assert.True(result.IsSuccess);
+        var item0 = result.Value!.Guias[0].Itens[0];
+        Assert.Equal("—", item0.PercentualViaLabel);
+        Assert.Null(item0.ValorApurado);
     }
 
     [Fact]

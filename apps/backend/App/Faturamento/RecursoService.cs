@@ -79,7 +79,7 @@ internal sealed record ItemPdfData(
     string Descricao,
     string PercentualViaLabel,
     decimal ValorPago,
-    decimal ValorApurado);
+    decimal? ValorApurado);
 
 internal sealed record ListarRecursosResult(
     IReadOnlyList<RecursoDto> Itens, int Total, int Pagina, int ItensPorPagina);
@@ -585,9 +585,11 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser, 
             var itemDtos = guiaItens.Select(i => new ItemPdfData(
                 i.CodigoTuss,
                 i.Descricao,
-                FormatarPercentualVia(i.PercentualOrdem),
+                // % VIA é a posição na cascata, só significativa quando o item foi apurado.
+                // Sem apuração, o PercentualOrdem fica no default 1.0 — não exibir "100%".
+                i.ValorApurado is null ? "—" : FormatarPercentualVia(i.PercentualOrdem),
                 i.ValorLiquidado ?? 0m,
-                i.ValorApurado ?? 0m)).ToList();
+                i.ValorApurado)).ToList();
 
             return new GuiaPdfData(
                 g.DataAtendimento,
