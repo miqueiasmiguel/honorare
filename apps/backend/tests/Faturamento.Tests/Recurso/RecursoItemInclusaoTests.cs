@@ -52,7 +52,7 @@ public sealed class RecursoItemInclusaoTests(PostgresContainerFixture db)
             prestadorId, operadoraId, null, numeroGuia,
             new DateOnly(2026, 1, 10), false, string.Empty,
             [new CriarItemGuiaCommand(
-                procedimentoId, PosicaoExecutor.Cirurgiao, 1.0m,
+                procedimentoId, PosicaoExecutor.Cirurgiao,
                 ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null)]);
         var result = await svc.CriarAsync(cmd);
         return result.Value!.Id;
@@ -71,7 +71,7 @@ public sealed class RecursoItemInclusaoTests(PostgresContainerFixture db)
             new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 1, 1), null, "100001"))).Value!.Id;
         var guiaId = await CriarGuiaAsync(ctx, user, prestId, opId, procId, "EIR-EX-" + tenantId.ToString("N")[..4]);
 
-        ctx.Add(ItemGuia.Create(guiaId, procId, PosicaoExecutor.PrimeiroAuxiliar, 0.5m,
+        ctx.Add(ItemGuia.Create(guiaId, procId, PosicaoExecutor.PrimeiroAuxiliar,
             ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null));
         await ctx.SaveChangesAsync();
 
@@ -100,7 +100,7 @@ public sealed class RecursoItemInclusaoTests(PostgresContainerFixture db)
             new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 1, 1), null, "100002"))).Value!.Id;
         var guiaId = await CriarGuiaAsync(ctx, user, prestId, opId, procId, "EIR-REI-" + tenantId.ToString("N")[..4]);
 
-        ctx.Add(ItemGuia.Create(guiaId, procId, PosicaoExecutor.PrimeiroAuxiliar, 0.5m,
+        ctx.Add(ItemGuia.Create(guiaId, procId, PosicaoExecutor.PrimeiroAuxiliar,
             ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null));
         await ctx.SaveChangesAsync();
 
@@ -150,7 +150,7 @@ public sealed class RecursoItemInclusaoTests(PostgresContainerFixture db)
             new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 1, 1), null, "100004"))).Value!.Id;
         var guiaId = await CriarGuiaAsync(ctx, user, prestId, opId, procId, "EIR-DTO-" + tenantId.ToString("N")[..4]);
 
-        ctx.Add(ItemGuia.Create(guiaId, procId, PosicaoExecutor.PrimeiroAuxiliar, 0.5m,
+        ctx.Add(ItemGuia.Create(guiaId, procId, PosicaoExecutor.PrimeiroAuxiliar,
             ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null));
         await ctx.SaveChangesAsync();
 
@@ -181,7 +181,7 @@ public sealed class RecursoItemInclusaoTests(PostgresContainerFixture db)
             new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 1, 1), null, "100005"))).Value!.Id;
         var guiaId = await CriarGuiaAsync(ctx, user, prestId, opId, procId, "EIR-PDF-" + tenantId.ToString("N")[..4]);
 
-        ctx.Add(ItemGuia.Create(guiaId, procId, PosicaoExecutor.PrimeiroAuxiliar, 0.5m,
+        ctx.Add(ItemGuia.Create(guiaId, procId, PosicaoExecutor.PrimeiroAuxiliar,
             ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null));
         await ctx.SaveChangesAsync();
 
@@ -208,7 +208,7 @@ public sealed class RecursoItemInclusaoTests(PostgresContainerFixture db)
             new CriarRecursoCommand(opId, prestId, new DateOnly(2026, 1, 1), null, "100006"))).Value!.Id;
         var guiaId = await CriarGuiaAsync(ctx, user, prestId, opId, procId, "EIR-RST-" + tenantId.ToString("N")[..4]);
 
-        ctx.Add(ItemGuia.Create(guiaId, procId, PosicaoExecutor.PrimeiroAuxiliar, 0.5m,
+        ctx.Add(ItemGuia.Create(guiaId, procId, PosicaoExecutor.PrimeiroAuxiliar,
             ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null));
         await ctx.SaveChangesAsync();
 

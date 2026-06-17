@@ -51,7 +51,7 @@ public sealed class GuiaServiceCalculoTests(PostgresContainerFixture db)
         var cmd = new CriarGuiaCommand(prestadorId, operadoraId, null, "SEN-CAL01",
             new DateOnly(2025, 1, 1), false, string.Empty,
             [new CriarItemGuiaCommand(procedimentoId, PosicaoExecutor.Cirurgiao,
-                1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null)]);
+                ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null)]);
 
         var result = await service.CriarAsync(cmd);
 
@@ -78,7 +78,7 @@ public sealed class GuiaServiceCalculoTests(PostgresContainerFixture db)
         var cmd = new CriarGuiaCommand(prestadorId, operadoraId, null, "SEN-CAL02",
             new DateOnly(2025, 1, 1), false, string.Empty,
             [new CriarItemGuiaCommand(procedimentoId, PosicaoExecutor.Cirurgiao,
-                1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null)]);
+                ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null)]);
 
         var result = await service.CriarAsync(cmd);
 
@@ -100,7 +100,7 @@ public sealed class GuiaServiceCalculoTests(PostgresContainerFixture db)
         var cmd = new CriarGuiaCommand(prestadorId, operadoraId, null, "SEN-CAL03",
             new DateOnly(2025, 1, 1), true, string.Empty,
             [new CriarItemGuiaCommand(procedimentoId, PosicaoExecutor.Cirurgiao,
-                1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, 500m)]);
+                ViaAcesso.Convencional, Acomodacao.Enfermaria, false, 500m)]);
 
         var result = await service.CriarAsync(cmd);
 
@@ -128,14 +128,14 @@ public sealed class GuiaServiceCalculoTests(PostgresContainerFixture db)
         var criar = new CriarGuiaCommand(prestadorId, operadoraId, null, "SEN-CAL04",
             new DateOnly(2025, 1, 1), false, string.Empty,
             [new CriarItemGuiaCommand(procedimentoId, PosicaoExecutor.Cirurgiao,
-                1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null)]);
+                ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null)]);
         var criado = await service.CriarAsync(criar);
         Assert.True(criado.IsSuccess);
 
         var atualizar = new AtualizarGuiaCommand(operadoraId, null, "SEN-CAL04-UPD",
             new DateOnly(2025, 2, 1), false, string.Empty,
             [new CriarItemGuiaCommand(procedimentoId, PosicaoExecutor.Cirurgiao,
-                1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null)]);
+                ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null)]);
 
         var atualizado = await service.AtualizarAsync(criado.Value!.Id, atualizar);
 
@@ -162,7 +162,7 @@ public sealed class GuiaServiceCalculoTests(PostgresContainerFixture db)
             "SEN-REC01", new DateOnly(2025, 1, 1), false, string.Empty);
         ctx.Add(guia);
         var item = ItemGuia.Create(guia.Id, procedimentoId, PosicaoExecutor.Cirurgiao,
-            1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);
+            ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);
         ctx.Add(item);
         var calculo = Calculo.Create(tenantId, guia.Id);
         ctx.Add(calculo);
@@ -195,7 +195,7 @@ public sealed class GuiaServiceCalculoTests(PostgresContainerFixture db)
         var cmd = new CriarGuiaCommand(prestadorId, operadoraId, null, "SEN-REC02",
             new DateOnly(2025, 1, 1), true, string.Empty,
             [new CriarItemGuiaCommand(procedimentoId, PosicaoExecutor.Cirurgiao,
-                1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, 300m)]);
+                ViaAcesso.Convencional, Acomodacao.Enfermaria, false, 300m)]);
         var criado = await service.CriarAsync(cmd);
         Assert.True(criado.IsSuccess);
 
@@ -219,7 +219,7 @@ public sealed class GuiaServiceCalculoTests(PostgresContainerFixture db)
         var cmd = new CriarGuiaCommand(prestadorId, operadoraId, null, "SEN-CAL05",
             new DateOnly(2025, 1, 1), false, string.Empty,
             [new CriarItemGuiaCommand(procedimentoId, PosicaoExecutor.Cirurgiao,
-                1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null)]);
+                ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null)]);
 
         var result = await service.CriarAsync(cmd);
 

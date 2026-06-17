@@ -69,7 +69,7 @@ public sealed class RecursoPdfDataTests(PostgresContainerFixture db)
         var cmd = new CriarGuiaCommand(
             prestId, opId, null, numeroGuia, new DateOnly(2026, 3, 5), false, string.Empty,
             [new CriarItemGuiaCommand(
-                procId, PosicaoExecutor.Cirurgiao, 1.0m,
+                procId, PosicaoExecutor.Cirurgiao,
                 ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null)]);
         var guiaResult = await guiaSvc.CriarAsync(cmd);
         var recursoSvc = new RecursoService(ctx, user, _noopStorage);
@@ -117,9 +117,9 @@ public sealed class RecursoPdfDataTests(PostgresContainerFixture db)
             prestId, opId, null, "PDF-2IT-" + tenantId.ToString("N")[..4],
             new DateOnly(2026, 3, 5), false, string.Empty,
             [
-                new CriarItemGuiaCommand(procId, PosicaoExecutor.Cirurgiao, 1.0m,
+                new CriarItemGuiaCommand(procId, PosicaoExecutor.Cirurgiao,
                     ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null),
-                new CriarItemGuiaCommand(proc2.Id, PosicaoExecutor.PrimeiroAuxiliar, 0.5m,
+                new CriarItemGuiaCommand(proc2.Id, PosicaoExecutor.PrimeiroAuxiliar,
                     ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null),
             ]);
         var guiaResult = await guiaSvc.CriarAsync(cmd);
@@ -152,7 +152,7 @@ public sealed class RecursoPdfDataTests(PostgresContainerFixture db)
         var cmd = new CriarGuiaCommand(
             prestId, opId, null, "PDF-LA-" + tenantId.ToString("N")[..4],
             new DateOnly(2026, 3, 5), false, string.Empty,
-            [new CriarItemGuiaCommand(procId, PosicaoExecutor.Cirurgiao, 1.0m,
+            [new CriarItemGuiaCommand(procId, PosicaoExecutor.Cirurgiao,
                 ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null)],
             "Hospital São Lucas");
         var guiaResult = await guiaSvc.CriarAsync(cmd);
@@ -199,7 +199,7 @@ public sealed class RecursoPdfDataTests(PostgresContainerFixture db)
             prestId, opId, null, "PDF-PKG-" + tenantId.ToString("N")[..4],
             new DateOnly(2026, 3, 5), true, string.Empty,
             [new CriarItemGuiaCommand(
-                procId, PosicaoExecutor.Cirurgiao, 1.0m,
+                procId, PosicaoExecutor.Cirurgiao,
                 ViaAcesso.NaoAplicavel, Acomodacao.Enfermaria, false, 50m)]);
         var guiaResult = await guiaSvc.CriarAsync(cmd);
         Assert.True(guiaResult.IsSuccess);
@@ -226,7 +226,8 @@ public sealed class RecursoPdfDataTests(PostgresContainerFixture db)
             "PDF-FAT-" + tenantId.ToString("N")[..4], new DateOnly(2026, 3, 5), false, string.Empty);
         ctx.Guias.Add(guia);
         var item = ItemGuia.Create(guia.Id, procId, PosicaoExecutor.Cirurgiao,
-            0.5m, ViaAcesso.NaoAplicavel, Acomodacao.Enfermaria, false, 35m);
+            ViaAcesso.NaoAplicavel, Acomodacao.Enfermaria, false, 35m);
+        item.SetPercentualOrdem(0.5m);
         ctx.ItensGuia.Add(item);
         await ctx.SaveChangesAsync();
 
@@ -252,7 +253,8 @@ public sealed class RecursoPdfDataTests(PostgresContainerFixture db)
             "PDF-VID-" + tenantId.ToString("N")[..4], new DateOnly(2026, 3, 5), false, string.Empty);
         ctx.Guias.Add(guia);
         var item = ItemGuia.Create(guia.Id, procId, PosicaoExecutor.Cirurgiao,
-            0.7m, ViaAcesso.NaoAplicavel, Acomodacao.Enfermaria, false, null);
+            ViaAcesso.NaoAplicavel, Acomodacao.Enfermaria, false, null);
+        item.SetPercentualOrdem(0.7m);
         ctx.ItensGuia.Add(item);
         await ctx.SaveChangesAsync();
 

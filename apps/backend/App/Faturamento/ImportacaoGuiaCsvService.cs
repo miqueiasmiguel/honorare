@@ -200,7 +200,7 @@ internal sealed class ImportacaoGuiaCsvService(
                 {
                     var novoItem = ItemGuia.Create(
                         guia.Id, proc.Id, posicao.Value,
-                        percentualOrdem, ViaAcesso.NaoAplicavel,
+                        ViaAcesso.NaoAplicavel,
                         acomodacao, ehUrgencia, null);
                     db.ItensGuia.Add(novoItem);
                     await db.SaveChangesAsync(ct);
@@ -444,6 +444,7 @@ internal sealed class ImportacaoGuiaCsvService(
             }
 
             item.SetValorApurado(resultado.ValorApurado);
+            item.SetPercentualOrdem(resultado.PercentualOrdem);
 
             foreach (var passo in resultado.Passos)
             {

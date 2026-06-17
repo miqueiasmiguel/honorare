@@ -37,7 +37,7 @@ public sealed class GuiaPagamentoTests(PostgresContainerFixture db)
             "PGT" + tenantId.ToString("N")[..5], new DateOnly(2025, 1, 1),
             false, string.Empty,
             [new CriarItemGuiaCommand(
-                proc.Id, PosicaoExecutor.Cirurgiao, 1.0m,
+                proc.Id, PosicaoExecutor.Cirurgiao,
                 ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null)]);
 
         var result = await service.CriarAsync(cmd);
