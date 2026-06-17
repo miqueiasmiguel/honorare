@@ -309,7 +309,7 @@ public sealed class ProcedimentoCrudTests(PostgresContainerFixture db)
         ctx.Add(guia);
         await ctx.SaveChangesAsync();
 
-        var item = ItemGuia.Create(guia.Id, procedimentoId, PosicaoExecutor.Cirurgiao, 1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);
+        var item = ItemGuia.Create(guia.Id, procedimentoId, PosicaoExecutor.Cirurgiao, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);
         ctx.Add(item);
         await ctx.SaveChangesAsync();
 

@@ -23,6 +23,8 @@ internal sealed class ItemGuia
 
     internal void SetValorApurado(decimal? valor) => ValorApurado = valor;
 
+    internal void SetPercentualOrdem(decimal valor) => PercentualOrdem = valor;
+
     internal void SetValorLiquidado(decimal? valor) => ValorLiquidado = valor;
 
     internal void SetMotivoGlosa(string? valor) => MotivoGlosa = valor?.Trim();
@@ -33,9 +35,8 @@ internal sealed class ItemGuia
 
     internal void ReincluirNoRecurso() => IncluidoNoRecurso = true;
 
-    internal void Atualizar(decimal percentualOrdem, Acomodacao acomodacao, bool ehUrgencia)
+    internal void Atualizar(Acomodacao acomodacao, bool ehUrgencia)
     {
-        PercentualOrdem = percentualOrdem;
         Acomodacao = acomodacao;
         EhUrgencia = ehUrgencia;
     }
@@ -44,7 +45,6 @@ internal sealed class ItemGuia
         Guid guiaId,
         Guid procedimentoId,
         PosicaoExecutor posicao,
-        decimal percentualOrdem,
         ViaAcesso via,
         Acomodacao acomodacao,
         bool ehUrgencia,
@@ -57,7 +57,7 @@ internal sealed class ItemGuia
             GuiaId = guiaId,
             ProcedimentoId = procedimentoId,
             PosicaoExecutor = posicao,
-            PercentualOrdem = percentualOrdem,
+            PercentualOrdem = 1.0m,
             ViaAcesso = via,
             Acomodacao = acomodacao,
             EhUrgencia = ehUrgencia,

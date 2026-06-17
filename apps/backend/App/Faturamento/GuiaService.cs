@@ -13,7 +13,7 @@ internal sealed record CriarGuiaCommand(
 
 internal sealed record CriarItemGuiaCommand(
     Guid ProcedimentoId, PosicaoExecutor PosicaoExecutor,
-    decimal PercentualOrdem, ViaAcesso ViaAcesso, Acomodacao Acomodacao,
+    ViaAcesso ViaAcesso, Acomodacao Acomodacao,
     bool EhUrgencia, decimal? ValorApurado, int? TempoAnestesicoMin = null);
 
 internal sealed record AtualizarGuiaCommand(
@@ -106,12 +106,6 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
                 new ValidationError("Itens de guia pacote devem ter ValorApurado preenchido."));
         }
 
-        if (cmd.Itens.Any(i => i.PercentualOrdem < 0.01m || i.PercentualOrdem > 1.00m))
-        {
-            return Result<GuiaDetalheDto>.Fail(
-                new ValidationError("PercentualOrdem deve estar entre 0.01 e 1.00."));
-        }
-
         var tenantId = _currentUser.TenantId!.Value;
 
         var prestador = await _db.Prestadores.FirstOrDefaultAsync(p => p.Id == cmd.PrestadorId, ct);
@@ -156,7 +150,7 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
         {
             var item = ItemGuia.Create(
                 guia.Id, itemCmd.ProcedimentoId, itemCmd.PosicaoExecutor,
-                itemCmd.PercentualOrdem, itemCmd.ViaAcesso, itemCmd.Acomodacao,
+                itemCmd.ViaAcesso, itemCmd.Acomodacao,
                 itemCmd.EhUrgencia, itemCmd.ValorApurado, itemCmd.TempoAnestesicoMin);
             _db.ItensGuia.Add(item);
             itens.Add(item);
@@ -175,12 +169,6 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
     internal async Task<Result<GuiaDetalheDto>> AdicionarItemAsync(
         Guid guiaId, CriarItemGuiaCommand itemCmd, CancellationToken ct = default)
     {
-        if (itemCmd.PercentualOrdem < 0.01m || itemCmd.PercentualOrdem > 1.00m)
-        {
-            return Result<GuiaDetalheDto>.Fail(
-                new ValidationError("PercentualOrdem deve estar entre 0.01 e 1.00."));
-        }
-
         var guia = await _db.Guias.FirstOrDefaultAsync(g => g.Id == guiaId, ct);
         if (guia is null)
         {
@@ -213,44 +201,22 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
 
         var item = ItemGuia.Create(
             guia.Id, itemCmd.ProcedimentoId, itemCmd.PosicaoExecutor,
-            itemCmd.PercentualOrdem, itemCmd.ViaAcesso, itemCmd.Acomodacao,
+            itemCmd.ViaAcesso, itemCmd.Acomodacao,
             itemCmd.EhUrgencia, guia.EhPacote ? itemCmd.ValorApurado : null, itemCmd.TempoAnestesicoMin);
         _db.ItensGuia.Add(item);
         await _db.SaveChangesAsync(ct);
 
         if (!guia.EhPacote && operadora.TipoRuleSet != TipoRuleSet.Nulo)
         {
-            var ruleSet = _factory.Criar(operadora.TipoRuleSet);
-            var ctx = new ApurarGuiaContext(
-                _currentUser.TenantId!.Value, guia.PrestadorId, guia.OperadoraId,
-                [new ApurarItemInput(
-                    item.Id, item.ProcedimentoId, item.PosicaoExecutor,
-                    item.PercentualOrdem, item.ViaAcesso, item.Acomodacao,
-                    item.EhUrgencia, item.TempoAnestesicoMin)]);
-            var resultado = (await ruleSet.ApurarAsync(ctx, ct))[0];
-
-            if (resultado.Situacao == SituacaoApuracao.Calculado)
+            await _db.Calculos.Where(c => c.GuiaId == guiaId).ExecuteDeleteAsync(ct);
+            var itens = await _db.ItensGuia.Where(i => i.GuiaId == guiaId).ToListAsync(ct);
+            foreach (var i in itens)
             {
-                item.SetValorApurado(resultado.ValorApurado);
-
-                var calculo = await _db.Calculos.FirstOrDefaultAsync(c => c.GuiaId == guiaId, ct);
-                if (calculo is null)
-                {
-                    calculo = Calculo.Create(_currentUser.TenantId!.Value, guiaId);
-                    _db.Calculos.Add(calculo);
-                }
-
-                var seq = await _db.PassosCalculo
-                    .Where(p => p.CalculoId == calculo.Id)
-                    .Select(p => (int?)p.Sequencia).MaxAsync(ct) ?? 0;
-                foreach (var passo in resultado.Passos)
-                {
-                    _db.PassosCalculo.Add(PassoCalculo.Create(
-                        calculo.Id, item.Id, ++seq, passo.Regra, passo.Fator, passo.ValorResultante));
-                }
-
-                await _db.SaveChangesAsync(ct);
+                i.SetValorApurado(null);
             }
+
+            await _db.SaveChangesAsync(ct);
+            await ExecutarCalculoAsync(guia, operadora, itens, ct);
         }
 
         return await ObterDetalheDtoInternalAsync(guiaId, ct);
@@ -431,12 +397,6 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
                 new ValidationError("Itens de guia pacote devem ter ValorApurado preenchido."));
         }
 
-        if (cmd.Itens.Any(i => i.PercentualOrdem < 0.01m || i.PercentualOrdem > 1.00m))
-        {
-            return Result<GuiaDetalheDto>.Fail(
-                new ValidationError("PercentualOrdem deve estar entre 0.01 e 1.00."));
-        }
-
         var guia = await _db.Guias.FirstOrDefaultAsync(g => g.Id == id, ct);
         if (guia is null)
         {
@@ -474,7 +434,7 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
         {
             var item = ItemGuia.Create(
                 id, itemCmd.ProcedimentoId, itemCmd.PosicaoExecutor,
-                itemCmd.PercentualOrdem, itemCmd.ViaAcesso, itemCmd.Acomodacao,
+                itemCmd.ViaAcesso, itemCmd.Acomodacao,
                 itemCmd.EhUrgencia, itemCmd.ValorApurado, itemCmd.TempoAnestesicoMin);
             _db.ItensGuia.Add(item);
             itens.Add(item);
@@ -562,7 +522,7 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
                     _currentUser.TenantId!.Value, guia.PrestadorId, guia.OperadoraId,
                     itemsSemCalculo.Select(i => new ApurarItemInput(
                         i.Id, i.ProcedimentoId, i.PosicaoExecutor,
-                        i.PercentualOrdem, i.ViaAcesso, i.Acomodacao,
+                        i.ViaAcesso, i.Acomodacao,
                         i.EhUrgencia, i.TempoAnestesicoMin)).ToList());
                 var resultados = await ruleSet.ApurarAsync(diagnosticCtx, ct);
                 foreach (var r in resultados)
@@ -736,7 +696,7 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
         var ctx = new ApurarGuiaContext(tenantId, guia.PrestadorId, guia.OperadoraId,
             itens.Select(i => new ApurarItemInput(
                 i.Id, i.ProcedimentoId, i.PosicaoExecutor,
-                i.PercentualOrdem, i.ViaAcesso, i.Acomodacao, i.EhUrgencia,
+                i.ViaAcesso, i.Acomodacao, i.EhUrgencia,
                 i.TempoAnestesicoMin))
             .ToList());
 
@@ -755,6 +715,7 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
 
             var item = itens.First(i => i.Id == resultado.ItemGuiaId);
             item.SetValorApurado(resultado.ValorApurado);
+            item.SetPercentualOrdem(resultado.PercentualOrdem);
 
             foreach (var passo in resultado.Passos)
             {
@@ -780,7 +741,7 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
         var tempItens = itens
             .Select(i => new ApurarItemInput(
                 Guid.NewGuid(), i.ProcedimentoId, i.PosicaoExecutor,
-                i.PercentualOrdem, i.ViaAcesso, i.Acomodacao,
+                i.ViaAcesso, i.Acomodacao,
                 i.EhUrgencia, i.TempoAnestesicoMin))
             .ToList();
 

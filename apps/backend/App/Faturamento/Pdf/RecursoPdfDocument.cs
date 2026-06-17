@@ -106,7 +106,7 @@ internal sealed class RecursoPdfDocument(RecursoPdfData data) : IDocument
             if (tipo == TipoRecurso.GlosaParcial)
             {
                 var totalPagoGuia = guia.Itens.Sum(i => i.ValorPago);
-                var totalApuradoGuia = guia.Itens.Sum(i => i.ValorApurado);
+                var totalApuradoGuia = guia.Itens.Sum(i => i.ValorApurado ?? 0m);
                 var restaPagarGuia = totalApuradoGuia - totalPagoGuia;
                 col.Item().PaddingTop(2).AlignRight().Text(t =>
                 {
@@ -180,7 +180,8 @@ internal sealed class RecursoPdfDocument(RecursoPdfData data) : IDocument
                     table.Cell().Border(0.5f).Padding(2).Text(item.Descricao);
                     table.Cell().Border(0.5f).Padding(2).Text(item.PercentualViaLabel);
                     table.Cell().Border(0.5f).Padding(2).Text(item.ValorPago.ToString("N2", CultureInfo.CurrentCulture));
-                    table.Cell().Border(0.5f).Padding(2).Text(item.ValorApurado.ToString("N2", CultureInfo.CurrentCulture));
+                    table.Cell().Border(0.5f).Padding(2).Text(
+                        item.ValorApurado is { } v ? v.ToString("N2", CultureInfo.CurrentCulture) : "—");
                 }
             });
         }
@@ -189,7 +190,7 @@ internal sealed class RecursoPdfDocument(RecursoPdfData data) : IDocument
     private void ComposeTotaisFinais(IContainer c)
     {
         var totalPago = data.Guias.SelectMany(g => g.Itens).Sum(i => i.ValorPago);
-        var totalApurado = data.Guias.SelectMany(g => g.Itens).Sum(i => i.ValorApurado);
+        var totalApurado = data.Guias.SelectMany(g => g.Itens).Sum(i => i.ValorApurado ?? 0m);
         var restaPagar = totalApurado - totalPago;
 
         c.Column(col =>

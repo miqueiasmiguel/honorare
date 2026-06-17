@@ -216,7 +216,6 @@ describe('GuiaService', () => {
     const payload: CriarItemGuiaPayload = {
       procedimentoId: 'proc-1',
       posicaoExecutor: 'Cirurgiao',
-      percentualOrdem: 1,
       viaAcesso: 'Convencional',
       acomodacao: 'Ambulatorial',
       ehUrgencia: false,

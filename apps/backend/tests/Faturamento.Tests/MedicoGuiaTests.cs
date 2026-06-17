@@ -74,7 +74,7 @@ public sealed class MedicoGuiaTests : IAsyncLifetime
             numeroGuia, data, false, string.Empty);
         ctx.Guias.Add(guia);
         var item = ItemGuia.Create(guia.Id, procedimentoId, PosicaoExecutor.Cirurgiao,
-            1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);
+            ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);
         ctx.ItensGuia.Add(item);
         await ctx.SaveChangesAsync();
         return guia.Id;
@@ -299,7 +299,7 @@ public sealed class MedicoGuiaTests : IAsyncLifetime
                         "DET-CALC-01", new DateOnly(2025, 7, 1), false, string.Empty);
         ctx.Guias.Add(guia);
         var item = ItemGuia.Create(guia.Id, procedimentoId, PosicaoExecutor.Cirurgiao,
-            1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, 100m);
+            ViaAcesso.Convencional, Acomodacao.Enfermaria, false, 100m);
         ctx.ItensGuia.Add(item);
         var calculo = Calculo.Create(tenantId, guia.Id);
         ctx.Calculos.Add(calculo);
@@ -331,7 +331,7 @@ public sealed class MedicoGuiaTests : IAsyncLifetime
                         "DET-NCALC-01", new DateOnly(2025, 8, 1), false, string.Empty);
         ctx.Guias.Add(guia);
         var item = ItemGuia.Create(guia.Id, procedimentoId, PosicaoExecutor.Cirurgiao,
-            1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);
+            ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);
         ctx.ItensGuia.Add(item);
         await ctx.SaveChangesAsync();
 

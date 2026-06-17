@@ -36,7 +36,7 @@ public sealed class AdicionarItemTests(PostgresContainerFixture db)
     }
 
     private static CriarItemGuiaCommand ItemCmd(Guid procedimentoId, decimal? valorApurado = null) =>
-        new(procedimentoId, PosicaoExecutor.Cirurgiao, 1.0m,
+        new(procedimentoId, PosicaoExecutor.Cirurgiao,
             ViaAcesso.Convencional, Acomodacao.Enfermaria, false, valorApurado);
 
     private static async Task<GuiaDetalheDto> CriarGuiaAsync(
@@ -68,11 +68,41 @@ public sealed class AdicionarItemTests(PostgresContainerFixture db)
 
         Assert.True(result.IsSuccess);
         var novoItem = result.Value!.Itens.Single(i => i.Id != itemOriginalId);
-        Assert.Equal(200m, novoItem.ValorApurado);
+        Assert.NotNull(novoItem.ValorApurado);
 
         await using var adminCtx = db.CreateContext();
         Assert.True(await adminCtx.PassosCalculo
             .AnyAsync(p => p.ItemGuiaId == novoItem.Id && p.Regra == "ValorBase"));
+    }
+
+    [Fact]
+    public async Task Deve_reapurar_guia_inteira_ao_adicionar_itemAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user, factory) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (prestadorId, operadoraId, procedimentoId) = await SeedBaseAsync(ctx, tenantId);
+
+        var proc2 = Procedimento.Create(tenantId, tenantId.ToString("N")[8..16], "Proc2 Add", "1", null, false, false);
+        ctx.Add(proc2);
+        await ctx.SaveChangesAsync();
+        ctx.Add(TabelaProcedimento.Create(tenantId, operadoraId, procedimentoId, 200m));
+        ctx.Add(TabelaProcedimento.Create(tenantId, operadoraId, proc2.Id, 500m));
+        await ctx.SaveChangesAsync();
+
+        var service = new GuiaService(ctx, user, factory);
+        var guia = await CriarGuiaAsync(service, prestadorId, operadoraId, procedimentoId, tenantId);
+        var itemOriginalId = guia.Itens[0].Id;
+        Assert.Equal(200m, guia.Itens[0].ValorApurado); // rank 0 = 100%
+
+        // Adiciona proc2 (500m) — deve virar rank 0 = 100%; proc1 (200m) cai para rank 1 = 50%
+        var result = await service.AdicionarItemAsync(guia.Id,
+            new CriarItemGuiaCommand(proc2.Id, PosicaoExecutor.Cirurgiao, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null));
+
+        Assert.True(result.IsSuccess);
+        var itens = result.Value!.Itens;
+        Assert.Equal(500m, itens.First(i => i.ProcedimentoId == proc2.Id).ValorApurado);    // rank 0 = 100%
+        Assert.Equal(100m, itens.First(i => i.Id == itemOriginalId).ValorApurado);           // rank 1 = 50%
     }
 
     [Fact]

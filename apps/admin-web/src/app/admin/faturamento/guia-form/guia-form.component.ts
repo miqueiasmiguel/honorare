@@ -469,7 +469,8 @@ export class GuiaFormComponent implements OnInit {
     this.itens.update((prev) => prev.filter((_, i) => i !== index));
   }
 
-  formatarPercentualOrdem(valor: number): string {
+  formatarPercentualOrdem(valor: number | undefined): string {
+    if (valor === undefined) return '';
     return new Intl.NumberFormat('pt-BR', {
       style: 'percent',
       minimumFractionDigits: 0,

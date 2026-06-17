@@ -6,7 +6,7 @@ namespace Faturamento.Tests.Domain;
 public sealed class ItemGuiaTests
 {
     private static ItemGuia Novo() => ItemGuia.Create(
-        Guid.NewGuid(), Guid.NewGuid(), PosicaoExecutor.Cirurgiao, 1.0m,
+        Guid.NewGuid(), Guid.NewGuid(), PosicaoExecutor.Cirurgiao,
         ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null);
 
     [Fact]

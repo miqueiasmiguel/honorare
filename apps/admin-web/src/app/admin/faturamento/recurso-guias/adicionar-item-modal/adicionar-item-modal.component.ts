@@ -50,7 +50,6 @@ export class AdicionarItemModalComponent {
       .adicionarItem(this.guiaId(), {
         procedimentoId: item.procedimentoId,
         posicaoExecutor: item.posicaoExecutor,
-        percentualOrdem: item.percentualOrdem,
         viaAcesso: item.viaAcesso,
         acomodacao: item.acomodacao,
         ehUrgencia: item.ehUrgencia,

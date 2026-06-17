@@ -79,7 +79,7 @@ internal sealed record ItemPdfData(
     string Descricao,
     string PercentualViaLabel,
     decimal ValorPago,
-    decimal ValorApurado);
+    decimal? ValorApurado);
 
 internal sealed record ListarRecursosResult(
     IReadOnlyList<RecursoDto> Itens, int Total, int Pagina, int ItensPorPagina);
@@ -258,6 +258,9 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser, 
 
         var itensPorGuia = itens.GroupBy(i => i.GuiaId)
             .ToDictionary(g => g.Key, g => g
+                .OrderBy(i => i.PosicaoExecutor)
+                .ThenByDescending(i => i.ValorApurado ?? 0m)
+                .ThenByDescending(i => i.PercentualOrdem)
                 .Select(i => new ItemGuiaNoRecursoDto(
                     i.Id, i.CodigoTuss, i.DescricaoProcedimento,
                     i.PosicaoExecutor, i.PercentualOrdem,
@@ -552,7 +555,6 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser, 
             from i in _db.ItensGuia
             where guiaIds.Contains(i.GuiaId) && i.IncluidoNoRecurso
             join p in _db.Procedimentos on i.ProcedimentoId equals p.Id
-            orderby i.PercentualOrdem descending
             select new
             {
                 i.Id,
@@ -571,7 +573,11 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser, 
 
         var guiaDtos = guiasRaw.Select(g =>
         {
-            var guiaItens = itensPorGuia.GetValueOrDefault(g.Id, []);
+            var guiaItens = itensPorGuia.GetValueOrDefault(g.Id, [])
+                .OrderBy(i => i.PosicaoExecutor)
+                .ThenByDescending(i => i.ValorApurado ?? 0m)
+                .ThenByDescending(i => i.PercentualOrdem)
+                .ToList();
             var primeiraPos = guiaItens.Count > 0
                 ? guiaItens[0].PosicaoExecutor
                 : PosicaoExecutor.Cirurgiao;
@@ -579,9 +585,11 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser, 
             var itemDtos = guiaItens.Select(i => new ItemPdfData(
                 i.CodigoTuss,
                 i.Descricao,
-                FormatarPercentualVia(i.PercentualOrdem),
+                // % VIA é a posição na cascata, só significativa quando o item foi apurado.
+                // Sem apuração, o PercentualOrdem fica no default 1.0 — não exibir "100%".
+                i.ValorApurado is null ? "—" : FormatarPercentualVia(i.PercentualOrdem),
                 i.ValorLiquidado ?? 0m,
-                i.ValorApurado ?? 0m)).ToList();
+                i.ValorApurado)).ToList();
 
             return new GuiaPdfData(
                 g.DataAtendimento,

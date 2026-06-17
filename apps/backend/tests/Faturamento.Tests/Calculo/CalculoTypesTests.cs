@@ -22,6 +22,7 @@ public sealed class CalculoTypesTests
             Guid.NewGuid(),
             SituacaoApuracao.Calculado,
             100m,
+            1.0m,
             []);
 
         Assert.NotNull(result.ValorApurado);
@@ -35,6 +36,7 @@ public sealed class CalculoTypesTests
             Guid.NewGuid(),
             SituacaoApuracao.SemTabela,
             null,
+            1.0m,
             []);
 
         Assert.Null(result.ValorApurado);

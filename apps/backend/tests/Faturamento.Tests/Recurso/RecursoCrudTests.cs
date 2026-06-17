@@ -61,7 +61,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
             prestadorId, operadoraId, null, numeroGuia,
             dataAtendimento, false, string.Empty,
             [new CriarItemGuiaCommand(
-                procedimentoId, PosicaoExecutor.Cirurgiao, 1.0m,
+                procedimentoId, PosicaoExecutor.Cirurgiao,
                 ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null)]);
         var result = await svc.CriarAsync(cmd);
         return result.Value!.Id;
@@ -542,8 +542,8 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         var guiaResult = await guiaSvc.CriarAsync(new CriarGuiaCommand(
             prestId, opId, null, $"RC05-A-{pfx}", new DateOnly(2026, 3, 10), false, string.Empty,
             [
-                new CriarItemGuiaCommand(procId, PosicaoExecutor.Cirurgiao, 1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null),
-                new CriarItemGuiaCommand(procId, PosicaoExecutor.PrimeiroAuxiliar, 0.3m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null),
+                new CriarItemGuiaCommand(procId, PosicaoExecutor.Cirurgiao, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null),
+                new CriarItemGuiaCommand(procId, PosicaoExecutor.PrimeiroAuxiliar, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null),
             ]));
         var guiaId = guiaResult.Value!.Id;
         await service.AdicionarGuiaAsync(recursoId, guiaId);
@@ -583,7 +583,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         var guiaResult = await guiaSvc.CriarAsync(new CriarGuiaCommand(
             prestId, opId, null, $"RC05-OBS-{pfx}", new DateOnly(2026, 4, 5), false,
             "Guia glosada indevidamente",
-            [new CriarItemGuiaCommand(procId, PosicaoExecutor.Cirurgiao, 1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null)]));
+            [new CriarItemGuiaCommand(procId, PosicaoExecutor.Cirurgiao, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null)]));
         var guiaId = guiaResult.Value!.Id;
         await service.AdicionarGuiaAsync(recursoId, guiaId);
 
@@ -696,7 +696,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
             new CriarRecursoCommand(operadora.Id, prestador.Id, new DateOnly(2026, 1, 1), null, "202512"))).Value!.Id;
 
         var guiaId = await CriarGuiaAsync(ctx, user, prestador.Id, operadora.Id, procNormal.Id, $"MX-A-{pfx}");
-        ctx.Add(ItemGuia.Create(guiaId, procNr.Id, PosicaoExecutor.PrimeiroAuxiliar, 0.5m,
+        ctx.Add(ItemGuia.Create(guiaId, procNr.Id, PosicaoExecutor.PrimeiroAuxiliar,
             ViaAcesso.Convencional, Acomodacao.Enfermaria, false, 50m));
         await ctx.SaveChangesAsync();
 
@@ -791,7 +791,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
 
         // guia mista: 1 item normal + 1 item NR → deve entrar, item NR excluído
         var guiaMistaId = await CriarGuiaAsync(ctx, user, prestador.Id, operadora.Id, procNormal.Id, $"MX-C-MX-{pfx}");
-        ctx.Add(ItemGuia.Create(guiaMistaId, procNr.Id, PosicaoExecutor.PrimeiroAuxiliar, 0.5m,
+        ctx.Add(ItemGuia.Create(guiaMistaId, procNr.Id, PosicaoExecutor.PrimeiroAuxiliar,
             ViaAcesso.Convencional, Acomodacao.Enfermaria, false, 50m));
 
         // guia normal: 1 item normal → deve entrar, todos os itens incluídos
@@ -849,7 +849,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
             new CriarRecursoCommand(operadora.Id, prestador.Id, new DateOnly(2026, 1, 1), null, "202512"))).Value!.Id;
 
         var guiaId = await CriarGuiaAsync(ctx, user, prestador.Id, operadora.Id, procNormal.Id, $"MX-D-{pfx}");
-        ctx.Add(ItemGuia.Create(guiaId, procNr.Id, PosicaoExecutor.PrimeiroAuxiliar, 0.5m,
+        ctx.Add(ItemGuia.Create(guiaId, procNr.Id, PosicaoExecutor.PrimeiroAuxiliar,
             ViaAcesso.Convencional, Acomodacao.Enfermaria, false, 50m));
         await ctx.SaveChangesAsync();
 
@@ -918,7 +918,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
         var guiaSvc = new GuiaService(ctx, user, factory);
         var guiaResult = await guiaSvc.CriarAsync(new CriarGuiaCommand(
             prestId, opId, null, $"RC-LA-{pfx}", new DateOnly(2026, 5, 5), false, string.Empty,
-            [new CriarItemGuiaCommand(procId, PosicaoExecutor.Cirurgiao, 1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null)],
+            [new CriarItemGuiaCommand(procId, PosicaoExecutor.Cirurgiao, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null)],
             "Hospital Santa Casa"));
         await service.AdicionarGuiaAsync(recursoId, guiaResult.Value!.Id);
 
@@ -1095,7 +1095,7 @@ public sealed class RecursoCrudTests(PostgresContainerFixture db)
             prestId, opId, null, "RE-PKG-" + tenantId.ToString("N")[..4],
             new DateOnly(2026, 8, 10), true, string.Empty,
             [new CriarItemGuiaCommand(procId, PosicaoExecutor.Cirurgiao,
-                1.0m, ViaAcesso.Convencional, Acomodacao.Enfermaria, false, 500m)]))).Value!.Id;
+                ViaAcesso.Convencional, Acomodacao.Enfermaria, false, 500m)]))).Value!.Id;
         await service.AdicionarGuiaAsync(recursoId, guiaId);
 
         var result = await service.ObterPorIdAsync(recursoId);

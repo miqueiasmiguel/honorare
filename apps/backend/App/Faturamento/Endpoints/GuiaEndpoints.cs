@@ -90,7 +90,7 @@ internal static class GuiaEndpoints
             body.PrestadorId, body.OperadoraId, body.BeneficiarioId,
             body.NumeroGuia, body.DataAtendimento, body.EhPacote, body.Observacao,
             body.Itens.Select(i => new CriarItemGuiaCommand(
-                i.ProcedimentoId, i.PosicaoExecutor, i.PercentualOrdem,
+                i.ProcedimentoId, i.PosicaoExecutor,
                 i.ViaAcesso, i.Acomodacao, i.EhUrgencia, i.ValorApurado, i.TempoAnestesicoMin)).ToList(),
             body.LocalAtendimento ?? string.Empty);
 
@@ -112,7 +112,7 @@ internal static class GuiaEndpoints
         Guid id, CriarItemGuiaRequest body, GuiaService service, CancellationToken ct)
     {
         var cmd = new CriarItemGuiaCommand(
-            body.ProcedimentoId, body.PosicaoExecutor, body.PercentualOrdem,
+            body.ProcedimentoId, body.PosicaoExecutor,
             body.ViaAcesso, body.Acomodacao, body.EhUrgencia, body.ValorApurado, body.TempoAnestesicoMin);
         var result = await service.AdicionarItemAsync(id, cmd, ct);
         if (result.IsFailure)
@@ -135,7 +135,7 @@ internal static class GuiaEndpoints
             body.OperadoraId, body.BeneficiarioId,
             body.NumeroGuia, body.DataAtendimento, body.EhPacote, body.Observacao,
             body.Itens.Select(i => new CriarItemGuiaCommand(
-                i.ProcedimentoId, i.PosicaoExecutor, i.PercentualOrdem,
+                i.ProcedimentoId, i.PosicaoExecutor,
                 i.ViaAcesso, i.Acomodacao, i.EhUrgencia, i.ValorApurado, i.TempoAnestesicoMin)).ToList(),
             body.LocalAtendimento ?? string.Empty);
 
