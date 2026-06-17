@@ -91,10 +91,6 @@ internal sealed record ImportarTabelaPorteResult(
 internal sealed record ListarBeneficiariosResult(
     IReadOnlyList<BeneficiarioDto> Itens, int Total, int Pagina, int ItensPorPagina);
 
-internal sealed record SalvarOrdemItem(int NumeroProcedimento, TipoViaOrdem TipoVia, decimal Percentual);
-
-internal sealed record TabelaOrdemItem(int NumeroProcedimento, TipoViaOrdem TipoVia, decimal Percentual);
-
 internal sealed record BeneficiarioDto(
     Guid Id, string Carteira, string Nome, DateTimeOffset CriadoEm);
 
@@ -1365,106 +1361,6 @@ internal sealed class CatalogService(AppDbContext db, ICurrentUser currentUser)
             procedimentosAtualizados,
             procedimentosNaoEncontrados,
             erros);
-    }
-
-    // ── TabelaOrdemOperadora ──────────────────────────────────────────────────
-
-    private static readonly Dictionary<(int, TipoViaOrdem), decimal> _padraoOrdem = new()
-    {
-        { (1, TipoViaOrdem.MesmaVia), 1.00m }, { (1, TipoViaOrdem.ViaDiferente), 1.00m },
-        { (2, TipoViaOrdem.MesmaVia), 0.50m }, { (2, TipoViaOrdem.ViaDiferente), 0.70m },
-        { (3, TipoViaOrdem.MesmaVia), 0.40m }, { (3, TipoViaOrdem.ViaDiferente), 0.50m },
-        { (4, TipoViaOrdem.MesmaVia), 0.30m }, { (4, TipoViaOrdem.ViaDiferente), 0.40m },
-        { (5, TipoViaOrdem.MesmaVia), 0.20m }, { (5, TipoViaOrdem.ViaDiferente), 0.30m },
-    };
-
-    internal async Task<IReadOnlyList<TabelaOrdemItem>> ListarTabelaOrdemAsync(
-        Guid operadoraId, CancellationToken ct = default)
-    {
-        return await _db.TabelasOrdemOperadora
-            .Where(t => t.OperadoraId == operadoraId)
-            .OrderBy(t => t.NumeroProcedimento).ThenBy(t => t.TipoVia)
-            .Select(t => new TabelaOrdemItem(t.NumeroProcedimento, t.TipoVia, t.Percentual))
-            .ToListAsync(ct);
-    }
-
-    internal async Task SalvarTabelaOrdemAsync(
-        Guid operadoraId, IReadOnlyList<SalvarOrdemItem> itens, CancellationToken ct = default)
-    {
-        var tenantId = _currentUser.TenantId!.Value;
-
-        var keys = itens.Select(i => (i.NumeroProcedimento, i.TipoVia)).ToList();
-        var existing = await _db.TabelasOrdemOperadora
-            .Where(t => t.OperadoraId == operadoraId)
-            .ToListAsync(ct);
-
-        var existingMap = existing.ToDictionary(t => (t.NumeroProcedimento, t.TipoVia));
-
-        foreach (var item in itens)
-        {
-            if (existingMap.TryGetValue((item.NumeroProcedimento, item.TipoVia), out var row))
-            {
-                row.AtualizarPercentual(item.Percentual);
-            }
-            else
-            {
-                _db.TabelasOrdemOperadora.Add(TabelaOrdemOperadora.Create(
-                    tenantId, operadoraId, item.NumeroProcedimento, item.TipoVia, item.Percentual));
-            }
-        }
-
-        await _db.SaveChangesAsync(ct);
-    }
-
-    internal async Task ExcluirTabelaOrdemAsync(Guid operadoraId, CancellationToken ct = default)
-    {
-        var rows = await _db.TabelasOrdemOperadora
-            .Where(t => t.OperadoraId == operadoraId)
-            .ToListAsync(ct);
-
-        _db.TabelasOrdemOperadora.RemoveRange(rows);
-        await _db.SaveChangesAsync(ct);
-    }
-
-    internal async Task<decimal> ResolverPercentualOrdemAsync(
-        Guid operadoraId, int numeroProcedimento, TipoViaOrdem tipoVia, CancellationToken ct = default)
-    {
-        var tabela = await _db.TabelasOrdemOperadora
-            .Where(t => t.OperadoraId == operadoraId)
-            .OrderBy(t => t.NumeroProcedimento)
-            .ToListAsync(ct);
-
-        if (tabela.Count == 0)
-        {
-            return ResolverPadrao(numeroProcedimento, tipoVia);
-        }
-
-        var match = tabela.FirstOrDefault(t => t.NumeroProcedimento == numeroProcedimento && t.TipoVia == tipoVia);
-        if (match is not null)
-        {
-            return match.Percentual;
-        }
-
-        // clamp to last defined entry for this TipoVia
-        var filtered = tabela
-            .Where(t => t.TipoVia == tipoVia)
-            .OrderByDescending(t => t.NumeroProcedimento)
-            .ToList();
-
-        return filtered.Count > 0
-            ? filtered[0].Percentual
-            : ResolverPadrao(numeroProcedimento, tipoVia);
-    }
-
-    private static decimal ResolverPadrao(int numeroProcedimento, TipoViaOrdem tipoVia)
-    {
-        if (_padraoOrdem.TryGetValue((numeroProcedimento, tipoVia), out var val))
-        {
-            return val;
-        }
-
-        // 6+ → 0.10m para ambos os tipos
-        return 0.10m;
     }
 
     private static string[] SplitCsvLine(string line)
