@@ -405,6 +405,24 @@ Os dois flags são mutuamente exclusivos. A distinção veio em duas etapas: NRE
 
 **Revisitar:** se um tenant configurar códigos que ocorram misturados com procedimentos recorríveis em muitas guias, a exclusão automática de itens NR via lote pode surpreender. A tela já mostra o badge "Contém não recorrível" como sinal visual.
 
+### D-050: Cascata de atos múltiplos unificada por valor decrescente, fixa no motor
+
+A regra de progressão de atos múltiplos deixou de ser entrada (campo `% VIA` do demonstrativo ou configuração por operadora) e passou a ser **calculada automaticamente pelo motor** (`UnimedRuleSet`) a cada apuração.
+
+**Cascata fixa:** 100% / 50% / 40% / 30% / 20% / 10% / 10% (8º procedimento em diante → 10%). Constante única no motor (`_cascata` em `UnimedRuleSet`). Não configurável por operadora.
+
+**Agrupamento:** por `(GuiaId, PosicaoExecutor)`. Cada posição de executor é um grupo de ranking independente — cirurgião concorre só com cirurgião, cada auxiliar com os seus, anestesista entre os atos anestésicos dele.
+
+**Ordenação dentro do grupo:** valor base decrescente (`TabelaProcedimento.Valor` para cirúrgico; valor de referência de `TabelaPorteAnestesico` para anestesista). Desempate: `ProcedimentoId` → `ItemGuiaId` (ascendente), para reprodutibilidade.
+
+**Via de acesso abolida como critério de ranking:** a distinção "mesma via" × "via diferente" deixou de existir. O `% VIA` do demonstrativo é ignorado no cálculo. A `TabelaOrdemOperadora` configurável foi removida por completo (entidade, tabela, endpoints, enum `TipoViaOrdem`).
+
+**Escopo temporal:** vale apenas para novas apurações. Guias já calculadas antes desta mudança não são reprocessadas automaticamente.
+
+**Justificativa:** o cliente informou que a UNIMED adotou a cascata unificada independentemente de via. A configuração por operadora nunca foi utilizada na prática; a manutenção do `% VIA` como entrada causava confusão (o campo do demonstrativo tem semântica de pagamento realizado, não de regra de cálculo). A cascata fixa no motor elimina atrito de configuração e garante que todas as apurações sigam a mesma progressão.
+
+**Revisitar:** se uma Unimed Singular negociar progressão diferente da cascata padrão — reintroduzir configuração por operadora.
+
 ### D-023: CLAUDE.md em três níveis
 
 - Raiz: regras gerais do monorepo

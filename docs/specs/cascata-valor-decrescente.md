@@ -415,7 +415,7 @@ Os erros de compilação TS resultantes guiam o resto da remoção.
 
 ### TASK-CASCATA-07 — Documentação (DOMINIO.md + DECISOES.md)
 
-- [ ] pendente
+- [x] concluída
 
 **Objetivo:** Refletir a nova regra na documentação de domínio e registrar a decisão.
 
@@ -455,4 +455,4 @@ Os erros de compilação TS resultantes guiam o resto da remoção.
 - [x] TASK-CASCATA-04 — Recurso ordena por posição → valor → percentual
 - [x] TASK-CASCATA-05 — Abolir `TabelaOrdemOperadora` (backend + migração)
 - [x] TASK-CASCATA-06 — Frontend remove % VIA / atos múltiplos + regenera client
-- [ ] TASK-CASCATA-07 — Documentação (DOMINIO.md + DECISOES.md)
+- [x] TASK-CASCATA-07 — Documentação (DOMINIO.md + DECISOES.md)

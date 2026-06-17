@@ -63,7 +63,7 @@
 
 - **Urgência/emergência:** sim/não. Considera horário e dia da semana.
 
-- **PercentualOrdem:** decimal (0.01–1.00) armazenado em `ItemGuia` que representa o fator de progressão de atos múltiplos. Substituiu o enum `OrdemProcedimento` (abolido em F3.8). O modifier aplica o valor diretamente, sem switch/case. Fonte do valor: formulário de guia (via `TabelaOrdemOperadora` da operadora) ou importação CSV (coluna `% VIA` ÷ 100).
+- **PercentualOrdem:** decimal (0.01–1.00) armazenado em `ItemGuia` que representa o fator de progressão de atos múltiplos. Substituiu o enum `OrdemProcedimento` (abolido em F3.8). O modifier aplica o valor diretamente, sem switch/case. **Fonte do valor: calculado automaticamente pelo `UnimedRuleSet` por ranking de valor base dentro de `(GuiaId, PosicaoExecutor)`, ignorando o `% VIA` do demonstrativo e qualquer configuração externa.** Ver D-050.
 
 ### CBHPM e UCO
 
@@ -78,8 +78,6 @@
 - **TabelaProcedimento:** valor negociado de um procedimento para uma operadora específica (tabela de honorários). A combinação `(OperadoraId, ProcedimentoId)` é única por tenant. Pode ser importada via CSV. É a fonte do `valor_base` no motor de cálculo cirúrgico.
 
 - **TabelaPorteAnestesico:** valor de referência da anestesia por operadora e letra de porte (A–Z, exceto O). Cada porte tem par fixo `(ValorEnfermaria, ValorApartamento)` e opcional `ValorAmbulatorial`. A combinação `(OperadoraId, PorteLetra)` é única por tenant. Importada via CSV no formato UNIMED JPA (separador vírgula, decimal com vírgula entre aspas, 8 linhas de cabeçalho a ignorar). É a fonte do valor de referência no `AnestesiaCalculator` — substituiu o uso da `TabelaProcedimento` para a posição Anestesista.
-
-- **TabelaOrdemOperadora:** tabela de progressão de atos múltiplos configurável por operadora. Define o `PercentualOrdem` para cada posição (`NumeroProcedimento` 1, 2, 3…) e tipo de via (`MesmaVia` / `ViaDiferente`). Chave única `(TenantId, OperadoraId, NumeroProcedimento, TipoVia)`. Quando não configurada, o sistema usa defaults embutidos: MesmaVia 100%/50%/40%/30%/20%/10%; ViaDiferente 100%/70%/50%/40%/30%/10% (6+→10% em ambas). Gerenciada via endpoints `GET/PUT/DELETE /api/v1/admin/operadoras/{id}/tabela-ordem`.
 
 - **PosicaoExecutor:** papel do profissional na execução do procedimento. Valores: `Cirurgiao`, `PrimeiroAuxiliar`, `SegundoAuxiliar`, `TerceiroAuxiliar`, `Anestesista`, `ClinicoAssistente`. Os auxiliares aplicam os descontos de posição do `PosicaoExecutorModifier` (1º aux ×0.6 · 2º ×0.4 · 3º ×0.3) sobre o valor apurado.
 
@@ -121,15 +119,27 @@ A regra é: **plano contratado manda**, não o local físico.
 
 ### Procedimentos múltiplos
 
-O fator de progressão é armazenado diretamente em `ItemGuia.PercentualOrdem` (decimal 0.01–1.00) e aplicado pelo `OrdemProcedimentoModifier` sem lógica condicional. Defaults quando nenhuma `TabelaOrdemOperadora` está configurada:
+O fator de progressão é calculado automaticamente pelo motor (`UnimedRuleSet`) por ranking de valor base e gravado em `ItemGuia.PercentualOrdem`. O `OrdemProcedimentoModifier` aplica o fator diretamente, sem lógica condicional. Ver D-050.
 
-- 1º procedimento: 100%
-- 2º mesma via: **50%** · 2º via diferente: **70%**
-- 3º: 40% · 4º: 30% · 5º: 20% · 6º ou mais: 10%
+**Cascata fixa:**
 
-A progressão real pode variar por Unimed Singular — configure via seção "Tabela de Atos Múltiplos" na tela da operadora.
+| Rank         | Fator |
+| ------------ | ----- |
+| 1º           | 100%  |
+| 2º           | 50%   |
+| 3º           | 40%   |
+| 4º           | 30%   |
+| 5º           | 20%   |
+| 6º e 7º      | 10%   |
+| 8º em diante | 10%   |
 
-O mesmo código TUSS pode aparecer múltiplas vezes numa guia quando o procedimento é realizado em vias de acesso diferentes (ex: denervação percutânea de faceta 3×, cada uma em nível vertebral diferente). Cada ocorrência é um `ItemGuia` separado com seu próprio `PercentualOrdem`. Aparece em guias reais do cliente.
+**Agrupamento do ranking:** por `(GuiaId, PosicaoExecutor)`. Cirurgião concorre só com cirurgião; cada auxiliar com os seus (recebe deflator de posição depois via `PosicaoExecutorModifier`); anestesista entre os atos anestésicos dele. O mesmo médico pode ocupar duas posições na mesma cirurgia — cada posição é um grupo de ranking independente.
+
+**Ordenação dentro do grupo:** por valor base decrescente (`TabelaProcedimento.Valor` para cirúrgico; valor de referência de `TabelaPorteAnestesico` para anestesista). Desempate determinístico: `ProcedimentoId` depois `ItemGuiaId` (ascendente), para o cálculo ser reproduzível.
+
+**Via de acesso é irrelevante para o ranking** — a distinção "mesma via" × "via diferente" foi abolida. O `% VIA` do demonstrativo é ignorado no cálculo; a cascata é idêntica independentemente das vias de acesso dos itens.
+
+O mesmo código TUSS pode aparecer múltiplas vezes numa guia quando o procedimento é realizado em vias de acesso diferentes (ex: denervação percutânea de faceta 3×, cada uma em nível vertebral diferente). Cada ocorrência é um `ItemGuia` separado. Aparece em guias reais do cliente.
 
 ### Videolaparoscopia
 
@@ -162,7 +172,7 @@ Percentuais **CBHPM 2018+** (atualização vs. regra antiga de 30%/20%):
 A ordem afeta o resultado. **Esta é a ordem implementada no `UnimedRuleSet`, validada por 10 cenários E2E (F3.2).**
 
 1. Valor base: `TabelaProcedimento.Valor`
-2. Ordem de procedimento: aplica `ItemGuia.PercentualOrdem` diretamente (ex: 1.0, 0.5, 0.4…) — sem enum, sem switch/case
+2. Ordem de procedimento: aplica o fator derivado pelo ranking de valor base (`ItemGuia.PercentualOrdem`, ex: 1.0, 0.5, 0.4…) — sem enum, sem switch/case; ver D-050
 3. Videolaparoscopia: `Via=Videolaparoscopia` e `!TemPorteProprioVideo` → ×1.5; senão ×1.0
 4. Acomodação: `Apartamento && Posicao == Cirurgiao` → ×2.0; demais → ×1.0
 5. Urgência: `EhUrgencia` e `!EhSadt` → ×1.3; senão ×1.0
