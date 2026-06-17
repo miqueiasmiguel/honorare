@@ -388,6 +388,64 @@ public sealed class RecursoPdfDataTests(PostgresContainerFixture db)
         Assert.True(result.IsSuccess);
         Assert.Null(result.Value!.TenantLogo);
     }
+
+    [Fact]
+    public async Task ObterDadosPdf_OrdenarItensPorPosicaoValorPercentualAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        var (ctx, user) = BuildTenant(tenantId);
+        await using var _ = ctx;
+        var (opId, prestId, _) = await SeedCatalogAsync(ctx, tenantId);
+
+        var codigoA = "A" + tenantId.ToString("N")[..7];
+        var codigoB = "B" + tenantId.ToString("N")[..7];
+        var codigoC = "C" + tenantId.ToString("N")[..7];
+
+        var procA = Procedimento.Create(tenantId, codigoA, "Cirug Alto", "1", null, false, false);
+        var procB = Procedimento.Create(tenantId, codigoB, "Cirug Baixo", "1", null, false, false);
+        var procC = Procedimento.Create(tenantId, codigoC, "Aux Medio", "1", null, false, false);
+        ctx.Add(procA);
+        ctx.Add(procB);
+        ctx.Add(procC);
+        await ctx.SaveChangesAsync();
+
+        ctx.Add(TabelaProcedimento.Create(tenantId, opId, procA.Id, 1000m));
+        ctx.Add(TabelaProcedimento.Create(tenantId, opId, procB.Id, 600m));
+        ctx.Add(TabelaProcedimento.Create(tenantId, opId, procC.Id, 800m));
+        await ctx.SaveChangesAsync();
+
+        var recursoId = await CriarRecursoAsync(ctx, user, opId, prestId);
+
+        var factory = new PricingRuleSetFactory(ctx);
+        var guiaSvc = new GuiaService(ctx, user, factory);
+        var cmd = new CriarGuiaCommand(
+            prestId, opId, null, "ORD-" + tenantId.ToString("N")[..4],
+            new DateOnly(2026, 3, 5), false, string.Empty,
+            [
+                new CriarItemGuiaCommand(procA.Id, PosicaoExecutor.Cirurgiao,
+                    ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null),
+                new CriarItemGuiaCommand(procB.Id, PosicaoExecutor.Cirurgiao,
+                    ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null),
+                new CriarItemGuiaCommand(procC.Id, PosicaoExecutor.PrimeiroAuxiliar,
+                    ViaAcesso.Convencional, Acomodacao.Enfermaria, false, null),
+            ]);
+        var guiaResult = await guiaSvc.CriarAsync(cmd);
+        Assert.True(guiaResult.IsSuccess);
+
+        var recursoSvc = new RecursoService(ctx, user, _noopStorage);
+        await recursoSvc.AdicionarGuiaAsync(recursoId, guiaResult.Value!.Id);
+
+        var result = await recursoSvc.ObterDadosPdfAsync(recursoId);
+
+        Assert.True(result.IsSuccess);
+        var itens = result.Value!.Guias[0].Itens;
+        Assert.Equal(3, itens.Count);
+        // posição ascendente: Cirurgiao(1) antes de PrimeiroAuxiliar(2)
+        // dentro de Cirurgiao: maior ValorApurado primeiro
+        Assert.Equal(codigoA, itens[0].CodigoTuss); // Cirurgiao, 1000 → 100%
+        Assert.Equal(codigoB, itens[1].CodigoTuss); // Cirurgiao, 600 → 50%
+        Assert.Equal(codigoC, itens[2].CodigoTuss); // PrimeiroAuxiliar, 800
+    }
 }
 
 file sealed class FakePdfTenantUser(Guid tenantId) : ICurrentUser

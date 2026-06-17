@@ -258,6 +258,9 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser, 
 
         var itensPorGuia = itens.GroupBy(i => i.GuiaId)
             .ToDictionary(g => g.Key, g => g
+                .OrderBy(i => i.PosicaoExecutor)
+                .ThenByDescending(i => i.ValorApurado ?? 0m)
+                .ThenByDescending(i => i.PercentualOrdem)
                 .Select(i => new ItemGuiaNoRecursoDto(
                     i.Id, i.CodigoTuss, i.DescricaoProcedimento,
                     i.PosicaoExecutor, i.PercentualOrdem,
@@ -552,7 +555,6 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser, 
             from i in _db.ItensGuia
             where guiaIds.Contains(i.GuiaId) && i.IncluidoNoRecurso
             join p in _db.Procedimentos on i.ProcedimentoId equals p.Id
-            orderby i.PercentualOrdem descending
             select new
             {
                 i.Id,
@@ -571,7 +573,11 @@ internal sealed class RecursoService(AppDbContext db, ICurrentUser currentUser, 
 
         var guiaDtos = guiasRaw.Select(g =>
         {
-            var guiaItens = itensPorGuia.GetValueOrDefault(g.Id, []);
+            var guiaItens = itensPorGuia.GetValueOrDefault(g.Id, [])
+                .OrderBy(i => i.PosicaoExecutor)
+                .ThenByDescending(i => i.ValorApurado ?? 0m)
+                .ThenByDescending(i => i.PercentualOrdem)
+                .ToList();
             var primeiraPos = guiaItens.Count > 0
                 ? guiaItens[0].PosicaoExecutor
                 : PosicaoExecutor.Cirurgiao;
