@@ -207,7 +207,7 @@ await ExecutarCalculoAsync(guia, operadora, itens, ct);
 
 ### TASK-CASCATA-03 — Importação do demonstrativo: derivar % e tornar `% VIA` opcional
 
-- [ ] pendente
+- [x] concluída
 
 **Objetivo:** A importação CSV deixa de ler `% VIA` para o cálculo (motor deriva); a coluna `% VIA` deixa
 de ser obrigatória; o percentual derivado é gravado no item; a apuração roda sobre **todos** os itens da guia.
@@ -451,7 +451,7 @@ Os erros de compilação TS resultantes guiam o resto da remoção.
 
 - [x] TASK-CASCATA-01 — Motor calcula a cascata por valor base decrescente
 - [x] TASK-CASCATA-02 — GuiaService persiste % derivado e remove entrada manual
-- [ ] TASK-CASCATA-03 — Importação deriva % e torna `% VIA` opcional
+- [x] TASK-CASCATA-03 — Importação deriva % e torna `% VIA` opcional
 - [ ] TASK-CASCATA-04 — Recurso ordena por posição → valor → percentual
 - [ ] TASK-CASCATA-05 — Abolir `TabelaOrdemOperadora` (backend + migração)
 - [ ] TASK-CASCATA-06 — Frontend remove % VIA / atos múltiplos + regenera client
