@@ -88,7 +88,6 @@ export interface ListarGuiasResult {
 export interface CriarItemGuiaPayload {
   procedimentoId: string;
   posicaoExecutor: PosicaoExecutor;
-  percentualOrdem: number;
   viaAcesso: ViaAcesso;
   acomodacao: Acomodacao;
   ehUrgencia: boolean;
@@ -100,6 +99,7 @@ export interface ItemGuiaDisplay extends CriarItemGuiaPayload {
   id?: string;
   codigoTuss?: string;
   descricaoProcedimento?: string;
+  percentualOrdem?: number;
   valorLiquidado?: number | null;
   motivoGlosa?: string | null;
 }

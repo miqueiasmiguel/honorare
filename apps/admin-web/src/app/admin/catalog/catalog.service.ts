@@ -25,7 +25,6 @@ import type {
   SalvarOperadoraPayload,
   SalvarProcedimentoPayload,
   TabelaItem,
-  TabelaOrdemOperadoraItem,
   TabelaPorteAnestesicoItem,
   UpsertValorPayload,
 } from './catalog.types';
@@ -268,25 +267,5 @@ export class CatalogService {
       form,
       { params },
     );
-  }
-
-  // ── Tabela Ordem Operadora ─────────────────────────────────────────────────
-
-  listarTabelaOrdem(operadoraId: string): Observable<TabelaOrdemOperadoraItem[]> {
-    return this._http.get<TabelaOrdemOperadoraItem[]>(
-      `/api/v1/admin/operadoras/${operadoraId}/tabela-ordem`,
-    );
-  }
-
-  salvarTabelaOrdem(operadoraId: string, payload: TabelaOrdemOperadoraItem[]): Observable<void> {
-    return this._http
-      .put(`/api/v1/admin/operadoras/${operadoraId}/tabela-ordem`, payload)
-      .pipe(map(() => undefined));
-  }
-
-  excluirTabelaOrdem(operadoraId: string): Observable<void> {
-    return this._http
-      .delete(`/api/v1/admin/operadoras/${operadoraId}/tabela-ordem`)
-      .pipe(map(() => undefined));
   }
 }

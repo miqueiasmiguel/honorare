@@ -184,16 +184,6 @@ export interface AtualizarBeneficiarioPayload {
   nome: string;
 }
 
-// ── Tabela Ordem Operadora ───────────────────────────────────────────────────
-
-export type TipoViaOrdem = 'MesmaVia' | 'ViaDiferente';
-
-export interface TabelaOrdemOperadoraItem {
-  numeroProcedimento: number;
-  tipoVia: TipoViaOrdem;
-  percentual: number;
-}
-
 // ── Tabela Porte Anestésico ──────────────────────────────────────────────────
 
 export interface TabelaPorteAnestesicoItem {

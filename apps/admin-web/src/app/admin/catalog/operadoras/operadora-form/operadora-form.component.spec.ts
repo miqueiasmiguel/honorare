@@ -22,9 +22,6 @@ function setup(operadoraId: string | null = null, operadora: OperadoraItem = moc
     atualizarOperadora: vi.fn().mockReturnValue(of(mockOperadora)),
     listarPortesAnestesico: vi.fn().mockReturnValue(of([])),
     excluirPorteAnestesico: vi.fn().mockReturnValue(of(undefined)),
-    listarTabelaOrdem: vi.fn().mockReturnValue(of([])),
-    salvarTabelaOrdem: vi.fn().mockReturnValue(of(undefined)),
-    excluirTabelaOrdem: vi.fn().mockReturnValue(of(undefined)),
   };
 
   const routerSpy = {

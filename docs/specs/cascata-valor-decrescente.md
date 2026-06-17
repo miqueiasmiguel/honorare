@@ -363,7 +363,7 @@ métodos de serviço, endpoints, enum `TipoViaOrdem`, testes e a tabela no banco
 
 ### TASK-CASCATA-06 — Frontend: remover % VIA / atos múltiplos + regenerar client
 
-- [ ] pendente
+- [x] concluída
 
 **Objetivo:** Tirar do admin-web tudo que pedia/configurava `% VIA`/atos múltiplos e regenerar o client TS
 do OpenAPI (o backend mudou contratos: `CriarItemGuiaCommand` sem `percentualOrdem`, endpoints `tabela-ordem` removidos).
@@ -454,5 +454,5 @@ Os erros de compilação TS resultantes guiam o resto da remoção.
 - [x] TASK-CASCATA-03 — Importação deriva % e torna `% VIA` opcional
 - [x] TASK-CASCATA-04 — Recurso ordena por posição → valor → percentual
 - [x] TASK-CASCATA-05 — Abolir `TabelaOrdemOperadora` (backend + migração)
-- [ ] TASK-CASCATA-06 — Frontend remove % VIA / atos múltiplos + regenera client
+- [x] TASK-CASCATA-06 — Frontend remove % VIA / atos múltiplos + regenera client
 - [ ] TASK-CASCATA-07 — Documentação (DOMINIO.md + DECISOES.md)

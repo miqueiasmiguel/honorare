@@ -7,7 +7,6 @@ import type {
   ImportarTabelaPorteResult,
   ListarBeneficiariosResult,
   LookupOrCreateResult,
-  TabelaOrdemOperadoraItem,
   TabelaPorteAnestesicoItem,
 } from './catalog.types';
 
@@ -173,64 +172,5 @@ describe('CatalogService — TabelaPorteAnestesico', () => {
     req.flush({ ...IMPORT_PORTE_RESULT, procedimentosNaoEncontrados: ['99999999'] });
 
     expect(result?.procedimentosNaoEncontrados).toContain('99999999');
-  });
-});
-
-const TABELA_ORDEM_ITEM: TabelaOrdemOperadoraItem = {
-  numeroProcedimento: 1,
-  tipoVia: 'MesmaVia',
-  percentual: 1.0,
-};
-
-describe('CatalogService — TabelaOrdemOperadora', () => {
-  let service: CatalogService;
-  let httpMock: HttpTestingController;
-
-  beforeEach(() => {
-    TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting(), CatalogService],
-    });
-    service = TestBed.inject(CatalogService);
-    httpMock = TestBed.inject(HttpTestingController);
-  });
-
-  afterEach(() => {
-    httpMock.verify();
-  });
-
-  it('listarTabelaOrdem_chamaCaminhoCorreto', () => {
-    let result: TabelaOrdemOperadoraItem[] | undefined;
-    service.listarTabelaOrdem('op-1').subscribe((v) => (result = v));
-
-    const req = httpMock.expectOne('/api/v1/admin/operadoras/op-1/tabela-ordem');
-    expect(req.request.method).toBe('GET');
-    req.flush([TABELA_ORDEM_ITEM]);
-
-    expect(result).toHaveLength(1);
-    expect(result?.[0].tipoVia).toBe('MesmaVia');
-  });
-
-  it('salvarTabelaOrdem_enviaPUT_comPayload', () => {
-    let completed = false;
-    const payload: TabelaOrdemOperadoraItem[] = [TABELA_ORDEM_ITEM];
-    service.salvarTabelaOrdem('op-1', payload).subscribe({ complete: () => (completed = true) });
-
-    const req = httpMock.expectOne('/api/v1/admin/operadoras/op-1/tabela-ordem');
-    expect(req.request.method).toBe('PUT');
-    expect(req.request.body).toEqual(payload);
-    req.flush(null, { status: 204, statusText: 'No Content' });
-
-    expect(completed).toBe(true);
-  });
-
-  it('excluirTabelaOrdem_enviaDELETE', () => {
-    let completed = false;
-    service.excluirTabelaOrdem('op-1').subscribe({ complete: () => (completed = true) });
-
-    const req = httpMock.expectOne('/api/v1/admin/operadoras/op-1/tabela-ordem');
-    expect(req.request.method).toBe('DELETE');
-    req.flush(null, { status: 204, statusText: 'No Content' });
-
-    expect(completed).toBe(true);
   });
 });

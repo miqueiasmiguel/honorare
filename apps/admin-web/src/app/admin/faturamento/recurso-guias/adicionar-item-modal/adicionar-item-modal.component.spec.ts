@@ -10,7 +10,6 @@ import type { ItemGuiaDisplay } from '../../guia.types';
 const mockItem: ItemGuiaDisplay = {
   procedimentoId: 'proc-1',
   posicaoExecutor: 'Cirurgiao',
-  percentualOrdem: 1,
   viaAcesso: 'Convencional',
   acomodacao: 'Enfermaria',
   ehUrgencia: false,
@@ -82,7 +81,6 @@ describe('AdicionarItemModalComponent', () => {
     expect(guiaService.adicionarItem).toHaveBeenCalledWith('guia-1', {
       procedimentoId: 'proc-1',
       posicaoExecutor: 'Cirurgiao',
-      percentualOrdem: 1,
       viaAcesso: 'Convencional',
       acomodacao: 'Enfermaria',
       ehUrgencia: false,

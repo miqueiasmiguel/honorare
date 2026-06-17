@@ -26,7 +26,6 @@ function makeServiceSpy(procs: ProcedimentoItem[] = []) {
   };
   return {
     listarProcedimentos: vi.fn().mockReturnValue(of(result)),
-    listarTabelaOrdem: vi.fn().mockReturnValue(of([])),
   };
 }
 
@@ -52,14 +51,18 @@ function setup(ehPacote = false, procs: ProcedimentoItem[] = []) {
 }
 
 describe('ItemGuiaFormComponent', () => {
-  it('renderiza campos basicos posicao ordem via acomodacao urgencia', () => {
+  it('renderiza campos basicos posicao via acomodacao urgencia', () => {
     const { el } = setup();
 
     expect(el.querySelector('.item-guia-form__select--posicao')).not.toBeNull();
-    expect(el.querySelector('.item-guia-form__select--ordem')).not.toBeNull();
     expect(el.querySelector('.item-guia-form__select--via')).not.toBeNull();
     expect(el.querySelector('.item-guia-form__select--acomodacao')).not.toBeNull();
     expect(el.querySelector('.item-guia-form__checkbox--urgencia')).not.toBeNull();
+  });
+
+  it('nao exibe campo de ordem', () => {
+    const { el } = setup();
+    expect(el.querySelector('.item-guia-form__select--ordem')).toBeNull();
   });
 
   it('valorApurado oculto quando ehPacote false', () => {
@@ -77,14 +80,13 @@ describe('ItemGuiaFormComponent', () => {
     expect(input?.required).toBe(true);
   });
 
-  it('emite itemChange com percentualOrdem ao submeter', () => {
+  it('emite itemChange sem percentualOrdem ao submeter', () => {
     const { component, fixture, el } = setup();
 
     const emitSpy = vi.spyOn(component.itemChange, 'emit');
 
     component.procedimentoId.set('proc-abc');
     component.posicaoExecutor.set('Anestesista');
-    component.percentualOrdem.set(0.5);
     component.viaAcesso.set('Videolaparoscopia');
     component.acomodacao.set('Apartamento');
     component.ehUrgencia.set(true);
@@ -96,13 +98,14 @@ describe('ItemGuiaFormComponent', () => {
       expect.objectContaining({
         procedimentoId: 'proc-abc',
         posicaoExecutor: 'Anestesista',
-        percentualOrdem: 0.5,
         viaAcesso: 'Videolaparoscopia',
         acomodacao: 'Apartamento',
         ehUrgencia: true,
         valorApurado: null,
       }),
     );
+    const emitted = emitSpy.mock.calls[0][0] as Record<string, unknown> | null;
+    expect(emitted).not.toHaveProperty('percentualOrdem');
   });
 
   it('onCancelar emite null', () => {
@@ -123,7 +126,6 @@ describe('ItemGuiaFormComponent', () => {
       item: signal({
         procedimentoId: 'proc-x',
         posicaoExecutor: 'Anestesista' as const,
-        percentualOrdem: 0.7,
         viaAcesso: 'Videolaparoscopia' as const,
         acomodacao: 'Apartamento' as const,
         ehUrgencia: true,
@@ -135,7 +137,6 @@ describe('ItemGuiaFormComponent', () => {
     const component = fixture.componentInstance;
     expect(component.procedimentoId()).toBe('proc-x');
     expect(component.posicaoExecutor()).toBe('Anestesista');
-    expect(component.percentualOrdem()).toBe(0.7);
     expect(component.valorApurado()).toBe('150.5');
     expect(component.ehUrgencia()).toBe(true);
   });
@@ -257,7 +258,6 @@ describe('ItemGuiaFormComponent', () => {
       item: signal({
         procedimentoId: 'proc-an',
         posicaoExecutor: 'Anestesista' as const,
-        percentualOrdem: 1.0,
         viaAcesso: 'Convencional' as const,
         acomodacao: 'Enfermaria' as const,
         ehUrgencia: false,
@@ -268,26 +268,6 @@ describe('ItemGuiaFormComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.componentInstance.tempoAnestesicoMin()).toBe(120);
-  });
-
-  it('carrega opcoes de tabela-ordem quando operadoraId fornecido', () => {
-    const catalogService = makeServiceSpy();
-    catalogService.listarTabelaOrdem = vi.fn().mockReturnValue(
-      of([
-        { numeroProcedimento: 1, tipoVia: 'MesmaVia', percentual: 1.0 },
-        { numeroProcedimento: 1, tipoVia: 'ViaDiferente', percentual: 1.0 },
-      ]),
-    );
-
-    TestBed.configureTestingModule({
-      imports: [ItemGuiaFormComponent],
-      providers: [{ provide: CatalogService, useValue: catalogService }],
-    });
-    const fixture = TestBed.createComponent(ItemGuiaFormComponent);
-    Object.assign(fixture.componentInstance, { operadoraId: signal('op-x') });
-    fixture.detectChanges();
-
-    expect(catalogService.listarTabelaOrdem).toHaveBeenCalledWith('op-x');
   });
 
   it('Não deve exibir campos de cálculo quando operadora é Nulo', () => {
@@ -302,7 +282,6 @@ describe('ItemGuiaFormComponent', () => {
 
     const el = fixture.nativeElement as HTMLElement;
     expect(el.querySelector('.item-guia-form__select--posicao')).toBeNull();
-    expect(el.querySelector('.item-guia-form__select--ordem')).toBeNull();
     expect(el.querySelector('.item-guia-form__select--via')).toBeNull();
     expect(el.querySelector('.item-guia-form__select--acomodacao')).toBeNull();
     expect(el.querySelector('.item-guia-form__checkbox--urgencia')).toBeNull();
@@ -315,7 +294,6 @@ describe('ItemGuiaFormComponent', () => {
     const { el } = setup();
     // semCalculo false por default — campos devem aparecer
     expect(el.querySelector('.item-guia-form__select--posicao')).not.toBeNull();
-    expect(el.querySelector('.item-guia-form__select--ordem')).not.toBeNull();
     expect(el.querySelector('.item-guia-form__select--via')).not.toBeNull();
     expect(el.querySelector('.item-guia-form__select--acomodacao')).not.toBeNull();
     expect(el.querySelector('.item-guia-form__checkbox--urgencia')).not.toBeNull();
