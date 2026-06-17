@@ -35,9 +35,8 @@ internal sealed class ItemGuia
 
     internal void ReincluirNoRecurso() => IncluidoNoRecurso = true;
 
-    internal void Atualizar(decimal percentualOrdem, Acomodacao acomodacao, bool ehUrgencia)
+    internal void Atualizar(Acomodacao acomodacao, bool ehUrgencia)
     {
-        PercentualOrdem = percentualOrdem;
         Acomodacao = acomodacao;
         EhUrgencia = ehUrgencia;
     }

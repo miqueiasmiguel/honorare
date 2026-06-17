@@ -29,7 +29,7 @@ internal sealed class ImportacaoGuiaCsvService(
     AppDbContext db, ICurrentUser currentUser, PricingRuleSetFactory factory)
 {
     private static readonly string[] _requiredHeaders =
-        ["GUIA", "CODIGO PROCEDIMENTO", "HONORARIO", "% VIA", "ACOMODACAO"];
+        ["GUIA", "CODIGO PROCEDIMENTO", "HONORARIO", "ACOMODACAO"];
 
     internal async Task<Result<ImportacaoResultado>> ImportarAsync(
         Stream csvStream, Guid prestadorId, Guid operadoraId,
@@ -179,7 +179,6 @@ internal sealed class ImportacaoGuiaCsvService(
                     continue;
                 }
 
-                var percentualOrdem = MapearPercentualOrdem(linha.PercentVia);
                 var acomodacao = MapearAcomodacao(linha.Acomodacao);
                 var ehUrgencia = MapearUrgencia(linha.Acrescimo);
 
@@ -191,7 +190,7 @@ internal sealed class ImportacaoGuiaCsvService(
 
                 if (itemExistente is not null)
                 {
-                    itemExistente.Atualizar(percentualOrdem, acomodacao, ehUrgencia);
+                    itemExistente.Atualizar(acomodacao, ehUrgencia);
                     await db.SaveChangesAsync(ct);
                     itensAtualizados++;
                     itensGrupo.Add(itemExistente);
@@ -232,7 +231,7 @@ internal sealed class ImportacaoGuiaCsvService(
                 continue;
             }
 
-            await ExecutarCalculoAsync(guia, op, itens, ct);
+            await ExecutarCalculoAsync(guia, op, ct);
 
             var todosItens = await db.ItensGuia
                 .Where(i => i.GuiaId == guia.Id)
@@ -305,9 +304,8 @@ internal sealed class ImportacaoGuiaCsvService(
 
             var honorario = ParseDecimal(Col(cols, idx, "HONORARIO"));
             var total = ParseDecimal(Col(cols, idx, "TOTAL"));
-            var percentVia = ParseDecimal(Col(cols, idx, "% VIA"));
 
-            if (!honorario.HasValue || !total.HasValue || !percentVia.HasValue)
+            if (!honorario.HasValue || !total.HasValue)
             {
                 continue;
             }
@@ -331,7 +329,6 @@ internal sealed class ImportacaoGuiaCsvService(
                 NomeProcedimento: Col(cols, idx, "NOME PROCEDIMENTO"),
                 Funcao: Col(cols, idx, "FUNCAO"),
                 ExecutanteServico: Col(cols, idx, "EXECUTANTE DO SERVICO"),
-                PercentVia: percentVia.Value,
                 Acomodacao: Col(cols, idx, "ACOMODACAO"),
                 Acrescimo: Col(cols, idx, "ACRESCIMO"),
                 QtdePaga: int.TryParse(Col(cols, idx, "QTDE PAGA"), out var q) ? q : 0,
@@ -407,18 +404,17 @@ internal sealed class ImportacaoGuiaCsvService(
             CultureInfo.InvariantCulture, out var v) && v > 0m;
     }
 
-    private static decimal MapearPercentualOrdem(decimal percentVia) =>
-        percentVia / 100m;
-
-    private async Task ExecutarCalculoAsync(
-        Guia guia, Operadora operadora, List<ItemGuia> itens, CancellationToken ct)
+    private async Task ExecutarCalculoAsync(Guia guia, Operadora operadora, CancellationToken ct)
     {
         var tenantId = currentUser.TenantId!.Value;
         var ruleSet = factory.Criar(operadora.TipoRuleSet);
 
+        await db.Calculos.Where(c => c.GuiaId == guia.Id).ExecuteDeleteAsync(ct);
+        var todosItens = await db.ItensGuia.Where(i => i.GuiaId == guia.Id).ToListAsync(ct);
+
         var ctx = new ApurarGuiaContext(
             tenantId, guia.PrestadorId, guia.OperadoraId,
-            itens.Select(i => new ApurarItemInput(
+            todosItens.Select(i => new ApurarItemInput(
                 i.Id, i.ProcedimentoId, i.PosicaoExecutor,
                 i.ViaAcesso, i.Acomodacao,
                 i.EhUrgencia, i.TempoAnestesicoMin))
@@ -437,7 +433,7 @@ internal sealed class ImportacaoGuiaCsvService(
                 continue;
             }
 
-            var item = itens.FirstOrDefault(i => i.Id == resultado.ItemGuiaId);
+            var item = todosItens.FirstOrDefault(i => i.Id == resultado.ItemGuiaId);
             if (item is null)
             {
                 continue;
@@ -467,7 +463,6 @@ internal sealed class ImportacaoGuiaCsvService(
         string NomeProcedimento,
         string Funcao,
         string ExecutanteServico,
-        decimal PercentVia,
         string Acomodacao,
         string Acrescimo,
         int QtdePaga,

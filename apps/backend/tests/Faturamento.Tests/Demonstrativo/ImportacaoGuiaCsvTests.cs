@@ -704,6 +704,93 @@ public sealed class ImportacaoGuiaCsvTests(PostgresContainerFixture db)
     }
 
     [Fact]
+    public async Task Deve_importar_CSV_sem_a_coluna_percentViaAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        await using var ctx = db.CreateTenantContext(tenantId);
+        var (prestadorId, operadoraId) = await SeedBaseAsync(ctx, tenantId);
+
+        var proc = Procedimento.Create(tenantId, "31020001", "PROC SEMVIA", "1", null, false, false);
+        ctx.Add(proc);
+        await ctx.SaveChangesAsync();
+
+        ctx.Add(TabelaProcedimento.Create(tenantId, operadoraId, proc.Id, 300m));
+        await ctx.SaveChangesAsync();
+
+        const string CsvHeaderSemVia =
+            "GUIA;CODIGO;BENEFICIARIO;DATA SERVICO;CODIGO PROCEDIMENTO;NOME PROCEDIMENTO;" +
+            "FUNCAO;EXECUTANTE DO SERVICO;ACOMODACAO;ACRESCIMO;QTDE PAGA;HONORARIO;GLOSA;COD_GLOSA;TOTAL;LOCAL ATENDIMENTO";
+
+        var csv = string.Join("\n",
+            "SV01_001",
+            CsvHeaderSemVia,
+            "34290001;0000000000002001;PACIENTE SEMVIA;01/01/2025;31020001;PROC SEMVIA;" +
+            "CIRURGIAO;DR SV01;ENFERMARIA;;1;300,00;0,00;;300,00;");
+
+        var (svcCtx, service) = BuildService(tenantId);
+        await using var _ = svcCtx;
+        var resultado = await service.ImportarAsync(ToCsvStream(csv), prestadorId, operadoraId, false, CancellationToken.None);
+
+        Assert.True(resultado.IsSuccess);
+        Assert.Equal(1, resultado.Value!.ItensCriados);
+
+        await using var check = db.CreateTenantContext(tenantId);
+        var guia = await check.Guias.FirstOrDefaultAsync(g => g.NumeroGuia == "34290001" && g.PrestadorId == prestadorId);
+        Assert.NotNull(guia);
+
+        var itemGuia = await check.ItensGuia.FirstOrDefaultAsync(i => i.GuiaId == guia.Id);
+        Assert.NotNull(itemGuia);
+        Assert.NotNull(itemGuia.ValorApurado);
+        Assert.Equal(1.0m, itemGuia.PercentualOrdem);
+    }
+
+    [Fact]
+    public async Task Deve_derivar_cascata_por_valor_na_importacaoAsync()
+    {
+        var tenantId = Guid.NewGuid();
+        await using var ctx = db.CreateTenantContext(tenantId);
+        var (prestadorId, operadoraId) = await SeedBaseAsync(ctx, tenantId);
+
+        var proc1 = Procedimento.Create(tenantId, "31021001", "PROC MAIOR", "1", null, false, false);
+        var proc2 = Procedimento.Create(tenantId, "31021002", "PROC MENOR", "1", null, false, false);
+        ctx.AddRange(proc1, proc2);
+        await ctx.SaveChangesAsync();
+
+        ctx.AddRange(
+            TabelaProcedimento.Create(tenantId, operadoraId, proc1.Id, 600m),
+            TabelaProcedimento.Create(tenantId, operadoraId, proc2.Id, 300m));
+        await ctx.SaveChangesAsync();
+
+        // % VIA diz 50 para ambos — motor deve ignorar e derivar 100/50 por valor base
+        var csv = string.Join("\n",
+            "SV02_001",
+            CsvHeader,
+            CsvRow("34290002", "0000000000002002", "PACIENTE CASCADE", "01/01/2025",
+                "31021001", "PROC MAIOR", "CIRURGIAO", "DR SV02", "50", "ENFERMARIA", "", "1", "600,00", "0,00", "", "600,00"),
+            CsvRow("34290002", "0000000000002002", "PACIENTE CASCADE", "01/01/2025",
+                "31021002", "PROC MENOR", "CIRURGIAO", "DR SV02", "50", "ENFERMARIA", "", "1", "300,00", "0,00", "", "300,00"));
+
+        var (svcCtx, service) = BuildService(tenantId);
+        await using var _ = svcCtx;
+        var resultado = await service.ImportarAsync(ToCsvStream(csv), prestadorId, operadoraId, false, CancellationToken.None);
+
+        Assert.True(resultado.IsSuccess);
+
+        await using var check = db.CreateTenantContext(tenantId);
+        var guia = await check.Guias.FirstOrDefaultAsync(g => g.NumeroGuia == "34290002" && g.PrestadorId == prestadorId);
+        Assert.NotNull(guia);
+
+        var itens = await check.ItensGuia
+            .Where(i => i.GuiaId == guia.Id)
+            .OrderByDescending(i => i.PercentualOrdem)
+            .ToListAsync();
+
+        Assert.Equal(2, itens.Count);
+        Assert.Equal(1.0m, itens[0].PercentualOrdem);
+        Assert.Equal(0.5m, itens[1].PercentualOrdem);
+    }
+
+    [Fact]
     public async Task ImportarCsv_GuiaExistenteComLocal_NaoSobrescreveAsync()
     {
         var tenantId = Guid.NewGuid();
