@@ -225,7 +225,7 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
                 _currentUser.TenantId!.Value, guia.PrestadorId, guia.OperadoraId,
                 [new ApurarItemInput(
                     item.Id, item.ProcedimentoId, item.PosicaoExecutor,
-                    item.PercentualOrdem, item.ViaAcesso, item.Acomodacao,
+                    item.ViaAcesso, item.Acomodacao,
                     item.EhUrgencia, item.TempoAnestesicoMin)]);
             var resultado = (await ruleSet.ApurarAsync(ctx, ct))[0];
 
@@ -562,7 +562,7 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
                     _currentUser.TenantId!.Value, guia.PrestadorId, guia.OperadoraId,
                     itemsSemCalculo.Select(i => new ApurarItemInput(
                         i.Id, i.ProcedimentoId, i.PosicaoExecutor,
-                        i.PercentualOrdem, i.ViaAcesso, i.Acomodacao,
+                        i.ViaAcesso, i.Acomodacao,
                         i.EhUrgencia, i.TempoAnestesicoMin)).ToList());
                 var resultados = await ruleSet.ApurarAsync(diagnosticCtx, ct);
                 foreach (var r in resultados)
@@ -736,7 +736,7 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
         var ctx = new ApurarGuiaContext(tenantId, guia.PrestadorId, guia.OperadoraId,
             itens.Select(i => new ApurarItemInput(
                 i.Id, i.ProcedimentoId, i.PosicaoExecutor,
-                i.PercentualOrdem, i.ViaAcesso, i.Acomodacao, i.EhUrgencia,
+                i.ViaAcesso, i.Acomodacao, i.EhUrgencia,
                 i.TempoAnestesicoMin))
             .ToList());
 
@@ -780,7 +780,7 @@ internal sealed class GuiaService(AppDbContext db, ICurrentUser currentUser, Pri
         var tempItens = itens
             .Select(i => new ApurarItemInput(
                 Guid.NewGuid(), i.ProcedimentoId, i.PosicaoExecutor,
-                i.PercentualOrdem, i.ViaAcesso, i.Acomodacao,
+                i.ViaAcesso, i.Acomodacao,
                 i.EhUrgencia, i.TempoAnestesicoMin))
             .ToList();
 

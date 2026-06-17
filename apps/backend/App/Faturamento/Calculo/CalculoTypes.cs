@@ -15,13 +15,13 @@ internal sealed record ApuracaoItemResult(
     Guid ItemGuiaId,
     SituacaoApuracao Situacao,
     decimal? ValorApurado,
+    decimal PercentualOrdem,
     IReadOnlyList<PassoApuracao> Passos);
 
 internal sealed record ApurarItemInput(
     Guid ItemGuiaId,
     Guid ProcedimentoId,
     PosicaoExecutor Posicao,
-    decimal PercentualOrdem,
     ViaAcesso Via,
     Acomodacao Acomodacao,
     bool EhUrgencia,

@@ -6,7 +6,7 @@ internal sealed class NullRuleSet : IPricingRuleSet
         ApurarGuiaContext ctx, CancellationToken ct = default)
     {
         IReadOnlyList<ApuracaoItemResult> resultados = ctx.Itens
-            .Select(item => new ApuracaoItemResult(item.ItemGuiaId, SituacaoApuracao.Indeterminado, null, []))
+            .Select(item => new ApuracaoItemResult(item.ItemGuiaId, SituacaoApuracao.Indeterminado, null, 1.0m, []))
             .ToList();
 
         return Task.FromResult(resultados);

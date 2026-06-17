@@ -420,7 +420,7 @@ internal sealed class ImportacaoGuiaCsvService(
             tenantId, guia.PrestadorId, guia.OperadoraId,
             itens.Select(i => new ApurarItemInput(
                 i.Id, i.ProcedimentoId, i.PosicaoExecutor,
-                i.PercentualOrdem, i.ViaAcesso, i.Acomodacao,
+                i.ViaAcesso, i.Acomodacao,
                 i.EhUrgencia, i.TempoAnestesicoMin))
             .ToList());
 
