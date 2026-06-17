@@ -132,7 +132,7 @@ distintos (ex.: 1000, 600, 300) e montar uma guia com vários itens. Casos:
 
 ### TASK-CASCATA-02 — GuiaService: persistir % derivado e remover entrada manual
 
-- [ ] pendente
+- [x] concluída
 
 **Objetivo:** Parar de receber/validar `PercentualOrdem` na criação/edição de guia; gravar no `ItemGuia`
 o percentual que o motor derivou; e garantir que adicionar item reapure a **guia inteira** (ranking correto).
@@ -450,7 +450,7 @@ Os erros de compilação TS resultantes guiam o resto da remoção.
 ## Checklist final
 
 - [x] TASK-CASCATA-01 — Motor calcula a cascata por valor base decrescente
-- [ ] TASK-CASCATA-02 — GuiaService persiste % derivado e remove entrada manual
+- [x] TASK-CASCATA-02 — GuiaService persiste % derivado e remove entrada manual
 - [ ] TASK-CASCATA-03 — Importação deriva % e torna `% VIA` opcional
 - [ ] TASK-CASCATA-04 — Recurso ordena por posição → valor → percentual
 - [ ] TASK-CASCATA-05 — Abolir `TabelaOrdemOperadora` (backend + migração)
