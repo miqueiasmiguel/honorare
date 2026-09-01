@@ -63,14 +63,24 @@ pnpm -F admin-web test              # Vitest watch mode
 pnpm -F admin-web test:ci           # Vitest single-run + coverage (used by CI)
 ```
 
-CI/CD uses four independent GitHub Actions workflows:
+CI/CD is a single Gitea Actions pipeline: `.gitea/workflows/ci-cd.yml`. It runs on
+`pull_request → master` (test jobs only, which is what gates the merge) and on
+`push → master` (full pipeline: test → build → deploy).
 
-| Workflow            | Trigger path                                    | Steps                                                   |
-| ------------------- | ----------------------------------------------- | ------------------------------------------------------- |
-| `backend-ci.yml`    | `apps/backend/**`                               | restore → build → test → coverage threshold             |
-| `admin-web-ci.yml`  | `apps/admin-web/**, packages/api-contracts/**`  | prettier → eslint → stylelint → test → coverage → build |
-| `medico-pwa-ci.yml` | `apps/medico-pwa/**, packages/api-contracts/**` | same as admin-web                                       |
-| `codeql.yml`        | `main`/`master` push + weekly                   | CodeQL static analysis (C# + TypeScript)                |
+| Job                | Depends on       | Steps                                                       |
+| ------------------ | ---------------- | ----------------------------------------------------------- |
+| `test-backend`     | —                | restore → build → test → coverage threshold (80%)           |
+| `test-admin-web`   | —                | prettier → eslint → stylelint → test → coverage (80%) → build |
+| `test-medico-pwa`  | —                | same as admin-web                                            |
+| `build-*` (×3)     | matching test job | docker build → push to `gitea.m2sf.com.br` (master only)    |
+| `deploy`           | all `build-*`    | rsync `infra/` → homelab, compose pull + up (master only)   |
+
+Runner topology: one `act_runner` in the homelab. `test-backend` talks to a dedicated
+`docker:dind` service (not the host socket) — Testcontainers hits
+`RegexMatchTimeoutException` under the contention of a socket two container layers deep.
+
+There is no GitHub Actions setup and no `.github/` directory; the earlier
+`.gitlab-ci.yml` was ported to Gitea and removed.
 
 ## Architecture
 
@@ -84,16 +94,10 @@ honorare/
 ├── .husky/
 │   ├── pre-commit              # → pnpm lint-staged
 │   └── commit-msg              # → pnpm commitlint --edit "$1"
-├── .vscode/
-│   ├── settings.json           # formatOnSave, ESLint flat config, per-lang formatters
-│   └── extensions.json         # Recommended extensions for the team
-├── .github/
-│   ├── dependabot.yml          # Weekly updates: npm (3 scopes), NuGet, Actions
+├── .gitea/
 │   └── workflows/
-│       ├── backend-ci.yml
-│       ├── admin-web-ci.yml
-│       ├── medico-pwa-ci.yml
-│       └── codeql.yml          # Security analysis (C# + TypeScript)
+│       └── ci-cd.yml           # Single pipeline: test → build → deploy (homelab)
+├── renovate.json               # Weekly dependency PRs, grouped (npm + NuGet)
 ├── apps/
 │   ├── backend/
 │   │   ├── .editorconfig       # Roslyn analyzer severity rules + C# naming conventions
@@ -320,8 +324,8 @@ Commit format: `type(scope): subject` where type ∈ `feat fix chore docs style 
 ### Security
 
 - **NuGetAudit** — `dotnet restore` fails if any NuGet package (direct or transitive) has a CVE at moderate severity or above. Configured in `Directory.Build.props`.
-- **CodeQL** — `.github/workflows/codeql.yml` runs static security analysis on C# and TypeScript on every PR to main and weekly. Uses the `security-and-quality` query pack.
-- **Dependabot** — `.github/dependabot.yml` opens weekly PRs for npm (root, admin-web, medico-pwa), NuGet, and GitHub Actions. Angular, ESLint, OpenTelemetry, and EF Core packages are grouped to reduce PR noise.
+- **Renovate** — `renovate.json` opens dependency PRs every Monday for npm and NuGet. Angular, ESLint, StyleLint, OpenTelemetry, and EF Core packages are grouped to reduce PR noise.
+- **No SAST in the pipeline.** There is no CodeQL equivalent running on Gitea; static security analysis is currently a gap, not a solved problem.
 
 ## Testing Philosophy
 
