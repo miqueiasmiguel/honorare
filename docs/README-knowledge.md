@@ -18,6 +18,7 @@ Este conjunto de documentos é o **contexto destilado** do projeto Honorare. Foi
 | `DOMINIO.md` | Glossário e regras UNIMED | Implementação de cálculo, entidades, validação |
 | `DECISOES.md` | Lista de decisões com justificativa | Antes de propor algo que pareça contrariar uma decisão |
 | `PROXIMOS_PASSOS.md` | Backlog ordenado das fatias | Para saber o que vem depois ou em que fase estamos |
+| `adr/` | ADRs — decisões que precisam de contexto longo, alternativas e trade-offs (em inglês) | Antes de mudar algo que uma ADR justifica |
 
 ## Como manter atualizado
 
